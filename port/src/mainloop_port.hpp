@@ -35,6 +35,17 @@ void PortAutosaveResetArrival();
 void PortAutosaveStep(int program_loop_no);
 
 /**
+ * Whether the player has control on a dungeon floor: the field is up, with no menu, event or locked input, and the
+ * player and field are stepping. Floor autosave and the debug menu key read it.
+ */
+bool PortDungeonFieldControl();
+/**
+ * Whether the player walks a town with control: no Georama edit, menu, event, player lock, pause, locked input or
+ * sub-game. Town autosave, which also skips interiors, and the debug menu key read it.
+ */
+bool PortTownFieldControl();
+
+/**
  * Saves town edits and releases the active town's event, sub-game and audio state.
  */
 void PreExitLoop(CScene *scene);
