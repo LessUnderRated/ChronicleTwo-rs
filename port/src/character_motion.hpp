@@ -30,13 +30,20 @@ struct Action {
 
 /**
  * Registers the actions of a motion set under its channel anchor.
+ *
+ * The anchor is stamped, so a set whose arena is reset and reused stops resolving.
  */
-void Register(const Mot_List *anchor, std::vector<Action> actions);
+void Register(Mot_List *anchor, std::vector<Action> actions);
 
 /**
  * Forgets a motion set whose channel anchor is released or replaced.
  */
 void Forget(const Mot_List *anchor);
+
+/**
+ * Forgets the pose recorded on a frame tree whose root is initialized or whose address is reused.
+ */
+void ForgetFrame(const mgCFrame *root);
 
 /**
  * Forgets every registered motion set and recorded pose.

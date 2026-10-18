@@ -1,6 +1,8 @@
 #include "common.h"
 
 #include <algorithm>
+#include <cstdint>
+#include <cstring>
 #include <optional>
 #include <span>
 #include <unordered_map>
@@ -13,18 +15,27 @@
 namespace character_motion {
 namespace {
 /**
+ * The registered actions of one motion set.
+ */
+struct Set {
+    std::uint32_t       stamp = 0; /**< Registration stamp, also written into the anchor. */
+    std::vector<Action> actions;   /**< Actions in game-frame order. */
+};
+
+/**
  * The action last posed on one frame tree, the source of the next blend.
  */
 struct Posed {
     const Mot_List *anchor = nullptr; /**< Motion set of the action. */
+    std::uint32_t   stamp = 0;        /**< Registration of the motion set when posed. */
     std::size_t     action = 0;       /**< Index of the action in its motion set. */
 };
 
 /**
- * Registered actions by the channel anchor of their motion set.
+ * Registered motion sets by their channel anchor.
  */
-std::unordered_map<const Mot_List *, std::vector<Action> > &Registry() {
-    static std::unordered_map<const Mot_List *, std::vector<Action> > registry;
+std::unordered_map<const Mot_List *, Set> &Registry() {
+    static std::unordered_map<const Mot_List *, Set> registry;
     return registry;
 }
 
@@ -34,6 +45,32 @@ std::unordered_map<const Mot_List *, std::vector<Action> > &Registry() {
 std::unordered_map<const mgCFrame *, Posed> &PosedActions() {
     static std::unordered_map<const mgCFrame *, Posed> posed;
     return posed;
+}
+
+/**
+ * Reads the registration stamp an anchor carries in its otherwise unused tail.
+ */
+std::uint32_t StampOf(const Mot_List &anchor) {
+    std::uint32_t stamp;
+    std::memcpy(&stamp, anchor.unk_1C, sizeof(stamp));
+    return stamp;
+}
+
+/**
+ * Finds the registered set of an anchor.
+ *
+ * The game releases a motion set by resetting its arena without telling the registry; an anchor whose
+ * memory now holds other data no longer carries its stamp, so it counts as unregistered.
+ */
+const Set *Lookup(const Mot_List *anchor) {
+    if (!anchor) {
+        return nullptr;
+    }
+    const auto found = Registry().find(anchor);
+    if (found == Registry().end() || StampOf(*anchor) != found->second.stamp) {
+        return nullptr;
+    }
+    return &found->second;
 }
 
 /**
@@ -110,13 +147,23 @@ void Apply(mgCFrame &root, const Action &action, float local, mgCCamera *camera)
 }
 } // namespace
 
-void Register(const Mot_List *anchor, std::vector<Action> actions) {
-    Registry().insert_or_assign(anchor, std::move(actions));
+void Register(Mot_List *anchor, std::vector<Action> actions) {
+    static std::uint32_t next_stamp = 0;
+    // A cleared arena holds zero, so zero never stamps a set.
+    if (++next_stamp == 0) {
+        ++next_stamp;
+    }
+    std::memcpy(anchor->unk_1C, &next_stamp, sizeof(next_stamp));
+    Registry().insert_or_assign(anchor, Set{.stamp = next_stamp, .actions = std::move(actions)});
 }
 
 void Forget(const Mot_List *anchor) {
     Registry().erase(anchor);
     std::erase_if(PosedActions(), [anchor](const auto &entry) { return entry.second.anchor == anchor; });
+}
+
+void ForgetFrame(const mgCFrame *root) {
+    PosedActions().erase(root);
 }
 
 void Clear() {
@@ -125,11 +172,11 @@ void Clear() {
 }
 
 std::span<const Action> Actions(const tagMOTION_TYPE &motion) {
-    const auto found = Registry().find(motion.motion_list);
-    if (found == Registry().end()) {
+    const auto *set = Lookup(motion.motion_list);
+    if (!set) {
         return {};
     }
-    return found->second;
+    return set->actions;
 }
 
 const Action *Find(const tagMOTION_TYPE &motion, std::string_view name) {
@@ -145,14 +192,17 @@ const Action *At(const tagMOTION_TYPE &motion, float frame) {
 }
 
 void Pose(mgCFrame &root, tagMOTION_TYPE &motion, float frame, mgCCamera *camera) {
-    const auto actions = Actions(motion);
-    const auto index = NearestAt(actions, frame);
+    const auto *set = Lookup(motion.motion_list);
+    if (!set) {
+        return;
+    }
+    const auto index = NearestAt(set->actions, frame);
     if (!index) {
         return;
     }
-    const auto &action = actions[*index];
+    const auto &action = set->actions[*index];
     Apply(root, action, Local(action, frame), camera);
-    PosedActions().insert_or_assign(&root, Posed{.anchor = motion.motion_list, .action = *index});
+    PosedActions().insert_or_assign(&root, Posed{.anchor = motion.motion_list, .stamp = set->stamp, .action = *index});
 }
 
 void Blend(mgCFrame &root, tagMOTION_TYPE &motion, float from, float to, float blend, mgCCamera *camera) {
@@ -163,11 +213,13 @@ void Blend(mgCFrame &root, tagMOTION_TYPE &motion, float from, float to, float b
     }
     const auto &target = actions[*target_index];
     const float target_local = Local(target, to);
-    // The game blends from the frame it last posed; that action may belong to another motion set.
+    // The game blends from the frame it last posed; that action may belong to another motion set. A set
+    // released or registered again since then no longer holds that action.
     const Action *source = nullptr;
     if (const auto posed = PosedActions().find(&root); posed != PosedActions().end()) {
-        if (const auto set = Registry().find(posed->second.anchor); set != Registry().end() && posed->second.action < set->second.size()) {
-            const auto &candidate = set->second[posed->second.action];
+        const auto *set = Lookup(posed->second.anchor);
+        if (set && set->stamp == posed->second.stamp && posed->second.action < set->actions.size()) {
+            const auto &candidate = set->actions[posed->second.action];
             if (from >= static_cast<float>(candidate.base) && from <= static_cast<float>(candidate.base) + candidate.duration + 1) {
                 source = &candidate;
             }

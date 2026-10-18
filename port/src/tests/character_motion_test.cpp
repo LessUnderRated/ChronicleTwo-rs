@@ -4,7 +4,10 @@
 
 #include <array>
 #include <cmath>
+#include <cstdlib>
+#include <cstring>
 #include <initializer_list>
+#include <new>
 
 #include "character_motion.hpp"
 #include "gameutil.hpp"
@@ -57,6 +60,24 @@ struct Channel {
         list.key_count = static_cast<u32>(keys.size());
         list.values = values;
         list.key_frames = frames;
+    }
+};
+
+// Data that reused a released arena; read as a channel pointer it faults, as 0x8100000081 did in the crash report.
+constexpr unsigned char kReused = 0x81;
+
+/**
+ * One motion set laid out as its arena holds it: the anchor, then the channel list of its only action.
+ */
+struct MotionSet {
+    Mot_List       anchor{};
+    Mot_List       channel{};
+    tagMOTION_TYPE motion{};
+
+    explicit MotionSet(bool with_channel) {
+        motion.motion_list = &anchor;
+        character_motion::Action idle{.name = "idle", .duration = 10, .base = 0, .head = with_channel ? &channel : nullptr};
+        character_motion::Register(&anchor, {idle});
     }
 };
 
@@ -118,6 +139,50 @@ TEST_F(CharacterMotion, BlendIntoAnActionEndKeepsItsMaterialAlpha) {
     character_motion::Blend(model.root, motion, 0.0f, 4.0f, 0.5f, nullptr);
     ASSERT_FALSE(std::isnan(model.material.diffuse[3]));
     EXPECT_NEAR(model.material.diffuse[3], 1.0f - 0.8f, 1e-5f);
+}
+
+TEST_F(CharacterMotion, ReleasedMotionSetStopsResolving) {
+    MotionSet set(true);
+    EXPECT_EQ(character_motion::Actions(set.motion).size(), 1u);
+    std::memset(&set.anchor, kReused, sizeof(set.anchor));
+    EXPECT_TRUE(character_motion::Actions(set.motion).empty());
+}
+
+// An effect script copies its character's frame tree into work memory that the next script reuses; the new
+// tree must not blend from the action the previous tree at that address posed, whose channels are gone.
+TEST(CharacterMotionDeathTest, BlendIgnoresPoseOfFrameTreePreviouslyAtSameAddress) {
+    EXPECT_EXIT(([] {
+                    character_motion::Clear();
+                    alignas(mgCFrame) unsigned char storage[sizeof(mgCFrame)];
+                    auto                           *root = new (storage) mgCFrame;
+                    MotionSet                       previous(true);
+                    character_motion::Pose(*root, previous.motion, 5, nullptr);
+                    // The arena reset reuses the channel; the anchor keeps its stamp, so only the new tree's
+                    // construction can drop the old pose.
+                    std::memset(&previous.channel, kReused, sizeof(previous.channel));
+                    root = new (storage) mgCFrame;
+                    MotionSet next(false);
+                    character_motion::Blend(*root, next.motion, 5, 5, .5f, nullptr);
+                    std::exit(0);
+                }()),
+                testing::ExitedWithCode(0), "");
+}
+
+// A frame tree that outlives the motion set it last posed, released by an arena reset without Forget, must
+// not blend from that set's channels.
+TEST(CharacterMotionDeathTest, BlendIgnoresPoseFromReleasedMotionSet) {
+    EXPECT_EXIT(([] {
+                    character_motion::Clear();
+                    mgCFrame  root;
+                    MotionSet previous(true);
+                    character_motion::Pose(root, previous.motion, 5, nullptr);
+                    std::memset(&previous.anchor, kReused, sizeof(previous.anchor));
+                    std::memset(&previous.channel, kReused, sizeof(previous.channel));
+                    MotionSet next(false);
+                    character_motion::Blend(root, next.motion, 5, 5, .5f, nullptr);
+                    std::exit(0);
+                }()),
+                testing::ExitedWithCode(0), "");
 }
 
 } // namespace

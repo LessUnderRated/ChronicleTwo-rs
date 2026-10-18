@@ -1536,6 +1536,7 @@ bool UsesStandardScaleOrder(const mgCFrame *frame) {
 
 void ForgetFrame(const mgCFrame *frame) {
     FrameConventions().erase(frame);
+    character_motion::ForgetFrame(frame);
 }
 
 std::shared_ptr<const Json> ReadGameplay(const std::filesystem::path &gltf, std::string &error) {
