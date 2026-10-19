@@ -4,6 +4,7 @@
 
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>
 #include <initializer_list>
@@ -12,7 +13,9 @@
 #include "character_motion.hpp"
 #include "gameutil.hpp"
 #include "mg_frame.hpp"
+#include "mg_memory.hpp"
 #include "mg_visual.hpp"
+#include "platform/arena.hpp"
 
 namespace {
 
@@ -66,6 +69,10 @@ struct Channel {
 // Data that reused a released arena; read as a channel pointer it faults, as 0x8100000081 did in the crash report.
 constexpr unsigned char kReused = 0x81;
 
+constexpr int kQuadwords = 256;
+constexpr std::size_t kBytes = static_cast<std::size_t>(kQuadwords) * 16;
+constexpr int         kListQuadwords = static_cast<int>((sizeof(Mot_List) + 15) / 16);
+
 /**
  * One motion set laid out as its arena holds it: the anchor, then the channel list of its only action.
  */
@@ -77,9 +84,36 @@ struct MotionSet {
     explicit MotionSet(bool with_channel) {
         motion.motion_list = &anchor;
         character_motion::Action idle{.name = "idle", .duration = 10, .base = 0, .head = with_channel ? &channel : nullptr};
-        character_motion::Register(&anchor, {idle});
+        character_motion::Register(&anchor, {idle}, {});
     }
 };
+
+/**
+ * One motion set allocated from an arena as BuildMotion allocates it: the channel list of its only action,
+ * then the anchor at the end of the run.
+ */
+struct ArenaMotionSet {
+    Mot_List      *channel = nullptr;
+    Mot_List      *anchor = nullptr;
+    tagMOTION_TYPE motion{};
+
+    explicit ArenaMotionSet(mgCMemory &arena) {
+        const auto *storage = reinterpret_cast<const std::byte *>(arena.stGetTop());
+        channel = ::new (arena.Alloc(kListQuadwords)) Mot_List{};
+        anchor = ::new (arena.Alloc(kListQuadwords)) Mot_List{};
+        anchor->frame = -1;
+        motion.motion_list = anchor;
+        character_motion::Action idle{.name = "idle", .duration = 10, .base = 0, .head = channel};
+        character_motion::Register(anchor, {idle}, {storage, reinterpret_cast<const std::byte *>(arena.stGetTop())});
+    }
+};
+
+u_long128 *ArenaBuffer() {
+    static char key;
+    auto       *buffer = reinterpret_cast<u_long128 *>(ArenaBlock(&key, kBytes));
+    std::memset(buffer, 0, kBytes);
+    return buffer;
+}
 
 class CharacterMotion : public ::testing::Test {
 protected:
@@ -95,7 +129,8 @@ TEST_F(CharacterMotion, MaterialAlphaHoldsItsLastKeyAtAndPastTheActionEnd) {
     motion.motion_list = &transparency.list;
     character_motion::Register(motion.motion_list, {
                                                        {.name = "get_item", .duration = 2.0f, .base = 0, .head = &transparency.list}
-    });
+    },
+                               {});
 
     character_motion::Pose(model.root, motion, 1.5f, nullptr);
     EXPECT_NEAR(model.material.diffuse[3], 1.0f - 0.7f, 1e-5f);
@@ -115,7 +150,8 @@ TEST_F(CharacterMotion, MaterialColourHoldsItsLastKeyAtTheActionEnd) {
     motion.motion_list = &colour.list;
     character_motion::Register(motion.motion_list, {
                                                        {.name = "flash", .duration = 1.0f, .base = 0, .head = &colour.list}
-    });
+    },
+                               {});
 
     character_motion::Pose(model.root, motion, 1.0f, nullptr);
     for (int component = 0; component < 3; ++component) {
@@ -133,7 +169,8 @@ TEST_F(CharacterMotion, BlendIntoAnActionEndKeepsItsMaterialAlpha) {
     character_motion::Register(motion.motion_list, {
                                                        {.name = "start", .duration = 1.0f, .base = 0, .head = &first.list },
                                                        {.name = "end",   .duration = 1.0f, .base = 3, .head = &second.list},
-    });
+    },
+                               {});
 
     character_motion::Pose(model.root, motion, 0.0f, nullptr);
     character_motion::Blend(model.root, motion, 0.0f, 4.0f, 0.5f, nullptr);
@@ -146,6 +183,43 @@ TEST_F(CharacterMotion, ReleasedMotionSetStopsResolving) {
     EXPECT_EQ(character_motion::Actions(set.motion).size(), 1u);
     std::memset(&set.anchor, kReused, sizeof(set.anchor));
     EXPECT_TRUE(character_motion::Actions(set.motion).empty());
+}
+
+// Memory the arena hands out after the set's run belongs to someone else; the set stays registered.
+TEST_F(CharacterMotion, AllocationPastMotionStorageKeepsSet) {
+    mgCMemory arena;
+    arena.stSetBuffer(ArenaBuffer(), kQuadwords);
+    ArenaMotionSet set(arena);
+    std::memset(arena.Alloc(kListQuadwords), kReused, sizeof(Mot_List));
+    EXPECT_EQ(character_motion::Actions(set.motion).size(), 1u);
+}
+
+// A stage reset rewinds the arena and hands its front out again, over the channels; the anchor at the end of the
+// run keeps its bytes, stamp included, but the set must stop resolving.
+TEST_F(CharacterMotion, ResetArenaReusingChannelsReleasesSet) {
+    mgCMemory arena;
+    arena.stSetBuffer(ArenaBuffer(), kQuadwords);
+    ArenaMotionSet set(arena);
+    const Mot_List anchor = *set.anchor;
+    arena.stReset();
+    std::memset(arena.Alloc(kListQuadwords), kReused, sizeof(Mot_List));
+    ASSERT_EQ(std::memcmp(set.anchor, &anchor, sizeof(anchor)), 0);
+    EXPECT_TRUE(character_motion::Actions(set.motion).empty());
+}
+
+// A heap block freed and claimed again by the next stack mode releases the sets it held.
+TEST_F(CharacterMotion, FreedHeapBlockReusedReleasesSet) {
+    mgCMemory arena;
+    arena.SetHeapMem(ArenaBuffer(), kQuadwords);
+    u_long128 *block = arena.StartStackMode(MG_STACK_MODE_FIRST, 0);
+    ASSERT_NE(block, nullptr);
+    ArenaMotionSet set(arena);
+    arena.EndStackMode();
+    arena.Free(block);
+    ASSERT_EQ(arena.StartStackMode(MG_STACK_MODE_FIRST, 0), block);
+    std::memset(arena.Alloc(kListQuadwords), kReused, sizeof(Mot_List));
+    EXPECT_TRUE(character_motion::Actions(set.motion).empty());
+    arena.EndStackMode();
 }
 
 // An effect script copies its character's frame tree into work memory that the next script reuses; the new
@@ -178,6 +252,25 @@ TEST(CharacterMotionDeathTest, BlendIgnoresPoseFromReleasedMotionSet) {
                     character_motion::Pose(root, previous.motion, 5, nullptr);
                     std::memset(&previous.anchor, kReused, sizeof(previous.anchor));
                     std::memset(&previous.channel, kReused, sizeof(previous.channel));
+                    MotionSet next(false);
+                    character_motion::Blend(root, next.motion, 5, 5, .5f, nullptr);
+                    std::exit(0);
+                }()),
+                testing::ExitedWithCode(0), "");
+}
+
+// The frame tree survives, so nothing drops its recorded pose; the arena reset that handed the front of the motion
+// run out again overwrote the channels but left the anchor, stamp included, intact.
+TEST(CharacterMotionDeathTest, SurvivingFrameIgnoresPoseFromResetArenaWithIntactAnchor) {
+    EXPECT_EXIT(([] {
+                    character_motion::Clear();
+                    mgCMemory arena;
+                    arena.stSetBuffer(ArenaBuffer(), kQuadwords);
+                    mgCFrame       root;
+                    ArenaMotionSet previous(arena);
+                    character_motion::Pose(root, previous.motion, 5, nullptr);
+                    arena.stReset();
+                    std::memset(arena.Alloc(kListQuadwords), kReused, sizeof(Mot_List));
                     MotionSet next(false);
                     character_motion::Blend(root, next.motion, 5, 5, .5f, nullptr);
                     std::exit(0);

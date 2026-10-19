@@ -2354,14 +2354,22 @@ const Json &ExternalResource(const Json &resource, const std::optional<MotionOwn
 }
 
 /**
+ * The named actions of a built motion set and the arena memory that holds them.
+ */
+struct BuiltMotion {
+    std::vector<character_motion::Action> actions; /**< Actions with game frames from zero. */
+    std::span<const std::byte>            storage; /**< Arena run holding the actions' channels and the anchor. */
+};
+
+/**
  * Builds motion records from direct resource indices in the embedded glTF semantics.
  *
  * Returns the named actions of the selected animation, with game frames from zero.
  */
-std::vector<character_motion::Action> BuildMotion(const std::shared_ptr<Document> &source, tagMOTION_TYPE &motion, mgCMemory &memory,
-                                                  std::optional<std::size_t> animation, std::optional<std::size_t> bind_pose,
-                                                  std::optional<std::size_t> weights, std::optional<std::size_t> model,
-                                                  const std::optional<MotionOwner> &owner = std::nullopt) {
+BuiltMotion BuildMotion(const std::shared_ptr<Document> &source, tagMOTION_TYPE &motion, mgCMemory &memory,
+                        std::optional<std::size_t> animation, std::optional<std::size_t> bind_pose,
+                        std::optional<std::size_t> weights, std::optional<std::size_t> model,
+                        const std::optional<MotionOwner> &owner = std::nullopt) {
     const auto &resources = Resources(*source);
     auto        document = SelectModel(source, model);
     motion = {};
@@ -2376,8 +2384,10 @@ std::vector<character_motion::Action> BuildMotion(const std::shared_ptr<Document
             std::memcpy(motion.base_matrices[index], value.data(), sizeof(sceVu0FMATRIX));
         }
     }
-    std::vector<character_motion::Action> actions;
+    BuiltMotion built;
+    auto       &actions = built.actions;
     if (animation) {
+        const auto *storage = reinterpret_cast<const std::byte *>(memory.stGetTop());
         if (source->custom->contains("resources")) {
             const auto &resource = resources.at("animations").at(*animation);
             if (resource.contains("external") && !resource.contains("variants")) {
@@ -2400,11 +2410,12 @@ std::vector<character_motion::Action> BuildMotion(const std::shared_ptr<Document
         native_channels.erase(anchor);
         anchor->frame = -1;
         motion.motion_list = anchor;
+        built.storage = {storage, reinterpret_cast<const std::byte *>(memory.stGetTop())};
     }
     if (weights) {
         motion.skin_list = BuildChannels(document, std::nullopt, resources.at("weights").at(*weights).at("channels"), memory);
     }
-    return actions;
+    return built;
 }
 
 /**
@@ -2412,15 +2423,15 @@ std::vector<character_motion::Action> BuildMotion(const std::shared_ptr<Document
  *
  * Intervals are two frames apart, so a frame rounded up at an action's end stays in that action.
  */
-void RegisterActions(const tagMOTION_TYPE &motion, std::vector<character_motion::Action> actions, int base) {
+void RegisterActions(const tagMOTION_TYPE &motion, BuiltMotion built, int base) {
     if (!motion.motion_list) {
         return;
     }
-    for (auto &action : actions) {
+    for (auto &action : built.actions) {
         action.base = base;
         base += static_cast<int>(std::ceil(action.duration)) + 2;
     }
-    character_motion::Register(motion.motion_list, std::move(actions));
+    character_motion::Register(motion.motion_list, std::move(built.actions), built.storage);
 }
 
 /**
@@ -2914,9 +2925,9 @@ void CharacterProfile(CCharacter2 &character, const std::shared_ptr<Document> &d
             if (!shadow && motion.motion_list) {
                 character_motion::Forget(motion.motion_list);
             }
-            auto actions = BuildMotion(document, motion, motion_memory, shadow ? std::nullopt : animation, bind, weights, shadow ? shadow_model : selected_model, owner);
+            auto built = BuildMotion(document, motion, motion_memory, shadow ? std::nullopt : animation, bind, weights, shadow ? shadow_model : selected_model, owner);
             if (!shadow) {
-                RegisterActions(motion, actions, NextActionFrame(character, motion_slot));
+                RegisterActions(motion, std::move(built), NextActionFrame(character, motion_slot));
                 slot_actions = std::vector<character_motion::Action>(character_motion::Actions(motion).begin(), character_motion::Actions(motion).end());
             }
             if (!shadow && motion.base_matrices && root->init_matrix) {

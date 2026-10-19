@@ -18,8 +18,9 @@ namespace {
  * The registered actions of one motion set.
  */
 struct Set {
-    std::uint32_t       stamp = 0; /**< Registration stamp, also written into the anchor. */
-    std::vector<Action> actions;   /**< Actions in game-frame order. */
+    std::uint32_t              stamp = 0; /**< Registration stamp, also written into the anchor. */
+    std::vector<Action>        actions;   /**< Actions in game-frame order. */
+    std::span<const std::byte> storage;   /**< Arena memory holding the channels and the anchor. */
 };
 
 /**
@@ -59,8 +60,8 @@ std::uint32_t StampOf(const Mot_List &anchor) {
 /**
  * Finds the registered set of an anchor.
  *
- * The game releases a motion set by resetting its arena without telling the registry; an anchor whose
- * memory now holds other data no longer carries its stamp, so it counts as unregistered.
+ * A set whose storage an arena handed out again is already forgotten. An anchor overwritten some other
+ * way no longer carries its stamp, so it counts as unregistered too.
  */
 const Set *Lookup(const Mot_List *anchor) {
     if (!anchor) {
@@ -147,19 +148,36 @@ void Apply(mgCFrame &root, const Action &action, float local, mgCCamera *camera)
 }
 } // namespace
 
-void Register(Mot_List *anchor, std::vector<Action> actions) {
+void Register(Mot_List *anchor, std::vector<Action> actions, std::span<const std::byte> storage) {
     static std::uint32_t next_stamp = 0;
     // A cleared arena holds zero, so zero never stamps a set.
     if (++next_stamp == 0) {
         ++next_stamp;
     }
     std::memcpy(anchor->unk_1C, &next_stamp, sizeof(next_stamp));
-    Registry().insert_or_assign(anchor, Set{.stamp = next_stamp, .actions = std::move(actions)});
+    Registry().insert_or_assign(anchor, Set{.stamp = next_stamp, .actions = std::move(actions), .storage = storage});
 }
 
 void Forget(const Mot_List *anchor) {
     Registry().erase(anchor);
     std::erase_if(PosedActions(), [anchor](const auto &entry) { return entry.second.anchor == anchor; });
+}
+
+void ForgetStorage(const void *begin, const void *end) {
+    if (Registry().empty()) {
+        return;
+    }
+    const auto                   *first = static_cast<const std::byte *>(begin);
+    const auto                   *last = static_cast<const std::byte *>(end);
+    std::vector<const Mot_List *> released;
+    for (const auto &[anchor, set] : Registry()) {
+        if (set.storage.data() < last && first < set.storage.data() + set.storage.size()) {
+            released.push_back(anchor);
+        }
+    }
+    for (const auto *anchor : released) {
+        Forget(anchor);
+    }
 }
 
 void ForgetFrame(const mgCFrame *root) {

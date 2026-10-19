@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "arena_root.hpp"
+#include "character_motion.hpp"
 #include "dataread_port.hpp"
 #include "log/log.hpp"
 #include "mg_memory_port.hpp"
@@ -64,6 +65,16 @@ std::ptrdiff_t QuadwordsBetween(const void *from, const void *to) {
 
 mgMEMORY_BLOCK *BlockAt(const void *base, std::ptrdiff_t quadwords) {
     return reinterpret_cast<mgMEMORY_BLOCK *>(QuadwordsFrom(base, quadwords));
+}
+
+// Reports quadwords an arena hands out or writes a block header over. The game releases memory by
+// resetting or rewinding a stack (stReset, or a direct write to stack_used), by unlinking a heap block or
+// by setting up a heap again, none of which touch the contents. Released memory is only overwritten once
+// the arena hands it out again, so the motion registry forgets the sets that lived there at that point.
+void Reuse(const void *start, std::ptrdiff_t quadwords) {
+    if (quadwords > 0) {
+        character_motion::ForgetStorage(start, QuadwordsFrom(start, quadwords));
+    }
 }
 
 struct PeakEntry {
@@ -156,6 +167,7 @@ u_long128 *AllocQuadwords(mgCMemory &memory, int size) {
     u_long128 *data = QuadwordsFrom(memory.stack, memory.stack_used);
     memory.stack_used = static_cast<int>(new_used);
     g_last_run = {.arena = &memory, .start = data, .quadwords = size};
+    Reuse(data, size);
     NotePeak(memory);
     return data;
 }
@@ -181,6 +193,7 @@ void GrowLastRun(const u_long128 *buffer, std::size_t bytes) {
         Overflow(memory, new_used);
     }
 
+    Reuse(QuadwordsFrom(run.start, run.quadwords), quadwords - run.quadwords);
     memory.stack_used = static_cast<int>(new_used);
     run.quadwords = quadwords;
     NotePeak(memory);
@@ -239,6 +252,8 @@ PORT_OVERRIDE void mgCMemory::SetHeapMem(u_long128 *buffer, int size) {
         return;
     }
 
+    Reuse(buffer, kHeaderQuadwords);
+    Reuse(BlockAt(buffer, size - kHeaderQuadwords), kHeaderQuadwords);
     heap = buffer;
     heap_size = static_cast<u_int>(size);
     heap_top = reinterpret_cast<mgMEMORY_BLOCK *>(buffer);
@@ -322,6 +337,7 @@ PORT_OVERRIDE u_long128 *mgCMemory::StartStackMode(int mode, int size) {
         return nullptr;
     }
 
+    Reuse(chosen, kHeaderQuadwords);
     // Sized from the chosen gap. Retail sizes it from the last gap examined, so mode 2 can run the
     // stack region past the end of the gap it claimed and over the next header.
     stack_block = chosen;
