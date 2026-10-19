@@ -237,6 +237,8 @@ PORT_OVERRIDE void mgCMemory::SetHeapMem(u_long128 *buffer, int size) {
     if (buffer != nullptr && size >= 0x10 && !ArenaContains(buffer)) {
         const NameCopy label = CopyName(name);
         u_long128     *block = ArenaRoot(buffer, size, label.data());
+        // Binding the same buffer again maps the same root, so the copy lands on whatever the heap held.
+        Reuse(block, size);
         std::memcpy(block, buffer, static_cast<std::size_t>(size) * sizeof(u_long128));
         TextureSourceCopy(buffer, block, static_cast<std::size_t>(size) * sizeof(u_long128));
         DataReadCopyBuffer(buffer, block, static_cast<std::size_t>(size) * sizeof(u_long128));

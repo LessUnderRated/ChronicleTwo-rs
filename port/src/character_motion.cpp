@@ -61,14 +61,18 @@ std::uint32_t StampOf(const Mot_List &anchor) {
  * Finds the registered set of an anchor.
  *
  * A set whose storage an arena handed out again is already forgotten. An anchor overwritten some other
- * way no longer carries its stamp, so it counts as unregistered too.
+ * way no longer carries its stamp, so its set is forgotten here.
  */
 const Set *Lookup(const Mot_List *anchor) {
     if (!anchor) {
         return nullptr;
     }
     const auto found = Registry().find(anchor);
-    if (found == Registry().end() || StampOf(*anchor) != found->second.stamp) {
+    if (found == Registry().end()) {
+        return nullptr;
+    }
+    if (StampOf(*anchor) != found->second.stamp) {
+        Forget(anchor);
         return nullptr;
     }
     return &found->second;
@@ -154,6 +158,8 @@ void Register(Mot_List *anchor, std::vector<Action> actions, std::span<const std
     if (++next_stamp == 0) {
         ++next_stamp;
     }
+    // A set registered again at the same anchor drops the old one's poses along with its actions.
+    Forget(anchor);
     std::memcpy(anchor->unk_1C, &next_stamp, sizeof(next_stamp));
     Registry().insert_or_assign(anchor, Set{.stamp = next_stamp, .actions = std::move(actions), .storage = storage});
 }
@@ -234,10 +240,12 @@ void Blend(mgCFrame &root, tagMOTION_TYPE &motion, float from, float to, float b
     // The game blends from the frame it last posed; that action may belong to another motion set. A set
     // released or registered again since then no longer holds that action.
     const Action *source = nullptr;
-    if (const auto posed = PosedActions().find(&root); posed != PosedActions().end()) {
-        const auto *set = Lookup(posed->second.anchor);
-        if (set && set->stamp == posed->second.stamp && posed->second.action < set->actions.size()) {
-            const auto &candidate = set->actions[posed->second.action];
+    if (const auto found = PosedActions().find(&root); found != PosedActions().end()) {
+        // Lookup may forget a stale set and its poses, this one included, so the record is copied first.
+        const Posed posed = found->second;
+        const auto *set = Lookup(posed.anchor);
+        if (set && set->stamp == posed.stamp && posed.action < set->actions.size()) {
+            const auto &candidate = set->actions[posed.action];
             if (from >= static_cast<float>(candidate.base) && from <= static_cast<float>(candidate.base) + candidate.duration + 1) {
                 source = &candidate;
             }

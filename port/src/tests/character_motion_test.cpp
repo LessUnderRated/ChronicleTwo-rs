@@ -181,7 +181,11 @@ TEST_F(CharacterMotion, BlendIntoAnActionEndKeepsItsMaterialAlpha) {
 TEST_F(CharacterMotion, ReleasedMotionSetStopsResolving) {
     MotionSet set(true);
     EXPECT_EQ(character_motion::Actions(set.motion).size(), 1u);
+    const Mot_List anchor = set.anchor;
     std::memset(&set.anchor, kReused, sizeof(set.anchor));
+    EXPECT_TRUE(character_motion::Actions(set.motion).empty());
+    // The rejected set is erased, not just hidden: restoring the stamp does not bring it back.
+    set.anchor = anchor;
     EXPECT_TRUE(character_motion::Actions(set.motion).empty());
 }
 
@@ -220,6 +224,34 @@ TEST_F(CharacterMotion, FreedHeapBlockReusedReleasesSet) {
     std::memset(arena.Alloc(kListQuadwords), kReused, sizeof(Mot_List));
     EXPECT_TRUE(character_motion::Actions(set.motion).empty());
     arena.EndStackMode();
+}
+
+// A heap set up over a buffer outside the arenas imports it into an arena root, and binding the same buffer again
+// maps the same root and copies the buffer over it. The copy covers the buffer's own size, not the root's headroom,
+// so it overwrites channels inside that size while an anchor in the headroom keeps its bytes.
+TEST_F(CharacterMotion, RebindingHeapBufferReleasesSetInsideTheImport) {
+    alignas(16) static u_long128 external[kQuadwords];
+    std::memset(external, kReused, sizeof(external));
+    mgCMemory arena;
+    arena.SetHeapMem(external, kQuadwords);
+    u_long128 *block = arena.StartStackMode(MG_STACK_MODE_FIRST, 0);
+    ASSERT_NE(block, nullptr);
+    const auto *storage = reinterpret_cast<const std::byte *>(arena.stGetTop());
+    auto       *channel = ::new (arena.Alloc(kListQuadwords)) Mot_List{};
+    arena.Alloc(kQuadwords);
+    auto *anchor = ::new (arena.Alloc(kListQuadwords)) Mot_List{};
+    ASSERT_GE(reinterpret_cast<u_long128 *>(anchor) - block, kQuadwords);
+    tagMOTION_TYPE motion{};
+    motion.motion_list = anchor;
+    character_motion::Action idle{.name = "idle", .duration = 10, .base = 0, .head = channel};
+    character_motion::Register(anchor, {idle}, {storage, reinterpret_cast<const std::byte *>(arena.stGetTop())});
+    arena.EndStackMode();
+    const Mot_List kept = *anchor;
+
+    arena.SetHeapMem(external, kQuadwords);
+    ASSERT_EQ(std::memcmp(anchor, &kept, sizeof(kept)), 0);
+    ASSERT_EQ(reinterpret_cast<const unsigned char *>(channel)[0], kReused);
+    EXPECT_TRUE(character_motion::Actions(motion).empty());
 }
 
 // An effect script copies its character's frame tree into work memory that the next script reuses; the new

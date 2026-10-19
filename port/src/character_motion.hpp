@@ -43,11 +43,12 @@ void Register(Mot_List *anchor, std::vector<Action> actions, std::span<const std
 void Forget(const Mot_List *anchor);
 
 /**
- * Forgets every motion set whose storage overlaps memory an arena is handing out again.
+ * Forgets every motion set whose storage overlaps memory about to be written again.
  *
  * The game releases motion memory by resetting or rewinding an arena, or by freeing a heap block, without
- * telling the registry. Released memory is only rewritten once an arena hands it out again, so the arena
- * reports each reused range here.
+ * telling the registry. The arena reports each range it hands out again or writes a header or an imported
+ * buffer over, and the main-thread file loads report their whole sector-padded destination, which they
+ * write before the caller reserves it.
  */
 void ForgetStorage(const void *begin, const void *end);
 
