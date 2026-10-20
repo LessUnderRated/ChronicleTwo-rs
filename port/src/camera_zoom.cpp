@@ -142,7 +142,7 @@ private:
 
 // Retail's wall correction places the eye five units in front of a hit along
 // the view, which leaves it almost touching a wall it grazes. Move it toward the
-// target until it has the room mouse turning needs to prove motion away.
+// target until it keeps the clearance, so the view does not graze that wall.
 void KeepClear(const float *target, float *eye, CCPoly *polys, int count) {
     if (count <= 0 || MouseCameraClearance(eye, polys, count) > CameraZoom::clearance) {
         return;
@@ -361,13 +361,13 @@ private:
     float  box_max[3]{};
 };
 
-// Whether a wall crosses the surface a view sweeps from one drawn pose to the
-// next, from target a to eye a and target b to eye b. A plane meets the patch
-// in a hyperbola, parabola or lines, never a closed curve, so a wall meets a
-// part of it only where a wall edge crosses that part or one of its edges
-// crosses the wall.
-bool Sweeps(CCPoly *walls, int count, const float *target_a, const float *eye_a, const float *target_b,
-            const float *eye_b) {
+} // namespace
+
+// A plane meets the swept patch in a hyperbola, parabola or lines, never a
+// closed curve, so a wall meets a part of it only where a wall edge crosses
+// that part or one of its edges crosses the wall.
+bool CameraViewSweeps(CCPoly *walls, int count, const float *target_a, const float *eye_a, const float *target_b,
+                      const float *eye_b) {
     if (count <= 0) {
         return false;
     }
@@ -397,7 +397,6 @@ bool Sweeps(CCPoly *walls, int count, const float *target_a, const float *eye_a,
     }
     return false;
 }
-} // namespace
 
 float CameraZoom::HeightScale(CCameraControl &camera) const {
     return active ? std::clamp(requested / std::max(1.0f, camera.GetActiveParam()->min_dist), 0.05f, 1.0f) : 1.0f;
@@ -693,5 +692,5 @@ bool CameraZoom::Swept(CCameraControl &camera, CScene &scene, CCameraControl &re
     collector.Clear(false);
     collector.Add(target, eye, 8 + step);
     const int count = collector.Finish();
-    return count >= 0 && Sweeps(collector.Data(), count, target, eye, rendered.ref, rendered.pos);
+    return count >= 0 && CameraViewSweeps(collector.Data(), count, target, eye, rendered.ref, rendered.pos);
 }

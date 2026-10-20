@@ -12,7 +12,7 @@ struct CameraZoom {
     static constexpr float min_distance = 30.0f;
     static constexpr float max_distance = 600.0f;
     static constexpr float wheel_step = 8.0f;
-    // The eye keeps this much room from geometry, beyond mouse turning's own bound.
+    // The eye keeps this much room from geometry, so a view does not graze a wall.
     static constexpr float clearance = 6.0f;
     // A cleared view returns this fraction of the remaining distance per tick,
     // at least release_min, once the view lookahead units farther stays clear.
@@ -60,3 +60,9 @@ private:
     bool Swept(CCameraControl &camera, CScene &scene, CCameraControl &rendered, CCPoly *retail_polys,
                int retail_count) const;
 };
+
+// Whether a wall crosses any view a display frame blends between two drawn
+// poses, from target a and eye a to target b and eye b, with the eye and target
+// each moving linearly.
+bool CameraViewSweeps(CCPoly *walls, int count, const float *target_a, const float *eye_a, const float *target_b,
+                      const float *eye_b);

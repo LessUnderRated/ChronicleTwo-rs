@@ -133,7 +133,9 @@ PORT_OVERRIDE void CCameraControl::MoveCamera(CPadControl *pad, float *player_ro
         // back toward a resting height through the follow camera's easing.
         param->rest_min_height = param->min_height;
         param->rest_max_height = param->max_height;
-        if (stick_yaw != 0) {
+        // Retail skips obstacle avoidance while the camera turns; a mouse turn
+        // is a turn too, or avoidance swings the eye back against it at walls.
+        if (stick_yaw != 0 || (fresh && look.yaw != 0)) {
             rot_cancel |= CAMERA_ROT_CANCEL_AUTO_MOVE;
         }
     }
@@ -157,7 +159,7 @@ PORT_OVERRIDE void CCameraControl::MoveCamera(CPadControl *pad, float *player_ro
     }
 
     // The retail collection encloses the old eye and cannot cover a mouse flick.
-    // Collect the full current/pending orbit before validating a continuous turn.
+    // Collect the full current/pending orbit before turning or tilting.
     float radius = 5;
     for (const auto [eye, target] : {
              std::pair{pos,      ref     },
@@ -192,7 +194,7 @@ PORT_OVERRIDE void CCameraControl::MoveCamera(CPadControl *pad, float *player_ro
         CancelRotBack();
     }
     MouseCameraPitch(*this, pitch, orbit_polys, count, zoom_keeps ? zoom.HeightScale(*this) : 1.0f);
-    // Direct motion is proved against the camera's data; a far zoom also keeps
+    // Direct motion is checked against the camera's data; a far zoom also keeps
     // the walls only the characters' collision knows out of the drawn view.
     if (zoom_keeps && zoom.active) {
         zoom.KeepVisible(*this, *scene, polys, poly_count);
