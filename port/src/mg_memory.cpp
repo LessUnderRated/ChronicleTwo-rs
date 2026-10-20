@@ -152,7 +152,15 @@ void NotePeak(const mgCMemory &memory) {
     ArenaOverflow(static_cast<const void *>(&memory), clamped, memory.stack_size);
 }
 
-u_long128 *AllocQuadwords(mgCMemory &memory, int size) {
+/**
+ * Whether memory an arena hands out again still holds what the game left there.
+ */
+enum class Contents {
+    Released, /**< Handed out for new data. */
+    Kept,     /**< Reserved again by its owner, which goes on using what it holds. */
+};
+
+u_long128 *AllocQuadwords(mgCMemory &memory, int size, Contents contents = Contents::Released) {
     if (memory.lock != 0 || size <= 0) {
         return nullptr;
     }
@@ -167,7 +175,9 @@ u_long128 *AllocQuadwords(mgCMemory &memory, int size) {
     u_long128 *data = QuadwordsFrom(memory.stack, memory.stack_used);
     memory.stack_used = static_cast<int>(new_used);
     g_last_run = {.arena = &memory, .start = data, .quadwords = size};
-    Reuse(data, size);
+    if (contents == Contents::Released) {
+        Reuse(data, size);
+    }
     NotePeak(memory);
     return data;
 }
@@ -407,6 +417,10 @@ PORT_OVERRIDE void *operator new(size_t size, u_long128 *buffer) {
 PORT_OVERRIDE void *operator new[](size_t size, u_long128 *buffer) {
     GrowLastRun(buffer, size);
     return buffer;
+}
+
+u_long128 *MemoryAllocKept(mgCMemory &memory, int size) {
+    return AllocQuadwords(memory, size, Contents::Kept);
 }
 
 mgMemoryUsage MemoryUsage(const mgCMemory &memory) {

@@ -17,3 +17,10 @@ mgMemoryUsage MemoryUsage(const mgCMemory &memory);
 void MemoryLogPeaks();
 
 void MemoryForget(const mgCMemory &memory);
+
+/**
+ * Reserves quadwords as Alloc does, for memory whose owner rewound over it and goes on using what it holds.
+ *
+ * Alloc treats what it hands out as overwritten, so motion sets stored there stop resolving; these keep theirs.
+ */
+u_long128 *MemoryAllocKept(mgCMemory &memory, int size);

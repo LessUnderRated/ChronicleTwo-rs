@@ -1,5 +1,7 @@
 #pragma once
 
+#include <mg_memory.hpp>
+
 // Expose the retail town ownership state without changing its logic or layout.
 extern int LoopMode asm("EditLoop_Mode");
 extern int ControlMode asm("EditLoop_Control");
@@ -14,3 +16,7 @@ extern mgCFrame *BlueBicMark asm("EditLoop_BlueBicMark");
 
 void PortRetailUpdateTrBoxFlag(int map_no) asm("EditLoop_UpdateTrBoxFlag");
 int  PortRetailEditDraw() asm("EditLoop_EditDraw");
+
+// SetDataPacket reserves the controlled character's memory again while the character stays loaded there
+// (port/src/mg_memory.cpp).
+u_long128 *MemoryAllocKept(mgCMemory &memory, int size);

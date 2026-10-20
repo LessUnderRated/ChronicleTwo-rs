@@ -14,6 +14,7 @@
 #include "gameutil.hpp"
 #include "mg_frame.hpp"
 #include "mg_memory.hpp"
+#include "mg_memory_port.hpp"
 #include "mg_visual.hpp"
 #include "platform/arena.hpp"
 
@@ -224,6 +225,22 @@ TEST_F(CharacterMotion, FreedHeapBlockReusedReleasesSet) {
     std::memset(arena.Alloc(kListQuadwords), kReused, sizeof(Mot_List));
     EXPECT_TRUE(character_motion::Actions(set.motion).empty());
     arena.EndStackMode();
+}
+
+// A town map change rewinds the character buffer and reserves the controlled character's memory again while the
+// character stays loaded there; its motion set must keep resolving.
+TEST_F(CharacterMotion, KeptReservationAfterRewindKeepsSet) {
+    mgCMemory arena;
+    arena.stSetBuffer(ArenaBuffer(), kQuadwords);
+    ArenaMotionSet set(arena);
+    const int      used = arena.stGetUsed();
+    arena.stack_used = 0;
+    ASSERT_NE(MemoryAllocKept(arena, used), nullptr);
+    EXPECT_EQ(character_motion::Actions(set.motion).size(), 1u);
+    // The set is still tracked, so handing the memory out for new data releases it.
+    arena.stReset();
+    std::memset(arena.Alloc(kListQuadwords), kReused, sizeof(Mot_List));
+    EXPECT_TRUE(character_motion::Actions(set.motion).empty());
 }
 
 // A heap set up over a buffer outside the arenas imports it into an arena root, and binding the same buffer again
