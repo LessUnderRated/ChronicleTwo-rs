@@ -1232,19 +1232,30 @@ still hide the player from a longer zoomed view. Decorations without any
 collision, such as awnings, can also come between.
 
 Within retail's own follow distance (or a nearer request), walls shorten the
-eye on each tick as retail's correction does and release it as soon as
+eye on each game frame as retail's correction does and release it as soon as
 retail's would. Beyond it, the allowed distance drops at once when a wall cuts
-the view, then holds for three quarters of a second, doubled for each recent
-pull-in up to three seconds. It returns 4% of the remaining gap per tick (at
-least one unit) only after a view 32 units farther has stayed clear for 20
-ticks, both where the camera points and where it will point over the next
-second if it keeps turning as it is. Walking through rocks therefore keeps a
-shorter distance instead of returning toward each next rock. When the eased
-eye would be drawn behind a wall, it is placed in front of that wall on the
-drawn view, on the same side of the look-at point, and presentation
-interpolation is cut, so display frames do not pass through it; from there it
-eases at the camera's own speed again. Interpolation is also cut when a wall
-from the camera's collision crosses any view a display frame blends between
+the view. The camera updates once per game frame, 30 a second. The distance
+returns 10% of the remaining gap per game frame (at least two units) only
+after a view 32 units farther has stayed clear for 15 game frames, half a
+second, both where the camera points and where it will point over the next two
+seconds if it keeps turning as it is; a cleared eye is nine tenths of the way
+back within about a second and a third. Pulling in further before the eye
+begins moving out, such as backing into a wall, is one pull-in, and a first
+pull-in does not hold: walking away from the wall brings the eye back out to
+the selected distance, as retail's returns after a wall. A wall met again while recent
+pull-ins are remembered holds the distance first, for a second and a half,
+doubled for each further one up to six seconds; ten quiet seconds forget one.
+Walking through rocks therefore keeps a shorter distance instead of returning
+toward each next rock. A pull-in of less than ten units, such as foliage
+brushing a still view or a wall approached a step at a time, still shortens
+the eye but neither counts nor holds. When the eased eye would be drawn behind
+a wall, it is placed in front of that wall on the drawn view, on the same side
+of the look-at point, and from there it eases at the camera's own speed again.
+Presentation interpolation is cut to the placed eye only where a display frame
+blending to it would show a wall, the characters' walls included, between the
+eye and the look-at point; otherwise the display frames blend to it as to any
+pull-in. Interpolation is also cut when a wall from the camera's collision
+crosses any view a display frame blends between
 the drawn pose and the next, with the eye and look-at point each moving
 linearly, such as a post both views pass on either side. Walls only the
 walking collision knows are not part of that check: they limit each tick's own
