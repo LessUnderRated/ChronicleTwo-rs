@@ -93,7 +93,21 @@ void CMonsterMan::RunScript(int index) {
                 nowMonster->now_prog = script;
                 nowMonster->req_prog = MONSTER_PROG_RUNNING;
             }
+#ifdef PORT
+            // A script without a stun program, like the Rainbow Butterfly's, never took the stun request and stayed frozen.
+            // Hold its running program for the stun instead, then let it carry on from where it stopped.
+            else if (script == MONSTER_PROG_PIYORI) {
+                nowMonster->piyori_mark = nowMonster->piyori_time;
+                nowMonster->piyori.Set(nowMonster, nowMonster->piyori_mark);
+                nowMonster->req_prog = MONSTER_PROG_RUNNING;
+            }
+#endif
         } else {
+#ifdef PORT
+            if (nowMonster->piyori_mark > 0 && nowMonster->mons_script.check_program(MONSTER_PROG_PIYORI) == 0) {
+                return;
+            }
+#endif
             nowMonster->mons_script.resume();
 
             if (nowMonster->mons_script.end != 0) {
