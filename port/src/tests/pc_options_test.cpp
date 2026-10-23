@@ -41,6 +41,7 @@ TEST(PcOptions, RequestedSettingsHaveUniqueRowsAndRoundTripTheirEdits) {
         "input.mouse_invert_y",
         "input.mouse_capture",
         "input.mouse_zoom",
+        "input.keyboard_walk",
         "input.mouse_fixed_look",
         "input.menu_pointer_speed",
         "input.menu_pointer_acceleration",

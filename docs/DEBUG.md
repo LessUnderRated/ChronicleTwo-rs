@@ -41,6 +41,8 @@ Start+Select on pad 1 enters the retail developer menu from any active mode when
 lock. Loading between modes finishes first. The chord acts once per press;
 release both buttons before using it again. While frame-paused, modified Start
 captures instead. The existing four-shoulder/R3 toggle remains available.
+The `debug_menu` binding (F1 or a gamepad's paddle 1 by default, PC SETTINGS >
+Bindings > Debug menu) does the same with one press.
 
 ## Start+Select transition
 
@@ -88,7 +90,7 @@ These work with the pad-2 Circle toggle. Pad 2 is locked unless the boot unlock 
 ## PC gaps
 
 - The keyboard feeds pad 1 only (`tools/kazarov/src/cpp/platform/input.cpp`, `Compose`); L2+Select makes its debug button reads available too.
-- `developer_menu` (paddle 2) and `debug_menu` (paddle 1) are bound in `input.cpp` but nothing reads them.
+- `developer_menu` (paddle 2) is bound in `input.cpp` but nothing reads it.
 - GyoRace hits the `sgLoopGyoRace` stub (`port/src/gyorace.cpp`).
 
 ## Jump replays

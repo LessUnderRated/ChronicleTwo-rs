@@ -303,7 +303,10 @@ bool GameDeveloperMenuRequested(int mode) {
     constexpr auto chord = kInputStart | kInputSelect;
     const auto     buttons = InputGetPad(0).buttons;
     bool           held = (buttons & chord) == chord;
-    bool           pressed = held && !held_before;
+    // The debug_menu binding (F1 by default) stands in for the chord on a keyboard; its press is
+    // consumed whether or not debug controls are enabled, so it cannot fire later.
+    const bool     key = InputHostPressed(InputHostAction::DebugMenu);
+    bool           pressed = (held && !held_before) || key;
     // A partial release must not re-arm a chord carried across a mode change.
     if ((buttons & chord) == 0) {
         held_before = false;
