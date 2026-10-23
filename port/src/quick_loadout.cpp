@@ -31,6 +31,7 @@
 #include "mglib_port.hpp"
 #include "photo.hpp"
 #include "platform/config.hpp"
+#include "platform/input.hpp"
 #include "platform/paths.hpp"
 #include "prespr.hpp"
 #include "quick_loadout.hpp"
@@ -126,6 +127,7 @@ bool  slots_loaded = false;
 bool panel_open = false;
 int  fade = 0;         // ticks of the panel's fade, 0 (hidden) to kFadeTicks
 int  raw_previous = 0; // the face buttons before this session took any away
+bool toggle_previous = false; // whether the quick_loadout binding was held last frame
 int  swallowed = 0;    // buttons taken from the game, until they are let go
 int  request_slot = -1;
 bool reloading = false;
@@ -742,13 +744,20 @@ void PortQuickLoadoutPad() {
     const int raw = GamePad__2.pad[0].button;
     const int pressed = raw & ~raw_previous;
     raw_previous = raw;
+    // The panel has a binding of its own (quick_loadout: Down on the keyboard, the D-pad's Down on a controller), read
+    // as it is held: a press made while the panel cannot open, or while this is not called, is not kept for later.
+    const bool toggle_held = InputHostHeld(InputHostAction::QuickLoadout);
+    const bool toggle = toggle_held && !toggle_previous;
+    toggle_previous = toggle_held;
+    while (InputHostPressed(InputHostAction::QuickLoadout)) {
+    }
     const int ticks = mgFrameRate > 0 ? mgFrameRate : 1;
 
     if (!Usable()) {
         if (panel_open) {
             Close();
         }
-    } else if (pressed & PAD_DOWN) {
+    } else if (toggle) {
         if (panel_open) {
             Close();
             PlaySe(SYSTEM_SE_CANCEL);

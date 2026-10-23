@@ -114,7 +114,7 @@ void Draw() {
             const int  x = kLeft + p * kTabStep;
             const bool selected = p == g_screen.page;
             Plate(x, 91, kTabStep - 3, 23, selected || (hit.kind == HitKind::Tab && hit.index == p));
-            Text(Pages()[p].name, x + 4, 93, kTabStep - 9, selected, 14);
+            Text(Pages()[p].name, x + 4, 93, kTabStep - 9, selected, 13);
         }
         for (int row = first; row < std::min(count, first + kVisibleRows); ++row) {
             int         y = kRowY + (row - first) * kRowStep;
@@ -126,7 +126,9 @@ void Draw() {
             }
             Text(item.label, kLeft + 8, y + 1, kValueX - kLeft - 18, false, 15);
             Plate(kValueX, y + 1, kRight - kValueX, 21, selected);
-            const std::string value = g_screen.binding == row ? "Press a key..." : item.value(config);
+            const std::string value = g_screen.binding != row ? item.value(config)
+                                      : item.pad                ? "Press a button..."
+                                                                : "Press a key...";
             Text(value, kValueX + 15, y + 2, kRight - kValueX - 29, selected, 14);
             if (selected && item.step) {
                 Text("<", kValueX + 3, y + 2, 10, true, 14);
@@ -137,7 +139,7 @@ void Draw() {
              332, 314, 103, false, 12);
         Plate(kLeft, 343, 105, 27, hit.kind == HitKind::Back);
         Text(g_screen.binding >= 0 ? "Cancel capture" : "Back to Options", kLeft + 5, 348, 96, false, 12);
-        if (g_screen.page == kBindingsPage && g_screen.binding < 0) {
+        if (BindingPage(g_screen.page) && g_screen.binding < 0) {
             Plate(272, 343, kRight - 272, 27, hit.kind == HitKind::ResetBinding);
             Text(ButtonName("square", config) + ": Restore binding", 278, 348, kRight - 284, false, 12);
         }
@@ -145,6 +147,8 @@ void Draw() {
             Help("Could not save config.json. Settings work this session.\nCheck the folder above the saves; change a setting to retry.");
         } else if (DisplayGetWarning() != DisplayWarning::None) {
             Help("The display could not apply that mode.\nThe setting shows the mode the window kept.");
+        } else if (g_screen.binding >= 0 && g_screen.page == kPadBindingsPage) {
+            Help("Press a controller button or trigger. Escape or five\nseconds cancels. A button another one has swaps.");
         } else if (g_screen.binding >= 0) {
             Help("Press a key or mouse button. Escape cancels.\nEscape is reserved and cannot be bound.");
         } else {

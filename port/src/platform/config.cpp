@@ -201,6 +201,21 @@ bool ApplyBindings(Config &config, const Json &bindings) {
     return true;
 }
 
+bool ApplyPadBindings(Config &config, const Json &bindings) {
+    if (!bindings.is_object()) {
+        return false;
+    }
+    for (const auto &[action, buttons] : bindings.items()) {
+        ConfigKeyBinding binding = {.action = Lower(action), .keys = {}};
+        if (ReadList(buttons, binding.keys)) {
+            config.pad_bindings.push_back(std::move(binding));
+        } else {
+            Ignore("input.gamepad_bindings." + action, buttons);
+        }
+    }
+    return true;
+}
+
 bool ReadLogLevel(const Json &value, std::optional<LogLevel> &out) {
     if (!value.is_string()) {
         return false;
@@ -397,6 +412,9 @@ bool Apply(Config &config, std::string_view name, const Json &value) {
     if (name == "input.bindings") {
         return ApplyBindings(config, value);
     }
+    if (name == "input.gamepad_bindings") {
+        return ApplyPadBindings(config, value);
+    }
     if (name == "log.level") {
         return ReadLogLevel(value, config.log.level);
     }
@@ -433,7 +451,7 @@ void MergeChanges(Json &root, const Json &before, const Json &after, const std::
         root = Json::object();
     }
     const auto erase = [&](const std::string &key) {
-        if (path == "input.bindings") {
+        if (path == "input.bindings" || path == "input.gamepad_bindings") {
             for (auto it = root.begin(); it != root.end();) {
                 if (Lower(it.key()) == Lower(key)) {
                     it = root.erase(it);
@@ -448,7 +466,7 @@ void MergeChanges(Json &root, const Json &before, const Json &after, const std::
     for (const auto &[key, value] : after.items()) {
         const Json previous = before.is_object() && before.contains(key) ? before[key] : Json();
         if (previous != value) {
-            if (path == "input.bindings") {
+            if (path == "input.bindings" || path == "input.gamepad_bindings") {
                 erase(key);
             }
             MergeChanges(root[key], previous, value, path.empty() ? key : path + "." + key);
@@ -518,6 +536,10 @@ std::string ConfigSerialize(const Config &config) {
     for (const ConfigKeyBinding &binding : s.key_bindings) {
         bindings[binding.action] = binding.keys;
     }
+    Json pad_bindings = Json::object();
+    for (const ConfigKeyBinding &binding : s.pad_bindings) {
+        pad_bindings[binding.action] = binding.keys;
+    }
     Json root;
     root["game"]["debug_mode"] = config.debug_mode;
     root["game"]["autosave"] = config.autosave;
@@ -567,6 +589,7 @@ std::string ConfigSerialize(const Config &config) {
     root["input"]["glyph_device"] = kGlyphDeviceNames[static_cast<std::size_t>(s.glyph_device)];
     root["input"]["mouse_release"] = s.mouse_release_keys;
     root["input"]["bindings"] = std::move(bindings);
+    root["input"]["gamepad_bindings"] = std::move(pad_bindings);
     Json log_categories = Json::object();
     for (const auto &[category, level] : config.log.categories) {
         log_categories[std::string(LogCategoryName(category))] = LogLevelName(level);

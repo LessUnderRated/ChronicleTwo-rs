@@ -13,9 +13,13 @@ constexpr int kRowStep = 24;
 constexpr int kLeft = 82;
 constexpr int kRight = 434;
 constexpr int kValueX = 288;
-constexpr int kPages = 5;
-constexpr int kBindingsPage = kPages - 1;
+constexpr int kPages = 6;
+// The keyboard's and the controller's bindings, two sets apart.
+constexpr int kBindingsPage = kPages - 2;
+constexpr int kPadBindingsPage = kPages - 1;
 constexpr int kTabStep = (kRight - kLeft) / kPages;
+
+constexpr bool BindingPage(int page) { return page == kBindingsPage || page == kPadBindingsPage; }
 
 struct State {
     bool                    open = false;

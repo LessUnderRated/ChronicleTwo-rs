@@ -689,6 +689,7 @@ Writes are atomic: the file is written as `config.json.tmp` and renamed over `co
 | `input.glyph_device` | string | auto | auto, ps3, ps4, ps5, ps5color, xbox, switch, steamdeck, steamcontroller, keyboard | whose button symbols are drawn |
 | `input.mouse_release` | string or array of strings | empty | key names | keys that release the captured mouse |
 | `input.bindings` | object: action to string or array of strings | empty | key names | rebinds actions; action names are lowercased |
+| `input.gamepad_bindings` | object: action to string or array of strings | empty | SDL gamepad button names, `lefttrigger`, `righttrigger` | rebinds actions on a controller, a set apart from the keyboard's; see "Controller bindings" |
 | `log.level` | string | auto | auto, trace, debug, info, warning, error, critical, off | the lowest level logged; `auto` is `debug` in a Debug build and `info` otherwise. `--log-level` and `DC2_LOG` outrank it; applies live |
 | `log.file` | bool | true | | write the session log under `<save root>/../logs/`; `DC2_LOG_FILE=0` turns it off; applies live |
 | `log.keep` | int | 10 | 1 to 1000 | session logs kept in `logs/`, this session's included; older ones are deleted when the file opens |
@@ -737,7 +738,8 @@ The **PC SETTINGS** entry and the page are drawn at the UI scale, or smaller whe
 | Audio | Master volume and PS2/custom soundtrack |
 | Controls | Mouse sensitivity, Y inversion and capture; menu pointer speed and acceleration; stick sensitivity and X/Y inversion; button symbols and glyph style |
 | Game | Autosave, quick loadout title, skip intro, auto-use event items, floor monster list, more monsters and debug mode |
-| Bindings | Keyboard and mouse bindings for pad buttons, movement, look, FPS and debug menu |
+| Keyboard | Keyboard and mouse bindings for pad buttons, movement, look, FPS, debug menu and quick loadout |
+| Gamepad | Controller bindings for pad buttons, FPS, debug menu, gyro hold and quick loadout |
 
 Edits save to `config.json` and apply immediately. Soundtrack selection takes effect the next time a song starts, including one whose data is already loaded. Custom recordings use the actual sequence JSON path in `soundtrack/soundtrack.json`; `AUDIO_TRACE` prints that path. An absent or invalid recording falls back to the converted sequence. Current music is not restarted by moving the setting.
 
@@ -745,13 +747,39 @@ Turning to another tab, with L1/R1 or the mouse, plays the retail menu cursor so
 
 Resolution changes the windowed size; fullscreen uses the desktop. A command-line `--window` takes precedence. A refused window change is read back and reported on screen. Hand-edited resolutions and numeric values are shown as stored and stay unchanged until that row is edited. The PC UI offers a bounded set of scale presets; the configuration file still accepts the full documented range.
 
-Confirm on a binding shows **Press a key...**. Press a key or mouse button; Escape cancels and cannot be bound. The opening press is ignored, and the new input must be released before navigation resumes. Square or **Restore binding** removes that action's override and restores its defaults. Controller buttons retain their retail assignments. Glyph style changes the PC page's device-specific button prompts; keyboard prompts use current bindings. With **Button symbols** on New, the retail menus and messages draw the symbols of `glyphs/` for that style too (see [GLYPHS.md](GLYPHS.md)); Original keeps the PlayStation art everywhere.
+Confirm on a binding shows **Press a key...**. Press a key or mouse button; Escape cancels and cannot be bound. The opening press is ignored, and the new input must be released before navigation resumes. Square or **Restore binding** removes that action's override and restores its defaults. Controller buttons are rebound on the Gamepad page (see "Controller bindings"). Glyph style changes the PC page's device-specific button prompts; keyboard prompts use current bindings. With **Button symbols** on New, the retail menus and messages draw the symbols of `glyphs/` for that style too (see [GLYPHS.md](GLYPHS.md)); Original keeps the PlayStation art everywhere.
 
 A failed write shows a warning. Settings still work in the current session. Check the save root's parent directory and change a setting to retry. A configuration file that could not be read remains protected against replacement.
 
 `tools/input/pc-settings.input` replays all four tabs, a key rebind, Escape cancellation, and return to retail Options from `--jump town:10 --fast-load`. Its comments give capture frames. `tools/input/pc-settings-mouse.input` exercises clicking and mouse-button capture at `--window 1280x960`. Use fresh save roots and `--screenshot-display 2` for both.
 
 `tools/input/pc-settings-display.input` checks fullscreen, return to windowed, and resizing in a real window. Start with a fresh config containing a nonzero window size, omit `--window`, and stop at frame 940. The optional `PcSettingsReplay` CTests run the headless pad and mouse flows and assert the saved configuration when `DC2_DATA` is available.
+
+### Controller bindings
+
+The controller has a set of bindings apart from the keyboard's, `input.gamepad_bindings`, which the **Gamepad** page
+of PC SETTINGS edits. An action left out keeps its default: the pad's own layout for the pad's buttons (on a PS4 or
+PS5 pad the touchpad click is Select and Share/Create presses nothing; on others Back/View is Select), `dpdown` for
+`quick_loadout`, `paddle1` for `debug_menu`, `paddle2` for `developer_menu` and `paddle4` for `gyro_hold`. Names are
+SDL's (`a`, `b`, `x`, `y` by place, the bottom button being `a`; `back`, `guide`, `start`, `leftstick`,
+`rightstick`, `leftshoulder`, `rightshoulder`, `dpup`, `dpdown`, `dpleft`, `dpright`, `touchpad`, `misc1`,
+`paddle1` to `paddle4`) and `lefttrigger`, `righttrigger`; an empty list leaves the action without a button. Every
+controller follows the one set. The sticks stay the sticks.
+
+```json
+"input": {
+    "gamepad_bindings": {"cross": ["b"], "circle": ["a"], "quick_loadout": ["leftstick"]}
+}
+```
+
+On the Gamepad page, confirm on an action and press the button or trigger to give it; Escape, a right click,
+**Cancel capture** or five seconds without a press cancels, since every pad button can be bound. A pad button
+another pad button's action has moves over, and that action takes the buttons this one had, so the two swap. The
+port's own actions (quick loadout, FPS, debug menu, gyro hold) share buttons with the pad's: the button presses both.
+Square or **Restore binding** restores the action's default the same way. Button names follow the glyph style,
+and with **Button symbols** on New the game's symbols follow the controller bindings: Cross moved to the right face
+button shows the Circle symbol. Host actions bound in `input.bindings` with a `Gamepad:` name (the earlier way)
+still work beside these.
 
 ### Auto-use event items
 
@@ -1176,7 +1204,7 @@ mouse pitch uses the same scale and floor/ceiling clearance still takes priority
 
 `input.bindings.zoom_reset` defaults to `Mouse3` (middle click). It restores the
 active camera's retail follow control immediately. Retail easing then returns
-to its normal distance range, as far as geometry permits. The Bindings page
+to its normal distance range, as far as geometry permits. The Keyboard page
 includes **Zoom reset**. The existing L2/cancel camera reset and turning the
 option off also release zoom immediately. When enabled, the reset binding owns its
 keyboard/mouse source ahead of conflicting actions; physical controller buttons

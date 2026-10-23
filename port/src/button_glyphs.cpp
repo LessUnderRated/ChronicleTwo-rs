@@ -257,6 +257,13 @@ std::string ButtonGlyphsStyle() {
         for (const char *action : kActions) {
             style += "|" + InputPrimaryBindingName(action);
         }
+    } else if (!style.empty()) {
+        // A pad button moved on the controller shows the symbol of the button it now sits on.
+        for (const char *action : kActions) {
+            if (const auto shown = InputPadGlyphAction(action); shown != action) {
+                style += std::string("|") + action + "=" + shown;
+            }
+        }
     }
     return style;
 }
@@ -302,6 +309,12 @@ void ButtonGlyphsApply(std::string_view texture_name, int logical_width, int log
                 if (!key.empty()) {
                     found = glyphs::FindNamedPixels(name.c_str(), key.c_str(), image);
                 }
+            }
+        } else if (const char *action = Action(glyph); action != nullptr && glyph == action) {
+            // The button cells only: a label (START, SELECT) keeps its word.
+            const auto shown = InputPadGlyphAction(action);
+            if (!shown.empty() && shown != action) {
+                found = glyphs::FindNamedPixels(name.c_str(), shown.c_str(), image);
             }
         }
         if (!found) {

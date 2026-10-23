@@ -4,6 +4,7 @@
 #include <array>
 #include <cmath>
 #include <format>
+#include <iterator>
 #include <ranges>
 #include <type_traits>
 #include <utility>
@@ -92,19 +93,8 @@ Row Resolution() {
     return row;
 }
 
-std::vector<Row> Bindings() {
-    std::vector<Row> rows;
-    for (const auto &info : InputActions()) {
-        if (info.whole_axis) {
-            continue;
-        }
-        // These host actions have no game-side consumer in this port.
-        if (info.action == "developer_menu" || info.action == "gyro_hold") {
-            continue;
-        }
-        std::string      action(info.action);
-        std::string      label = action;
-        static constexpr std::pair<std::string_view, const char *> names[] = {
+std::string ActionLabel(std::string_view action) {
+    static constexpr std::pair<std::string_view, const char *> names[] = {
             {"cross",      "Cross"       },
             {"circle",     "Circle"      },
             {"square",     "Square"      },
@@ -132,15 +122,145 @@ std::vector<Row> Bindings() {
             {"zoom_reset", "Zoom reset"  },
             {"fps_toggle", "Toggle FPS"  },
             {"debug_menu", "Debug menu"  },
+            {"gyro_hold",  "Gyro hold"   },
+            {"quick_loadout", "Quick loadout"},
         };
-        for (auto [name, text] : names) {
-            if (action == name) {
-                label = text;
-            }
+    for (auto [name, text] : names) {
+        if (action == name) {
+            return text;
         }
-        rows.push_back({.key = "input.bindings." + action, .label = label, .help = "Confirm, then press a key or mouse button.\nEscape cancels. Square restores this binding.", .value = [action](const Config &) { return InputBindingLabel(action); }, .step = {}, .action = action});
+    }
+    return std::string(action);
+}
+
+std::vector<Row> Bindings() {
+    std::vector<Row> rows;
+    for (const auto &info : InputActions()) {
+        if (info.whole_axis) {
+            continue;
+        }
+        // These host actions have no game-side consumer in this port, or none from a keyboard.
+        if (info.action == "developer_menu" || info.action == "gyro_hold") {
+            continue;
+        }
+        std::string action(info.action);
+        rows.push_back({.key = "input.bindings." + action, .label = ActionLabel(action), .help = "Confirm, then press a key or mouse button.\nEscape cancels. Square restores this binding.", .value = [action](const Config &) { return InputBindingLabel(action); }, .step = {}, .action = action});
     }
     return rows;
+}
+
+struct PadButtonNames {
+    std::string_view button;
+    const char      *playstation;
+    const char      *xbox;
+    const char      *nintendo;
+};
+
+// By SDL's names, which are the places of a pad with the Xbox layout: on a Nintendo pad the bottom button is B.
+// clang-format off
+constexpr PadButtonNames kPadButtonNames[] = {
+    {"a",             "Cross",       "A",           "B"          },
+    {"b",             "Circle",      "B",           "A"          },
+    {"x",             "Square",      "X",           "Y"          },
+    {"y",             "Triangle",    "Y",           "X"          },
+    {"back",          "Share",       "View",        "Minus"      },
+    {"guide",         "PS",          "Guide",       "Home"       },
+    {"start",         "Options",     "Menu",        "Plus"       },
+    {"leftstick",     "L3",          "LS",          "LS"         },
+    {"rightstick",    "R3",          "RS",          "RS"         },
+    {"leftshoulder",  "L1",          "LB",          "L"          },
+    {"rightshoulder", "R1",          "RB",          "R"          },
+    {"lefttrigger",   "L2",          "LT",          "ZL"         },
+    {"righttrigger",  "R2",          "RT",          "ZR"         },
+    {"dpup",          "D-pad Up",    "D-pad Up",    "D-pad Up"   },
+    {"dpdown",        "D-pad Down",  "D-pad Down",  "D-pad Down" },
+    {"dpleft",        "D-pad Left",  "D-pad Left",  "D-pad Left" },
+    {"dpright",       "D-pad Right", "D-pad Right", "D-pad Right"},
+    {"touchpad",      "Touchpad",    "Touchpad",    "Touchpad"   },
+    {"misc1",         "Mute",        "Share",       "Capture"    },
+    {"paddle1",       "Paddle 1",    "Paddle 1",    "Paddle 1"   },
+    {"paddle2",       "Paddle 2",    "Paddle 2",    "Paddle 2"   },
+    {"paddle3",       "Paddle 3",    "Paddle 3",    "Paddle 3"   },
+    {"paddle4",       "Paddle 4",    "Paddle 4",    "Paddle 4"   },
+    {"misc2",         "Misc 2",      "Misc 2",      "Misc 2"     },
+    {"misc3",         "Misc 3",      "Misc 3",      "Misc 3"     },
+    {"misc4",         "Misc 4",      "Misc 4",      "Misc 4"     },
+    {"misc5",         "Misc 5",      "Misc 5",      "Misc 5"     },
+    {"misc6",         "Misc 6",      "Misc 6",      "Misc 6"     },
+};
+// clang-format on
+
+const PadButtonNames *FindPadButton(std::string_view button) {
+    for (const auto &names : kPadButtonNames) {
+        if (names.button == button) {
+            return &names;
+        }
+    }
+    return nullptr;
+}
+
+// The controller's set: the pad's buttons and the host actions a controller presses; the sticks stay sticks.
+std::vector<Row> PadBindings() {
+    std::vector<Row> rows;
+    for (const auto &info : InputActions()) {
+        // The developer menu has no consumer in this port, and zoom reset belongs to the mouse wheel's zoom.
+        if (!info.pad || info.action == "developer_menu" || info.action == "zoom_reset") {
+            continue;
+        }
+        std::string action(info.action);
+        const auto  value = [action](const Config &config) {
+            std::string text;
+            for (const std::string &button : InputPadBindingNames(action)) {
+                text += (text.empty() ? "" : ", ") + PadButtonName(button, config);
+            }
+            return text.empty() ? std::string("None") : text;
+        };
+        rows.push_back({.key = "input.gamepad_bindings." + action, .label = ActionLabel(action), .help = "Confirm, then press a controller button. Escape or\nfive seconds cancels. Square restores this binding.", .value = value, .step = {}, .action = action, .pad = true});
+    }
+    return rows;
+}
+
+// The pad buttons' actions, which keep their controller buttons apart; the host actions share theirs.
+bool PadButtonAction(std::string_view action) {
+    const auto actions = InputActions();
+    const auto known = std::ranges::find(actions, action, &InputActionInfo::action);
+    return known != actions.end() && known->pad && !known->host;
+}
+
+std::vector<std::string> PadNames(const Config &config, std::string_view action) {
+    const auto it = std::ranges::find(config.pad_bindings, action, &ConfigKeyBinding::action);
+    return it != config.pad_bindings.end() ? it->keys : InputPadBindingNames(action);
+}
+
+void SetPadNames(Config &config, std::string_view action, std::vector<std::string> names) {
+    auto it = std::ranges::find(config.pad_bindings, action, &ConfigKeyBinding::action);
+    if (it == config.pad_bindings.end()) {
+        config.pad_bindings.push_back({.action = std::string(action), .keys = std::move(names)});
+    } else {
+        it->keys = std::move(names);
+    }
+}
+
+// The other pad button actions give up the buttons action has taken; one left with none takes those action had.
+void TakeFromOthers(Config &config, std::string_view action, const std::vector<std::string> &taken,
+                    const std::vector<std::string> &previous) {
+    if (!PadButtonAction(action)) {
+        return;
+    }
+    const auto is_taken = [&](const std::string &name) { return std::ranges::find(taken, name) != taken.end(); };
+    for (const auto &info : InputActions()) {
+        if (info.action == action || !PadButtonAction(info.action)) {
+            continue;
+        }
+        auto names = PadNames(config, info.action);
+        if (std::erase_if(names, is_taken) == 0) {
+            continue;
+        }
+        if (names.empty()) {
+            std::ranges::copy_if(previous, std::back_inserter(names), [&](const std::string &name) { return !is_taken(name); });
+        }
+        SetPadNames(config, info.action, std::move(names));
+    }
 }
 
 } // namespace
@@ -192,7 +312,8 @@ std::span<const Page> Pages() {
                              Choice<&Config::more_monsters>("game.more_monsters", "More monsters", "Floors hold up to 60 monsters instead of 24, and all of\nthem in range show and act. Applies from the next floor.", {"Off", "On"}),
                              Choice<&Config::debug_mode>("game.debug_mode", "Debug mode", "Unlocks the developer menu and debug controls.\nThe boot unlock applies from the next start.", {"Off", "On"}),
                          }        },
-        {.name = "Bindings", .rows = Bindings()           },
+        {.name = "Keyboard", .rows = Bindings()           },
+        {.name = "Gamepad",  .rows = PadBindings()        },
     };
     return pages;
 }
@@ -230,6 +351,74 @@ bool SetBinding(Config &config, std::string_view action, std::string_view key) {
 
 void ResetBinding(Config &config, std::string_view action) {
     std::erase_if(config.key_bindings, [&](const auto &b) { return b.action == action; });
+}
+
+bool SetPadBinding(Config &config, std::string_view action, std::string_view button) {
+    const auto actions = InputActions();
+    const auto known = std::ranges::find(actions, action, &InputActionInfo::action);
+    if (known == actions.end() || !known->pad || FindPadButton(button) == nullptr) {
+        return false;
+    }
+    std::vector<std::string> names{std::string(button)};
+    const auto               previous = PadNames(config, action);
+    if (previous == names) {
+        return false;
+    }
+    SetPadNames(config, action, names);
+    TakeFromOthers(config, action, names, previous);
+    return true;
+}
+
+void ResetPadBinding(Config &config, std::string_view action) {
+    const auto previous = PadNames(config, action);
+    std::erase_if(config.pad_bindings, [&](const auto &b) { return b.action == action; });
+    TakeFromOthers(config, action, InputPadBindingNames(action, true), previous);
+}
+
+std::string PadButtonName(std::string_view button, const Config &config) {
+    auto device = config.glyphs_new ? config.glyph_device : ConfigGlyphDevice::Ps3;
+    if (device == ConfigGlyphDevice::Auto || device == ConfigGlyphDevice::Keyboard) {
+        switch (InputGamepadGlyphFamily()) {
+            case InputGlyphFamily::Ps3:
+                device = ConfigGlyphDevice::Ps3;
+                break;
+            case InputGlyphFamily::Ps5:
+                device = ConfigGlyphDevice::Ps5;
+                break;
+            case InputGlyphFamily::Xbox:
+            case InputGlyphFamily::SteamDeck:
+            case InputGlyphFamily::SteamController:
+                device = ConfigGlyphDevice::Xbox;
+                break;
+            case InputGlyphFamily::Switch:
+                device = ConfigGlyphDevice::Switch;
+                break;
+            default:
+                device = ConfigGlyphDevice::Ps4;
+                break;
+        }
+    }
+    const PadButtonNames *names = FindPadButton(button);
+    if (names == nullptr) {
+        return std::string(button);
+    }
+    if (device == ConfigGlyphDevice::Xbox || device == ConfigGlyphDevice::SteamDeck ||
+        device == ConfigGlyphDevice::SteamController) {
+        return names->xbox;
+    }
+    if (device == ConfigGlyphDevice::Switch) {
+        return names->nintendo;
+    }
+    const bool ps3 = device == ConfigGlyphDevice::Ps3;
+    if (button == "back") {
+        return ps3                                                                            ? "Select"
+               : device == ConfigGlyphDevice::Ps5 || device == ConfigGlyphDevice::Ps5Color ? "Create"
+                                                                                             : "Share";
+    }
+    if (button == "start" && ps3) {
+        return "Start";
+    }
+    return names->playstation;
 }
 
 std::vector<DisplayModeSize> ResolutionList(std::span<const DisplayModeSize> modes, int width, int height) {
@@ -283,6 +472,11 @@ std::string ButtonName(std::string_view action, const Config &config) {
     if (device == ConfigGlyphDevice::Keyboard) {
         const std::string bindings = InputBindingLabel(action);
         return bindings.substr(0, bindings.find(", "));
+    }
+    // A pad button moved on the controller is named after the button it now sits on.
+    const std::string shown = InputPadGlyphAction(action);
+    if (!shown.empty()) {
+        action = shown;
     }
     const bool xbox = device == ConfigGlyphDevice::Xbox || device == ConfigGlyphDevice::SteamDeck || device == ConfigGlyphDevice::SteamController;
     const bool sw = device == ConfigGlyphDevice::Switch;
