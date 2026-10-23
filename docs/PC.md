@@ -690,6 +690,7 @@ Writes are atomic: the file is written as `config.json.tmp` and renamed over `co
 | `input.glyph_device` | string | auto | auto, ps3, ps4, ps5, ps5color, xbox, switch, steamdeck, steamcontroller, keyboard | whose button symbols are drawn |
 | `input.mouse_release` | string or array of strings | empty | key names | keys that release the captured mouse |
 | `input.bindings` | object: action to string or array of strings | empty | key names | rebinds actions; action names are lowercased |
+| `input.gamepad_bindings` | object: action to string or array of strings | empty | SDL gamepad button names, `lefttrigger`, `righttrigger` | rebinds actions on a controller, a set apart from the keyboard's; see "Controller bindings" |
 | `log.level` | string | auto | auto, trace, debug, info, warning, error, critical, off | the lowest level logged; `auto` is `debug` in a Debug build and `info` otherwise. `--log-level` and `DC2_LOG` outrank it; applies live |
 | `log.file` | bool | true | | write the session log under `<save root>/../logs/`; `DC2_LOG_FILE=0` turns it off; applies live |
 | `log.keep` | int | 10 | 1 to 1000 | session logs kept in `logs/`, this session's included; older ones are deleted when the file opens |
@@ -738,7 +739,8 @@ The **PC SETTINGS** entry and the page are drawn at the UI scale, or smaller whe
 | Audio | Master volume and PS2/custom soundtrack |
 | Controls | Mouse sensitivity, Y inversion and capture; menu pointer speed and acceleration; stick sensitivity and X/Y inversion; button symbols and glyph style |
 | Game | Autosave, quick loadout title, skip intro, auto-use event items, floor monster list, more monsters, transformation stats, transformation EXP, shared badge EXP and debug mode |
-| Bindings | Keyboard and mouse bindings for pad buttons, movement, look, FPS and debug menu |
+| Keyboard | Keyboard and mouse bindings for pad buttons, movement, look, walking, FPS, developer and mode debug menus, and quick loadout |
+| Gamepad | Controller bindings for pad buttons, FPS, developer and mode debug menus, gyro hold and quick loadout |
 
 Edits save to `config.json` and apply immediately. Soundtrack selection takes effect the next time a song starts, including one whose data is already loaded. Custom recordings use the actual sequence JSON path in `soundtrack/soundtrack.json`; `AUDIO_TRACE` prints that path. An absent or invalid recording falls back to the converted sequence. Current music is not restarted by moving the setting.
 
@@ -746,17 +748,17 @@ Turning to another tab, with L1/R1 or the mouse, plays the retail menu cursor so
 
 Resolution changes the windowed size; fullscreen uses the desktop. A command-line `--window` takes precedence. A refused window change is read back and reported on screen. Hand-edited resolutions and numeric values are shown as stored and stay unchanged until that row is edited. The PC UI offers a bounded set of scale presets; the configuration file still accepts the full documented range.
 
-Confirm on a binding shows **Press a key...**. Press a key or mouse button; Escape cancels and cannot be bound. The opening press is ignored, and the new input must be released before navigation resumes. Square or **Restore binding** removes that action's override and restores its defaults. Controller buttons retain their retail assignments. Glyph style changes the PC page's device-specific button prompts; keyboard prompts use current bindings. With **Button symbols** on New, the retail menus and messages draw the symbols of `glyphs/` for that style too (see [GLYPHS.md](GLYPHS.md)); Original keeps the PlayStation art everywhere.
+Confirm on a binding shows **Press a key...**. Press a key or mouse button; Escape cancels and cannot be bound. The opening press is ignored, and the new input must be released before navigation resumes. Square or **Restore binding** removes that action's override and restores its defaults. Controller buttons are rebound on the Gamepad page (see "Controller bindings"). Glyph style changes the PC page's device-specific button prompts; keyboard prompts use current bindings. With **Button symbols** on New, the retail menus and messages draw the symbols of `glyphs/` for that style too (see [GLYPHS.md](GLYPHS.md)); Original keeps the PlayStation art everywhere.
 
 A failed write shows a warning. Settings still work in the current session. Check the save root's parent directory and change a setting to retry. A configuration file that could not be read remains protected against replacement.
 
-`tools/input/pc-settings.input` replays all four tabs, a key rebind, Escape cancellation, and return to retail Options from `--jump town:10 --fast-load`. Its comments give capture frames. `tools/input/pc-settings-mouse.input` exercises clicking and mouse-button capture at `--window 1280x960`. Use fresh save roots and `--screenshot-display 2` for both.
+`tools/input/pc-settings.input` visits all six tabs, a key rebind, Escape cancellation, and return to retail Options from `--jump town:10 --fast-load`. Its comments give capture frames. `tools/input/pc-settings-mouse.input` exercises clicking and mouse-button capture at `--window 1280x960`. Use fresh save roots and `--screenshot-display 2` for both.
 
 `tools/input/pc-settings-display.input` checks fullscreen, return to windowed, and resizing in a real window. Start with a fresh config containing a nonzero window size, omit `--window`, and stop at frame 940. The optional `PcSettingsReplay` CTests run the headless pad and mouse flows and assert the saved configuration when `DC2_DATA` is available.
 
 ### Monster transformation settings
 
-Three PC SETTINGS > Game settings retune Monica's monster transformations. Each is off by default, which keeps retail's numbers, and `port/src/monster_transformation.cpp` holds the rules.
+Three PC SETTINGS > Game settings retune Monica's monster transformations. Each is off by default, which keeps retail's numbers, and `port/src/userdata.cpp` overrides `MOS_CHANGE_PARAM::GetAttackVol`, `GetDefenceVol` and `CBattleCharaInfo::AddAbs`.
 
 | Setting | Key | Off (retail) | On |
 |---|---|---|---|
@@ -765,6 +767,34 @@ Three PC SETTINGS > Game settings retune Monica's monster transformations. Each 
 | Shared badge EXP | `game.shared_badge_exp` | Only the badge in use gains absorption | A quarter of every absorption Monica gains, armed or transformed, also goes to each other unlocked badge, which levels up when its gauge fills |
 
 Monica's defence starts at 8 and rises by 4 with each Witch Parfait, up to 128. The badge that adds a quarter to a transformation's attack and defence applies after these rules. Absorption and shared absorption apply at once; stats are read when Monica transforms, so they apply from the next transformation. Turning a setting off never changes a saved badge's level.
+
+### Controller bindings
+
+The controller has a set of bindings apart from the keyboard's, `input.gamepad_bindings`, which the **Gamepad** page
+of PC SETTINGS edits. An action left out keeps its default: the pad's own layout for the pad's buttons (on a PS4 or
+PS5 pad the touchpad click is Select and Share/Create presses nothing; on others Back/View is Select), `dpdown` for
+`quick_loadout`, `paddle1` for `debug_menu` (the developer menu), `paddle2` for the unused `developer_menu` host action,
+and `paddle4` for `gyro_hold`. The mode-debug-menu action, `mode_debug_menu`, has no default controller button;
+its keyboard default is F2. Names are
+SDL's (`a`, `b`, `x`, `y` by place, the bottom button being `a`; `back`, `guide`, `start`, `leftstick`,
+`rightstick`, `leftshoulder`, `rightshoulder`, `dpup`, `dpdown`, `dpleft`, `dpright`, `touchpad`, `misc1`,
+`paddle1` to `paddle4`) and `lefttrigger`, `righttrigger`; an empty list leaves the action without a button. Every
+controller follows the one set. The sticks stay the sticks.
+
+```json
+"input": {
+    "gamepad_bindings": {"cross": ["b"], "circle": ["a"], "quick_loadout": ["leftstick"]}
+}
+```
+
+On the Gamepad page, confirm on an action and press the button or trigger to give it; Escape, a right click,
+**Cancel capture** or five seconds without a press cancels, since every pad button can be bound. A pad button
+another pad button's action has moves over, and that action takes the buttons this one had, so the two swap. The
+port's own actions (quick loadout, FPS, debug menu, gyro hold) share buttons with the pad's: the button presses both.
+Square or **Restore binding** restores the action's default the same way. Button names follow the glyph style,
+and with **Button symbols** on New the game's symbols follow the controller bindings: Cross moved to the right face
+button shows the Circle symbol. Host actions bound in `input.bindings` with a `Gamepad:` name (the earlier way)
+still work beside these.
 
 ### Auto-use event items
 
@@ -1233,7 +1263,7 @@ mouse pitch uses the same scale and floor/ceiling clearance still takes priority
 
 `input.bindings.zoom_reset` defaults to `Mouse3` (middle click). It restores the
 active camera's retail follow control immediately. Retail easing then returns
-to its normal distance range, as far as geometry permits. The Bindings page
+to its normal distance range, as far as geometry permits. The Keyboard page
 includes **Zoom reset**. The existing L2/cancel camera reset and turning the
 option off also release zoom immediately. When enabled, the reset binding owns its
 keyboard/mouse source ahead of conflicting actions; physical controller buttons
@@ -1615,7 +1645,7 @@ Visual faces (`port/src/mg_visual.cpp`) keep their triangles on the CPU. `mgCVis
 - The full-frame rule that fills the flanks samples with clamped wrap, so a repeating texture shows no seam line at the frame's edges.
 - Copies of the frame (`mgSetPkMoveImage`: the heat haze in `sceneevent.cpp`, `map.cpp`'s screen, menu grabs) go to frame targets as 1:1 logical copies, so a grab is as wide as the window.
 - Culls: `mgPortVisibleExtent()` (`gfx::VisibleLogicalRect` of the current target, in screen units, with centred half extents and GS coordinates) replaces retail's 256/240 half extents in `mgCFrame::GetDrawRect` (`mg_frame_asm.cpp`). It also replaces them in `mgRENDER_INFO::screen_box_min`/`max`, which retail's `SetRenderInfo` sets from the screen size. `mgSetRenderInfo` is overridden to widen them, and `mgBeginFrame` refreshes them every game frame, since the window can change shape between scenes. `mgCFrame::Draw`'s `mgClipBoxW` reads them. A mesh at logical x = -40 is drawn at 16:9 and culled at 4:3 (`MglibAspect.*`). The GS guard band (2048) is unchanged.
-- The camera (`DrawTakePhoto`, `port/src/photo.cpp`) draws its black border, corner arcs and shutter on the edges of `mgPortVisibleUiExtent` and copies all of `mgPortVisibleExtent` from the frame grab into the 64x64 picture. A view wider than 4:3 keeps its shape inside the picture between black bars above and below (a taller one, at the sides), so the album, the idea board and the high-resolution copy show it unsquashed; the shot preview crops the bars. At 4:3, and with `video.aspect` `4:3`, the camera is retail's.
+- The camera (`DrawTakePhoto`, `port/src/photo.cpp`) draws its black border, corner arcs and shutter on the edges of `mgPortVisibleUiExtent` and copies all of `mgPortVisibleExtent` from the frame grab into the 64x64 picture. A view wider than 4:3 keeps its shape inside the picture between black bars above and below (a taller one, at the sides), so the album, the idea board and the high-resolution copy show it unsquashed; the shot preview crops the bars and retains the captured crop and shape if the window or aspect setting changes. At 4:3, and with `video.aspect` `4:3`, the camera is retail's.
 - The dungeon floor map (`CDngFreeMap::DrawRoot` and `DrawRoomOne`, `port/src/dngmenu.cpp`) culls its rooms and passages at `mgPortVisibleUiExtent`, the visible extent in the UI units its 2D is drawn in, so floors in a wide window's flanks, or uncovered by `video.ui_scale` below 1, are drawn. Retail strokes each passage with three 1-pixel GS lines a pixel apart; each is filled as the pixel-wide band the GS covers, so a passage stays one solid stroke above 512x480 (`MglibAspect.FloorMap*`).
 - A layout change (`video.aspect`, `video.ui_scale`) is applied from the pump outside a recording, through `mgPortSetFrameLayout`. Letterboxing never draws or clears the bars, so a switch from `auto` to `4:3` first lets two ticks clear the main target outside the frame (one per main image, each also rendering the display image so presentation and display screenshots lose the art too) and then switches; otherwise the bars keep the last Fill frame's art (`MglibPresent.LetterboxSwitchClearsWhatFillDrewBesideTheFrame`).
 - `--window WxH` sets the window size (headless: the offscreen image's).
@@ -1889,7 +1919,6 @@ Each fixup's text must occur exactly once in its file, or the script stops befor
 - `dngmenu.cpp`: the floor list's debug panel prints a room's four next-floor IDs into a `FONT_STR_MAX`-byte line. Retail's 32 bytes cannot hold even one-digit IDs and the terminator. In the Windows Release build the overflow reaches the panel font's string, and copying the line into it runs off the stack.
 - `pbuggy.cpp`: the train fight reads the player's and the bomb carrier's motion frames through `PortBuggyRetailFrame` (`port/src/pbuggy.cpp`). It takes the bomb at frame 15 of the lift, throws it at 44 and reloads it at 18 and 30.9, retail frames of motions that start at 11, 38 and 9 in retail's `info.cfg`. Native motion sets lay their motions out back to back from frame 2, so the lift and throw started at 367 and 400 and the bomb was never taken.
 - `menusys.cpp`: closing the item overflow notice resets `TrushMesCls` with a range loop and `nullptr`, bounded by its four message slots. Retail's reset writes eight pointers, corrupting adjacent PC state and hiding dungeon overlays until the next floor. The array size and all other message handling stay unchanged.
-- `userdata.cpp`: a badge's attack scale and defence, the absorption the badge in use gains, and a share of Monica's absorption for the other badges (at the top of `CBattleCharaInfo::AddAbs`) go through `PortTransformation*` and `PortShareTransformationAbs` (`port/src/monster_transformation.cpp`), which give retail's values unless the PC SETTINGS > Game transformation settings are on (see "Monster transformation settings").
 - `nowload.cpp`: `SCElogoFade`'s fade loop also stops on `PortSkipIntro()` (`game.skip_intro`), keeping the language select and the title image load.
 - `menuop.cpp`: `CMenuOption::KeyStep` moves the cursor's `op_cursorlimmit` bottom (y 274) down to the selected row's place in the settled list through `PortOptionCursorBottom` (`port/src/menuop.cpp`). Retail PAL settles the ninth shown row at 288, so on the last shown row its cursor and frame stopped between the last two rows.
 - `inventmn.cpp`: the native copy removes `inline` from `CMenuInvent::CMenuInvent()` so callers in other units have one emitted constructor. Retail source retains its original spelling.

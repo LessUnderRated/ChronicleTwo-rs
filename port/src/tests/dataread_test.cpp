@@ -6,6 +6,7 @@
 // clang-format on
 
 #include <algorithm>
+#include <array>
 #include <charconv>
 #include <chrono>
 #include <cstddef>
@@ -63,7 +64,7 @@ void WriteBytes(const fs::path &path, const std::vector<unsigned char> &bytes) {
 /**
  * Publishes native item table documents at the direct paths used by the native game.
  */
-void WriteMenuConfigs(const fs::path &base, const std::vector<std::pair<std::string, nlohmann::json> > &documents) {
+void WriteMenuConfigs(const fs::path &base, const std::vector<std::pair<std::string, nlohmann::json>> &documents) {
     const auto root = base / "data";
     fs::create_directories(root / "menu/cfg7");
     for (const auto &[name, document] : documents) {
@@ -239,29 +240,30 @@ TEST_F(DataRead, LoadFileReadsExactBytesThenZeroFillsTheSector) {
 // forgotten though the reservation never reaches it and the anchor keeps its bytes.
 TEST_F(DataRead, PaddedLoadForgetsMotionSetBeyondTheReservation) {
     DataReadIndex(root);
-    constexpr int kListQuadwords = static_cast<int>((sizeof(Mot_List) + 15) / 16);
+    constexpr int list_quadwords = static_cast<int>((sizeof(Mot_List) + 15) / 16);
     static char   key;
     auto         *buffer = reinterpret_cast<u_long128 *>(ArenaBlock(&key, kPadded));
     mgCMemory     arena;
     arena.stSetBuffer(buffer, static_cast<int>(kPadded / sizeof(u_long128)));
     arena.Alloc(512 / static_cast<int>(sizeof(u_long128)));
     const auto *storage = reinterpret_cast<const std::byte *>(arena.stGetTop());
-    auto       *channel = ::new (arena.Alloc(kListQuadwords)) Mot_List{.frame = -1, .key_count = 1};
+    auto       *channel = ::new (arena.Alloc(list_quadwords)) Mot_List{.frame = -1, .key_count = 1};
     arena.Alloc(2048 / static_cast<int>(sizeof(u_long128)));
-    auto *anchor = ::new (arena.Alloc(kListQuadwords)) Mot_List{.frame = -1};
+    auto *anchor = ::new (arena.Alloc(list_quadwords)) Mot_List{.frame = -1};
     ASSERT_GE(reinterpret_cast<const unsigned char *>(anchor) - reinterpret_cast<const unsigned char *>(buffer), 2048);
     tagMOTION_TYPE motion{};
     motion.motion_list = anchor;
     character_motion::Clear();
     character_motion::Action idle{.name = "idle", .duration = 10, .base = 0, .head = channel};
     character_motion::Register(anchor, {idle}, {storage, reinterpret_cast<const std::byte *>(arena.stGetTop())});
-    const Mot_List kept = *anchor;
+    std::array<std::byte, sizeof(Mot_List)> kept{};
+    std::memcpy(kept.data(), anchor, kept.size());
 
     arena.stReset();
     int size = -1;
     ASSERT_EQ(Load("small.txt", arena.stGetTop(), &size), 1);
     arena.Alloc(size / 16 + (size % 16 != 0));
-    ASSERT_EQ(std::memcmp(anchor, &kept, sizeof(kept)), 0);
+    ASSERT_EQ(std::memcmp(reinterpret_cast<const std::byte *>(anchor), kept.data(), kept.size()), 0);
     ASSERT_EQ(channel->key_count, 0u);
     EXPECT_TRUE(character_motion::Actions(motion).empty());
     character_motion::Clear();

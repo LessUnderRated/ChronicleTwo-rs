@@ -67,10 +67,9 @@ mgMEMORY_BLOCK *BlockAt(const void *base, std::ptrdiff_t quadwords) {
     return reinterpret_cast<mgMEMORY_BLOCK *>(QuadwordsFrom(base, quadwords));
 }
 
-// Reports quadwords an arena hands out or writes a block header over. The game releases memory by
-// resetting or rewinding a stack (stReset, or a direct write to stack_used), by unlinking a heap block or
-// by setting up a heap again, none of which touch the contents. Released memory is only overwritten once
-// the arena hands it out again, so the motion registry forgets the sets that lived there at that point.
+/**
+ * Invalidates motion data in arena storage before a new allocation or block header overwrites it.
+ */
 void Reuse(const void *start, std::ptrdiff_t quadwords) {
     if (quadwords > 0) {
         character_motion::ForgetStorage(start, QuadwordsFrom(start, quadwords));

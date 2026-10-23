@@ -1,8 +1,12 @@
 #include "common.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <cstdint>
 #include <cstring>
+#include <numbers>
+#include <optional>
 #include <vector>
 
 #include "inventmn.hpp"
@@ -10,8 +14,8 @@
 #include "mg_drawprim.hpp"
 #include "mg_math.hpp"
 #include "mg_texture.hpp"
-#include "mglib.hpp"
 #include "mg_texture_port.hpp"
+#include "mglib.hpp"
 #include "mglib_port.hpp"
 #include "padcontrol.hpp"
 #include "photo.hpp"
@@ -22,45 +26,57 @@
 
 namespace {
 
-// A rectangle of the camera's view or picture.
+/**
+ * Bounds of the camera view or the captured image inside its texture.
+ */
 struct PhotoView {
-    float left;
-    float right;
-    float top;
-    float bottom;
+    float left;   /**< Left edge in texture or screen units. */
+    float right;  /**< Right edge in texture or screen units. */
+    float top;    /**< Top edge in texture or screen units. */
+    float bottom; /**< Bottom edge in texture or screen units. */
 };
 
-// The scene the shot records: all the window shows, in the frame grab's texels.
+/** The image bounds saved by the latest shutter capture. */
+std::optional<PhotoView> captured_area;
+
+/**
+ * Returns the visible scene bounds in frame-grab texels.
+ */
 PhotoView SceneView() {
     const auto extent = mgPortVisibleExtent(gfx::kMainTarget);
-    return {extent.left, extent.right, extent.top, extent.bottom};
+    return {.left = extent.left, .right = extent.right, .top = extent.top, .bottom = extent.bottom};
 }
 
-// The camera's overlay, in the UI units its depthless 2D is drawn in.
+/**
+ * Returns the viewfinder bounds in UI units.
+ */
 PhotoView OverlayView() {
     const auto extent = mgPortVisibleUiExtent(gfx::kMainTarget);
-    return {extent.left, extent.right, extent.top, extent.bottom};
+    return {.left = extent.left, .right = extent.right, .top = extent.top, .bottom = extent.bottom};
 }
 
-// Where the shot lies in a width x height picture. Retail fills the picture with the 4:3 screen; a wider
-// (or taller) view keeps its shape inside it between black bars, so every place that shows the picture
-// shows it unsquashed.
+/**
+ * Fits the scene inside a picture while preserving its aspect relative to the retail screen.
+ */
 PhotoView PictureArea(const PhotoView &scene, float width, float height) {
     const float aspect = (scene.right - scene.left) * static_cast<float>(mgScreenHeight) /
                          ((scene.bottom - scene.top) * static_cast<float>(mgScreenWidth));
     if (aspect > 1.001f) {
         const float bar = height * (1.0f - 1.0f / aspect) * 0.5f;
-        return {0.0f, width, bar, height - bar};
+        return {.left = 0.0f, .right = width, .top = bar, .bottom = height - bar};
     }
     if (aspect < 0.999f) {
         const float bar = width * (1.0f - aspect) * 0.5f;
-        return {bar, width - bar, 0.0f, height};
+        return {.left = bar, .right = width - bar, .top = 0.0f, .bottom = height};
     }
-    return {0.0f, width, 0.0f, height};
+    return {.left = 0.0f, .right = width, .top = 0.0f, .bottom = height};
 }
 
 } // namespace
 
+/**
+ * Updates photo input, shutter state and frame-boundary capture requests.
+ */
 PORT_OVERRIDE void LoopTakePhoto(CPadControl *pad, CInventUserData *user) {
     if (user == nullptr) {
         return;
@@ -95,14 +111,15 @@ PORT_OVERRIDE void LoopTakePhoto(CPadControl *pad, CInventUserData *user) {
         uint32_t             width = 0;
         uint32_t             height = 0;
         mgPortReadColor(mgPortRenderTarget(WorkTex), ignored, width, height);
-        mgRect<int> lens(252, 204, 260, 212);
-        u_long128   depth[16];
-        mgStoreZBuffImage(lens, depth);
+        mgRect<int>               lens(252, 204, 260, 212);
+        std::array<u_long128, 16> depth{};
+        mgStoreZBuffImage(lens, depth.data());
     }
 }
 
-// Retail's camera with the viewfinder's border, corners and shutter on the edges of what the window shows,
-// and the shot taken from all of it. At 4:3 everything lands where retail draws it.
+/**
+ * Captures the visible scene and draws the viewfinder, shutter and latest-shot preview.
+ */
 PORT_OVERRIDE int DrawTakePhoto(USER_PICTURE_INFO *picture, float *distance) {
     if (WorkTex == nullptr || NowTakePhoto() == 0) {
         return 0;
@@ -110,24 +127,24 @@ PORT_OVERRIDE int DrawTakePhoto(USER_PICTURE_INFO *picture, float *distance) {
 
     mgCTextureManager *textures = &mgTexManager;
     textures->ReloadTexture(static_cast<int>(CameraTexb), static_cast<sceVif1Packet *>(nullptr));
-    u_long128   image[0x240];
-    u_long128   depth[0x40];
-    mgCDrawPrim prim;
-    int         taken = 0;
+    std::array<u_long128, 0x240> image{};
+    std::array<u_long128, 0x40>  depth{};
+    mgCDrawPrim                  prim;
+    int                          taken = 0;
 
     if (TakePhotoMode == TAKE_PHOTO_STORE) {
-        mgStoreImage(WorkTex, image);
-        mgRect<int>  area(252, 204, 260, 212);
-        const int    count = mgStoreZBuffImage(area, depth) * 4;
-        const u_int *pixel = reinterpret_cast<const u_int *>(depth);
-        u_int        nearest = *pixel;
+        mgStoreImage(WorkTex, image.data());
+        mgRect<int> area(252, 204, 260, 212);
+        const int   count = mgStoreZBuffImage(area, depth.data()) * 4;
+        const auto *pixel = reinterpret_cast<const u_int *>(depth.data());
+        u_int       nearest = *pixel;
         for (int i = 0; i < count; ++i) {
             nearest = std::max(nearest, pixel[i]);
         }
         *distance = mgConvZBuffToDist(nearest);
 
         if (picture != nullptr) {
-            std::memcpy(picture->image, image, 0x2000);
+            std::memcpy(picture->image, image.data(), std::size_t{64} * 64 * sizeof(std::uint16_t));
             picture->used = 1;
             picture->is_new = true;
             sndSePlay(GetSystemSndID(), 11, 0);
@@ -145,6 +162,7 @@ PORT_OVERRIDE int DrawTakePhoto(USER_PICTURE_INFO *picture, float *distance) {
         mgGetFrameBuffer(&frame);
         mgCTexture     *target = WorkTex;
         const PhotoView area = PictureArea(scene, static_cast<float>(target->width), static_cast<float>(target->height));
+        captured_area = area;
         mgSetPkFrameBuffer(target);
         mgCDrawPrim capture;
         capture.Initialize(nullptr, nullptr);
@@ -219,11 +237,11 @@ PORT_OVERRIDE int DrawTakePhoto(USER_PICTURE_INFO *picture, float *distance) {
         float         shutter_angle = (HALF_PI * static_cast<float>(frame - 1)) / 4.0f;
 
         if (shutter_angle > HALF_PI) {
-            shutter_angle = PI - shutter_angle;
+            shutter_angle = std::numbers::pi_v<float> - shutter_angle;
         }
 
         for (int i = 0; i < 12; i++) {
-            const float   angle = mgAngleLimit(PI + static_cast<float>(i) * (PI / 6.0f));
+            const float   angle = mgAngleLimit(std::numbers::pi_v<float> + static_cast<float>(i) * (std::numbers::pi_v<float> / 6.0f));
             sceVu0FVECTOR position;
             sceVu0FVECTOR edge;
             sceVu0FVECTOR rotated;
@@ -270,7 +288,8 @@ PORT_OVERRIDE int DrawTakePhoto(USER_PICTURE_INFO *picture, float *distance) {
     prim.End();
 
     // Corners 0..3: top left, bottom left, bottom right, top right.
-    const float arc_radius = 33.0f;
+    const float          arc_radius = 33.0f;
+    constexpr std::array corner_angles = {HALF_PI, std::numbers::pi_v<float>, std::numbers::pi_v<float> + HALF_PI, 0.0f};
     for (int corner = 0; corner < 4; corner++) {
         const bool  on_right = corner >= 2;
         const bool  on_bottom = corner == 1 || corner == 2;
@@ -278,7 +297,7 @@ PORT_OVERRIDE int DrawTakePhoto(USER_PICTURE_INFO *picture, float *distance) {
         const float corner_y = on_bottom ? bottom : top;
         const int   arc_x = static_cast<int>(on_right ? right - 48.0f : left + 48.0f);
         const int   arc_y = static_cast<int>(on_bottom ? bottom - 48.0f : top + 48.0f);
-        float       angle = corner == 0 ? HALF_PI : corner == 1 ? PI : corner == 2 ? PI + HALF_PI : 0.0f;
+        float       angle = corner_angles[static_cast<std::size_t>(corner)];
 
         prim.Begin(MG_PRIM_TRIANGLE_FAN);
         prim.Color(0, 0, 0, 128);
@@ -304,7 +323,7 @@ PORT_OVERRIDE int DrawTakePhoto(USER_PICTURE_INFO *picture, float *distance) {
         const int   frame_height = texture->height * 24 / 2 / 10;
         // The preview shows the shot without the picture's bars, in the shape it was taken in.
         const PhotoView area =
-            PictureArea(SceneView(), static_cast<float>(texture->width), static_cast<float>(texture->height));
+            captured_area.value_or(PictureArea(SceneView(), static_cast<float>(texture->width), static_cast<float>(texture->height)));
         const int shot_width =
             static_cast<int>(std::lround(static_cast<float>(photo_width) * (area.right - area.left) / static_cast<float>(texture->width)));
         const int shot_height =

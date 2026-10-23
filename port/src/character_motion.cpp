@@ -52,7 +52,7 @@ std::unordered_map<const mgCFrame *, Posed> &PosedActions() {
  * Reads the registration stamp an anchor carries in its otherwise unused tail.
  */
 std::uint32_t StampOf(const Mot_List &anchor) {
-    std::uint32_t stamp;
+    std::uint32_t stamp = 0;
     std::memcpy(&stamp, anchor.unk_1C, sizeof(stamp));
     return stamp;
 }

@@ -363,9 +363,9 @@ private:
 
 } // namespace
 
-// A plane meets the swept patch in a hyperbola, parabola or lines, never a
-// closed curve, so a wall meets a part of it only where a wall edge crosses
-// that part or one of its edges crosses the wall.
+/**
+ * Reports whether a wall intersects the surface swept between two camera views.
+ */
 bool CameraViewSweeps(CCPoly *walls, int count, const float *target_a, const float *eye_a, const float *target_b,
                       const float *eye_b) {
     if (count <= 0) {

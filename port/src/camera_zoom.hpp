@@ -6,76 +6,73 @@
 
 class CScene;
 
-// A request belongs to the walking camera, not its temporary collision distance.
-// The retail parameter sets are never retained or modified between updates.
+/**
+ * Retains the walking camera's requested zoom and collision recovery state between updates.
+ */
 struct CameraZoom {
-    static constexpr float min_distance = 30.0f;
-    static constexpr float max_distance = 600.0f;
-    static constexpr float wheel_step = 8.0f;
-    // The eye keeps this much room from geometry, so a view does not graze a wall.
-    static constexpr float clearance = 6.0f;
-    // A cleared view returns this fraction of the remaining distance per tick,
-    // at least release_min, once the view lookahead units farther stays clear:
-    // nine tenths of the way back within 40 game frames.
-    static constexpr float release_rate = 0.1f;
-    static constexpr float release_min = 2.0f;
-    static constexpr float lookahead = 32.0f;
-    // The lookahead also checks the view turned as far as this many ticks of its
-    // current turning would take it.
-    static constexpr float lookahead_ticks = 60.0f;
-    static constexpr int   clear_ticks = 15;
-    // A first pull-in is not held: once past the wall the eye returns as soon as
-    // the lookahead stays clear, as retail's does. A second recent pull-in holds
-    // hold_ticks and each one after doubles that, at most max_strikes times, so
-    // a field of rocks keeps the shorter distance.
-    static constexpr int hold_ticks = 45;
-    static constexpr int max_strikes = 2;
-    // A quiet period without pull-ins forgets one of them.
-    static constexpr int calm_ticks = 300;
-    // A pull-in shorter than this, such as foliage brushing a still view or a
-    // wall the player walks slowly toward, neither counts nor holds.
-    static constexpr float minor_pull_in = 10.0f;
+    static constexpr float min_distance = 30.0f;    /**< Closest requested camera distance. */
+    static constexpr float max_distance = 600.0f;   /**< Farthest requested camera distance. */
+    static constexpr float wheel_step = 8.0f;       /**< Distance change per wheel step. */
+    static constexpr float clearance = 6.0f;        /**< Minimum eye clearance from geometry. */
+    static constexpr float release_rate = 0.1f;     /**< Fraction of the remaining distance released per clear tick. */
+    static constexpr float release_min = 2.0f;      /**< Minimum distance released per clear tick. */
+    static constexpr float lookahead = 32.0f;       /**< Extra distance checked before releasing a shortened view. */
+    static constexpr float lookahead_ticks = 60.0f; /**< Turning prediction horizon in logic ticks. */
+    static constexpr int   clear_ticks = 15;        /**< Consecutive clear ticks required before releasing distance. */
+    static constexpr int   hold_ticks = 45;         /**< Initial hold duration after repeated pull-ins. */
+    static constexpr int   max_strikes = 2;         /**< Maximum number of hold-duration doublings. */
+    static constexpr int   calm_ticks = 300;        /**< Quiet ticks required to forget a recent pull-in. */
+    static constexpr float minor_pull_in = 10.0f;   /**< Minimum pull-in counted toward repeated-collision holds. */
 
-    float requested = 0;
-    // Distance the eye may use: drops at once when the view is blocked and
-    // returns only after any hold and a clear lookahead.
-    float allowed = 0;
-    int   hold = 0;
-    int   clear = 0;
-    // Recent pull-ins, the latest included.
-    int strikes = 0;
-    int calm = 0;
-    // The eye has not begun moving out since the latest pull-in. Pulling in
-    // further meanwhile, such as backing into a wall, is the same pull-in.
-    bool pulled = false;
-    // The pose drawn before this tick's step, which display frames blend from.
-    float shown_pos[3] = {NAN, NAN, NAN};
-    float shown_ref[3] = {NAN, NAN, NAN};
-    float heading = NAN;
-    float turn_rate = 0;
-    bool  active = false;
+    float requested = 0;                  /**< Distance selected by the player. */
+    float allowed = 0;                    /**< Distance currently permitted by collision recovery. */
+    int   hold = 0;                       /**< Remaining ticks before distance release may resume. */
+    int   clear = 0;                      /**< Consecutive ticks with a clear release corridor. */
+    int   strikes = 0;                    /**< Recent distinct pull-ins remembered for hold duration. */
+    int   calm = 0;                       /**< Ticks since the latest significant pull-in or decay. */
+    bool  pulled = false;                 /**< Whether the current pull-in has yet to begin releasing. */
+    float shown_pos[3] = {NAN, NAN, NAN}; /**< Eye shown before the current logic step. */
+    float shown_ref[3] = {NAN, NAN, NAN}; /**< Look-at point shown before the current logic step. */
+    float heading = NAN;                  /**< Previous pending camera heading. */
+    float turn_rate = 0;                  /**< Pending heading change per logic tick. */
+    bool  active = false;                 /**< Whether a player-selected zoom controls the distance. */
 
+    /**
+     * Returns the pitch-height scale for the requested zoom distance.
+     */
     float HeightScale(CCameraControl &camera) const;
-    void  Read(CCameraControl &camera, float wheel, bool reset, bool enabled);
-    void  Move(CCameraControl &camera, CScene &scene, CCameraControl::Control &control, float *rotation,
-               CCPoly *retail_polys = nullptr, int retail_count = 0);
-    // Places the eye in front of any wall between it and the player in the view
-    // drawn after the next step. Also run after direct mouse motion.
+    /**
+     * Applies wheel input or resets the player-selected distance.
+     */
+    void Read(CCameraControl &camera, float wheel, bool reset, bool enabled);
+    /**
+     * Moves the follow camera at the selected distance with collision correction and recovery.
+     */
+    void Move(CCameraControl &camera, CScene &scene, CCameraControl::Control &control, float *rotation,
+              CCPoly *retail_polys = nullptr, int retail_count = 0);
+    /**
+     * Places the stepped eye in front of obstructing walls and cuts obstructed display interpolation.
+     */
     void KeepVisible(CCameraControl &camera, CScene &scene, CCPoly *retail_polys = nullptr, int retail_count = 0);
 
 private:
-    // The distance below which walls limit the eye as in retail, without a hold.
+    /**
+     * Returns the distance below which collision recovery follows retail without a hold.
+     */
     [[nodiscard]] float Floor(const CameraCtrlParam &retail) const;
-    // Records a pull-in of drop units.
+    /**
+     * Records a collision pull-in and updates the hold for repeated significant collisions.
+     */
     void Strike(float drop);
-    // Whether a camera wall, or when walking any wall, lies between the drawn
-    // views blending to the rendered one.
+    /**
+     * Reports whether collision geometry intersects a view interpolated to the rendered pose.
+     */
     bool Swept(CCameraControl &camera, CScene &scene, CCameraControl &rendered, CCPoly *retail_polys,
                int retail_count, bool walking = false) const;
 };
 
-// Whether a wall crosses any view a display frame blends between two drawn
-// poses, from target a and eye a to target b and eye b, with the eye and target
-// each moving linearly.
+/**
+ * Reports whether a wall intersects any view with an eye and target interpolated between two poses.
+ */
 bool CameraViewSweeps(CCPoly *walls, int count, const float *target_a, const float *eye_a, const float *target_b,
                       const float *eye_b);

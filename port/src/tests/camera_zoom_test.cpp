@@ -872,7 +872,7 @@ TEST(CameraZoom, GrazingCharacterWallCountsWhereTheViewCrossesItHoweverTriangula
     // A character-only wall in the plane x=10 runs beside the player, and the
     // view to an eye at x=20 crosses it 300 units out. A camera wall at z=500
     // is farther. The crossing, not the nearest triangle, decides.
-    std::vector<std::vector<CCPoly> > layouts(3);
+    std::vector<std::vector<CCPoly>> layouts(3);
     layouts[0].push_back(Triangle({10, -2000, -2000}, {10, 2000, -2000}, {10, 0, 4000}, {1, 0, 0}));
     layouts[1].push_back(Triangle({10, -2000, -2000}, {10, 2000, -2000}, {10, 2000, 4000}, {1, 0, 0}));
     layouts[1].push_back(Triangle({10, -2000, -2000}, {10, 2000, 4000}, {10, -2000, 4000}, {1, 0, 0}));

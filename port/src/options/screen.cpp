@@ -42,6 +42,10 @@ float         g_pointer_y = 0;
 std::uint32_t g_buttons = 0;
 std::string   g_wait_source;
 bool          g_drain = false;
+// Frames a controller capture has waited; a pad has no Escape, so waiting cancels it.
+int g_capture_frames = 0;
+
+constexpr int kPadCaptureFrames = 5 * 60;
 
 bool Inside(float x, float y, float left, float top, float right, float bottom) {
     return x >= left && x < right && y >= top && y < bottom;
@@ -63,6 +67,7 @@ void Change(int direction) {
 
 void BeginBinding() {
     g_screen.binding = g_screen.row[g_screen.page];
+    g_capture_frames = 0;
     InputBeginBindCapture();
     MenuSePlay(SYSTEM_SE_DECIDE);
 }
@@ -113,7 +118,11 @@ void Activate(const Hit &hit) {
             break;
         case HitKind::ResetBinding: {
             Config config = ConfigGet();
-            ResetBinding(config, CurrentRow().action);
+            if (CurrentRow().pad) {
+                ResetPadBinding(config, CurrentRow().action);
+            } else {
+                ResetBinding(config, CurrentRow().action);
+            }
             Save(config);
             break;
         }
@@ -187,6 +196,24 @@ bool Run() {
         if ((pressed_mouse & kMouseLeft) && HitTest(g_screen, point.x, point.y).kind == HitKind::Back) {
             g_screen.binding = -1;
             g_drain = true;
+            return true;
+        }
+        if (CurrentRow().pad) {
+            // Every button is the binding's, Circle and Cross too: Escape, a right click, Back or a wait cancels.
+            const std::string button = InputTakeBindPadButton();
+            const std::string key = InputTakeBindKey(false);
+            if (!button.empty()) {
+                Config config = ConfigGet();
+                if (SetPadBinding(config, CurrentRow().action, button)) {
+                    Save(config);
+                }
+                g_screen.binding = -1;
+                g_wait_source = "Gamepad:" + button;
+                g_drain = true;
+            } else if (key == "Escape" || ++g_capture_frames >= kPadCaptureFrames) {
+                g_screen.binding = -1;
+                g_drain = true;
+            }
             return true;
         }
         const std::string key = InputTakeBindKey(false);
@@ -318,7 +345,7 @@ Hit HitTest(const State &state, float x, float y) {
     if (Inside(x, y, kLeft, 343, kLeft + 105, 370)) {
         return {.kind = HitKind::Back};
     }
-    if (state.page == kBindingsPage && Inside(x, y, 272, 343, kRight, 370)) {
+    if (BindingPage(state.page) && Inside(x, y, 272, 343, kRight, 370)) {
         return {.kind = HitKind::ResetBinding};
     }
     if (Inside(x, y, kLeft, kRowY, kRight, kRowY + kVisibleRows * kRowStep)) {

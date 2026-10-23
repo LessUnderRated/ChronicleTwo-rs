@@ -11,18 +11,10 @@ class UnitFixups(unittest.TestCase):
         self.assertEqual(mirrored.count("paint_top = 0; paint_return = 1;"), 1)
         self.assertEqual(mirrored.count("\n"), (source / "editmenu.hpp").read_bytes().count(b"\n"))
 
-    def test_monster_transformation_settings_reach_the_badge_rules(self):
-        source = (Path(__file__).resolve().parents[2] / "ps2/src/userdata.cpp").read_text(encoding="latin-1")
-        result = header_fixups.fixup_unit_text("userdata.cpp", source)
-        for seam in (
-            "scale = PortTransformationAttackScale(level);",
-            "value = fptosi(PortTransformationDefence(param->defence + GetDegreeLevel() * 2));",
-            "chara_data.monster->abs.AddPoint(PortTransformationAbs(amount));",
-            "int *leveled_up) { PortShareTransformationAbs(this, amount);",
-        ):
-            self.assertEqual(result.count(seam), 1, seam)
-        self.assertNotIn("scale = 1.0f + 2.0f * ((float) level / 98.0f);", result)
-        self.assertIn("        monster_hp_drain = 0.005f;", result)
+    def test_monster_scheduler_preserves_callback_scene_context(self):
+        source = (Path(__file__).resolve().parents[2] / "ps2/src/runscript_opcodes.cpp").read_text(encoding="latin-1")
+        result = header_fixups.fixup_unit_text("runscript_opcodes.cpp", source)
+        self.assertEqual(result.count("void PortSetMonsterScriptScene(CScene *scene) { nowScene = scene; }"), 1)
         self.assertEqual(result.count("\n"), source.count("\n"))
 
     def test_geostone_announcement_reserves_all_eight_nullable_message_slots(self):

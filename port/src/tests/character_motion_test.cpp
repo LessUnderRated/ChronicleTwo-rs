@@ -70,7 +70,7 @@ struct Channel {
 // Data that reused a released arena; read as a channel pointer it faults, as 0x8100000081 did in the crash report.
 constexpr unsigned char kReused = 0x81;
 
-constexpr int kQuadwords = 256;
+constexpr int         kQuadwords = 256;
 constexpr std::size_t kBytes = static_cast<std::size_t>(kQuadwords) * 16;
 constexpr int         kListQuadwords = static_cast<int>((sizeof(Mot_List) + 15) / 16);
 
@@ -94,14 +94,15 @@ struct MotionSet {
  * then the anchor at the end of the run.
  */
 struct ArenaMotionSet {
-    Mot_List      *channel = nullptr;
-    Mot_List      *anchor = nullptr;
-    tagMOTION_TYPE motion{};
+    const std::byte *storage;  /**< Start of the allocation run. */
+    Mot_List        *channel;  /**< Channels of the only action. */
+    Mot_List        *anchor;   /**< Registry anchor following the channels. */
+    tagMOTION_TYPE   motion{}; /**< Motion descriptor used by playback. */
 
-    explicit ArenaMotionSet(mgCMemory &arena) {
-        const auto *storage = reinterpret_cast<const std::byte *>(arena.stGetTop());
-        channel = ::new (arena.Alloc(kListQuadwords)) Mot_List{};
-        anchor = ::new (arena.Alloc(kListQuadwords)) Mot_List{};
+    explicit ArenaMotionSet(mgCMemory &arena)
+        : storage(reinterpret_cast<const std::byte *>(arena.stGetTop())),
+          channel(::new (arena.Alloc(kListQuadwords)) Mot_List{}),
+          anchor(::new (arena.Alloc(kListQuadwords)) Mot_List{}) {
         anchor->frame = -1;
         motion.motion_list = anchor;
         character_motion::Action idle{.name = "idle", .duration = 10, .base = 0, .head = channel};
@@ -203,7 +204,7 @@ TEST_F(CharacterMotion, EmptyOverwriteInsideMotionStorageKeepsSet) {
     mgCMemory arena;
     arena.stSetBuffer(ArenaBuffer(), kQuadwords);
     ArenaMotionSet set(arena);
-    const auto *inside = reinterpret_cast<const std::byte *>(set.channel) + 1;
+    const auto    *inside = reinterpret_cast<const std::byte *>(set.channel) + 1;
     character_motion::ForgetStorage(inside, inside);
     EXPECT_EQ(character_motion::Actions(set.motion).size(), 1u);
 }
@@ -213,11 +214,12 @@ TEST_F(CharacterMotion, EmptyOverwriteInsideMotionStorageKeepsSet) {
 TEST_F(CharacterMotion, ResetArenaReusingChannelsReleasesSet) {
     mgCMemory arena;
     arena.stSetBuffer(ArenaBuffer(), kQuadwords);
-    ArenaMotionSet set(arena);
-    const Mot_List anchor = *set.anchor;
+    ArenaMotionSet                          set(arena);
+    std::array<std::byte, sizeof(Mot_List)> anchor{};
+    std::memcpy(anchor.data(), set.anchor, anchor.size());
     arena.stReset();
     std::memset(arena.Alloc(kListQuadwords), kReused, sizeof(Mot_List));
-    ASSERT_EQ(std::memcmp(set.anchor, &anchor, sizeof(anchor)), 0);
+    ASSERT_EQ(std::memcmp(reinterpret_cast<const std::byte *>(set.anchor), anchor.data(), anchor.size()), 0);
     EXPECT_TRUE(character_motion::Actions(set.motion).empty());
 }
 
@@ -272,10 +274,11 @@ TEST_F(CharacterMotion, RebindingHeapBufferReleasesSetInsideTheImport) {
     character_motion::Action idle{.name = "idle", .duration = 10, .base = 0, .head = channel};
     character_motion::Register(anchor, {idle}, {storage, reinterpret_cast<const std::byte *>(arena.stGetTop())});
     arena.EndStackMode();
-    const Mot_List kept = *anchor;
+    std::array<std::byte, sizeof(Mot_List)> kept{};
+    std::memcpy(kept.data(), anchor, kept.size());
 
     arena.SetHeapMem(external, kQuadwords);
-    ASSERT_EQ(std::memcmp(anchor, &kept, sizeof(kept)), 0);
+    ASSERT_EQ(std::memcmp(reinterpret_cast<const std::byte *>(anchor), kept.data(), kept.size()), 0);
     ASSERT_EQ(reinterpret_cast<const unsigned char *>(channel)[0], kReused);
     EXPECT_TRUE(character_motion::Actions(motion).empty());
 }

@@ -41,18 +41,16 @@ Start+Select on pad 1 enters the retail developer menu from any active mode when
 lock. Loading between modes finishes first. The chord acts once per press;
 release both buttons before using it again. While frame-paused, modified Start
 captures instead. The existing four-shoulder/R3 toggle remains available.
-The `debug_menu` binding (F1 or a gamepad's paddle 1 by default, PC SETTINGS >
-Bindings > Developer menu) does the same with one press. The `mode_debug_menu`
-binding (F2 by default, PC SETTINGS > Bindings > Debug menu (R3)) turns
-`DebugFlag` on and presses R3 once, opening the town, dungeon or menu debug menu
-listed under "What `DebugFlag` unlocks on pad 1"; both need debug controls enabled.
-Neither binding, nor Start+Select, acts while PC SETTINGS is waiting for a key to
-bind or that key is still held.
+The `debug_menu` binding (F1 or controller paddle 1 by default) requests the
+developer menu. The `mode_debug_menu` binding (F2 by default) opens or closes
+the current mode's debug menu as described below. Their bindings are edited on
+**PC SETTINGS** > **Keyboard** or **Gamepad**. Neither binding nor Start+Select
+acts during binding capture or while a newly bound input remains held.
 
 ## Debug menu key
 
-`debug_menu` is a one-key shortcut for the routes above. Bind a key under
-**PC SETTINGS** > **Bindings** > Debug menu (paddle 1 by default). With
+`mode_debug_menu` is a one-key shortcut for the current mode. Bind a key under
+**PC SETTINGS** > **Keyboard** > Debug menu (R3), F2 by default. With
 `game.debug_mode` or `--jump`, a press turns `DebugFlag` on and presses the
 buttons the current loop opens its debug menu with: Start+Select on the title,
 which leaves for the developer menu, and R3 in a dungeon or town while the player

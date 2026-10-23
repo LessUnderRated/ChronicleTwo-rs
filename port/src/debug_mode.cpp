@@ -8,6 +8,7 @@
 #include "gamepad.hpp"
 #include "mainloop.hpp"
 #include "mainloop_port.hpp"
+#include "options/screen.hpp"
 #include "platform/input.hpp"
 #include "scenesnd.hpp"
 #include "sphida.hpp"
@@ -19,9 +20,9 @@ namespace {
 // The frame the last ordinary tick ended on, or -1 after a wait.
 int menu_key_frame = -1;
 
-// Field control for the shortcut: the autosave check, less what runs in field mode but reads the pad after
-// DngMainKey's debug R3 (dng_main.cpp:2176) or holds the player: a sub-game (2235), Spheda (2275, sphida.cpp:513) and
-// the player-control pause.
+/**
+ * Reports whether dungeon gameplay can receive a debug-menu shortcut.
+ */
 bool DungeonDebugKeyControl() {
     const CSphida *sphida = GetSphidaPtr();
     return PortDungeonFieldControl() && !(BattleAreaScene->pause_flag & DNG_PAUSE_PLAYER_CONTROL) &&
@@ -48,13 +49,12 @@ int DebugModeMenuButtons(int loop) {
         case LOOP_TITLE:
             return PAD_START | PAD_SELECT;
         case LOOP_DUNGEON:
-            // DngMainKey reads R3 only in the field. The open menu pauses the player and field steps, so it is matched
-            // on its own for the press that closes it (dng_debug.cpp:311).
+            // The open debug menu accepts a second R3 while its player and field steps are paused.
             return DungeonDebugKeyControl() || (DngStatus.mode == DNG_STATUS_FIELD && dngGetDebugInfo()->active)
                        ? PAD_R3
                        : 0;
         case LOOP_EDIT:
-            // The open menu holds control in EDIT_CONTROL_DEBUG, and its R3 closes it (editdebug.cpp:458).
+            // The open debug menu retains control until a second R3 closes it.
             return PortTownFieldControl() || (EditDebugMode() && PortTownControlMode == EDIT_CONTROL_DEBUG) ? PAD_R3 : 0;
         default:
             return 0;
@@ -74,10 +74,10 @@ bool DebugModeMenuKey(int loop) {
 
 bool DebugModeTakeMenuKey(int frame) {
     bool pressed = false;
-    while (InputHostPressed(InputHostAction::DebugMenu)) {
+    while (InputHostPressed(InputHostAction::ModeDebugMenu)) {
         pressed = true;
     }
-    return pressed && menu_key_frame >= 0 && frame == menu_key_frame;
+    return pressed && !options::Capturing() && menu_key_frame >= 0 && frame == menu_key_frame;
 }
 
 void DebugModeEndMenuKeyTick(int begin_frame, int end_frame) {
@@ -85,7 +85,7 @@ void DebugModeEndMenuKeyTick(int begin_frame, int end_frame) {
 }
 
 void DebugModeDiscardMenuKey() {
-    while (InputHostPressed(InputHostAction::DebugMenu)) {
+    while (InputHostPressed(InputHostAction::ModeDebugMenu)) {
     }
     menu_key_frame = -1;
 }

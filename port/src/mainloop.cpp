@@ -66,8 +66,8 @@ bool PortAutosave = false;
 
 namespace {
 
-std::optional<std::pair<int, int> > autosaved_floor;
-std::optional<int>                  autosaved_map;
+std::optional<std::pair<int, int>> autosaved_floor;
+std::optional<int>                 autosaved_map;
 
 bool AutosaveEnabled() {
     return PortAutosave && ConfigGet().autosave && PortCaptureMode == CAPTURE_OFF;

@@ -9,7 +9,7 @@
 #include "monster.hpp"
 #include "platform/model_assets.hpp"
 #include "runscript.hpp"
-#include "runscript_opcodes.hpp"
+#include "stubs/runscript_opcodes.hpp"
 
 namespace {
 
@@ -29,10 +29,13 @@ void SetStack(RS_STACKDATA *stack, float value) {
 
 } // namespace
 
+/**
+ * Runs a monster program while preserving suspended behavior through unsupported stun requests.
+ */
 PORT_OVERRIDE void CMonsterMan::RunScript(int index) {
     PortSetMonsterScriptScene(scene);
     nowMonster = active[index];
-    if (!nowMonster) {
+    if (nowMonster == nullptr) {
         return;
     }
 

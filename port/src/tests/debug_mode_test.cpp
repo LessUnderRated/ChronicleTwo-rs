@@ -15,15 +15,14 @@ using GamePadDebugChord = dc::test::DebugFixture;
 #include "mainloop.hpp"
 #include "mainloop_port.hpp"
 #include "mg_memory.hpp"
+#include "options/screen.hpp"
 #include "platform/input.hpp"
 #include "platform/settings.hpp"
 #include "scenesnd.hpp"
 #include "sphida.hpp"
+#include "stubs/subgame.hpp"
 #include "subgame.hpp"
 #include "title.hpp"
-
-// The running sub-game type that SubGameRunning reads (port/include/stubs/subgame.hpp).
-extern int PortSubGame asm("SubGame_Type");
 
 namespace {
 
@@ -100,7 +99,7 @@ TEST_F(GamePadDebugChord, PadLockSilencesTheChord) {
 
 namespace {
 
-// Puts the player in control of a dungeon floor and a town walk, the state the debug_menu key reads, and restores the
+// Puts the player in control of a dungeon floor and a town walk, the state the mode_debug_menu key reads, and restores the
 // game's state afterwards.
 class DebugMenuKey : public testing::Test {
 protected:
@@ -116,7 +115,7 @@ protected:
         DngStatus.mode = DNG_STATUS_FIELD;
         BattleAreaScene = &area;
         dngGetDebugInfo()->active = false;
-        PortSubGame = SUBGAME_NONE;
+        SubGame = SUBGAME_NONE;
         Sphida = nullptr;
         PortTownLoopMode = EDIT_LOOP_WALK;
         PortTownControlMode = EDIT_CONTROL_PLAYER;
@@ -134,7 +133,7 @@ protected:
         DngMainScene = dng_scene;
         DngStatus = status;
         BattleAreaScene = battle_area;
-        PortSubGame = sub_game;
+        SubGame = sub_game;
         Sphida = sphida;
         PortTownLoopMode = town_loop;
         PortTownControlMode = town_control;
@@ -168,7 +167,7 @@ protected:
     CScene          *dng_scene = DngMainScene;
     DNG_STATUS       status = DngStatus;
     DNG_BATTLE_AREA *battle_area = BattleAreaScene;
-    int              sub_game = PortSubGame;
+    int              sub_game = SubGame;
     CSphida         *sphida = Sphida;
     int              town_loop = PortTownLoopMode;
     int              town_control = PortTownControlMode;
@@ -176,13 +175,13 @@ protected:
     int              town_pause = PortTownPause;
 };
 
-// Binds debug_menu to F9 and presses it through the host input, as a keyboard or input script does.
+// Binds mode_debug_menu to F9 and presses it through the host input, as a keyboard or input script does.
 class DebugMenuKeyInput : public testing::Test {
 protected:
     void SetUp() override {
         HostSettings settings;
         settings.key_bindings = {
-            {.action = "debug_menu", .keys = {"F9"}}
+            {.action = "mode_debug_menu", .keys = {"F9"}}
         };
         InputResetBindings();
         InputApplyConfig(settings);
@@ -246,9 +245,9 @@ TEST_F(DebugMenuKey, DropsThePressWhileADungeonEventRunsOrThePlayerIsHeld) {
 
 // Fishing and Spheda run in field mode, and DngMainKey reads the debug R3 before either (dng_main.cpp:2176-2275).
 TEST_F(DebugMenuKey, DropsThePressWhileADungeonSubGameOrSphedaRuns) {
-    PortSubGame = SUBGAME_FISHING;
+    SubGame = SUBGAME_FISHING;
     ExpectDropped(LOOP_DUNGEON);
-    PortSubGame = SUBGAME_NONE;
+    SubGame = SUBGAME_NONE;
 
     CSphida spheda;
     Sphida = &spheda;
@@ -280,7 +279,7 @@ TEST_F(DebugMenuKey, DropsThePressWhileATownEventRunsOrThePlayerIsHeld) {
     PortTownPause = 1;
     ExpectDropped(LOOP_EDIT);
     PortTownPause = 0;
-    PortSubGame = SUBGAME_FISHING;
+    SubGame = SUBGAME_FISHING;
     ExpectDropped(LOOP_EDIT);
 }
 
@@ -392,4 +391,23 @@ TEST_F(DebugMenuKeyInput, APressAcrossAModeChangeIsDropped) {
     EXPECT_FALSE(DebugModeTakeMenuKey(11));
     DebugModeEndMenuKeyTick(11, 12);
     EXPECT_FALSE(DebugModeTakeMenuKey(12));
+}
+
+TEST_F(DebugMenuKeyInput, BindingCaptureDropsModeShortcutWithoutDeferringIt) {
+    DebugModeEndMenuKeyTick(10, 11);
+    Press();
+    const int previous_binding = options::g_screen.binding;
+    options::g_screen.binding = 0;
+    EXPECT_FALSE(DebugModeTakeMenuKey(11));
+    options::g_screen.binding = previous_binding;
+    EXPECT_FALSE(DebugModeTakeMenuKey(11));
+}
+
+TEST_F(GamePadDebugChord, DeveloperShortcutDoesNotAlsoQueueTheModeShortcut) {
+    InputSetScriptedDevices({});
+    InputSetScriptedDevices({.keys = {SDL_SCANCODE_F1}});
+    InputSetScriptedDevices({});
+    EXPECT_TRUE(GameDeveloperMenuRequested(LOOP_EDIT));
+    EXPECT_FALSE(GameDeveloperMenuRequested(LOOP_EDIT));
+    EXPECT_FALSE(InputHostPressed(InputHostAction::ModeDebugMenu));
 }

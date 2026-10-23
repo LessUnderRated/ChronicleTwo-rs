@@ -1,5 +1,7 @@
 #include "common.h"
+#include "mw_runtime.h"
 
+#include <algorithm>
 #include <array>
 #include <cstring>
 #include <format>
@@ -13,6 +15,7 @@
 #include "mainloop.hpp"
 #include "menucls1.hpp"
 #include "menucommon.hpp"
+#include "platform/config.hpp"
 #include "userdata.hpp"
 
 namespace {
@@ -94,6 +97,31 @@ struct BoiledName {
     std::string_view prefix; /**< Text written before the fish's name. */
     bool             named;  /**< Whether the fish's name follows the prefix. */
 };
+
+/**
+ * Shares Monica's absorption with her other unlocked transformation badges when enabled.
+ */
+void ShareTransformationAbs(CBattleCharaInfo &info, float amount) {
+    if (!ConfigGet().shared_badge_exp || amount <= 0.0f) {
+        return;
+    }
+    const bool transformed = info.chara_type == BATTLE_CHARA_MONSTER;
+    if (info.chr_no != USER_CHARA_MONICA && !transformed) {
+        return;
+    }
+    auto *user = GetUserDataMan();
+    if (user == nullptr) {
+        return;
+    }
+    const auto     *active = transformed ? info.chara_data.monster : nullptr;
+    constexpr float shared_fraction = 0.25f;
+    for (auto &badge : user->monster_box.monster) {
+        if (badge.enable != 0 && &badge != active) {
+            badge.abs.AddPoint(shared_fraction * amount);
+            badge.LevelUp();
+        }
+    }
+}
 
 } // namespace
 
@@ -258,4 +286,80 @@ PORT_OVERRIDE void CGameDataUsed::GetMsgAddInfo(char **message, char **extra_mes
         default:
             break;
     }
+}
+
+/**
+ * Returns the transformation's attack with optional faster level growth and the retail cap.
+ */
+PORT_OVERRIDE int MOS_CHANGE_PARAM::GetAttackVol(int monster_no) {
+    if (monster_no < 0) {
+        monster_no = monster_id;
+    }
+    const auto *param = GetMonsterHengeParam(monster_no);
+    if (param == nullptr) {
+        return 0;
+    }
+    const float growth = ConfigGet().transformation_stats ? 4.0f : 2.0f;
+    const float scale = 1.0f + growth * (static_cast<float>(level) / 98.0f);
+    return std::min(fptosi(static_cast<float>(param->attack) * scale), 999);
+}
+
+/**
+ * Returns the transformation's defence, optionally raised to Monica's defence, with the retail cap.
+ */
+PORT_OVERRIDE int MOS_CHANGE_PARAM::GetDefenceVol(int monster_no) {
+    if (monster_no < 0) {
+        monster_no = monster_id;
+    }
+    const auto *param = GetMonsterHengeParam(monster_no);
+    if (param == nullptr) {
+        return 0;
+    }
+    int value = fptosi(static_cast<float>(param->defence) + static_cast<float>(GetDegreeLevel() * 2));
+    if (ConfigGet().transformation_stats) {
+        auto *user = GetUserDataMan();
+        auto *monica = user != nullptr ? user->GetCharaDataPtr(USER_CHARA_MONICA) : nullptr;
+        if (monica != nullptr) {
+            value = std::max(value, static_cast<int>(monica->defence));
+        }
+    }
+    return std::min(value, 999);
+}
+
+/**
+ * Adds absorption to the active equipment or badge and applies the optional transformation rewards.
+ */
+PORT_OVERRIDE float CBattleCharaInfo::AddAbs(int slot, float amount, int *leveled_up) {
+    ShareTransformationAbs(*this, amount);
+    auto *gage = GetNowAccessAbs(slot);
+    if (gage == nullptr) {
+        return 0.0f;
+    }
+    if (chara_type == BATTLE_CHARA_ROBO) {
+        gage->now += amount;
+        GetUserDataMan()->AddRoboAbs(amount);
+        return 0.0f;
+    }
+    if (chara_type == BATTLE_CHARA_MONSTER) {
+        auto *badge = chara_data.monster;
+        if (badge != nullptr) {
+            badge->abs.AddPoint(ConfigGet().transformation_exp ? 2.0f * amount : amount);
+            if (badge->LevelUp() != 0 && leveled_up != nullptr) {
+                *leveled_up = true;
+            }
+        }
+        return 0.0f;
+    }
+    if (equip == nullptr || (chr_no == USER_CHARA_MAX && slot == 0 && equip->IsFishingRod() != 0)) {
+        return 0.0f;
+    }
+    gage->AddPoint(amount);
+    if (gage->max == 0.0f) {
+        return 0.0f;
+    }
+    const float rate = gage->GetRate();
+    if (LevelUpWeapon(&equip[slot]) != 0 && leveled_up != nullptr) {
+        *leveled_up = true;
+    }
+    return rate;
 }

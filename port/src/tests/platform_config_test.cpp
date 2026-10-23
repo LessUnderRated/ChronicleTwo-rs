@@ -100,6 +100,10 @@ TEST_F(PlatformConfig, FullFileRoundTrips) {
         ConfigKeyBinding{.action = "cross", .keys = {"Space", "Z"}},
         ConfigKeyBinding{.action = "start", .keys = {"Return"}    }
     };
+    full.pad_bindings = {
+        ConfigKeyBinding{.action = "cross",         .keys = {"b"}},
+        ConfigKeyBinding{.action = "quick_loadout", .keys = {}   }
+    };
     full.mouse_sensitivity = 0.25f;
     full.stick_sensitivity = 1.5f;
     full.stick_invert_x = true;

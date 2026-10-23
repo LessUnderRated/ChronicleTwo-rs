@@ -159,7 +159,9 @@ void CorrectGroundAndWalls(CCameraControl &camera, CCPoly *polys, int count) {
     camera.CheckCollision(polys, count);
 }
 
-// Whether a wall crosses the segment between two points.
+/**
+ * Whether a wall crosses the segment between two points.
+ */
 bool Blocked(CCPoly *polys, int count, const float *from, const float *to) {
     float a[4] = {from[0], from[1], from[2], 1};
     float b[4] = {to[0], to[1], to[2], 1};
@@ -167,13 +169,17 @@ bool Blocked(CCPoly *polys, int count, const float *from, const float *to) {
     return count > 0 && CheckHit(polys, count, a, b, hit, 1, 0) >= 0;
 }
 
-// The point retail's wall correction checks from when it has an explicit one.
+/**
+ * The point retail's wall correction checks from when it has an explicit one.
+ */
 std::array<float, 4> CheckTarget(const CCameraControl &camera) {
     return {camera.check_ref[0], camera.check_ref[1] + camera.follow_offset[1], camera.check_ref[2], 1};
 }
 
-// The largest fraction in [0, 1], to 1/4096, that a test accepts when it
-// accepts 0 and refuses 1.
+/**
+ * The largest fraction in [0, 1], to 1/4096, that a test accepts when it
+ * accepts 0 and refuses 1.
+ */
 template <typename Test>
 double LastAccepted(Test accepts) {
     double accepted = 0;
@@ -185,12 +191,12 @@ double LastAccepted(Test accepts) {
     return accepted;
 }
 
-// The walls that hid neither the look-at point nor retail's explicit collision
-// target from the eye before the turn. An eye already hidden eases on behind
-// those, as retail's eased eye can behind a pillar; only the others are held
-// against the turn.
+/**
+ * Collects walls that obstructed neither camera target before the turn.
+ */
 std::vector<CCPoly> NewWalls(const CCameraControl &camera, CCPoly *polys, int count) {
     std::vector<CCPoly> walls;
+    walls.reserve(static_cast<std::size_t>(count));
     for (int i = 0; i < count; ++i) {
         if (!Blocked(&polys[i], 1, camera.ref, camera.pos) &&
             !(camera.check_ref_on && Blocked(&polys[i], 1, CheckTarget(camera).data(), camera.pos))) {
@@ -200,14 +206,19 @@ std::vector<CCPoly> NewWalls(const CCameraControl &camera, CCPoly *polys, int co
     return walls;
 }
 
-// Whether an eye sees its look-at point past the walls and, when retail's wall
-// correction keeps an explicit collision target in view, that target too.
+/**
+ * Whether an eye sees its look-at point past the walls and, when retail's wall
+ * correction keeps an explicit collision target in view, that target too.
+ */
 bool InSight(const CCameraControl &camera, const float *ref, const float *eye, std::vector<CCPoly> &walls) {
     const int count = static_cast<int>(walls.size());
     return !Blocked(walls.data(), count, ref, eye) &&
            !(camera.check_ref_on && Blocked(walls.data(), count, CheckTarget(camera).data(), eye));
 }
 
+/**
+ * Predicts the camera pose after one logic step without changing the original.
+ */
 CCameraControl Stepped(const CCameraControl &camera) {
     CCameraControl stepped = camera;
     stepped.mgCCamera::Step(1);
@@ -216,25 +227,19 @@ CCameraControl Stepped(const CCameraControl &camera) {
 
 // The shortest view a placement here may leave, well clear of a camera with no
 // usable direction.
-constexpr double kShortestView = 10;
+constexpr double shortest_view = 10;
 
-// Where a fallback view's search starts, a little beyond kShortestView so that
+// Where a fallback view's search starts, a little beyond shortest_view so that
 // the view still measures at least that once its eye is stored as floats and
 // stepped.
-constexpr double kFallbackStart = kShortestView + 0.01;
+constexpr double fallback_start = shortest_view + 0.01;
 
 // The headings tried for that view in each half turn.
-constexpr int kHeadingSteps = 8;
+constexpr int heading_steps = 8;
 
-// Places the eyes so that the view this tick's step shows is in sight past the
-// new walls, each placement checked through the step itself. Retail's pending
-// pose is kept where moving the drawn eye suffices: a drawn eye the turn took
-// behind a wall first moves on along its easing path toward a pending eye its
-// look-at point sees, then in toward its look-at point. Failing both, both eyes
-// are placed on the view from the stepped look-at point nearest in heading to
-// the stepped view that has a point in sight at least kShortestView out, as
-// far out as a search finds in sight. Returns false, leaving the turn to be
-// dropped, when none of the headings tried has such a point.
+/**
+ * Places a usable stepped view clear of newly obstructing walls, rejecting turns with no sampled placement.
+ */
 bool KeepInSight(CCameraControl &camera, std::vector<CCPoly> &walls) {
     const int count = static_cast<int>(walls.size());
     // A placement made here must also leave a view of usable length.
@@ -243,7 +248,7 @@ bool KeepInSight(CCameraControl &camera, std::vector<CCPoly> &walls) {
         Write(trial.pos, drawn_eye);
         Write(trial.next_pos, pending_eye);
         const CCameraControl stepped = Stepped(trial);
-        return Length(Read(stepped.pos) - Read(stepped.ref)) >= kShortestView &&
+        return Length(Read(stepped.pos) - Read(stepped.ref)) >= shortest_view &&
                InSight(camera, stepped.ref, stepped.pos, walls);
     };
     const Vec pending = Read(camera.next_pos);
@@ -272,25 +277,25 @@ bool KeepInSight(CCameraControl &camera, std::vector<CCPoly> &walls) {
     }
     const CCameraControl stepped = Stepped(camera);
     const Vec            from = Read(stepped.ref);
-    const double         length = std::max(Length(Read(stepped.pos) - from), kFallbackStart);
+    const double         length = std::max(Length(Read(stepped.pos) - from), fallback_start);
     // Nearest first: the stepped view itself, then views turned from it in
     // steps of an eighth of a half turn either way, round to the view behind.
-    for (int k = 0; k < 2 * kHeadingSteps; ++k) {
+    for (int k = 0; k < 2 * heading_steps; ++k) {
         const int    steps = (k % 2 ? 1 : -1) * ((k + 1) / 2);
-        const float  angle = std::numbers::pi_v<float> * static_cast<float>(steps) / kHeadingSteps;
+        const float  angle = std::numbers::pi_v<float> * static_cast<float>(steps) / heading_steps;
         const Vec    aim = Orbit(Read(stepped.pos), from, angle);
         const double aim_length = Length(aim - from);
         if (!(aim_length > 0)) {
             continue;
         }
         const Vec  direction = (aim - from) * (1 / aim_length);
-        const auto at = [&](double s) { return from + direction * (kFallbackStart + (length - kFallbackStart) * s); };
+        const auto at = [&](double s) { return from + direction * (fallback_start + (length - fallback_start) * s); };
         if (!usable(at(0), at(0))) {
             continue;
         }
         const double reach = LastAccepted([&](double s) { return usable(at(s), at(s)); });
         // Five units nearer where there is room, as retail's correction leaves.
-        const double room = reach - (5 / std::max(length - kFallbackStart, 5.0));
+        const double room = reach - (5 / std::max(length - fallback_start, 5.0));
         const Vec    eye = at(room > 0 && usable(at(room), at(room)) ? room : reach);
         Write(camera.pos, eye);
         Write(camera.next_pos, eye);

@@ -121,22 +121,22 @@ std::string ContentHash(std::span<const std::byte> bytes) {
  * A standard glTF document and its adjacent native gameplay semantics.
  */
 struct Document : std::enable_shared_from_this<Document> {
-    std::shared_ptr<fastgltf::Asset>                                           storage;               /**< Shared standard glTF contents for every scene of a bundle. */
-    fastgltf::Asset                                                           &asset;                 /**< Parsed standard model, material, skin, and animation data. */
-    std::shared_ptr<Json>                                                      custom;                /**< Adjacent minimal game-specific JSON. */
-    std::shared_ptr<Json>                                                      images;                /**< Image replacement paths stored in the gameplay JSON. */
-    std::unordered_map<std::size_t, std::shared_ptr<texture_catalog::Source> > texture_sets;          /**< Stable native image and animation sets. */
-    Json                                                                       metadata;              /**< Engine-specific decoded model information. */
-    std::filesystem::path                                                      relative;              /**< Model path used to resolve external resources. */
-    bool                                                                       overlaid = false;      /**< Whether a datapack supplies this model document. */
-    std::string                                                                source;                /**< Datapack glTF path, size and write time naming its embedded images. */
-    std::size_t                                                                node_offset = 0;       /**< First standard node belonging to the selected native model. */
-    std::unordered_map<std::size_t, std::size_t>                               rotation_nodes;        /**< Standard rotation helpers mapped to their original gameplay frame. */
-    std::vector<std::size_t>                                                   frame_nodes;           /**< Standard scene nodes mapped to native frames when gameplay identities are absent. */
-    std::optional<fastgltf::Node>                                              scene_root;            /**< Identity parent joining multiple roots of a standard scene. */
-    bool                                                                       standard_only = false; /**< Whether the standard scene supplies all model identities. */
-    mutable std::unordered_map<std::size_t, std::string>                       embedded_keys;         /**< Content identities of embedded images by standard image index. */
-    std::shared_ptr<const std::vector<bool> >                                  scaled_nodes;          /**< Standard nodes some animation scales to other than one, once computed. */
+    std::shared_ptr<fastgltf::Asset>                                          storage;               /**< Shared standard glTF contents for every scene of a bundle. */
+    fastgltf::Asset                                                          &asset;                 /**< Parsed standard model, material, skin, and animation data. */
+    std::shared_ptr<Json>                                                     custom;                /**< Adjacent minimal game-specific JSON. */
+    std::shared_ptr<Json>                                                     images;                /**< Image replacement paths stored in the gameplay JSON. */
+    std::unordered_map<std::size_t, std::shared_ptr<texture_catalog::Source>> texture_sets;          /**< Stable native image and animation sets. */
+    Json                                                                      metadata;              /**< Engine-specific decoded model information. */
+    std::filesystem::path                                                     relative;              /**< Model path used to resolve external resources. */
+    bool                                                                      overlaid = false;      /**< Whether a datapack supplies this model document. */
+    std::string                                                               source;                /**< Datapack glTF path, size and write time naming its embedded images. */
+    std::size_t                                                               node_offset = 0;       /**< First standard node belonging to the selected native model. */
+    std::unordered_map<std::size_t, std::size_t>                              rotation_nodes;        /**< Standard rotation helpers mapped to their original gameplay frame. */
+    std::vector<std::size_t>                                                  frame_nodes;           /**< Standard scene nodes mapped to native frames when gameplay identities are absent. */
+    std::optional<fastgltf::Node>                                             scene_root;            /**< Identity parent joining multiple roots of a standard scene. */
+    bool                                                                      standard_only = false; /**< Whether the standard scene supplies all model identities. */
+    mutable std::unordered_map<std::size_t, std::string>                      embedded_keys;         /**< Content identities of embedded images by standard image index. */
+    std::shared_ptr<const std::vector<bool>>                                  scaled_nodes;          /**< Standard nodes some animation scales to other than one, once computed. */
 
     explicit Document(std::shared_ptr<fastgltf::Asset> input) : storage(std::move(input)), asset(*storage) {}
 };
@@ -173,7 +173,7 @@ void EnterModelTextures(const std::shared_ptr<Document> &source, std::optional<s
 /**
  * Parsed documents shared by the model and its associated motion resources.
  */
-std::unordered_map<std::string, std::shared_ptr<Document> > documents;
+std::unordered_map<std::string, std::shared_ptr<Document>> documents;
 
 /**
  * Standard inverse-bind matrices shared by copied visuals through their weight arrays.
@@ -254,10 +254,10 @@ std::unordered_map<const CCharacter2 *, MotionOwner> character_models;
  * Base streams and glTF morph deltas indexed by the native mesh's persistent positions.
  */
 struct NativeMorph {
-    std::vector<std::array<float, 4> >               positions;       /**< Undeformed native positions. */
-    std::vector<std::array<float, 4> >               normals;         /**< Undeformed native normals. */
-    std::vector<std::vector<std::array<float, 4> > > position_deltas; /**< Position deltas for each morph target. */
-    std::vector<std::vector<std::array<float, 4> > > normal_deltas;   /**< Normal deltas for each morph target. */
+    std::vector<std::array<float, 4>>              positions;       /**< Undeformed native positions. */
+    std::vector<std::array<float, 4>>              normals;         /**< Undeformed native normals. */
+    std::vector<std::vector<std::array<float, 4>>> position_deltas; /**< Position deltas for each morph target. */
+    std::vector<std::vector<std::array<float, 4>>> normal_deltas;   /**< Normal deltas for each morph target. */
 };
 
 /**
@@ -280,20 +280,20 @@ struct CharacterImages {
 /**
  * Associates entered native image sets with the character slots that own them.
  */
-std::unordered_map<CCharacter2 *, std::vector<CharacterImages> > character_images;
+std::unordered_map<CCharacter2 *, std::vector<CharacterImages>> character_images;
 
 /**
  * Owns parsed monster texture resources until their reserved slots are replaced.
  */
 struct ReservedImages {
-    std::shared_ptr<texture_catalog::Source>                               source; /**< Parsed picture and animation definitions. */
-    std::shared_ptr<std::vector<std::vector<datapacks::DecodedTexture> > > pixels; /**< Reserved RGBA mip chains for every variant. */
+    std::shared_ptr<texture_catalog::Source>                             source; /**< Parsed picture and animation definitions. */
+    std::shared_ptr<std::vector<std::vector<datapacks::DecodedTexture>>> pixels; /**< Reserved RGBA mip chains for every variant. */
 };
 
 /**
  * Keeps reserved native resource objects alive without serialized image buffers.
  */
-std::unordered_map<CActiveMonster *, std::array<ReservedImages, 2> > reserved_images;
+std::unordered_map<CActiveMonster *, std::array<ReservedImages, 2>> reserved_images;
 
 /**
  * Converts readable or escaped model names to the byte strings used by game frame and texture lookups.
@@ -714,7 +714,7 @@ void Stream(const fastgltf::Asset &asset, const fastgltf::Primitive &primitive, 
     if (accessor.count != mapping.size()) {
         throw std::runtime_error("glTF attribute/identity count mismatch");
     }
-    fastgltf::iterateAccessorWithIndex<fastgltf::math::vec<float, N> >(asset, accessor, [&](auto value, std::size_t corner) {
+    fastgltf::iterateAccessorWithIndex<fastgltf::math::vec<float, N>>(asset, accessor, [&](auto value, std::size_t corner) {
         const auto index = mapping.at(corner).get<int>();
         if (index < 0 || index >= count) {
             throw std::runtime_error("glTF stream index out of range");
@@ -895,9 +895,9 @@ void ImageExtent(const Document &document, std::size_t index, int &width, int &h
     if (!embedded.reference.empty()) {
         // The base game data never changes while running, so each external PNG's header is read once:
         // an area registers the same few thousand images many times over.
-        static std::mutex                                            extents_mutex;
-        static std::unordered_map<std::string, std::pair<int, int> > extents;
-        const auto                                                   key = vfs::FoldKey(embedded.reference);
+        static std::mutex                                           extents_mutex;
+        static std::unordered_map<std::string, std::pair<int, int>> extents;
+        const auto                                                  key = vfs::FoldKey(embedded.reference);
         {
             std::scoped_lock lock(extents_mutex);
             if (const auto found = extents.find(key); found != extents.end()) {
@@ -912,7 +912,7 @@ void ImageExtent(const Document &document, std::size_t index, int &width, int &h
         if (!file) {
             file = Asset(embedded.reference);
         }
-        std::array<std::uint8_t, 24> header{};
+        std::array<std::uint8_t, 24>          header{};
         constexpr std::array<std::uint8_t, 8> signature{137, 80, 78, 71, 13, 10, 26, 10};
         if (!vfs::ReadPrefix(file, header) || !std::equal(signature.begin(), signature.end(), header.begin()) ||
             !std::equal(header.begin() + 12, header.begin() + 16, "IHDR")) {
@@ -1059,7 +1059,7 @@ std::shared_ptr<const datapacks::DecodedTexture> SourcePixels(const ImageSource 
 /**
  * Prefetches every image decode a texture registration will request, on worker threads.
  */
-void PrefetchImages(std::span<const std::shared_ptr<const ImageSource> > sources) {
+void PrefetchImages(std::span<const std::shared_ptr<const ImageSource>> sources) {
     std::vector<datapacks::DecodeJob> jobs;
     std::unordered_set<std::string>   queued;
     for (const auto &source : sources) {
@@ -1342,8 +1342,8 @@ void Mesh(Document &document, const fastgltf::Node &node, const Json &detail, mg
         std::memcpy(morph.positions.data(), visual.vertex, visual.vertex_num * sizeof(sceVu0FVECTOR));
         std::memcpy(morph.normals.data(), visual.normal, visual.normal_num * sizeof(sceVu0FVECTOR));
         const auto count = mesh.primitives.front().targets.size();
-        morph.position_deltas.resize(count, std::vector<std::array<float, 4> >(visual.vertex_num));
-        morph.normal_deltas.resize(count, std::vector<std::array<float, 4> >(visual.normal_num));
+        morph.position_deltas.resize(count, std::vector<std::array<float, 4>>(visual.vertex_num));
+        morph.normal_deltas.resize(count, std::vector<std::array<float, 4>>(visual.normal_num));
         for (std::size_t primitive_index = 0; primitive_index < mesh.primitives.size(); ++primitive_index) {
             const auto &primitive = mesh.primitives[primitive_index];
             if (primitive.targets.size() != count) {
@@ -1408,8 +1408,8 @@ void Skin(Document &document, const fastgltf::Node &node, const Json &detail, mg
     inverse_binds.insert_or_assign(visual.weight, InverseBinds{.frames = visual.frame, .frame_id = visual.frame_id, .matrices = std::move(inverse)});
     const auto &mesh = document.asset.meshes.at(*node.meshIndex);
     for (std::size_t primitive_index = 0; primitive_index < mesh.primitives.size(); ++primitive_index) {
-        const auto                                       &primitive = mesh.primitives[primitive_index];
-        std::vector<std::pair<std::size_t, std::size_t> > attributes;
+        const auto                                      &primitive = mesh.primitives[primitive_index];
+        std::vector<std::pair<std::size_t, std::size_t>> attributes;
         for (std::size_t group = 0;; ++group) {
             const auto *const joints = primitive.findAttribute("JOINTS_" + std::to_string(group));
             const auto *const weights = primitive.findAttribute("WEIGHTS_" + std::to_string(group));
@@ -1657,8 +1657,8 @@ std::optional<std::size_t> EstimateCharacterMemory(const std::filesystem::path &
         const auto   &commands = game.at("profiles").at(selected).at("commands");
         ArenaEstimate estimate;
         estimate.Add(1, sizeof(CCharacter2));
-        std::vector<std::pair<const Json *, std::size_t> > measured_textures;
-        auto                                               measure_texture = [&](const std::shared_ptr<Document> &owner, std::size_t index) {
+        std::vector<std::pair<const Json *, std::size_t>> measured_textures;
+        auto                                              measure_texture = [&](const std::shared_ptr<Document> &owner, std::size_t index) {
             const auto identity = std::pair<const Json *, std::size_t>{owner->custom.get(), index};
             if (std::ranges::find(measured_textures, identity) != measured_textures.end()) {
                 return;
@@ -1891,7 +1891,7 @@ namespace {
  */
 const std::vector<bool> &ScaledNodes(Document &document) {
     if (!document.scaled_nodes) {
-        auto scaled = std::make_shared<std::vector<bool> >(document.asset.nodes.size(), false);
+        auto scaled = std::make_shared<std::vector<bool>>(document.asset.nodes.size(), false);
         for (const auto &animation : document.asset.animations) {
             for (const auto &channel : animation.channels) {
                 if (channel.path != fastgltf::AnimationPath::Scale || !channel.nodeIndex || *channel.nodeIndex >= scaled->size() || (*scaled)[*channel.nodeIndex]) {
@@ -2601,9 +2601,9 @@ std::size_t ImageIndex(std::string_view reference) {
  * Shares resolved image sources between prefetching, identities and decoding for one texture registration.
  */
 struct ResolvedImages {
-    std::shared_ptr<Document>                                            document;      /**< Document owning the images. */
-    std::unordered_map<std::size_t, std::shared_ptr<const ImageSource> > images;        /**< Resolved sources by standard image index. */
-    bool                                                                 active = true; /**< Whether resolutions are reused; later decodes resolve afresh. */
+    std::shared_ptr<Document>                                           document;      /**< Document owning the images. */
+    std::unordered_map<std::size_t, std::shared_ptr<const ImageSource>> images;        /**< Resolved sources by standard image index. */
+    bool                                                                active = true; /**< Whether resolutions are reused; later decodes resolve afresh. */
 
     /**
      * Resolves one image, reusing an earlier resolution while the registration is active.
@@ -2684,7 +2684,7 @@ void EnterTextureSet(const std::shared_ptr<Document> &document, std::size_t inde
     auto resolved = std::make_shared<ResolvedImages>();
     resolved->document = document;
     {
-        std::vector<std::shared_ptr<const ImageSource> > sources;
+        std::vector<std::shared_ptr<const ImageSource>> sources;
         for (const auto &entry : cached->entries) {
             if (entry.type == "cfg" || entry.no_image) {
                 continue;
@@ -3126,8 +3126,8 @@ namespace {
 /**
  * Validates a texture document and retains its native picture and animation definitions.
  */
-std::shared_ptr<texture_catalog::Source> ReadReplacementTextures(const std::filesystem::path                          &path,
-                                                                 std::vector<std::vector<datapacks::DecodedTexture> > *pixels = nullptr) {
+std::shared_ptr<texture_catalog::Source> ReadReplacementTextures(const std::filesystem::path                         &path,
+                                                                 std::vector<std::vector<datapacks::DecodedTexture>> *pixels = nullptr) {
     const auto *source = texture_catalog::Find(path.generic_string());
     if (!source) {
         throw std::runtime_error("invalid native texture document: " + path.generic_string());
@@ -3161,7 +3161,7 @@ std::shared_ptr<texture_catalog::Source> ReadReplacementTextures(const std::file
  */
 void ReplaceTextures(CCharacter2 &character, const std::shared_ptr<texture_catalog::Source> &source, int slot,
                      int block, mgCMemory *memory,
-                     const std::shared_ptr<std::vector<std::vector<datapacks::DecodedTexture> > > &pixels = {}) {
+                     const std::shared_ptr<std::vector<std::vector<datapacks::DecodedTexture>>> &pixels = {}) {
     if (slot < 0 || slot >= CHARA_IMAGE_MAX) {
         throw std::runtime_error("invalid character image slot");
     }
@@ -3307,7 +3307,7 @@ bool ReserveMonsterTextureDocument(CActiveMonster &monster, int slot, const std:
         if (slot < 0 || slot >= 2) {
             throw std::runtime_error("invalid reserved monster image slot");
         }
-        auto pixels = std::make_shared<std::vector<std::vector<datapacks::DecodedTexture> > >();
+        auto pixels = std::make_shared<std::vector<std::vector<datapacks::DecodedTexture>>>();
         auto source = ReadReplacementTextures(document, pixels.get());
         reserved_images[&monster][slot] = {.source = source, .pixels = pixels};
         monster.reserv_img[slot] = source.get();

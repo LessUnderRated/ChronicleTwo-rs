@@ -98,8 +98,9 @@ void ZeroSectorTail(void *buffer, std::size_t size) {
     std::memset(static_cast<char *>(buffer) + size, 0, PaddedSize(size) - size);
 }
 
-// A load writes its whole destination, sector padding included, before the caller reserves the unpadded size
-// it reports. Main-thread loads tell the motion registry first, so it forgets the sets that lived there.
+/**
+ * Invalidates motion data in a main-thread load destination, including any sector padding.
+ */
 void ReportDestination(void *buffer, std::size_t bytes) {
     character_motion::ForgetStorage(buffer, static_cast<char *>(buffer) + bytes);
 }
@@ -236,7 +237,9 @@ int ReadUnregistered(const IndexedFile &file, void *buffer) {
     return *size;
 }
 
-// Reads a whole file into a sector-padded buffer and records the buffer; main thread only.
+/**
+ * Reads and records a sector-padded file buffer on the main thread.
+ */
 int ReadWhole(const IndexedFile &file, void *buffer) {
     if (const std::optional<int> size = FileSize(file)) {
         ReportDestination(buffer, PaddedSize(static_cast<std::size_t>(*size)));

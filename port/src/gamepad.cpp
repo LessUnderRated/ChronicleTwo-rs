@@ -16,7 +16,6 @@
 #include "pad_rumble.hpp"
 #include "platform/input.hpp"
 #include "platform/paths.hpp"
-#include "options/screen.hpp"
 #include "test_hooks.hpp"
 
 namespace {
@@ -35,12 +34,6 @@ PORT_OVERRIDE void CGamePad::UpDate() {
     for (int port = 0; port < 2; ++port) {
         previous_pad[port] = pad[port];
         PortReadPad(&pad[port], port, 0);
-    }
-    // The mode_debug_menu binding (F2) turns DebugFlag on and presses R3 for one read, which opens the
-    // town, dungeon or menu debug menu (DEBUG.md). Its press is consumed even when it cannot act.
-    if (InputHostPressed(InputHostAction::ModeDebugMenu) && GameDebugEnabled() && !options::Capturing()) {
-        DebugFlag = 1;
-        pad[0].button |= PAD_R3;
     }
 
     const bool playback = capture_mode == PAD_CAPTURE_PLAY;

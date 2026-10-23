@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
@@ -14,6 +15,7 @@
 #include <vector>
 
 #include "dataread.hpp"
+#include "dataread_port.hpp"
 #include "dng_event.hpp"
 #include "dng_main.hpp"
 #include "font.hpp"
@@ -196,18 +198,18 @@ std::string MessageText(const CDC2Mes &message) {
     return text;
 }
 
+/**
+ * Reads localized save messages through the native asset index into aligned storage.
+ */
 std::vector<u_long128> SaveMessages(int language) {
-    const auto    path = PathsDataRoot().parent_path() / "data/menu" / std::to_string(language) / "save.pac/allmenu.mes";
-    std::ifstream file(path, std::ios::binary | std::ios::ate);
-    if (!file) {
+    const auto                path = "menu/" + std::to_string(language) + "/save.pac/allmenu.mes";
+    const auto                file = DataReadFind(path.c_str());
+    std::vector<std::uint8_t> bytes;
+    if (!file || !vfs::Read(*file, bytes) || bytes.empty()) {
         return {};
     }
-    const auto             size = static_cast<std::size_t>(file.tellg());
-    std::vector<u_long128> archive((size + 15) / 16);
-    file.seekg(0);
-    if (!file.read(reinterpret_cast<char *>(archive.data()), size)) {
-        return {};
-    }
+    std::vector<u_long128> archive((bytes.size() + sizeof(u_long128) - 1) / sizeof(u_long128));
+    std::memcpy(archive.data(), bytes.data(), bytes.size());
     return archive;
 }
 

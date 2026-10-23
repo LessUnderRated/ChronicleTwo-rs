@@ -1,37 +1,26 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <filesystem>
 #include <format>
 #include <memory>
 
 #include "mainloop_port.hpp"
-#include "monster_transformation.hpp"
 #include "platform/config.hpp"
 #include "platform/paths.hpp"
 #include "platform_fixture.hpp"
 #include "savedata.hpp"
 #include "userdata.hpp"
 
-namespace mt = monster_transformation;
-
 namespace {
-
-// mos_henge_param's row for monster 1: base attack 22, defence 12.
-constexpr int kMonster = 1;
-
-MOS_CHANGE_PARAM Badge(int level) {
-    MOS_CHANGE_PARAM badge{};
-    badge.monster_id = kMonster;
-    badge.level = static_cast<s16>(level);
-    return badge;
-}
-
-// Turns every Extras setting on or off in an isolated save root, with a save data of its own.
+/**
+ * Provides isolated settings and save data for transformation rewards.
+ */
 class TransformationSettings : public testing::Test {
 protected:
-    std::filesystem::path      root = std::filesystem::temp_directory_path() / std::format("dc2_transformation_{}", dc::test::ProcessId());
-    std::unique_ptr<CSaveData> save = std::make_unique<CSaveData>();
-    CSaveData                 *previous = PortActiveSaveData;
+    std::filesystem::path      root = std::filesystem::temp_directory_path() / std::format("dc2_transformation_{}", dc::test::ProcessId()); /**< Isolated configuration and save directory. */
+    std::unique_ptr<CSaveData> save = std::make_unique<CSaveData>();                                                                        /**< Save data containing the test badges. */
+    CSaveData                 *previous = PortActiveSaveData;                                                                               /**< Active save restored after each test. */
 
     void SetUp() override {
         PathsSetSaveRoot(root / "save");
@@ -54,45 +43,24 @@ protected:
     }
 };
 
+/**
+ * Creates a badge for the monster whose base attack and defence are 22 and 12.
+ */
+MOS_CHANGE_PARAM Badge(int level) {
+    MOS_CHANGE_PARAM badge{};
+    badge.monster_id = 1;
+    badge.level = static_cast<s16>(level);
+    return badge;
+}
 } // namespace
 
-TEST(MonsterTransformation, SettingsOffKeepRetailNumbers) {
-    for (int level : {0, 10, 49, 98}) {
-        EXPECT_EQ(mt::AttackScale(level, false), 1.0f + 2.0f * ((float) level / 98.0f)) << level;
+TEST_F(TransformationSettings, DisabledStatsKeepRetailNumbers) {
+    Set(false);
+    for (const int level : {0, 10, 49, 98}) {
+        auto badge = Badge(level);
+        EXPECT_EQ(badge.GetAttackVol(-1), static_cast<int>(22.0f * (1.0f + 2.0f * (static_cast<float>(level) / 98.0f))));
+        EXPECT_EQ(badge.GetDefenceVol(-1), 12 + std::min(level / 6, 15) * 2);
     }
-    EXPECT_EQ(mt::Defence(42, 128, false), 42.0f);
-    EXPECT_EQ(mt::Absorption(30.0f, false), 30.0f);
-}
-
-TEST(MonsterTransformation, StrongerStatsGrowAttackTwiceAsFastAndTakeMonicasDefenceWhenHigher) {
-    // Retail adds twice the base by level 98; twice as fast adds four times it.
-    EXPECT_FLOAT_EQ(mt::AttackScale(0, true), 1.0f);
-    EXPECT_FLOAT_EQ(mt::AttackScale(49, true), 3.0f);
-    EXPECT_FLOAT_EQ(mt::AttackScale(98, true), 5.0f);
-    EXPECT_FLOAT_EQ(mt::Defence(42, 60, true), 60.0f);
-    EXPECT_FLOAT_EQ(mt::Defence(42, 20, true), 42.0f);
-}
-
-TEST(MonsterTransformation, FasterExpDoublesTheAbsorption) { EXPECT_FLOAT_EQ(mt::Absorption(30.0f, true), 60.0f); }
-
-TEST(MonsterTransformation, ShareGivesAQuarterToOtherUnlockedBadgesAndLevelsThoseThatFill) {
-    auto box = std::make_unique<CMonsterBox>();
-    box->Initialize();
-    for (int badge : {0, 1, 2}) {
-        box->monster[badge].enable = 1;
-    }
-    mt::Share(*box, &box->monster[1], 40.0f);
-    EXPECT_FLOAT_EQ(box->monster[0].abs.now, 10.0f);
-    EXPECT_FLOAT_EQ(box->monster[1].abs.now, 0.0f);
-    EXPECT_FLOAT_EQ(box->monster[2].abs.now, 10.0f);
-    EXPECT_FLOAT_EQ(box->monster[3].abs.now, 0.0f);
-    // Without a badge in use every unlocked badge shares; a full gauge levels the badge up.
-    mt::Share(*box, nullptr, 360.0f);
-    EXPECT_EQ(box->monster[0].level, 1);
-    EXPECT_FLOAT_EQ(box->monster[0].abs.now, 0.0f);
-    EXPECT_EQ(box->monster[1].level, 0);
-    EXPECT_FLOAT_EQ(box->monster[1].abs.now, 90.0f);
-    EXPECT_EQ(box->monster[3].level, 0);
 }
 
 TEST_F(TransformationSettings, BadgeStatsFollowTheSetting) {
@@ -105,44 +73,72 @@ TEST_F(TransformationSettings, BadgeStatsFollowTheSetting) {
     Set(true);
     EXPECT_EQ(badge.GetAttackVol(-1), 110);
     EXPECT_EQ(badge.GetDefenceVol(-1), 60);
-    // The form's own defence, 12 and 30 for its degree, stays when Monica's is lower.
     monica.defence = 20;
     EXPECT_EQ(badge.GetDefenceVol(-1), 42);
 }
 
-TEST_F(TransformationSettings, SeamsFollowTheSetting) {
-    Set(true);
-    EXPECT_FLOAT_EQ(PortTransformationAbs(30.0f), 60.0f);
+TEST_F(TransformationSettings, ActiveBadgeAbsorptionFollowsTheSetting) {
+    auto &badge = save->user_data.monster_box.monster[0];
+    badge.enable = 1;
+    CBattleCharaInfo transformed;
+    transformed.chr_no = USER_CHARA_MONSTER;
+    transformed.chara_type = BATTLE_CHARA_MONSTER;
+    transformed.chara_data.monster = &badge;
     Set(false);
-    EXPECT_FLOAT_EQ(PortTransformationAbs(30.0f), 30.0f);
+    transformed.AddAbs(0, 30.0f, nullptr);
+    EXPECT_FLOAT_EQ(badge.abs.now, 30.0f);
+    Set(true);
+    transformed.AddAbs(0, 30.0f, nullptr);
+    EXPECT_FLOAT_EQ(badge.abs.now, 90.0f);
 }
 
-TEST_F(TransformationSettings, MonicasAbsorptionSharesOnlyWithTheSettingOn) {
+TEST_F(TransformationSettings, SharesWithOtherUnlockedBadgesAndLevelsThoseThatFill) {
     auto &box = save->user_data.monster_box;
-    box.monster[0].enable = 1;
-    box.monster[1].enable = 1;
+    for (const int badge : {0, 1, 2}) {
+        box.monster[badge].enable = 1;
+    }
     CBattleCharaInfo monica;
     monica.chr_no = USER_CHARA_MONICA;
     monica.chara_type = BATTLE_CHARA_HUMAN;
+    monica.equip = nullptr;
     Set(false);
-    PortShareTransformationAbs(&monica, 40.0f);
+    monica.AddAbs(0, 40.0f, nullptr);
     EXPECT_FLOAT_EQ(box.monster[0].abs.now, 0.0f);
     Set(true);
-    PortShareTransformationAbs(&monica, 40.0f);
+    CBattleCharaInfo transformed;
+    transformed.chr_no = USER_CHARA_MONSTER;
+    transformed.chara_type = BATTLE_CHARA_MONSTER;
+    transformed.chara_data.monster = &box.monster[1];
+    transformed.AddAbs(0, 40.0f, nullptr);
     EXPECT_FLOAT_EQ(box.monster[0].abs.now, 10.0f);
-    EXPECT_FLOAT_EQ(box.monster[1].abs.now, 10.0f);
-    // A transformed Monica shares with the other badges, not the one she is.
+    EXPECT_FLOAT_EQ(box.monster[1].abs.now, 80.0f);
+    EXPECT_FLOAT_EQ(box.monster[2].abs.now, 10.0f);
+    EXPECT_FLOAT_EQ(box.monster[3].abs.now, 0.0f);
+    monica.AddAbs(0, 360.0f, nullptr);
+    EXPECT_EQ(box.monster[0].level, 1);
+    EXPECT_FLOAT_EQ(box.monster[0].abs.now, 0.0f);
+    EXPECT_EQ(box.monster[3].level, 0);
+}
+
+TEST_F(TransformationSettings, MaxAbsorptionDoesNotShareAndFlagsAreIndependent) {
+    auto &box = save->user_data.monster_box;
+    box.monster[0].enable = 1;
+    CBattleCharaInfo max;
+    max.chr_no = USER_CHARA_MAX;
+    max.chara_type = BATTLE_CHARA_HUMAN;
+    max.equip = nullptr;
+    Set(true);
+    max.AddAbs(0, 40.0f, nullptr);
+    EXPECT_FLOAT_EQ(box.monster[0].abs.now, 0.0f);
+    Config config;
+    config.shared_badge_exp = true;
+    ASSERT_TRUE(ConfigChange(config));
     CBattleCharaInfo transformed;
     transformed.chr_no = USER_CHARA_MONSTER;
     transformed.chara_type = BATTLE_CHARA_MONSTER;
     transformed.chara_data.monster = &box.monster[0];
-    PortShareTransformationAbs(&transformed, 40.0f);
-    EXPECT_FLOAT_EQ(box.monster[0].abs.now, 10.0f);
-    EXPECT_FLOAT_EQ(box.monster[1].abs.now, 20.0f);
-    // Max's absorption is his own.
-    CBattleCharaInfo max;
-    max.chr_no = USER_CHARA_MAX;
-    max.chara_type = BATTLE_CHARA_HUMAN;
-    PortShareTransformationAbs(&max, 40.0f);
-    EXPECT_FLOAT_EQ(box.monster[1].abs.now, 20.0f);
+    transformed.AddAbs(0, 30.0f, nullptr);
+    EXPECT_FLOAT_EQ(box.monster[0].abs.now, 30.0f);
+    auto badge = Badge(98);
+    EXPECT_EQ(badge.GetAttackVol(-1), 66);
 }

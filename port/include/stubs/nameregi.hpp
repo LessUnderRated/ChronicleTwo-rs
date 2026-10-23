@@ -1,5 +1,6 @@
 #pragma once
 #include <nameregi.hpp>
-// The PC keyboard types into the name entry the retail screen keeps here (port/src/nameregi.cpp).
+/** Holds the active name-entry menu. */
 extern CNameRegiMenu *NameRegiMenuPtr asm("NameRegi_MenuPtr");
-extern s16            NameRegistMax asm("NameRegi_Max");
+/** Limits the number of characters accepted by the name-entry menu. */
+extern s16 NameRegistMax asm("NameRegi_Max");

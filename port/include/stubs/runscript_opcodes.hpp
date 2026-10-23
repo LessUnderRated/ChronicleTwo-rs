@@ -1,5 +1,7 @@
 #pragma once
 
+#include <runscript_opcodes.hpp>
+
 class CScene;
 
 /**

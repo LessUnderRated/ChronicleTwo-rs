@@ -1,4 +1,5 @@
 #include "common.h"
+
 #include <cstring>
 #include <string>
 
@@ -11,17 +12,20 @@
 
 namespace {
 
-// The characters the alphabet and symbol grids offer outside Japanese (nameregi.cpp's
-// KIGOU_TABLE_ASCII1, less its line break).
+/**
+ * Reports whether an ASCII character is available on the non-Japanese name-entry grids.
+ */
 bool OnGrid(char c) {
     return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') ||
            (c != 0 && std::strchr("!?\"#$&'()*+-%,.:;<=>@[]_{}|/ ", c) != nullptr);
 }
 
-// The row below the grid's OK button (command_table's event 500).
+/** Identifies the name-entry command that accepts the entered name. */
 constexpr int kCommandOk = 11;
 
-// Applies one typed character the way KeyStep applies the matching grid or button press.
+/**
+ * Applies a typed character or editing command to the active name.
+ */
 void Type(CNameRegiMenu &menu, char c) {
     const int max = NameRegistMax;
     if (c == '\b') {

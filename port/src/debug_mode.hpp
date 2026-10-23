@@ -1,28 +1,36 @@
 #pragma once
 
+/**
+ * Unlocks retail debug controls when the configured debug mode is enabled.
+ */
 void DebugModeBoot(bool debug_mode);
 
-// Pad 1 is not locked by the debug lock, so this works while pad 2 is locked.
+/**
+ * Detects a new pad-one R3 press with all four shoulders held and the debug code unlocked.
+ */
 bool DebugModeToggleChord(int pad1_held, int pad1_pressed);
 
-// The pad 1 buttons the bound debug_menu key presses this tick of loop, or 0 to drop the press. Start+Select opens the
-// title's debug menu. R3 opens the dungeon's or town's only while the player has control there, and closes that menu
-// once it is open. Ordinary menus, events, sub-games, Spheda, a pad lock and other loops get nothing.
+/**
+ * Returns the current mode's debug-menu buttons when gameplay or its debug menu can receive them.
+ */
 int DebugModeMenuButtons(int loop);
 
-// Delivers a debug_menu key press for loop: turns DebugFlag on and presses DebugModeMenuButtons(loop) on pad 1 as a new
-// press. A dropped press leaves DebugFlag and the pad alone. Returns whether the press was delivered.
+/**
+ * Enables the debug flag and delivers a fresh debug-menu button press to an eligible mode.
+ */
 bool DebugModeMenuKey(int loop);
 
-// MainLoop reads the debug_menu key once a tick, but the host counts its presses whenever it polls input. A press made
-// during a pause, a frame pause, a load or a mode change would otherwise reach whatever follows, so presses count only
-// when they arrive within one ordinary tick.
-
-// Takes the pending debug_menu presses at the start of the tick that begins on frame (mgPortFrameCount), as one press.
-// They are dropped unless the previous tick ended on frame: any frame ended since then belongs to a wait.
+/**
+ * Drains mode-debug-menu presses and accepts them only between consecutive gameplay ticks outside binding capture.
+ */
 bool DebugModeTakeMenuKey(int frame);
-// Records the tick that began on begin_frame and ended on end_frame. A tick that ended more than its own frame waited
-// inside, for a load, so the presses pending at the next take are dropped.
+
+/**
+ * Records whether a gameplay tick completed without an intervening loading frame.
+ */
 void DebugModeEndMenuKeyTick(int begin_frame, int end_frame);
-// Drops the pending debug_menu presses and the last tick, for the end of a blocking wait or a mode change.
+
+/**
+ * Discards pending mode-debug-menu presses after a pause or mode transition.
+ */
 void DebugModeDiscardMenuKey();
