@@ -128,6 +128,9 @@ CHARA_MODEL_STACK_EXTRA = 12000
 # COFF has no inline-vs-strong resolution: map.cpp's out-of-line CMapParts::CMapParts is the single definition,
 # so the identical inline copies in editeff.cpp/editmap.cpp are blanked rather than kept.
 UNIT_FIXUPS = [
+    # Native monster scheduling retains the retail callback scene context.
+    ("runscript_opcodes.cpp", "static CScene *nowScene;",
+     "static CScene *nowScene; void PortSetMonsterScriptScene(CScene *scene) { nowScene = scene; }"),
     # The native texture-copy prelude includes host stdlib.h, which declares random().
     ("password.cpp", "static unsigned int random() {", "static unsigned int PortPasswordRandom() {"),
     # Replace party-ring palette copies with independently registered RGBA pixels.
