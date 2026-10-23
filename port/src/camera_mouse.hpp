@@ -33,9 +33,11 @@ bool MouseCameraEye(CCameraControl &camera, float &heading, float &tilt, float y
 
 void TownMouseEyeAfterControl(CScene *scene, CPadControl *pad);
 
-// Apply the safe prefix of a direct yaw to both current and pending poses.
-// Polygons must cover the entire orbit and follow corridor, not just the old eye.
-// No refused motion is carried into another input read.
+// Turn both current and pending poses by a direct yaw. Retail's wall correction
+// brings the pending eye in front of any wall on its view, and no wall that did
+// not already hide the drawn view hides the view after the next step; a turn
+// that cannot keep that view in sight is dropped and returns 0. Polygons must
+// cover the entire orbit and follow corridor, not just the old eye.
 float MouseCameraYaw(CCameraControl &camera, float yaw, CCPoly *polys, int count);
 
 // Tilt the follow view by changing eye height, within the active retail limits.

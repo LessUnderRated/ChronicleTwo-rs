@@ -488,6 +488,114 @@ TEST(CameraZoom, BackingIntoAWallThenAwayReturnsToRetailDistanceAtOnce) {
     }
 }
 
+TEST(CameraZoom, BackingIntoAWallThenAwayReturnsToTheChosenDistance) {
+    // The player keeps walking toward the eye until a wall behind it squeezes
+    // the eye right in, stands there, then walks well away and stops.
+    auto       camera = Camera();
+    CameraZoom zoom;
+    CScene     scene;
+    auto       wall = Plane(2, 200);
+    zoom.Read(camera, -100, false, true);
+    float z = 0;
+    float previous = 0;
+    for (int i = 0; i < 200; ++i) {
+        if (i < 29) {
+            z = 6.0f * i;
+        } else if (i >= 50 && i < 110) {
+            z -= 10;
+        }
+        CCameraControl::Control control{};
+        float                   rotation[4]{};
+        camera.SetFollow(0, 10, z);
+        zoom.Move(camera, scene, control, rotation, &wall, 1);
+        camera.Step(1);
+        const float distance = PendingDistance(camera);
+        // One wall is one pull-in, however far the eye is squeezed.
+        EXPECT_LE(zoom.strikes, 1) << i;
+        EXPECT_EQ(zoom.hold, 0) << i;
+        if (i >= 110) {
+            EXPECT_GE(distance, previous - 0.02f) << i;
+        }
+        previous = distance;
+    }
+    // Retail's eye is back out in a few ticks; the chosen distance is back
+    // while the player is still walking away, not after a long hold.
+    EXPECT_NEAR(previous, 600, 0.5f);
+}
+
+TEST(CameraZoom, RepeatedPullInsStillHoldTheShorterDistance) {
+    auto       camera = Camera();
+    CameraZoom zoom;
+    CScene     scene;
+    auto       wall = Plane(2, 150);
+    zoom.Read(camera, -100, false, true);
+    // Returns the hold the wall sets.
+    auto pull_in = [&] {
+        int hold = 0;
+        for (int i = 0; i < 10; ++i) {
+            Tick(camera, zoom, scene, &wall, 1, 0);
+            hold = std::max(hold, zoom.hold);
+        }
+        EXPECT_LT(PendingDistance(camera), 150);
+        return hold;
+    };
+    auto return_out = [&] {
+        for (int i = 0; i < 400 && zoom.pulled; ++i) {
+            Tick(camera, zoom, scene, nullptr, 0, 0);
+        }
+        EXPECT_FALSE(zoom.pulled);
+    };
+    EXPECT_EQ(pull_in(), 0);
+    return_out();
+    // A wall met again soon after is held, longer each time.
+    EXPECT_EQ(pull_in(), CameraZoom::hold_ticks);
+    return_out();
+    EXPECT_EQ(pull_in(), CameraZoom::hold_ticks * 2);
+    // A quiet period forgets them again.
+    return_out();
+    for (int i = 0; i < CameraZoom::calm_ticks * 3; ++i) {
+        Tick(camera, zoom, scene, nullptr, 0, 0);
+    }
+    EXPECT_EQ(pull_in(), 0);
+}
+
+TEST(CameraZoom, SmallPullInsNeitherCountNorHold) {
+    // After two wall pull-ins, the second held, the wall creeps in a few units
+    // at a time, as foliage brushing a still view does.
+    auto       camera = Camera();
+    CameraZoom zoom;
+    CScene     scene;
+    auto       near_wall = Plane(2, 150);
+    zoom.Read(camera, -100, false, true);
+    for (int i = 0; i < 10; ++i) {
+        Tick(camera, zoom, scene, &near_wall, 1, 0);
+    }
+    for (int i = 0; i < 400 && zoom.allowed < zoom.requested; ++i) {
+        Tick(camera, zoom, scene, nullptr, 0, 0);
+    }
+    ASSERT_FLOAT_EQ(zoom.allowed, zoom.requested);
+    float z = 300;
+    auto  wall = Plane(2, z);
+    Tick(camera, zoom, scene, &wall, 1, 0);
+    EXPECT_EQ(zoom.strikes, 2);
+    EXPECT_EQ(zoom.hold, CameraZoom::hold_ticks);
+    for (int i = 0; i < CameraZoom::calm_ticks + 300; ++i) {
+        if (i % 30 == 29) {
+            z -= CameraZoom::minor_pull_in / 2;
+            wall = Plane(2, z);
+        }
+        Tick(camera, zoom, scene, &wall, 1, 0);
+        EXPECT_LT(camera.next_pos[2], z) << i;
+        // The hold runs out and is not taken up again.
+        if (i >= CameraZoom::hold_ticks) {
+            EXPECT_EQ(zoom.hold, 0) << i;
+        }
+    }
+    // The eye followed the wall in, and the quiet period forgot a pull-in.
+    EXPECT_LT(z, 250);
+    EXPECT_EQ(zoom.strikes, 1);
+}
+
 TEST(CameraZoom, RenderedViewStaysClearWhileEyeAndTargetEaseSeparately) {
     auto camera = Camera();
     camera.SetPos(0, 40, 600);
@@ -574,6 +682,35 @@ TEST(CameraZoom, ClearedWallEasesBackOutWithoutJumping) {
         previous = distance;
     }
     EXPECT_NEAR(previous, 600, 0.05f);
+}
+
+TEST(CameraZoom, ClearedWallReturnsMostDistanceWithinFortyGameFrames) {
+    auto       camera = Camera();
+    CameraZoom zoom;
+    CScene     scene;
+    auto       wall = Plane(2, 150);
+    zoom.Read(camera, -100, false, true);
+    for (int i = 0; i < 60; ++i) {
+        Tick(camera, zoom, scene, &wall, 1, 0);
+    }
+    ASSERT_LT(Distance(camera), 150);
+    int most = -1;
+    int back = -1;
+    for (int i = 0; i < 120 && back < 0; ++i) {
+        Tick(camera, zoom, scene, nullptr, 0, 0);
+        if (most < 0 && Distance(camera) >= 600 - 0.1f * (600 - 150)) {
+            most = i;
+        }
+        if (Distance(camera) >= 600 - 5) {
+            back = i;
+        }
+    }
+    // Thirty game frames a second: the drawn eye is nine tenths of the way out
+    // within a second and a third and back within two.
+    EXPECT_GE(most, 0);
+    EXPECT_LE(most, 40);
+    EXPECT_GE(back, 0);
+    EXPECT_LE(back, 60);
 }
 
 TEST(CameraZoom, SettledEyeKeepsRoomToTurnAwayFromAWall) {
@@ -943,14 +1080,20 @@ TEST(CameraZoom, MouseTurnBehindACharacterWallIsCorrectedByTheWrapper) {
         camera.Step(1);
     }
     EXPECT_FALSE(Blocked(camera, map.walking));
-    const auto generation = mgPortCameraGeneration();
+    const auto  generation = mgPortCameraGeneration();
+    const float eye[3] = {camera.pos[0], camera.pos[1], camera.pos[2]};
+    const float ref[3] = {camera.ref[0], camera.ref[1], camera.ref[2]};
     InputSetScriptedDevices({.mouse_dx = -300});
     InputLatchPad(0);
     camera.MoveCamera(&pad, rotation, nullptr, 0);
     EXPECT_FALSE(Blocked(camera, map.walking));
     camera.Step(1);
     EXPECT_FALSE(Blocked(camera, map.walking));
-    EXPECT_NE(mgPortCameraGeneration(), generation);
+    // Interpolation is cut only when a display frame blending to the turned
+    // view would show the wall.
+    if (mgPortCameraGeneration() == generation) {
+        EXPECT_FALSE(BlendHidden(eye, ref, camera, map.walking.data(), static_cast<int>(map.walking.size())));
+    }
     InputSetScriptedDevices({});
     InputSetOverride(0, nullptr);
     InputResetBindings();

@@ -969,19 +969,51 @@ town rooms use the separate fixed-camera look option below; photo view uses
 the direct aiming controls described below. A camera-reset request owns
 its frame; a later mouse yaw cancels an unfinished reset.
 
-Direct motion turns both current and pending camera poses. A fresh bounded
-polygon collection covers the orbit and follow corridor; conservative continuous
-geometry checks reject an invalid starting corridor and clip an obstructed turn.
-Retail wall and ground correction runs on both resulting eyes. A full polygon
-collector or exhausted validation budget drops unproved motion rather than
-queuing it. The conservative corridor may refuse motion that retail's endpoint
-checks would permit. Explicit MouseX/MouseY stick bindings retain ownership of
-their axes and suppress the independent mouse look on those axes.
+Direct yaw, from the stick or the mouse, uses retail's rotate-then-correct
+collision response: it rotates the pending eye around its look-at point, and
+retail's ground and wall correction, run on a fresh bounded polygon collection
+covering the orbit and follow corridor, brings it in front of any wall on its
+view. A turn along or into a wall therefore shortens the eye and goes on, and
+the next update moves it back out as retail's follow does. Retail's obstacle
+avoidance waits while the camera turns, as it did for the retail stick, so it
+cannot swing the eye back against the turn. Unlike retail, which left the drawn
+eye to ease after the pending one at a distance-dependent rate, direct yaw also
+turns the drawn eye by the same angle at once, so the view follows the input.
+After the turn, the view the tick's step shows is checked against every wall
+except those that already hid the drawn view, from the look-at point and, when
+retail's wall correction checks from an explicit collision target, from that
+target too. A view already blocked, as retail's eased view can be when a pillar
+comes between the eye and the player, therefore eases on behind that pillar,
+but no other wall may come between. Each placement is checked through the
+step itself. Where moving the drawn eye suffices, retail's pending pose is
+kept: a drawn eye the turn takes behind a wall moves on along its easing path
+toward a pending eye its look-at point can see, then in toward its look-at
+point. Failing both, both eyes are placed on a view from the stepped look-at
+point, at least ten units long so the camera keeps a usable direction: the
+stepped view itself, or the nearest in heading to it of views turned from it in
+eighths of a half turn either way. Each view's search starts just beyond ten
+units, so the view still measures ten once stored and stepped, and goes as far
+out as it finds in sight, five units nearer where there is room. This is a
+bounded search of sampled headings, not of every clear point. If none has a
+usable starting point, the turn is dropped for that update and retail's camera
+stays as it was. Recovery can change the heading abruptly in tight wall-end
+geometry. Presentation interpolation is cut when the eye itself would pass through
+a camera wall between display frames, or when any of those other walls crosses
+a sightline a display frame blends between the drawn pose and the next, the
+look-at point's or the explicit collision target's, such as a thin post the
+view passes across. Direct pitch keeps
+conservative continuous checks on the same collection and clips an obstructed
+tilt. A full polygon collector drops the motion rather than queuing it.
+Explicit MouseX/MouseY stick bindings retain ownership of their axes and
+suppress the independent mouse look on those axes.
 
 `tools/input/town-mouse-camera.input`, with `--jump town:10 --fast-load`, exercises
 yaw, vertical motion and a menu interruption. `tools/input/dungeon-mouse-camera.input`,
 with `--jump dungeon:0:1 --fast-load`, enters the first floor and exercises the
-same follow controls.
+same follow controls. `tools/input/dungeon-camera-wall-turn.input`, with the same
+options, turns into and along the first corridor's wall with the right stick and
+then the mouse; captures at frames 2600 and 2900 show the view turned on past
+the wall.
 `tools/input/dungeon-mouse-carry.input`, with `--jump dungeon:4:1 --fast-load`,
 lifts a rock in Mt. Gundor using R1 and Cross, then turns the mouse camera while
 carrying it (capture at frame 2374).
@@ -1194,7 +1226,7 @@ distance and runs retail's floor, ceiling and wall correction and obstacle
 avoidance on it, with the geometry gathered along that view. A view through
 dense geometry is gathered in shorter pieces. The look-at point always follows
 the player as in retail; only the eye is shortened, and it keeps six units from
-geometry so mouse turning can move it away from a wall.
+geometry so the view does not graze the wall it rests against.
 When the request is beyond retail's follow range, the characters' walking
 collision also blocks the view, because the camera's own collision data leaves
 out some facades seen from far away; the nearest wall from either source wins.
@@ -1207,19 +1239,30 @@ still hide the player from a longer zoomed view. Decorations without any
 collision, such as awnings, can also come between.
 
 Within retail's own follow distance (or a nearer request), walls shorten the
-eye on each tick as retail's correction does and release it as soon as
+eye on each game frame as retail's correction does and release it as soon as
 retail's would. Beyond it, the allowed distance drops at once when a wall cuts
-the view, then holds for three quarters of a second, doubled for each recent
-pull-in up to three seconds. It returns 4% of the remaining gap per tick (at
-least one unit) only after a view 32 units farther has stayed clear for 20
-ticks, both where the camera points and where it will point over the next
-second if it keeps turning as it is. Walking through rocks therefore keeps a
-shorter distance instead of returning toward each next rock. When the eased
-eye would be drawn behind a wall, it is placed in front of that wall on the
-drawn view, on the same side of the look-at point, and presentation
-interpolation is cut, so display frames do not pass through it; from there it
-eases at the camera's own speed again. Interpolation is also cut when a wall
-from the camera's collision crosses any view a display frame blends between
+the view. The camera updates once per game frame, 30 a second. The distance
+returns 10% of the remaining gap per game frame (at least two units) only
+after a view 32 units farther has stayed clear for 15 game frames, half a
+second, both where the camera points and where it will point over the next two
+seconds if it keeps turning as it is; a cleared eye is nine tenths of the way
+back within about a second and a third. Pulling in further before the eye
+begins moving out, such as backing into a wall, is one pull-in, and a first
+pull-in does not hold: walking away from the wall brings the eye back out to
+the selected distance, as retail's returns after a wall. A wall met again while recent
+pull-ins are remembered holds the distance first, for a second and a half,
+doubled for each further one up to six seconds; ten quiet seconds forget one.
+Walking through rocks therefore keeps a shorter distance instead of returning
+toward each next rock. A pull-in of less than ten units, such as foliage
+brushing a still view or a wall approached a step at a time, still shortens
+the eye but neither counts nor holds. When the eased eye would be drawn behind
+a wall, it is placed in front of that wall on the drawn view, on the same side
+of the look-at point, and from there it eases at the camera's own speed again.
+Presentation interpolation is cut to the placed eye only where a display frame
+blending to it would show a wall, the characters' walls included, between the
+eye and the look-at point; otherwise the display frames blend to it as to any
+pull-in. Interpolation is also cut when a wall from the camera's collision
+crosses any view a display frame blends between
 the drawn pose and the next, with the eye and look-at point each moving
 linearly, such as a post both views pass on either side. Walls only the
 walking collision knows are not part of that check: they limit each tick's own
