@@ -8,3 +8,4 @@ extern float        AddProj asm("Photo_Zoom");
 extern int          ShowTakePhotoCnt asm("Photo_PreviewFrames");
 extern int          ShutterAnmCnt asm("Photo_ShutterFrames");
 extern unsigned int OpenMenu asm("Photo_OpenMenu");
+extern unsigned int CameraTexb asm("Photo_CameraTexture");
