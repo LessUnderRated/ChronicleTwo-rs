@@ -248,10 +248,10 @@ bool ConvertScriptTiming(const std::string &key, void *buffer, int size) {
     return ok;
 }
 
-// A script the PAL disc ships with another language's text gets its own, which can make it script_text::Extra
-// bytes longer; the size queries below add the same count so buffers sized from them hold it.
+// A script or event text the PAL disc ships with another language's or wrong text gets corrected, which can
+// make it script_text::Extra bytes longer; the size queries below add the same count so buffers sized from them hold it.
 int PatchScriptText(const std::string &key, void *buffer, int size) {
-    if (size < 0 || !key.ends_with(".stb")) {
+    if (size < 0 || (!key.ends_with(".stb") && !key.ends_with(".txt"))) {
         return size;
     }
     const auto patched = static_cast<int>(script_text::Patch(key, static_cast<unsigned char *>(buffer), static_cast<std::size_t>(size)));

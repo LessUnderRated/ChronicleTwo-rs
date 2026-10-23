@@ -137,3 +137,37 @@ TEST(ScriptText, ExtractedSpanishSphedaScriptMatches) {
         EXPECT_EQ(Pushed(bytes, bytes.size(), line), line.text);
     }
 }
+
+TEST(ScriptText, SpanishSphedaLessonTextIsCorrected) {
+    constexpr std::string_view key = "event/e300/e314/e314_5.txt";
+    std::string                text = "@3140050\r\nNo tienes que acordarte de nada m\xe1s.\r\n@3140055\r\nDe azul a rojo, de negro a azul. "
+                                      "As\xed.\r\n@3140080\r\nuna pared o algo y cambiar\xe1 el color a negro.\r\n";
+    const std::size_t          size = text.size();
+    EXPECT_EQ(script_text::Extra(key), 0u);
+
+    const std::size_t patched = script_text::Patch(key, reinterpret_cast<unsigned char *>(text.data()), size);
+    const std::string expected = "@3140050\r\nTienes que acordarte de otra cosa m\xe1s.\r\n@3140055\r\nDe azul a rojo, de rojo a azul. "
+                                 "As\xed.\r\n@3140080\r\nuna pared o algo y cambiar\xe1 el color.\r\n";
+    ASSERT_EQ(patched, expected.size());
+    EXPECT_EQ(text.substr(0, patched), expected);
+    EXPECT_EQ(text.find_first_not_of('\0', patched), std::string::npos);
+}
+
+TEST(ScriptText, EventTextWithoutTheRetailLinesIsLeftUnchanged) {
+    std::string       text = "@3140050\r\nNo tienes que acordarte de nada m\xe1s.\r\n";
+    const std::string before = text;
+    EXPECT_EQ(script_text::Patch("event/e300/e314/e314_5.txt", reinterpret_cast<unsigned char *>(text.data()), text.size()), text.size());
+    EXPECT_EQ(text, before);
+}
+
+TEST(ScriptText, ExtractedSpanishSphedaLessonMatches) {
+    constexpr std::string_view key = "event/e300/e314/e314_5.txt";
+    const char                *data = std::getenv("DC2_DATA");
+    const auto                 path = data ? std::filesystem::path(data) / key : std::filesystem::path();
+    if (!data || !std::filesystem::is_regular_file(path)) {
+        GTEST_SKIP() << "DC2_DATA supplies the extracted event text";
+    }
+    std::ifstream              in(path, std::ios::binary);
+    std::vector<unsigned char> bytes{std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()};
+    EXPECT_EQ(script_text::Patch(key, bytes.data(), bytes.size()), bytes.size() - 7);
+}

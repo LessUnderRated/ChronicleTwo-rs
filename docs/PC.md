@@ -490,6 +490,12 @@ that fits is written over the Italian one, a longer one is appended after the
 script, so the file reads 1 KB or so longer and size queries report the same.
 The wording keeps the PAL Spanish names (Esfera, Esfeda, Bastón Multiusos, Ayuda).
 
+The Spanish text of the Spheda lesson that follows (`event/e300/e314/e314_5.txt`)
+says there is nothing more to remember right before the colour rules, and has a
+Sphere turn black, a colour it never takes. The same file corrects those three
+lines by their exact text: "Tienes que acordarte de otra cosa más.", "De azul a
+rojo, de rojo a azul." and "...y cambiará el color.".
+
 ### darkchronicle
 
 ```

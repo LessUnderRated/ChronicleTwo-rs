@@ -66,6 +66,28 @@ constexpr std::array<Line, 19> kS17Spanish{
      }
 };
 
+// The Spanish text of the Spheda lesson (event e314) says there is nothing more to remember right before
+// the colour rules, and gives a Sphere a black colour it never takes: it turns from blue to red and from
+// red to blue. The event files are Latin-1.
+constexpr std::array<Edit, 3> kE314Spanish{
+    {
+     {"No tienes que acordarte de nada m\xe1s.", "Tienes que acordarte de otra cosa m\xe1s."},
+     {"De azul a rojo, de negro a azul.", "De azul a rojo, de rojo a azul."},
+     {"cambiar\xe1 el color a negro.", "cambiar\xe1 el color."},
+     }
+};
+
+struct Messages {
+    const char           *path;
+    std::span<const Edit> edits;
+};
+
+constexpr std::array<Messages, 1> kMessages{
+    {
+     {"event/e300/e314/e314_5.txt", kE314Spanish},
+     }
+};
+
 struct Script {
     const char           *path;
     std::span<const Line> lines;
@@ -109,6 +131,28 @@ std::optional<std::size_t> RetailString(const unsigned char *bytes, std::size_t 
     return at;
 }
 
+std::span<const Edit> FindEdits(std::string_view key) {
+    const std::string normalised = script_timing::Key(key);
+    for (const Messages &messages : kMessages) {
+        if (normalised == messages.path) {
+            return messages.edits;
+        }
+    }
+    return {};
+}
+
+// The text after every edit, or nullopt when one of the retail texts is not there exactly once.
+std::optional<std::string> Edited(std::string text, std::span<const Edit> edits) {
+    for (const Edit &edit : edits) {
+        const std::size_t at = text.find(edit.retail);
+        if (at == std::string::npos || text.find(edit.retail, at + 1) != std::string::npos) {
+            return std::nullopt;
+        }
+        text.replace(at, std::strlen(edit.retail), edit.text);
+    }
+    return text;
+}
+
 void LogOnce(std::string_view key, bool matched) {
     static std::mutex            mutex;
     static std::set<std::string> logged;
@@ -119,7 +163,7 @@ void LogOnce(std::string_view key, bool matched) {
     if (matched) {
         CT_LOG_INFO(Script, "script text: {}: Spanish text", key);
     } else {
-        CT_LOG_WARN(Script, "script text: {} does not match the PAL script; its text is left unchanged", key);
+        CT_LOG_WARN(Script, "script text: {} does not match the PAL file; its text is left unchanged", key);
     }
 }
 
@@ -135,8 +179,16 @@ std::span<const Line> Find(std::string_view key) {
     return {};
 }
 
+std::span<const Edit> Edits(std::string_view key) {
+    return FindEdits(key);
+}
+
 std::size_t Extra(std::string_view key) {
-    std::size_t extra = 0;
+    std::ptrdiff_t growth = 0;
+    for (const Edit &edit : FindEdits(key)) {
+        growth += static_cast<std::ptrdiff_t>(std::strlen(edit.text)) - static_cast<std::ptrdiff_t>(std::strlen(edit.retail));
+    }
+    std::size_t extra = growth > 0 ? static_cast<std::size_t>(growth) : 0;
     for (const Line &line : Find(key)) {
         if (Appended(line)) {
             extra += std::strlen(line.text) + 1;
@@ -146,6 +198,20 @@ std::size_t Extra(std::string_view key) {
 }
 
 std::size_t Patch(std::string_view key, unsigned char *bytes, std::size_t size) {
+    if (const auto edits = FindEdits(key); !edits.empty()) {
+        const auto text = Edited(std::string(reinterpret_cast<const char *>(bytes), size), edits);
+        if (!text) {
+            LogOnce(key, false);
+            return size;
+        }
+        std::memcpy(bytes, text->data(), text->size());
+        if (text->size() < size) {
+            std::memset(bytes + text->size(), 0, size - text->size());
+        }
+        LogOnce(key, true);
+        return text->size();
+    }
+
     const auto lines = Find(key);
     if (lines.empty()) {
         return size;
