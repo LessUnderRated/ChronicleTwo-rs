@@ -84,10 +84,7 @@ void WriteAutosave(int program_loop_no, AutosaveSpawn *spawn = nullptr) {
  */
 void AutosaveFloor() {
     const auto *save = GetSaveData();
-    const auto *scene = GetMainScene();
-    if (!save || DngStatus.mode != DNG_STATUS_FIELD || !scene || scene->event_run || GamePad__2.key_lock ||
-        !BattleAreaScene || (BattleAreaScene->pause_flag & (DNG_PAUSE_PLAYER_STEP | DNG_PAUSE_FIELD_STEP)) ||
-        save->save_dungeon.stage_id < 0 || save->save_dungeon.stage_id >= SAVE_DUNGEON_NUM) {
+    if (!save || !PortDungeonFieldControl() || save->save_dungeon.stage_id < 0 || save->save_dungeon.stage_id >= SAVE_DUNGEON_NUM) {
         return;
     }
     const auto &dungeon = save->save_dungeon;
@@ -109,11 +106,10 @@ void AutosaveFloor() {
 
 // Save on the first controllable exterior frame of each town map.
 void AutosaveTown() {
-    CScene *scene = GetMainScene();
-    if (!GetSaveData() || !scene || IsEditMode() || PortTownLoopMode != EDIT_LOOP_WALK || PortTownControlMode != EDIT_CONTROL_PLAYER ||
-        PortTownLockChara || PortTownPause || scene->event_run || GamePad__2.key_lock || SubGameRunning() || InInterior()) {
+    if (!GetSaveData() || !PortTownFieldControl() || InInterior()) {
         return;
     }
+    CScene      *scene = GetMainScene();
     CCharacter2 *chara = scene->GetCharacter(scene->player_chara);
     mgCCamera   *camera = scene->GetCamera(scene->active_camera);
     const int    map = scene->GetNowMapNo();
@@ -166,6 +162,18 @@ void RecordCrashContext(int mode, const INIT_LOOP_ARG &arg) {
 }
 
 } // namespace
+
+bool PortDungeonFieldControl() {
+    const auto *scene = GetMainScene();
+    return DngStatus.mode == DNG_STATUS_FIELD && scene && !scene->event_run && !GamePad__2.key_lock && BattleAreaScene &&
+           !(BattleAreaScene->pause_flag & (DNG_PAUSE_PLAYER_STEP | DNG_PAUSE_FIELD_STEP));
+}
+
+bool PortTownFieldControl() {
+    const CScene *scene = GetMainScene();
+    return scene && !IsEditMode() && PortTownLoopMode == EDIT_LOOP_WALK && PortTownControlMode == EDIT_CONTROL_PLAYER &&
+           !PortTownLockChara && !PortTownPause && !scene->event_run && !GamePad__2.key_lock && !SubGameRunning();
+}
 
 void PortAutosaveResetArrival() {
     autosaved_floor.reset();
@@ -416,6 +424,8 @@ PORT_OVERRIDE void MainLoop() {
         LoopInit[PortLoopNo](InitArg);
         GameGiveOnArrival(PortLoopNo);
         PortAutosaveResetArrival();
+        // Presses made while the last mode ended and this one loaded belong to neither.
+        DebugModeDiscardMenuKey();
         INIT_LOOP_ARG next_arg;
 
         NextLoop(LOOP_MENU, next_arg);
@@ -487,7 +497,13 @@ PORT_OVERRIDE void MainLoop() {
                 DebugFlag = !DebugFlag;
             }
 
+            // Taken every tick, so a press made where the key does nothing is dropped rather than kept for later.
+            if (DebugModeTakeMenuKey(mgPortFrameCount()) && GameDebugEnabled()) {
+                DebugModeMenuKey(PortLoopNo);
+            }
+
             GameDebugFrame(PortLoopNo);
+            const int tick_frame = mgPortFrameCount();
             mgBeginFrame(nullptr);
             mode_finished = LoopMain[PortLoopNo]();
             PortFinishQuickChange();
@@ -500,6 +516,7 @@ PORT_OVERRIDE void MainLoop() {
             PortDrawQuickChangeBanner();
             PortDrawFrameBorder();
             mgEndFrame(nullptr);
+            DebugModeEndMenuKeyTick(tick_frame, mgPortFrameCount());
 
             if (mode_finished != 0) {
                 PauseCancel();
@@ -520,6 +537,8 @@ PORT_OVERRIDE void MainLoop() {
                     if (GameDebugPauseRequested(GamePad__2)) {
                         pause = true;
                     }
+                    // The frame pause waits on sceGsSyncV, which ends no frame, so its presses are dropped here.
+                    const bool frame_paused = pause != 0;
 
                     while (pause != 0) {
                         sceGsSyncV(0);
@@ -544,13 +563,21 @@ PORT_OVERRIDE void MainLoop() {
                             break;
                         }
                     }
+                    if (frame_paused) {
+                        DebugModeDiscardMenuKey();
+                    }
 
                     break;
                 }
             }
 
+            bool paused = false;
             while (!developer_menu_requested && PauseLoop() != 0) {
+                paused = true;
                 request_developer_menu();
+            }
+            if (paused) {
+                DebugModeDiscardMenuKey();
             }
 
             PauseCount();
