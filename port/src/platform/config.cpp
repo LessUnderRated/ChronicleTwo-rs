@@ -254,6 +254,15 @@ bool Apply(Config &config, std::string_view name, const Json &value) {
     if (name == "game.more_monsters") {
         return ReadBool(value, config.more_monsters);
     }
+    if (name == "game.transformation_stats") {
+        return ReadBool(value, config.transformation_stats);
+    }
+    if (name == "game.transformation_exp") {
+        return ReadBool(value, config.transformation_exp);
+    }
+    if (name == "game.shared_badge_exp") {
+        return ReadBool(value, config.shared_badge_exp);
+    }
     if (name == "game.quick_loadout_title") {
         return ReadChoice(value, "bar", "plate", config.quick_loadout_plate);
     }
@@ -529,6 +538,9 @@ std::string ConfigSerialize(const Config &config) {
     root["game"]["auto_use_event_item"] = config.auto_use_event_item;
     root["game"]["floor_info_monsters"] = config.floor_info_monsters;
     root["game"]["more_monsters"] = config.more_monsters;
+    root["game"]["transformation_stats"] = config.transformation_stats;
+    root["game"]["transformation_exp"] = config.transformation_exp;
+    root["game"]["shared_badge_exp"] = config.shared_badge_exp;
     root["video"]["present_mode"] = kPresentModeNames[static_cast<std::size_t>(s.present_mode)];
     root["video"]["interpolation"] = config.interpolation;
     root["video"]["render_thread"] = kRenderThreadNames[static_cast<std::size_t>(config.render_thread)];

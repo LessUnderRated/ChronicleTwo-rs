@@ -737,7 +737,7 @@ The **PC SETTINGS** entry and the page are drawn at the UI scale, or smaller whe
 | Display | Windowed/fullscreen, resolution, FIFO/mailbox/immediate, frame cap, interpolation, auto/4:3 aspect, UI scale, original/sharp text font, FPS counter |
 | Audio | Master volume and PS2/custom soundtrack |
 | Controls | Mouse sensitivity, Y inversion and capture; menu pointer speed and acceleration; stick sensitivity and X/Y inversion; button symbols and glyph style |
-| Game | Autosave, quick loadout title, skip intro, auto-use event items, floor monster list, more monsters and debug mode |
+| Game | Autosave, quick loadout title, skip intro, auto-use event items, floor monster list, more monsters, transformation stats, transformation EXP, shared badge EXP and debug mode |
 | Bindings | Keyboard and mouse bindings for pad buttons, movement, look, FPS and debug menu |
 
 Edits save to `config.json` and apply immediately. Soundtrack selection takes effect the next time a song starts, including one whose data is already loaded. Custom recordings use the actual sequence JSON path in `soundtrack/soundtrack.json`; `AUDIO_TRACE` prints that path. An absent or invalid recording falls back to the converted sequence. Current music is not restarted by moving the setting.
@@ -753,6 +753,18 @@ A failed write shows a warning. Settings still work in the current session. Chec
 `tools/input/pc-settings.input` replays all four tabs, a key rebind, Escape cancellation, and return to retail Options from `--jump town:10 --fast-load`. Its comments give capture frames. `tools/input/pc-settings-mouse.input` exercises clicking and mouse-button capture at `--window 1280x960`. Use fresh save roots and `--screenshot-display 2` for both.
 
 `tools/input/pc-settings-display.input` checks fullscreen, return to windowed, and resizing in a real window. Start with a fresh config containing a nonzero window size, omit `--window`, and stop at frame 940. The optional `PcSettingsReplay` CTests run the headless pad and mouse flows and assert the saved configuration when `DC2_DATA` is available.
+
+### Monster transformation settings
+
+Three PC SETTINGS > Game settings retune Monica's monster transformations. Each is off by default, which keeps retail's numbers, and `port/src/monster_transformation.cpp` holds the rules.
+
+| Setting | Key | Off (retail) | On |
+|---|---|---|---|
+| Transformation stats | `game.transformation_stats` | Attack is the badge's base × (1 + 2 × level / 98), three times the base at level 98; defence is the base plus 2 per 6 levels, at most 30 | Attack grows twice as fast, base × (1 + 4 × level / 98), five times the base at level 98 and still capped at 999; defence is Monica's when hers is higher than the badge's own |
+| Transformation EXP | `game.transformation_exp` | The badge in use gains each kill's absorption | It gains twice that |
+| Shared badge EXP | `game.shared_badge_exp` | Only the badge in use gains absorption | A quarter of every absorption Monica gains, armed or transformed, also goes to each other unlocked badge, which levels up when its gauge fills |
+
+Monica's defence starts at 8 and rises by 4 with each Witch Parfait, up to 128. The badge that adds a quarter to a transformation's attack and defence applies after these rules. Absorption and shared absorption apply at once; stats are read when Monica transforms, so they apply from the next transformation. Turning a setting off never changes a saved badge's level.
 
 ### Auto-use event items
 
@@ -1876,6 +1888,7 @@ Each fixup's text must occur exactly once in its file, or the script stops befor
 - `dngmenu.cpp`: the floor list's debug panel prints a room's four next-floor IDs into a `FONT_STR_MAX`-byte line. Retail's 32 bytes cannot hold even one-digit IDs and the terminator. In the Windows Release build the overflow reaches the panel font's string, and copying the line into it runs off the stack.
 - `pbuggy.cpp`: the train fight reads the player's and the bomb carrier's motion frames through `PortBuggyRetailFrame` (`port/src/pbuggy.cpp`). It takes the bomb at frame 15 of the lift, throws it at 44 and reloads it at 18 and 30.9, retail frames of motions that start at 11, 38 and 9 in retail's `info.cfg`. Native motion sets lay their motions out back to back from frame 2, so the lift and throw started at 367 and 400 and the bomb was never taken.
 - `menusys.cpp`: closing the item overflow notice resets `TrushMesCls` with a range loop and `nullptr`, bounded by its four message slots. Retail's reset writes eight pointers, corrupting adjacent PC state and hiding dungeon overlays until the next floor. The array size and all other message handling stay unchanged.
+- `userdata.cpp`: a badge's attack scale and defence, the absorption the badge in use gains, and a share of Monica's absorption for the other badges (at the top of `CBattleCharaInfo::AddAbs`) go through `PortTransformation*` and `PortShareTransformationAbs` (`port/src/monster_transformation.cpp`), which give retail's values unless the PC SETTINGS > Game transformation settings are on (see "Monster transformation settings").
 - `nowload.cpp`: `SCElogoFade`'s fade loop also stops on `PortSkipIntro()` (`game.skip_intro`), keeping the language select and the title image load.
 - `menuop.cpp`: `CMenuOption::KeyStep` moves the cursor's `op_cursorlimmit` bottom (y 274) down to the selected row's place in the settled list through `PortOptionCursorBottom` (`port/src/menuop.cpp`). Retail PAL settles the ninth shown row at 288, so on the last shown row its cursor and frame stopped between the last two rows.
 - `inventmn.cpp`: the native copy removes `inline` from `CMenuInvent::CMenuInvent()` so callers in other units have one emitted constructor. Retail source retains its original spelling.

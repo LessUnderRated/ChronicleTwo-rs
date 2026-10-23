@@ -256,6 +256,16 @@ UNIT_FIXUPS = [
     ("pbuggy.cpp", "            frame_now = player->GetNowFrame();", "            frame_now = PortBuggyRetailFrame(player);"),
     ("pbuggy.cpp", "        float     frame_now = StarbullChara->GetNowFrame();",
      "        float     frame_now = PortBuggyRetailFrame(StarbullChara);"),
+    # The Game page's monster transformation settings (port/src/monster_transformation.cpp): a badge's attack growth
+    # and defence, the absorption the badge in use gains, and a share of Monica's absorption for the other badges.
+    # Each gives retail's value while its setting is off.
+    ("userdata.cpp", "    scale = 1.0f + 2.0f * ((float) level / 98.0f);", "    scale = PortTransformationAttackScale(level);"),
+    ("userdata.cpp", "        value = fptosi((float) param->defence + (float) (GetDegreeLevel() * 2));",
+     "        value = fptosi(PortTransformationDefence(param->defence + GetDegreeLevel() * 2));"),
+    ("userdata.cpp", "        chara_data.monster->abs.AddPoint(amount);",
+     "        chara_data.monster->abs.AddPoint(PortTransformationAbs(amount));"),
+    ("userdata.cpp", "float CBattleCharaInfo::AddAbs(int slot, float amount, int *leveled_up) {",
+     "float CBattleCharaInfo::AddAbs(int slot, float amount, int *leveled_up) { PortShareTransformationAbs(this, amount);"),
     # The overflow notice resets only the message slots in its array, preserving adjacent dungeon state.
     ("menusys.cpp", """                        for (int i = 0; i < 8; i++) {
                             TrushMesCls[i] = NULL;

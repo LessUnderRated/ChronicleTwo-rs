@@ -59,6 +59,9 @@ TEST(PcOptions, RequestedSettingsHaveUniqueRowsAndRoundTripTheirEdits) {
         "game.floor_info_monsters",
         "game.more_monsters",
         "game.debug_mode",
+        "game.transformation_stats",
+        "game.transformation_exp",
+        "game.shared_badge_exp",
     };
     std::set<std::string> actual;
     for (const auto &page : options::Pages()) {
@@ -78,6 +81,28 @@ TEST(PcOptions, RequestedSettingsHaveUniqueRowsAndRoundTripTheirEdits) {
     }
     for (const auto &key : required) {
         EXPECT_TRUE(actual.contains(key)) << key;
+    }
+}
+
+TEST(PcOptions, GamePageHoldsTheMonsterTransformationSettingsBeforeDebugMode) {
+    const auto pages = options::Pages();
+    EXPECT_EQ(static_cast<int>(pages.size()), options::kPages);
+    EXPECT_EQ(std::string(pages[options::kBindingsPage].name), "Bindings");
+    const auto game = std::ranges::find(pages, std::string("Game"), &options::Page::name);
+    ASSERT_NE(game, pages.end());
+    std::vector<std::string> keys;
+    for (const auto &row : game->rows) {
+        keys.push_back(row.key);
+    }
+    ASSERT_GE(keys.size(), 5u);
+    const std::vector<std::string> tail(keys.end() - 5, keys.end());
+    EXPECT_EQ(tail, (std::vector<std::string>{"game.more_monsters", "game.transformation_stats", "game.transformation_exp", "game.shared_badge_exp", "game.debug_mode"}));
+    for (std::size_t i = keys.size() - 4; i < keys.size() - 1; ++i) {
+        const auto &row = game->rows[i];
+        Config      config;
+        EXPECT_EQ(row.value(config), "Off") << row.key;
+        EXPECT_TRUE(options::StepRow(row, config, 1)) << row.key;
+        EXPECT_EQ(row.value(config), "On") << row.key;
     }
 }
 

@@ -43,7 +43,14 @@ struct Config : HostSettings {
     // game.floor_info_monsters: Triangle on a dungeon floor's information lists its monsters and their drops.
     bool floor_info_monsters = false;
     // game.more_monsters: a dungeon floor holds up to 60 monsters instead of 24, and all of them in range show and act.
-    bool         more_monsters = false;
+    bool more_monsters = false;
+    // game.transformation_stats: a monster badge's attack grows twice as fast with its level, and it takes Monica's
+    // defence when hers is higher.
+    bool transformation_stats = false;
+    // game.transformation_exp: the badge Monica has transformed into gains twice a kill's absorption.
+    bool transformation_exp = false;
+    // game.shared_badge_exp: a quarter of the absorption Monica gains also goes to every other unlocked badge.
+    bool         shared_badge_exp = false;
     ConfigAspect aspect = ConfigAspect::Auto;
     float        ui_scale = 1.0f;
     bool         font_sharp = false;

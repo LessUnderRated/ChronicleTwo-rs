@@ -11,6 +11,20 @@ class UnitFixups(unittest.TestCase):
         self.assertEqual(mirrored.count("paint_top = 0; paint_return = 1;"), 1)
         self.assertEqual(mirrored.count("\n"), (source / "editmenu.hpp").read_bytes().count(b"\n"))
 
+    def test_monster_transformation_settings_reach_the_badge_rules(self):
+        source = (Path(__file__).resolve().parents[2] / "ps2/src/userdata.cpp").read_text(encoding="latin-1")
+        result = header_fixups.fixup_unit_text("userdata.cpp", source)
+        for seam in (
+            "scale = PortTransformationAttackScale(level);",
+            "value = fptosi(PortTransformationDefence(param->defence + GetDegreeLevel() * 2));",
+            "chara_data.monster->abs.AddPoint(PortTransformationAbs(amount));",
+            "int *leveled_up) { PortShareTransformationAbs(this, amount);",
+        ):
+            self.assertEqual(result.count(seam), 1, seam)
+        self.assertNotIn("scale = 1.0f + 2.0f * ((float) level / 98.0f);", result)
+        self.assertIn("        monster_hp_drain = 0.005f;", result)
+        self.assertEqual(result.count("\n"), source.count("\n"))
+
     def test_geostone_announcement_reserves_all_eight_nullable_message_slots(self):
         source = (Path(__file__).resolve().parents[2] / "ps2/src/editmenu.cpp").read_text()
         mirrored = header_fixups.fixup_unit_text("editmenu.cpp", source)
