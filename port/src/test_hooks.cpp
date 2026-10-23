@@ -18,6 +18,7 @@
 #include "log/log.hpp"
 #include "main.hpp"
 #include "mapselect.hpp"
+#include "options/screen.hpp"
 #include "platform/config.hpp"
 #include "platform/input.hpp"
 #include "platform/vfs.hpp"
@@ -313,7 +314,7 @@ bool GameDeveloperMenuRequested(int mode) {
     } else if (held) {
         held_before = true;
     }
-    return pressed && GameDebugEnabled() && mode != LOOP_MENU;
+    return pressed && GameDebugEnabled() && mode != LOOP_MENU && !options::Capturing();
 }
 
 bool GameDebugPauseRequested(CGamePad &pad) {

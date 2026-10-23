@@ -132,7 +132,8 @@ std::vector<Row> Bindings() {
             {"walk",       "Walk"        },
             {"zoom_reset", "Zoom reset"  },
             {"fps_toggle", "Toggle FPS"  },
-            {"debug_menu", "Debug menu"  },
+            {"debug_menu", "Developer menu"},
+            {"mode_debug_menu", "Debug menu (R3)"},
         };
         for (auto [name, text] : names) {
             if (action == name) {
