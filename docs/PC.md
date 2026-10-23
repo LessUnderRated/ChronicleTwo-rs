@@ -479,6 +479,17 @@ to move or throw away. `port/src/message_text.cpp` replaces the message in all
 five PAL languages with the translation's wording plus both, for example
 `You can only carry 999 "Thick Hide".`
 
+The PAL disc's Spanish script for the map where Max learns Spheda
+(`map/s/s17/s17_5.stb`) is a byte-for-byte copy of the Italian one, so its
+Spheda tutorial, prompts and dialogue read in Italian. `port/src/script_text.cpp`
+gives those 19 strings Spanish text when the script is read from the data index
+(`ResolveFile` in `port/src/dataread.cpp`), after the NTSC timing conversion. Each
+line is anchored on its push instruction and the Italian text it must find there;
+a script that does not show every line is left unchanged with a warning. A text
+that fits is written over the Italian one, a longer one is appended after the
+script, so the file reads 1 KB or so longer and size queries report the same.
+The wording keeps the PAL Spanish names (Esfera, Esfeda, Bastón Multiusos, Ayuda).
+
 ### darkchronicle
 
 ```

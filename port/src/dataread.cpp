@@ -37,6 +37,7 @@
 #include "platform/texture_catalog.hpp"
 #include "platform/vfs.hpp"
 #include "profile.hpp"
+#include "script_text.hpp"
 #include "script_timing.hpp"
 #include "texture_copy.hpp"
 #include "texture_source.hpp"
@@ -247,6 +248,17 @@ bool ConvertScriptTiming(const std::string &key, void *buffer, int size) {
     return ok;
 }
 
+// A script the PAL disc ships with another language's text gets its own, which can make it script_text::Extra
+// bytes longer; the size queries below add the same count so buffers sized from them hold it.
+int PatchScriptText(const std::string &key, void *buffer, int size) {
+    if (size < 0 || !key.ends_with(".stb")) {
+        return size;
+    }
+    const auto patched = static_cast<int>(script_text::Patch(key, static_cast<unsigned char *>(buffer), static_cast<std::size_t>(size)));
+    loaded_buffers[buffer] = static_cast<std::size_t>(patched);
+    return patched;
+}
+
 // sceOpen maps host0: onto the save tree, so this reads back whatever WriteFile put there. -1 when the
 // save tree does not have the file, which sends the caller on to the data index.
 int ReadSaveFile(const char *name, void *buffer, bool size_only) {
@@ -302,16 +314,18 @@ int ResolveFile(const char *name, const std::string &key, void *buffer, bool siz
         return -1;
     }
     if (!size_only) {
-        const int size = ReadWhole(*file, buffer);
+        int size = ReadWhole(*file, buffer);
         if (size >= 0) {
             if (!ConvertScriptTiming(key, buffer, size)) {
                 return -1;
             }
+            size = PatchScriptText(key, buffer, size);
             TextureSourceRegister(buffer, file->relative, static_cast<std::size_t>(size));
         }
         return size;
     }
-    return FileSize(*file).value_or(-1);
+    const auto size = FileSize(*file);
+    return size ? *size + static_cast<int>(script_text::Extra(key)) : -1;
 }
 
 CacheSlot *CacheFind(const std::string &key) {
