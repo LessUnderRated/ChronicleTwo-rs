@@ -255,7 +255,7 @@ if(PORT_BRIDGE_SOURCES)
 endif()
 
 find_path(CT_STB_IMAGE_INCLUDE_DIR stb_image.h
-    PATHS ${KZ_PORT_VENDOR_DIRS} ${CMAKE_BINARY_DIR}/kz_port/vendor NO_DEFAULT_PATH REQUIRED)
+    PATHS ${KZ_PORT_VENDOR_DIRS} ${CMAKE_BINARY_DIR}/kz_port/vendor NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH REQUIRED)
 if(NOT WIN32)
     find_package(Iconv REQUIRED)
 endif()
@@ -321,12 +321,37 @@ function(ct_link_game target)
     if(WIN32)
         # The Rust host UI uses Windows input, theme, OpenGL and desktop-composition APIs.
         target_link_libraries(${target} PRIVATE imm32 uxtheme opengl32 dwmapi)
+    elseif(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+        target_link_libraries(${target} PRIVATE "-framework UIKit" "-framework Metal" "-framework QuartzCore" "-framework CoreMotion" "-framework CoreGraphics" "-framework IOSurface" "-framework Foundation" "-framework GameController" "-framework CoreHaptics" "-framework UniformTypeIdentifiers")
     endif()
 endfunction()
 
 add_executable(darkchronicle ${PORT_DIR}/main.cpp)
 set_target_properties(darkchronicle PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 ct_link_game(darkchronicle)
+if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+    # iOS runs only applications: the executable goes inside darkchronicle.app with a generated Info.plist.
+    set_target_properties(darkchronicle PROPERTIES
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/assets/ios/Info.plist.in
+        MACOSX_BUNDLE_GUI_IDENTIFIER org.chronicletwo.darkchronicle
+        MACOSX_BUNDLE_BUNDLE_NAME "Dark Chronicle"
+        MACOSX_BUNDLE_SHORT_VERSION_STRING 0.1
+        MACOSX_BUNDLE_BUNDLE_VERSION 1)
+    # The launcher and the on-screen gamepad are UIKit views and the DualSense haptics use Core Haptics, so
+    # Objective-C++, built apart from the game's forced includes.
+    enable_language(OBJCXX)
+    add_library(ct_ios_touch OBJECT ${PORT_DIR}/platform/ios_touch_overlay.mm ${PORT_DIR}/platform/ios_haptics.mm
+        ${PORT_DIR}/platform/ios_launcher.mm)
+    set_target_properties(ct_ios_touch PROPERTIES OBJCXX_STANDARD 20 OBJCXX_STANDARD_REQUIRED ON)
+    target_include_directories(ct_ios_touch PRIVATE ${KZ_ROOT}/include ${PORT_DIR})
+    target_compile_options(ct_ios_touch PRIVATE -fobjc-arc -Wall)
+    target_link_libraries(darkchronicle PRIVATE ct_ios_touch)
+    # iOS 16's libc++ lacks std::to_chars for floating point, which std::format calls; the executable defines it.
+    add_library(ct_ios_to_chars OBJECT ${PORT_DIR}/platform/ios_to_chars.cpp)
+    set_target_properties(ct_ios_to_chars PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
+    target_link_libraries(darkchronicle PRIVATE ct_ios_to_chars)
+endif()
 if(WIN32)
     target_link_options(darkchronicle PRIVATE -municode)
     enable_language(RC)
@@ -334,7 +359,7 @@ if(WIN32)
 endif()
 
 include(GNUInstallDirs)
-install(TARGETS darkchronicle RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(TARGETS darkchronicle RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} BUNDLE DESTINATION .)
 if(CT_ENABLE_TRACY)
     install(FILES ${CMAKE_BINARY_DIR}/Tracy-LICENSE.txt
         DESTINATION ${CMAKE_INSTALL_DATADIR}/licenses/chronicletwo)
