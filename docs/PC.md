@@ -496,6 +496,13 @@ Sphere turn black, a colour it never takes. The same file corrects those three
 lines by their exact text: "Tienes que acordarte de otra cosa más.", "De azul a
 rojo, de rojo a azul." and "...y cambiará el color.".
 
+The Spanish jump gate menus in Gundorada (`map/f/f04/f04_5.stb` and
+`map/s/s30/s30_5.stb`) put East and West on one line, "Puerta de salto Este --
+Oeste", so they show one destination fewer than the script offers: the last
+choice is blank and the ones after North lead one destination further than they
+say. The same file gives the three menus the English menu's lines, with East and
+West apart and the time gate named "Puerta del tiempo".
+
 ### darkchronicle
 
 ```

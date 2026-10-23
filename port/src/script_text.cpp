@@ -66,6 +66,35 @@ constexpr std::array<Line, 19> kS17Spanish{
      }
 };
 
+// The Spanish jump gate menus (maps f04 and s30) put East and West on one line, "Puerta de salto Este --
+// Oeste", so they list one destination fewer than the script offers: the last choice is blank and the
+// ones after North take the player one destination further than they say. They get the English menu's
+// lines, with the time gate named as the Spanish text names it elsewhere.
+constexpr std::array<Line, 2> kF04Spanish{
+    {
+     {0x2CD20,
+         "Selecciona Destino de la Puerta de salto\nPuerta de salto Norte\nPuerta de salto Este -- Oeste\nEnfrente de la Puerta de "
+         "salto\nPuente de Paznos",
+         "Selecciona Destino de la Puerta de salto\nPuerta de salto Norte\nPuerta de salto Este\nPuerta de salto Oeste\nEnfrente de "
+         "la Puerta del tiempo\nPuente de Paznos"},
+     {0x2CD98,
+         "Selecciona Destino de la Puerta de salto\nPuerta de salto Norte\nPuerta de salto Este -- Oeste\nEnfrente de la Puerta de "
+         "salto\n",
+         "Selecciona Destino de la Puerta de salto\nPuerta de salto Norte\nPuerta de salto Este\nPuerta de salto Oeste\nEnfrente de "
+         "la Puerta del tiempo"},
+     }
+};
+
+constexpr std::array<Line, 1> kS30Spanish{
+    {
+     {0x2FC94,
+         "Selecciona Destino de la Puerta de salto\nPuerta de salto Norte\nPuerta de salto Este -- Oeste\nEnfrente de la Puerta de "
+         "salto\n",
+         "Selecciona Destino de la Puerta de salto\nPuerta de salto Norte\nPuerta de salto Este\nPuerta de salto Oeste\nEnfrente de "
+         "la Puerta del tiempo"},
+     }
+};
+
 // The Spanish text of the Spheda lesson (event e314) says there is nothing more to remember right before
 // the colour rules, and gives a Sphere a black colour it never takes: it turns from blue to red and from
 // red to blue. The event files are Latin-1.
@@ -93,9 +122,11 @@ struct Script {
     std::span<const Line> lines;
 };
 
-constexpr std::array<Script, 1> kScripts{
+constexpr std::array<Script, 3> kScripts{
     {
      {"map/s/s17/s17_5.stb", kS17Spanish},
+     {"map/f/f04/f04_5.stb", kF04Spanish},
+     {"map/s/s30/s30_5.stb", kS30Spanish},
      }
 };
 

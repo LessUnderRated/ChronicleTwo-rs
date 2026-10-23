@@ -1,14 +1,17 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
+#include <span>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "runscript.hpp"
@@ -135,6 +138,48 @@ TEST(ScriptText, ExtractedSpanishSphedaScriptMatches) {
     ASSERT_EQ(script_text::Patch(kKey, bytes.data(), size), bytes.size());
     for (const script_text::Line &line : script_text::Find(kKey)) {
         EXPECT_EQ(Pushed(bytes, bytes.size(), line), line.text);
+    }
+}
+
+TEST(ScriptText, SpanishJumpGateMenusListEveryDestination) {
+    // The script offers five destinations in the first f04 menu and four in the others.
+    const std::array<std::pair<std::string_view, std::size_t>, 3> menus{
+        {{"map/f/f04/f04_5.stb", 5}, {"map/f/f04/f04_5.stb", 4}, {"map/s/s30/s30_5.stb", 4}}
+    };
+    const std::array<std::span<const script_text::Line>, 3> lines{
+        script_text::Find(menus[0].first).first(1), script_text::Find(menus[1].first).subspan(1), script_text::Find(menus[2].first)};
+    for (std::size_t i = 0; i < menus.size(); ++i) {
+        ASSERT_EQ(lines[i].size(), 1u) << menus[i].first;
+        const std::string_view text = lines[i].front().text;
+        EXPECT_EQ(static_cast<std::size_t>(std::count(text.begin(), text.end(), '\n')), menus[i].second) << text;
+        EXPECT_FALSE(text.ends_with('\n')) << text;
+        EXPECT_LE(LongestLine(text), 40u) << text;
+    }
+    EXPECT_TRUE(script_text::Find("map/f/f04/f04_1.stb").empty());
+    EXPECT_TRUE(script_text::Find("map/s/s30/s30_4.stb").empty());
+}
+
+TEST(ScriptText, ExtractedSpanishJumpGateScriptsMatch) {
+    const char *data = std::getenv("DC2_DATA");
+    if (!data) {
+        GTEST_SKIP() << "DC2_DATA supplies the extracted scripts";
+    }
+    for (const std::string_view key : {"map/f/f04/f04_5.stb", "map/s/s30/s30_5.stb"}) {
+        const auto path = std::filesystem::path(data) / key;
+        if (!std::filesystem::is_regular_file(path)) {
+            GTEST_SKIP() << "DC2_DATA supplies the extracted scripts";
+        }
+        std::ifstream              in(path, std::ios::binary);
+        std::vector<unsigned char> bytes{std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()};
+        const std::size_t          size = bytes.size();
+        bytes.resize(size + script_text::Extra(key));
+
+        ASSERT_EQ(script_text::Patch(key, bytes.data(), size), bytes.size()) << key;
+        const auto code = static_cast<std::size_t>(Read32(bytes, 8));
+        for (const script_text::Line &line : script_text::Find(key)) {
+            const std::size_t at = code + static_cast<std::size_t>(Read32(bytes, line.push + 8));
+            EXPECT_EQ(std::string(reinterpret_cast<const char *>(bytes.data() + at)), line.text) << key;
+        }
     }
 }
 
