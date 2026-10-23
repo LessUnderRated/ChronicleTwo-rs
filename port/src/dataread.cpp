@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "bounded_text.hpp"
+#include "character_motion.hpp"
 #include "crash/crash.hpp"
 #include "dataread.hpp"
 #include "dataread_port.hpp"
@@ -95,6 +96,12 @@ std::size_t PaddedSize(std::size_t size) {
 // here: the result must not depend on the caller's buffer.
 void ZeroSectorTail(void *buffer, std::size_t size) {
     std::memset(static_cast<char *>(buffer) + size, 0, PaddedSize(size) - size);
+}
+
+// A load writes its whole destination, sector padding included, before the caller reserves the unpadded size
+// it reports. Main-thread loads tell the motion registry first, so it forgets the sets that lived there.
+void ReportDestination(void *buffer, std::size_t bytes) {
+    character_motion::ForgetStorage(buffer, static_cast<char *>(buffer) + bytes);
 }
 
 bool IsExcludedRootName(std::string_view name) {
@@ -229,7 +236,11 @@ int ReadUnregistered(const IndexedFile &file, void *buffer) {
     return *size;
 }
 
+// Reads a whole file into a sector-padded buffer and records the buffer; main thread only.
 int ReadWhole(const IndexedFile &file, void *buffer) {
+    if (const std::optional<int> size = FileSize(file)) {
+        ReportDestination(buffer, PaddedSize(static_cast<std::size_t>(*size)));
+    }
     const int size = ReadUnregistered(file, buffer);
     if (size >= 0) {
         loaded_buffers[buffer] = static_cast<std::size_t>(size);
@@ -257,6 +268,7 @@ int ReadSaveFile(const char *name, void *buffer, bool size_only) {
     int  size = sceLseek(fd, 0, SCE_SEEK_END);
     bool ok = size >= 0;
     if (ok && !size_only) {
+        ReportDestination(buffer, PaddedSize(static_cast<std::size_t>(size)));
         ok = sceLseek(fd, 0, SCE_SEEK_SET) >= 0 && sceRead(fd, buffer, size) == size;
     }
     sceClose(fd);
@@ -291,6 +303,7 @@ int ResolveFile(const char *name, const std::string &key, void *buffer, bool siz
         if (const auto module = luau_runtime::ModuleForScript(key)) {
             const std::string handle = luau_runtime::MakeHandle(*module);
             if (buffer && !size_only) {
+                ReportDestination(buffer, handle.size());
                 std::memcpy(buffer, handle.data(), handle.size());
             }
             return static_cast<int>(handle.size());
@@ -693,6 +706,7 @@ PORT_OVERRIDE int LoadFileBG(char *name, u_long128 *buffer, int *out_size) {
     int size = 0;
 
     if (CacheSlot *cached = CacheFind(CacheKey(name))) {
+        ReportDestination(buffer, static_cast<std::size_t>(cached->size));
         PortTextureSourceCopy(buffer, cached->address, static_cast<std::size_t>(cached->size));
         cached->ref_count--;
         size = cached->size;
@@ -798,6 +812,7 @@ PORT_OVERRIDE int LoadFile2(char *path, void *buffer, int *out_size, int mode) {
 
     if (CacheSlot *cached = CacheFind(CacheKey(path))) {
         if (mode != LOAD_FILE_SIZE) {
+            ReportDestination(buffer, static_cast<std::size_t>(cached->size));
             PortTextureSourceCopy(buffer, cached->address, static_cast<std::size_t>(cached->size));
         }
         if (mode == LOAD_FILE_READ) {

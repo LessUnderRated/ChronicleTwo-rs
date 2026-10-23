@@ -280,6 +280,11 @@ UNIT_FIXUPS = [
     MenuBuffer__2.stSetBuffer(read_buffer = main_stack->stAlloc64(260000), 260000);
     read_buffer_end = read_buffer + 260000;
     WorkBuffer.stSetBuffer(main_stack->stAlloc64({WORK_STACK_QUADWORDS}), {WORK_STACK_QUADWORDS});"""),
+    # A town map change rewinds the character buffer and reserves the controlled character's memory again, but the
+    # character stays loaded there and keeps its motion sets.
+    ("editloop.cpp", "\n        ControlCharaBuff.Alloc(FixCharaBuffSize);",
+     "\n        MemoryAllocKept(ControlCharaBuff, FixCharaBuffSize);"),
+    ("editloop.cpp", "\n    ControlCharaBuff.Alloc(FixCharaBuffSize);", "\n    MemoryAllocKept(ControlCharaBuff, FixCharaBuffSize);"),
     # Map files are read into a buffer sized to them rather than the caller's fixed one.
     ("sceneload.cpp", "    u8        *load_buf = info.load_buf;", "    u8        *load_buf = PortMapLoadBuffer(info);"),
     # Every Georama part definition may be placed as often as the player can hold it.

@@ -15,17 +15,22 @@
 #include <filesystem>
 #include <fstream>
 #include <iterator>
+#include <new>
 #include <optional>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "asset_directory.hpp"
+#include "character_motion.hpp"
 #include "dataread.hpp"
 #include "dataread_port.hpp"
 #include "gamedata.hpp"
+#include "gameutil.hpp"
 #include "log_capture.hpp"
 #include "mainloop.hpp"
+#include "mg_memory.hpp"
+#include "platform/arena.hpp"
 #include "platform/config_catalog.hpp"
 #include "platform/paths.hpp"
 #include "platform/vfs.hpp"
@@ -227,6 +232,39 @@ TEST_F(DataRead, LoadFileReadsExactBytesThenZeroFillsTheSector) {
     EXPECT_EQ(std::memcmp(bytes, expected.data(), kFileSize), 0);
     const std::vector<unsigned char> tail(kPadded - kFileSize, 0);
     EXPECT_EQ(std::memcmp(bytes + kFileSize, tail.data(), tail.size()), 0);
+}
+
+// MenuCommonReadData loads into the top of an arena and reserves the file's size afterwards, but the load writes
+// the whole sector. A motion set whose channels lie in that padding, with its anchor past the sector, must be
+// forgotten though the reservation never reaches it and the anchor keeps its bytes.
+TEST_F(DataRead, PaddedLoadForgetsMotionSetBeyondTheReservation) {
+    DataReadIndex(root);
+    constexpr int kListQuadwords = static_cast<int>((sizeof(Mot_List) + 15) / 16);
+    static char   key;
+    auto         *buffer = reinterpret_cast<u_long128 *>(ArenaBlock(&key, kPadded));
+    mgCMemory     arena;
+    arena.stSetBuffer(buffer, static_cast<int>(kPadded / sizeof(u_long128)));
+    arena.Alloc(512 / static_cast<int>(sizeof(u_long128)));
+    const auto *storage = reinterpret_cast<const std::byte *>(arena.stGetTop());
+    auto       *channel = ::new (arena.Alloc(kListQuadwords)) Mot_List{.frame = -1, .key_count = 1};
+    arena.Alloc(2048 / static_cast<int>(sizeof(u_long128)));
+    auto *anchor = ::new (arena.Alloc(kListQuadwords)) Mot_List{.frame = -1};
+    ASSERT_GE(reinterpret_cast<const unsigned char *>(anchor) - reinterpret_cast<const unsigned char *>(buffer), 2048);
+    tagMOTION_TYPE motion{};
+    motion.motion_list = anchor;
+    character_motion::Clear();
+    character_motion::Action idle{.name = "idle", .duration = 10, .base = 0, .head = channel};
+    character_motion::Register(anchor, {idle}, {storage, reinterpret_cast<const std::byte *>(arena.stGetTop())});
+    const Mot_List kept = *anchor;
+
+    arena.stReset();
+    int size = -1;
+    ASSERT_EQ(Load("small.txt", arena.stGetTop(), &size), 1);
+    arena.Alloc(size / 16 + (size % 16 != 0));
+    ASSERT_EQ(std::memcmp(anchor, &kept, sizeof(kept)), 0);
+    ASSERT_EQ(channel->key_count, 0u);
+    EXPECT_TRUE(character_motion::Actions(motion).empty());
+    character_motion::Clear();
 }
 
 TEST_F(DataRead, DatapacksOverrideIndexedFilesWithReplacementSizesAndSparseFallback) {

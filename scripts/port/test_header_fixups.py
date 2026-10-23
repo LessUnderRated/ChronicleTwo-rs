@@ -197,6 +197,14 @@ class UnitFixups(unittest.TestCase):
         self.assertEqual(result.count("load_buf = PortMapLoadBuffer(info);"), 1)
         self.assertEqual(result.count("\n"), source.count("\n"))
 
+    def test_town_map_change_keeps_the_controlled_character_reserved(self):
+        source = (Path(__file__).resolve().parents[2] / "ps2/src/editloop.cpp").read_text(encoding="latin-1")
+        result = header_fixups.fixup_unit_text("editloop.cpp", source)
+        self.assertNotIn("ControlCharaBuff.Alloc(FixCharaBuffSize);", result)
+        self.assertEqual(result.count("MemoryAllocKept(ControlCharaBuff, FixCharaBuffSize);"), 2)
+        self.assertEqual(result.count("ControlCharaBuff.Alloc(size)"), 4)
+        self.assertEqual(result.count("\n"), source.count("\n"))
+
 
 if __name__ == "__main__":
     unittest.main()
