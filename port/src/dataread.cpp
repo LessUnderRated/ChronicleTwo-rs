@@ -14,6 +14,7 @@
 #include <cstdio>
 #include <cstring>
 #include <filesystem>
+#include <limits>
 #include <optional>
 #include <print>
 #include <span>
@@ -22,6 +23,7 @@
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include "bounded_text.hpp"
@@ -38,6 +40,7 @@
 #include "platform/texture_catalog.hpp"
 #include "platform/vfs.hpp"
 #include "profile.hpp"
+#include "script_text.hpp"
 #include "script_timing.hpp"
 #include "texture_copy.hpp"
 #include "texture_source.hpp"
@@ -261,6 +264,22 @@ bool ConvertScriptTiming(const std::string &key, void *buffer, int size) {
     return ok;
 }
 
+/**
+ * Corrects PAL text and records the complete patched buffer extent.
+ */
+int PatchScriptText(const std::string &key, void *buffer, int size) {
+    if (size < 0 || (!key.ends_with(".stb") && !key.ends_with(".txt"))) {
+        return size;
+    }
+    const auto extra = script_text::Extra(key);
+    if (extra > 0) {
+        ReportDestination(static_cast<unsigned char *>(buffer) + size, extra);
+    }
+    const auto patched = static_cast<int>(script_text::Patch(key, static_cast<unsigned char *>(buffer), static_cast<std::size_t>(size)));
+    loaded_buffers[buffer] = static_cast<std::size_t>(patched);
+    return patched;
+}
+
 // sceOpen maps host0: onto the save tree, so this reads back whatever WriteFile put there. -1 when the
 // save tree does not have the file, which sends the caller on to the data index.
 int ReadSaveFile(const char *name, void *buffer, bool size_only) {
@@ -317,17 +336,23 @@ int ResolveFile(const char *name, const std::string &key, void *buffer, bool siz
     if (!file) {
         return -1;
     }
+    const auto raw_size = FileSize(*file);
+    const auto extra = script_text::Extra(key);
+    if (!raw_size || std::cmp_greater(extra, std::numeric_limits<int>::max() - *raw_size)) {
+        return -1;
+    }
     if (!size_only) {
-        const int size = ReadWhole(*file, buffer);
+        int size = ReadWhole(*file, buffer);
         if (size >= 0) {
             if (!ConvertScriptTiming(key, buffer, size)) {
                 return -1;
             }
+            size = PatchScriptText(key, buffer, size);
             TextureSourceRegister(buffer, file->relative, static_cast<std::size_t>(size));
         }
         return size;
     }
-    return FileSize(*file).value_or(-1);
+    return *raw_size + static_cast<int>(extra);
 }
 
 CacheSlot *CacheFind(const std::string &key) {
@@ -878,7 +903,7 @@ PORT_OVERRIDE int LoadFileCacheBG(char *path) {
         cache_next += quadwords;
     }
 
-    if (!LoadFileBG(path, buffer, nullptr)) {
+    if (!LoadFileBG(path, buffer, &size)) {
         return 0;
     }
     return CacheRecord(key, buffer, size);

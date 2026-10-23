@@ -10,6 +10,7 @@
 #include <charconv>
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -19,6 +20,7 @@
 #include <new>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -35,6 +37,9 @@
 #include "platform/config_catalog.hpp"
 #include "platform/paths.hpp"
 #include "platform/vfs.hpp"
+#include "runscript.hpp"
+#include "script_text.hpp"
+#include "script_timing.hpp"
 #include "scriptinterpreter.hpp"
 #include "texture_source.hpp"
 
@@ -43,6 +48,16 @@ int LoadGameDataAnalyze(char *);
 namespace fs = std::filesystem;
 
 namespace {
+
+/**
+ * Releases the file cache before its backing test storage is destroyed.
+ */
+struct CacheReset {
+    /**
+     * Clears cached references to fixture storage.
+     */
+    ~CacheReset() { DeleteFileCache(); }
+};
 
 constexpr std::size_t kFileSize = 3000;
 constexpr std::size_t kPadded = 4096;
@@ -59,6 +74,52 @@ void WriteBytes(const fs::path &path, const std::vector<unsigned char> &bytes) {
     fs::create_directories(path.parent_path());
     std::ofstream out(path, std::ios::binary);
     out.write(reinterpret_cast<const char *>(bytes.data()), static_cast<std::streamsize>(bytes.size()));
+}
+
+/**
+ * Builds a timing-valid Spanish map script with the retail strings anchored for translation.
+ */
+std::vector<unsigned char> SpanishMapScript(std::string_view key) {
+    constexpr std::size_t      code = 0x40;
+    constexpr std::size_t      first = code + 0x38;
+    std::vector<unsigned char> bytes(0x50000);
+    const auto                 put = [&](std::size_t offset, std::int32_t value) {
+        std::memcpy(bytes.data() + offset, &value, sizeof(value));
+    };
+    std::memcpy(bytes.data(), "SB2", 4);
+    put(4, code);
+    put(8, code);
+    put(12, 0x20);
+    put(code, first - code);
+    put(code + 8, 2);
+    std::size_t instruction = first;
+    for (int conversion = 0; conversion < 5; ++conversion) {
+        const std::array<vmcode_t, 8> recipe{
+            {
+             {.op = RS_OP_LOAD_ADDR, .arg1 = 0, .arg2 = RS_ADDR_LOCAL},
+             {.op = RS_OP_LOAD, .arg1 = conversion == 4 ? 1 : 0, .arg2 = RS_ADDR_LOCAL},
+             {.op = RS_OP_PUSH_CONST, .arg1 = RS_CONST_INT, .arg2 = 50},
+             {.op = RS_OP_MUL},
+             {.op = RS_OP_PUSH_CONST, .arg1 = RS_CONST_INT, .arg2 = 60},
+             {.op = RS_OP_DIV},
+             {.op = RS_OP_STORE},
+             {.op = RS_OP_POP},
+             }
+        };
+        std::memcpy(bytes.data() + instruction, recipe.data(), sizeof(recipe));
+        instruction += sizeof(recipe);
+    }
+    put(instruction, RS_OP_END);
+    for (const auto &line : script_text::Find(key)) {
+        const auto string_offset = bytes.size();
+        bytes.insert(bytes.end(), line.retail, line.retail + std::strlen(line.retail) + 1);
+        put(line.push, RS_OP_PUSH_CONST);
+        put(line.push + 4, RS_CONST_STR);
+        put(line.push + 8, static_cast<std::int32_t>(string_offset - code));
+    }
+    // Put appended translations in a sector the raw file does not write.
+    bytes.resize((bytes.size() + 2047) / 2048 * 2048);
+    return bytes;
 }
 
 /**
@@ -265,6 +326,48 @@ TEST_F(DataRead, PaddedLoadForgetsMotionSetBeyondTheReservation) {
     arena.Alloc(size / 16 + (size % 16 != 0));
     ASSERT_EQ(std::memcmp(reinterpret_cast<const std::byte *>(anchor), kept.data(), kept.size()), 0);
     ASSERT_EQ(channel->key_count, 0u);
+    EXPECT_TRUE(character_motion::Actions(motion).empty());
+    character_motion::Clear();
+}
+
+TEST_F(DataRead, ExpandedSpanishScriptForgetsMotionBeyondTheRawFileSector) {
+    constexpr std::string_view path = "map/s/s17/s17_5.stb";
+    auto                       script = SpanishMapScript(path);
+    const auto                 timing = script_timing::Apply(path, script.data(), script.size(), {.write = false});
+    ASSERT_TRUE(timing.ok) << timing.error;
+    WriteBytes(root / path, script);
+    DataReadIndex(root);
+
+    const auto extra = script_text::Extra(path);
+    ASSERT_GT(extra, sizeof(Mot_List));
+    const auto  capacity = script.size() + extra + 4096;
+    static char arena_key;
+    auto       *destination = reinterpret_cast<u_long128 *>(ArenaBlock(&arena_key, capacity));
+    mgCMemory   arena;
+    arena.stSetBuffer(destination, static_cast<int>(capacity / sizeof(u_long128)));
+    arena.Alloc(static_cast<int>(script.size() / sizeof(u_long128)));
+    constexpr int list_quadwords = static_cast<int>((sizeof(Mot_List) + 15) / 16);
+    const auto   *storage = reinterpret_cast<const std::byte *>(arena.stGetTop());
+    auto         *channel = ::new (arena.Alloc(list_quadwords)) Mot_List{.frame = -1};
+    arena.Alloc(static_cast<int>((extra + 15) / 16));
+    auto          *anchor = ::new (arena.Alloc(list_quadwords)) Mot_List{.frame = -1};
+    tagMOTION_TYPE motion{};
+    motion.motion_list = anchor;
+    character_motion::Clear();
+    character_motion::Register(anchor, {
+                                           {.name = "idle", .duration = 10, .base = 0, .head = channel}
+    },
+                               {storage, reinterpret_cast<const std::byte *>(arena.stGetTop())});
+    std::array<std::byte, sizeof(Mot_List)> kept{};
+    std::memcpy(kept.data(), anchor, kept.size());
+
+    arena.stReset();
+    int               size = 0;
+    const std::string name(path);
+    ASSERT_EQ(Load(name.c_str(), destination, &size), 1);
+    EXPECT_EQ(size, static_cast<int>(script.size() + extra));
+    EXPECT_NE(channel->frame, -1);
+    ASSERT_EQ(std::memcmp(reinterpret_cast<const std::byte *>(anchor), kept.data(), kept.size()), 0);
     EXPECT_TRUE(character_motion::Actions(motion).empty());
     character_motion::Clear();
 }
@@ -492,9 +595,7 @@ TEST_F(DataRead, FileCacheHoldsAFileLoadedInTheBackground) {
     DataReadIndex(root);
     std::vector<u_long128> cache(16384);
 
-    struct CacheReset {
-        ~CacheReset() { DeleteFileCache(); }
-    } reset;
+    CacheReset reset;
 
     InitFileCache(cache.data(), FILE_CACHE_UP);
 
@@ -514,6 +615,67 @@ TEST_F(DataRead, FileCacheHoldsAFileLoadedInTheBackground) {
 
     DeleteFileCache();
     EXPECT_EQ(SearchFileCache(name, &cached_size), nullptr);
+}
+
+TEST_F(DataRead, FileCacheRecordsTheShrunkenSpanishEventTextLength) {
+    constexpr std::string_view path = "event/e300/e314/e314_5.txt";
+    std::string                original;
+    std::string                expected;
+    for (const auto &edit : script_text::Edits(path)) {
+        original += std::string(edit.retail) + "\r\n";
+        expected += std::string(edit.text) + "\r\n";
+    }
+    ASSERT_LT(expected.size(), original.size());
+    WriteBytes(root / path, {original.begin(), original.end()});
+    DataReadIndex(root);
+    std::vector<u_long128> cache(16384);
+
+    CacheReset reset;
+
+    InitFileCache(cache.data(), FILE_CACHE_UP);
+    StartReadBG();
+    std::string name(path);
+    ASSERT_EQ(LoadFileCacheBG(name.data()), 1);
+    int cached_size = 0;
+    ASSERT_NE(SearchFileCache(name.data(), &cached_size), nullptr);
+    EXPECT_EQ(cached_size, static_cast<int>(expected.size()));
+    int size = 0;
+    ASSERT_EQ(Load(name.data(), Buffer(), &size), 1);
+    EXPECT_EQ(size, static_cast<int>(expected.size()));
+    EXPECT_EQ(DataReadBufferSize(Buffer()), expected.size());
+    EXPECT_EQ(std::memcmp(Buffer(), expected.data(), expected.size()), 0);
+}
+
+TEST_F(DataRead, FileCacheRecordsActualLengthWhenSpanishScriptTextDoesNotMatch) {
+    constexpr std::string_view path = "map/s/s17/s17_5.stb";
+    auto                       script = SpanishMapScript(path);
+    const auto                &line = script_text::Find(path).back();
+    std::int32_t               relative = 0;
+    std::memcpy(&relative, script.data() + line.push + 8, sizeof(relative));
+    script[0x40 + static_cast<std::size_t>(relative)] = 'X';
+    const auto timing = script_timing::Apply(path, script.data(), script.size(), {.write = false});
+    ASSERT_TRUE(timing.ok) << timing.error;
+    WriteBytes(root / path, script);
+    DataReadIndex(root);
+    std::vector<u_long128> cache((script.size() + script_text::Extra(path) + 4095) / sizeof(u_long128));
+    std::vector<u_long128> destination(cache.size());
+
+    CacheReset reset;
+
+    InitFileCache(cache.data(), FILE_CACHE_UP);
+    StartReadBG();
+    std::string name(path);
+    int         capacity = 0;
+    ASSERT_EQ(LoadFile2(name.data(), nullptr, &capacity, LOAD_FILE_SIZE), 1);
+    ASSERT_GT(capacity, static_cast<int>(script.size()));
+    ASSERT_EQ(LoadFileCacheBG(name.data()), 1);
+    int cached_size = 0;
+    ASSERT_NE(SearchFileCache(name.data(), &cached_size), nullptr);
+    EXPECT_EQ(cached_size, static_cast<int>(script.size()));
+    int size = 0;
+    ASSERT_EQ(Load(name.data(), destination.data(), &size), 1);
+    EXPECT_EQ(size, static_cast<int>(script.size()));
+    EXPECT_EQ(DataReadBufferSize(destination.data()), script.size());
 }
 
 TEST_F(DataRead, WriteToHost0LandsUnderTheSaveRoot) {

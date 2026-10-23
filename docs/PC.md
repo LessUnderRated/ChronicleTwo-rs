@@ -479,6 +479,30 @@ to move or throw away. `port/src/message_text.cpp` replaces the message in all
 five PAL languages with the translation's wording plus both, for example
 `You can only carry 999 "Thick Hide".`
 
+The PAL disc's Spanish script for the map where Max learns Spheda
+(`map/s/s17/s17_5.stb`) is a byte-for-byte copy of the Italian one, so its
+Spheda tutorial, prompts and dialogue read in Italian. `port/src/script_text.cpp`
+gives those 19 strings Spanish text when the script is read from the data index
+(`ResolveFile` in `port/src/dataread.cpp`), after the NTSC timing conversion. Each
+line is anchored on its push instruction and the Italian text it must find there;
+a script that does not show every line is left unchanged with a warning. A text
+that fits is written over the Italian one, a longer one is appended after the
+script, so the file reads 1 KB or so longer and size queries report the same.
+The wording keeps the PAL Spanish names (Esfera, Esfeda, Bastón Multiusos, Ayuda).
+
+The Spanish text of the Spheda lesson that follows (`event/e300/e314/e314_5.txt`)
+says there is nothing more to remember right before the colour rules, and has a
+Sphere turn black, a colour it never takes. The same file corrects those three
+lines by their exact text: "Tienes que acordarte de otra cosa más.", "De azul a
+rojo, de rojo a azul." and "...y cambiará el color.".
+
+The Spanish jump gate menus in Gundorada (`map/f/f04/f04_5.stb` and
+`map/s/s30/s30_5.stb`) put East and West on one line, "Puerta de salto Este --
+Oeste", so they show one destination fewer than the script offers: the last
+choice is blank and the ones after North lead one destination further than they
+say. The same file gives the three menus the English menu's lines, with East and
+West apart and the time gate named "Puerta del tiempo".
+
 ### darkchronicle
 
 ```
