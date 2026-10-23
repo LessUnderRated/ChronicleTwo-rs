@@ -75,6 +75,9 @@ Point PointerPosition();
 bool  Pointing();
 // Handles PC options input and forwards retail Options cancel to the pad edge.
 bool Run();
+// Whether a binding is waiting for its key, or the key just bound is still held: debug shortcuts
+// must not act on it.
+bool Capturing();
 Hit  HitTest(const State &state, float x, float y);
 // Shows a tab, wrapping at either end; a change of tab plays the retail cursor sound and returns true.
 bool SelectPage(State &state, int page);

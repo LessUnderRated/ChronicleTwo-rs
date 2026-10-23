@@ -41,6 +41,13 @@ Start+Select on pad 1 enters the retail developer menu from any active mode when
 lock. Loading between modes finishes first. The chord acts once per press;
 release both buttons before using it again. While frame-paused, modified Start
 captures instead. The existing four-shoulder/R3 toggle remains available.
+The `debug_menu` binding (F1 or a gamepad's paddle 1 by default, PC SETTINGS >
+Bindings > Developer menu) does the same with one press. The `mode_debug_menu`
+binding (F2 by default, PC SETTINGS > Bindings > Debug menu (R3)) turns
+`DebugFlag` on and presses R3 once, opening the town, dungeon or menu debug menu
+listed under "What `DebugFlag` unlocks on pad 1"; both need debug controls enabled.
+Neither binding, nor Start+Select, acts while PC SETTINGS is waiting for a key to
+bind or that key is still held.
 
 ## Debug menu key
 

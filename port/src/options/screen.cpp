@@ -150,6 +150,8 @@ void Track(bool on) {
 
 } // namespace
 
+bool Capturing() { return g_screen.binding >= 0 || !g_wait_source.empty(); }
+
 bool Run() {
     auto       mouse = Pointer();
     const auto pressed_mouse = MenuMouseTake().clicked & ~g_buttons;

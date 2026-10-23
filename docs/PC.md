@@ -676,6 +676,7 @@ Writes are atomic: the file is written as `config.json.tmp` and renamed over `co
 | `input.mouse_invert_y` | bool | false | | invert the mouse's Y axis |
 | `input.mouse_capture` | bool | true | | capture the mouse |
 | `input.mouse_zoom` | bool | false | | mouse wheel zoom |
+| `input.keyboard_walk` | bool | false | | keyboard movement walks and the `walk` binding (Left Shift) runs; off, it runs and `walk` walks |
 | `input.mouse_fixed_look` | bool | true | | gentle mouse look in fixed-camera town rooms |
 | `input.menu_pointer_speed` | number | 1.5 | 0.25 to 4 | captured menu hand travel per mouse count; 1 is one window pixel |
 | `input.menu_pointer_acceleration` | bool | true | | fast captured motion moves the menu hand up to twice as far per count |
@@ -772,6 +773,18 @@ Cancel. Enter retains the retail pause/resume action. WASD (or rebound left-stic
 keys) and a controller's left stick navigate menus through the same retail stick
 threshold, including Item and Character pages. In the field, stick movement does
 not change active-item slots. Arrow keys send the D-pad and can select those slots.
+
+Outside menus, holding the `walk` binding (Left Shift by default) makes keyboard
+movement deflect the left stick half way, so Max walks instead of running.
+**Keyboard movement** (`input.keyboard_walk`, PC SETTINGS > Controls) set to Walk
+swaps them: the keys walk and the `walk` binding runs. Controller sticks are unchanged.
+
+The name entry screen (renaming items, the robot, fish and keywords) takes typing
+outside Japanese: a letter, digit or one of the symbols the grid offers replaces the
+character at the caret and moves it on, as picking it on the grid does. Backspace and
+Delete act as the Back and Delete buttons, Return accepts the name, the arrow keys
+still move over the grid and Escape cancels. While typing, those keys do not press
+their pad bindings.
 
 ### Mouse menus
 
