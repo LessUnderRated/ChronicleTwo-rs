@@ -93,6 +93,8 @@ set(CT_GPU_TESTS
     MgDrawPrimRender.*
     MenuDrawGrab.*
     GfxMisc.*
+    */GfxColorWriteMask.*
+    GfxCachedTarget.*
     GfxTim2.UploadRgbaAndIndexed
     GfxValidation.DeliberateMisuseIsCaught)
 list(JOIN CT_GPU_SLOW_TESTS ":" CT_GPU_SLOW_FILTER)
