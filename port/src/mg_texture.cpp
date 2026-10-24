@@ -1,4 +1,5 @@
 #include "common.h"
+#include "mw_runtime.h"
 
 #include <algorithm>
 #include <climits>
@@ -846,10 +847,13 @@ void ApplyAnimation(mgCTextureManager *manager, const texture_catalog::Entry &en
             }
         } else if (op == "SCROLL") {
             if (data.type == MG_TEX_ANIME_TYPE_SCROLL) {
-                const double sx = number(0) * 16;
-                const double sy = number(1) * 16;
-                data.period_x = sx == 0 ? 0 : static_cast<short>((data.dest_w - 16) / sx);
-                data.period_y = sy == 0 ? 0 : static_cast<short>((data.dest_h - 16) / sy);
+                // As retail texSCROLL: an axis that does not move divides by zero, which fptosi saturates and the
+                // short truncates to a period of -1, so that axis is drawn unshifted. A period of 0 would divide by
+                // zero again when the record is drawn.
+                const float sx = 16.0f * static_cast<float>(number(0));
+                const float sy = 16.0f * static_cast<float>(number(1));
+                data.period_x = static_cast<short>(fptosi(static_cast<float>(data.dest_w - 16) / sx));
+                data.period_y = static_cast<short>(fptosi(static_cast<float>(data.dest_h - 16) / sy));
             } else if (data.type == MG_TEX_ANIME_TYPE_WAVE) {
                 for (int axis = 0; axis < 2; ++axis) {
                     const double value = number(axis);
