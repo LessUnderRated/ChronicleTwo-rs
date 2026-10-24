@@ -748,10 +748,33 @@ mgCTexture *EnterCatalog(mgCTextureManager *manager, int block, const texture_ca
     return texture;
 }
 
-void ApplyAnimation(mgCTextureManager *manager, const texture_catalog::Entry &entry, mgCMemory *stack, int base_block) {
+void ApplyAnimation(mgCTextureManager *manager, const texture_catalog::Source &source, const texture_catalog::Entry &entry,
+                    mgCMemory *stack, int base_block) {
     if (!stack) {
         return;
     }
+    // A set's script animates the set's own pictures, and its groups live in the memory the set is entered from. A
+    // lookup across every block finds the earliest registration of a name instead, and a record whose pictures are
+    // another set's would put a group from this memory into that set's block, which can outlive it. The dungeon's
+    // fire set in block 0x4B is hit both ways: polm's own fire_scr/fire_wrk resolve to the dungeon's copies, and the
+    // retail jet and fire effects (e808_mp_jet, e540_jet, e206_*fire...) name the bare fire_anm/fire_wrk they do not
+    // define. Their groups then dangle in block 0x4B once the effect's memory is reused, and restoring the block's
+    // animation faults. Retail's TexAnime skips a record whose pictures are outside the animated block, so these
+    // records never drew anything of their own.
+    std::vector<int> own_blocks;
+    for (const auto &picture : source.entries) {
+        if (picture.type != "cfg" && std::ranges::find(own_blocks, base_block + picture.block) == own_blocks.end()) {
+            own_blocks.push_back(base_block + picture.block);
+        }
+    }
+    auto find_texture = [manager, &own_blocks](std::string &name) {
+        for (const int block : own_blocks) {
+            if (mgCTexture *texture = manager->GetTexture(name.data(), block)) {
+                return texture;
+            }
+        }
+        return manager->GetTexture(name.data(), -1);
+    };
     auto &registered = NativeAnimations()[manager];
     auto  operands = [](const texture_catalog::Entry &definition) {
         std::vector<std::string> result;
@@ -829,14 +852,14 @@ void ApplyAnimation(mgCTextureManager *manager, const texture_catalog::Entry &en
             data.bug_patch = bug_patch;
         } else if (op == "SRC_TEX") {
             std::string name = named(0);
-            data.src_tex = manager->GetTexture(name.data(), -1);
+            data.src_tex = find_texture(name);
             data.src_x = static_cast<short>(number(1) * 16);
             data.src_y = static_cast<short>(number(2) * 16);
             data.src_w = static_cast<short>(number(3) * 16);
             data.src_h = static_cast<short>(number(4) * 16);
         } else if (op == "DEST_TEX") {
             std::string name = named(0);
-            data.dest_tex = manager->GetTexture(name.data(), -1);
+            data.dest_tex = find_texture(name);
             data.dest_x = static_cast<short>(number(1) * 16);
             data.dest_y = static_cast<short>(number(2) * 16);
             data.dest_w = args.size() > 3 ? static_cast<short>(number(3) * 16) : data.src_w;
@@ -895,6 +918,10 @@ void ApplyAnimation(mgCTextureManager *manager, const texture_catalog::Entry &en
         } else if (op == "TEX_ANIME_DATA_END") {
             mgCTexture *texture = data.src_tex ? data.src_tex : data.dest_tex;
             if (!texture || !data.src_tex || !data.dest_tex) {
+                continue;
+            }
+            auto own = [&own_blocks](const mgCTexture *picture) { return std::ranges::find(own_blocks, picture->block) != own_blocks.end(); };
+            if (!own_blocks.empty() && (!own(data.src_tex) || !own(data.dest_tex))) {
                 continue;
             }
             mgCTextureBlock *block = manager->GetTextureBlock(texture->block);
@@ -1600,7 +1627,7 @@ int EnterSource(mgCTextureManager *manager, int block, const texture_catalog::So
             datapacks::PrefetchEntries(std::span(entries).subspan(index, std::min(kPrefetchBatch, entries.size() - index)));
         }
         if (entry->type == "cfg") {
-            ApplyAnimation(manager, *entry, stack, block);
+            ApplyAnimation(manager, source, *entry, stack, block);
             continue;
         }
         const int group = entry->block;

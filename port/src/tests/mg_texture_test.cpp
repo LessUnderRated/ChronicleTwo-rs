@@ -890,6 +890,80 @@ TEST(MgTexture, NativeSetsReuseLiveAnimationGroupsAndRecreateDeletedOrChangedScr
     EXPECT_EQ(h.manager.texture_num, 2);
 }
 
+TEST(MgTexture, NativeSetScriptsAnimateTheirOwnPicturesOverEarlierPicturesOfTheSameName) {
+    Harness                h;
+    texture_catalog::Entry source;
+    source.type = "texture";
+    source.name = "fire_scr";
+    source.width = source.height = 2;
+    source.bpp = 32;
+    source.variants = {
+        {.selector = "fire_scr", .levels = {{.path = "#/images/0"}}}
+    };
+    auto destination = source;
+    destination.name = "fire_wrk";
+    destination.variants[0].selector = "fire_wrk";
+    auto                   text = [](std::string value) { return texture_catalog::Entry::Argument{.text = std::move(value), .number = 0}; };
+    auto                   number = [](double value) { return texture_catalog::Entry::Argument{.text = std::nullopt, .number = value}; };
+    texture_catalog::Entry script;
+    script.type = "cfg";
+    script.name = "#texanime";
+    script.script = {
+        {.name = "TEX_ANIME",          .args = {text("newgrp1"), number(1)}                                  },
+        {.name = "TEX_ANIME_DATA",     .args = {number(1)}                                                   },
+        {.name = "SRC_TEX",            .args = {text("fire_scr"), number(0), number(0), number(1), number(1)}},
+        {.name = "DEST_TEX",           .args = {text("fire_wrk"), number(0), number(0), number(1), number(1)}},
+        {.name = "TEX_ANIME_DATA_END", .args = {}                                                            },
+        {.name = "TEX_ANIME_END",      .args = {}                                                            }
+    };
+    const texture_catalog::Source dungeon{.source = "dungeon.gltf", .groups = {0}, .entries = {source, destination, script}};
+    const texture_catalog::Source effect{.source = "effect.gltf", .groups = {0}, .entries = {source, destination, script}};
+    unsigned char                 value = 10;
+    auto                          decode = [&value](const texture_catalog::Entry &, std::size_t, datapacks::DecodedTexture &decoded, std::string &) {
+        decoded = {};
+        decoded.width = decoded.height = 2;
+        decoded.levels.emplace_back(16, value);
+        return true;
+    };
+    MgTextureEnterNativeSet(&h.manager, 1, dungeon, &h.memory, decode);
+    auto *dungeon_animation = h.manager.GetTexAnime(1);
+    ASSERT_NE(dungeon_animation, nullptr);
+    ASSERT_NE(dungeon_animation->list[0], nullptr);
+
+    // The second set's script, entered from short-lived memory, must not reach the first set's block.
+    Quads     effect_storage(1024, 0);
+    mgCMemory effect_memory;
+    effect_memory.stSetBuffer(effect_storage.data(), static_cast<int>(effect_storage.size()));
+    value = 20;
+    MgTextureEnterNativeSet(&h.manager, 2, effect, &effect_memory, decode);
+    EXPECT_EQ(dungeon_animation->list[1], nullptr);
+    auto *effect_animation = h.manager.GetTexAnime(2);
+    ASSERT_NE(effect_animation, nullptr);
+    ASSERT_NE(effect_animation->list[0], nullptr);
+    EXPECT_EQ(effect_animation->list[0]->data.src_tex->block, 2);
+    EXPECT_EQ(effect_animation->list[0]->data.dest_tex->block, 2);
+    h.manager.DeleteBlock(2);
+
+    // A set that names pictures it does not define, as the retail jet effects do in their last group, animates nothing
+    // in the block that holds them.
+    auto jet_source = source;
+    jet_source.name = "jet_scr";
+    auto jet_script = script;
+    jet_script.script[2].args[0] = text("jet_scr");
+    jet_script.script.insert(jet_script.script.end() - 1, {
+        {.name = "TEX_ANIME_DATA",     .args = {number(0)}                                                   },
+        {.name = "SRC_TEX",            .args = {text("fire_scr"), number(0), number(0), number(1), number(1)}},
+        {.name = "DEST_TEX",           .args = {text("fire_wrk"), number(0), number(0), number(1), number(1)}},
+        {.name = "TEX_ANIME_DATA_END", .args = {}                                                            }
+    });
+    const texture_catalog::Source jet{.source = "jet.gltf", .groups = {0}, .entries = {jet_source, jet_script}};
+    effect_memory.stSetBuffer(effect_storage.data(), static_cast<int>(effect_storage.size()));
+    MgTextureEnterNativeSet(&h.manager, 3, jet, &effect_memory, decode);
+    EXPECT_EQ(dungeon_animation->list[1], nullptr);
+    EXPECT_EQ(h.manager.GetTexAnime(3), nullptr);
+    h.manager.DeleteBlock(3);
+}
+
 TEST(MgTexture, NativeSetsReuseIdenticallyNamedPicturesWithoutDecoding) {
     Harness                h;
     texture_catalog::Entry entry;
