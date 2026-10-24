@@ -2667,8 +2667,11 @@ void EnterTextureSet(const std::shared_ptr<Document> &document, std::size_t inde
     // Retail models look their textures up by name. A plain model's set whose pictures are all registered already,
     // as a map piece's copy of the set its map entered into the map's own blocks, stays with that owner: entering it
     // again from block 0 would put the pictures, and the texture animation that follows them by name, in blocks
-    // that outlive the memory the animation is allocated from.
-    if (!character && SetAlreadyEntered(*cached, *textures)) {
+    // that outlive the memory the animation is allocated from. A character without a block of its own, as a map
+    // piece's character (mdslist.cpp), borrows the map's textures the same way: entered from block -1, its set's
+    // per-picture offsets would land a block too low and replace the map's pictures of the same name
+    // (Channel Entrance's memo moved d01b08 from block 1 to 0, and the pipe joint drew black).
+    if ((!character || options.texture_block < 0) && SetAlreadyEntered(*cached, *textures)) {
         return;
     }
     bool owned = false;

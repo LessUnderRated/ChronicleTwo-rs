@@ -964,6 +964,53 @@ TEST(MgTexture, NativeSetScriptsAnimateTheirOwnPicturesOverEarlierPicturesOfTheS
     h.manager.DeleteBlock(3);
 }
 
+// Channel Entrance's water (d01en01, d01b17) scrolls one axis per record; the still axis must take retail's
+// saturated period of -1, not 0, which the drawn record would divide by.
+TEST(MgTexture, ScrollWithAStillAxisTakesRetailsSaturatedPeriod) {
+    Harness                h;
+    texture_catalog::Entry source;
+    source.type = "texture";
+    source.name = "source";
+    source.width = source.height = 128;
+    source.bpp = 32;
+    source.variants = {
+        {.selector = "source", .levels = {{.path = "#/images/0"}}}
+    };
+    auto destination = source;
+    destination.name = "destination";
+    destination.variants[0].selector = "destination";
+    auto                   text = [](std::string value) { return texture_catalog::Entry::Argument{.text = std::move(value), .number = 0}; };
+    auto                   number = [](double value) { return texture_catalog::Entry::Argument{.text = std::nullopt, .number = value}; };
+    texture_catalog::Entry script;
+    script.type = "cfg";
+    script.name = "#animation";
+    script.script = {
+        {.name = "TEX_ANIME",          .args = {text("water"), number(1)}                                                      },
+        {.name = "TEX_ANIME_DATA",     .args = {number(MG_TEX_ANIME_TYPE_SCROLL)}                                              },
+        {.name = "SRC_TEX",            .args = {text("source"), number(0), number(0), number(128), number(128)}                },
+        {.name = "DEST_TEX",           .args = {text("destination"), number(0), number(0), number(128), number(128), number(1)}},
+        {.name = "SCROLL",             .args = {number(0), number(0.5)}                                                        },
+        {.name = "TEX_ANIME_DATA_END", .args = {}                                                                              },
+        {.name = "TEX_ANIME_END",      .args = {}                                                                              }
+    };
+    texture_catalog::Source document{
+        .source = "model.gltf", .groups = {0},
+             .entries = {source, destination, script}
+    };
+    auto decode = [](const texture_catalog::Entry &, std::size_t, datapacks::DecodedTexture &decoded, std::string &) {
+        decoded = {};
+        decoded.width = decoded.height = 128;
+        decoded.levels.emplace_back(128 * 128 * 4, 33);
+        return true;
+    };
+    MgTextureEnterNativeSet(&h.manager, 0, document, &h.memory, decode);
+    auto *animation = h.manager.GetTexAnime(0);
+    ASSERT_NE(animation, nullptr);
+    ASSERT_NE(animation->list[0], nullptr);
+    EXPECT_EQ(animation->list[0]->data.period_x, -1);
+    EXPECT_EQ(animation->list[0]->data.period_y, 254);
+}
+
 TEST(MgTexture, NativeSetsReuseIdenticallyNamedPicturesWithoutDecoding) {
     Harness                h;
     texture_catalog::Entry entry;
