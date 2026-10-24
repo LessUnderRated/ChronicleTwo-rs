@@ -1,9 +1,11 @@
 #include <gtest/gtest.h>
 
 #include <cmath>
+#include <cstdlib>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <memory>
 #include <optional>
 #include <random>
 #include <string>
@@ -11,6 +13,7 @@
 #include <utility>
 #include <vector>
 
+#include "luau_bytecode.hpp"
 #include "luau_runtime.hpp"
 #include "monster.hpp"
 #include "runscript.hpp"
@@ -511,4 +514,34 @@ TEST_F(LuauRuntime, InterpreterKeepsRetailPrograms) {
 
     EXPECT_FALSE(luau_runtime::Owns(&script));
     EXPECT_EQ(script.check_program(1), 0);
+}
+
+TEST_F(LuauRuntime, PrecompiledModulesFallBackWhenStaleOrIncompatible) {
+    const std::string source = "return {[100] = function() return 7 end}\r\n";
+    const auto        module = root / "facade/precompiled.luau";
+    std::ofstream(module, std::ios::binary) << source;
+    auto                                          options = luau_bytecode::RuntimeOptions();
+    std::size_t                                   size = 0;
+    const std::unique_ptr<char, void (*)(void *)> code(luau_compile(source.data(), source.size(), &options, &size), std::free);
+    ASSERT_NE(code, nullptr);
+    const std::string valid = luau_bytecode::Header(source) + std::string(code.get(), size);
+    const std::string stale = luau_bytecode::Header("old source") + std::string(code.get(), size);
+    const std::string incompatible = luau_bytecode::Header(source) + "invalid bytecode";
+    for (const auto &contents : {valid, stale, incompatible}) {
+        luau_runtime::Shutdown();
+        luau_runtime::SetScriptsRoot(root);
+        std::ofstream(module.string() + "c", std::ios::binary) << contents;
+        Loaded loaded("facade/precompiled");
+        ASSERT_EQ(loaded.script.run(100), 0);
+        EXPECT_EQ(loaded.script.result, 7);
+    }
+}
+
+TEST(LuauBytecode, HeaderRejectsChangedSourceAndTruncatedPayloads) {
+    const std::string contents = luau_bytecode::Header("source") + "code";
+    const auto        bytecode = luau_bytecode::Bytecode(contents, "source");
+    EXPECT_EQ(bytecode, std::optional<std::string_view>{"code"});
+    EXPECT_FALSE(luau_bytecode::Bytecode(contents, "changed"));
+    EXPECT_FALSE(luau_bytecode::Bytecode(luau_bytecode::Header("source"), "source"));
+    EXPECT_FALSE(luau_bytecode::Bytecode("CTLB", "source"));
 }

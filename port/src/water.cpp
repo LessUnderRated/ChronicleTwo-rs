@@ -174,10 +174,11 @@ PORT_OVERRIDE int CWater::Draw(u_int * /*tag*/, float (*matrix)[4], mgCDrawManag
         .rows = rows,
         .columns = columns
     };
-    const vu::WaterMesh mesh = vu::BuildWaterMesh(desc, std::span<const float>(height, static_cast<std::size_t>(rows) * static_cast<std::size_t>(columns)));
+    static thread_local vu::WaterMesh mesh;
+    vu::BuildWaterMesh(desc, std::span<const float>(height, static_cast<std::size_t>(rows) * static_cast<std::size_t>(columns)), mesh);
 
-    std::vector<vu::WaterHostVertex> host_vertices;
-    std::vector<uint32_t>            indices;
+    static thread_local std::vector<vu::WaterHostVertex> host_vertices;
+    static thread_local std::vector<uint32_t>            indices;
     vu::WaterHostMesh(surface, eye, mesh, host_vertices, indices);
     if (indices.empty()) {
         return 0;
@@ -204,7 +205,8 @@ PORT_OVERRIDE int CWater::Draw(u_int * /*tag*/, float (*matrix)[4], mgCDrawManag
         return 0;
     }
 
-    std::vector<gfx::Vertex3D> vertices(host_vertices.size());
+    static thread_local std::vector<gfx::Vertex3D> vertices;
+    vertices.resize(host_vertices.size());
     for (std::size_t i = 0; i < host_vertices.size(); ++i) {
         const vu::WaterHostVertex &host = host_vertices[i];
         gfx::Vertex3D             &vertex = vertices[i];

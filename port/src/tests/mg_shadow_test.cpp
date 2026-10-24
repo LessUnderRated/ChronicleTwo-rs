@@ -399,3 +399,87 @@ TEST(MgShadowReject, GrazingTriangleIsRejected) {
 TEST(MgShadowReject, NaNCornerIsRejected) {
     EXPECT_TRUE(PrismFor(100.0f, P(0, 0, std::numeric_limits<float>::quiet_NaN())).empty());
 }
+
+namespace {
+
+struct ShadowMeshFixture {
+    sceVu0FVECTOR points[6] = {
+        {-1, -1, 100, 1},
+        {1,  -1, 100, 1},
+        {1,  1,  100, 1},
+        {-1, 1,  100, 1},
+        {-1, -1, 100, 1},
+        {1,  1,  100, 1}
+    };
+    std::vector<int>           corners = {0, 1, 2, 0, 2, 3};
+    mgCFace                    face{};
+    mgFACE_GROUP               group{};
+    mgCShadowMDT               visual;
+    mgRENDER_INFO              info{};
+    sceVu0FMATRIX              model{};
+    std::vector<gfx::Vertex3D> vertices;
+    std::vector<uint32_t>      indices;
+
+    ShadowMeshFixture() {
+        sceVu0UnitMatrix(model);
+        sceVu0UnitMatrix(info.view);
+        sceVu0UnitMatrix(info.shadow);
+        info.shadow[2][2] = 0;
+        info.shadow[3][2] = 50;
+        info.shadow_light_dir[2] = -1;
+        group.face = &face;
+        visual.vertex = points;
+        visual.vertex_num = 6;
+        visual.face_group = &group;
+    }
+
+    void Build() {
+        face.index = corners.data();
+        face.vertex_num = static_cast<short>(corners.size() / 3);
+        mgShadowPortBuildMesh(visual, model, info, TestProjection(), vertices, indices);
+    }
+};
+
+} // namespace
+
+TEST(MgShadowMesh, WeldsSharedEdgesAndKeepsSixVerticesPerPrism) {
+    ShadowMeshFixture mesh;
+    mesh.Build();
+    EXPECT_EQ(mesh.vertices.size(), 12u);
+    EXPECT_EQ(mesh.indices.size(), 36u);
+    mesh.corners = {0, 1, 2, 4, 5, 3};
+    mesh.Build();
+    EXPECT_EQ(mesh.indices.size(), 36u);
+    const auto capacity = mesh.vertices.capacity();
+    mesh.Build();
+    EXPECT_EQ(mesh.vertices.capacity(), capacity);
+    EXPECT_EQ(mesh.indices.size(), 36u);
+}
+
+TEST(MgShadowMesh, KeepsOverlapsAndAmbiguousEdgesAndRefreshesReusedGeometry) {
+    ShadowMeshFixture mesh;
+    mesh.corners = {0, 1, 2, 0, 1, 2};
+    mesh.Build();
+    EXPECT_EQ(mesh.indices.size(), 48u);
+    mesh.corners = {0, 1, 2, 0, 2, 3, 0, 2, 3};
+    mesh.Build();
+    EXPECT_EQ(mesh.indices.size(), 72u);
+    mesh.corners = {0, 1, 2, 4, 5, 3};
+    mesh.points[4][0] = -2;
+    mesh.Build();
+    EXPECT_EQ(mesh.indices.size(), 48u);
+}
+
+TEST(MgShadowMesh, RetainsTheSideBesideAClippedTriangle) {
+    ShadowMeshFixture mesh;
+    mesh.points[3][2] = 1;
+    mesh.Build();
+    EXPECT_EQ(mesh.vertices.size(), 6u);
+    EXPECT_EQ(mesh.indices.size(), 24u);
+    for (auto &point : mesh.points) {
+        point[2] = 1;
+    }
+    mesh.Build();
+    EXPECT_TRUE(mesh.vertices.empty());
+    EXPECT_TRUE(mesh.indices.empty());
+}

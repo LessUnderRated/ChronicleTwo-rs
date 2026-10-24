@@ -10,3 +10,13 @@
 // band. bias_dir lifts the drop corners off the receiving plane.
 void AppendShadowPrism(const dc::vu1::Vec4 top[3], const dc::vu1::Vec4 drop[3], const dc::vu1::Vec4 &bias_dir,
                        const mgPortProjection &projection, std::vector<dc::vu1::SdwPrismTriangle> &out);
+
+class mgCShadowMDT;
+class mgRENDER_INFO;
+
+/**
+ * Builds indexed shadow prisms, omitting shared sides whose opposite windings cancel.
+ */
+void mgShadowPortBuildMesh(const mgCShadowMDT &visual, float (*matrix)[4], mgRENDER_INFO &info,
+                           const mgPortProjection &projection, std::vector<gfx::Vertex3D> &vertices,
+                           std::vector<uint32_t> &indices);

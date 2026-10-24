@@ -19,10 +19,10 @@ Vec4 Centroid(const Vec4 p[3]) {
 
 }  // namespace
 
-void SdwPrism(const Vec4 top[3], const Vec4 drop[3], std::vector<SdwPrismTriangle>& out) {
+bool SdwPrismOrientation(const Vec4 top[3], const Vec4 drop[3], bool &down) {
     for (uint32_t i = 0; i < 3; ++i) {
         if (!Finite(top[i]) || !Finite(drop[i])) {
-            return;
+            return false;
         }
     }
 
@@ -32,16 +32,24 @@ void SdwPrism(const Vec4 top[3], const Vec4 drop[3], std::vector<SdwPrismTriangl
     const float height_len = std::sqrt(Dot3(height, height));
     const float thickness = Dot3(normal, height);
     if (!std::isfinite(normal_len) || !std::isfinite(height_len) || !std::isfinite(thickness)) {
-        return;
+        return false;
     }
     if (normal_len == 0.0f || height_len == 0.0f ||
         std::fabs(thickness) <= 1e-4f * normal_len * height_len) {
-        return;
+        return false;
     }
 
+    down = thickness < 0.0f;
+    return true;
+}
+
+void SdwPrism(const Vec4 top[3], const Vec4 drop[3], std::vector<SdwPrismTriangle> &out) {
+    bool down = false;
+    if (!SdwPrismOrientation(top, drop, down)) {
+        return;
+    }
     // The top normal points away from the drop exactly when the drop lies below the triangle; the
     // side and drop caps follow that orientation so every face winds outward either way.
-    const bool down = thickness < 0.0f;
     const Vec4 t[3] = {Point(top[0]), Point(top[1]), Point(top[2])};
     const Vec4 d[3] = {Point(drop[0]), Point(drop[1]), Point(drop[2])};
 

@@ -26,6 +26,8 @@ LONG64_SUFFIXES = (".h", ".hpp", ".hh", ".inc", ".inl")
 # ClsMes::Init is out-of-line only in dngmenu.cpp; making it inline everywhere leaves one definition.
 # mgVu0FBOX is not trivially copyable, so memset on it trips -Wnontrivial-memcall.
 FIXUPS = [
+    # Keep the game's float helper distinct from the standard library's abs overloads.
+    ("crandom.hpp", "float abs(float value);", "float CRandomAbs(float value);"),
     # Paint colours close the menu into paint mode on the first visit as well as returned visits.
     ("editmenu.hpp", "        paint_top = 0;", "        paint_top = 0; paint_return = 1;"),
     ("dng_event.hpp", "    virtual void Draw();", "    virtual int Draw();"),
@@ -132,6 +134,8 @@ CHARA_MODEL_STACK_EXTRA = 12000
 # COFF has no inline-vs-strong resolution: map.cpp's out-of-line CMapParts::CMapParts is the single definition,
 # so the identical inline copies in editeff.cpp/editmap.cpp are blanked rather than kept.
 UNIT_FIXUPS = [
+    ("crandom.cpp", "float abs(float value) {", "float CRandomAbs(float value) {"),
+    ("gyoracesim.cpp", "float magnitude = abs(distance);", "float magnitude = CRandomAbs(distance);"),
     # Native monster scheduling retains the retail callback scene context.
     ("runscript_opcodes.cpp", "static CScene *nowScene;",
      "static CScene *nowScene; void PortSetMonsterScriptScene(CScene *scene) { nowScene = scene; }"),

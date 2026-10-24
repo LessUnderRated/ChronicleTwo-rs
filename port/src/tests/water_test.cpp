@@ -310,3 +310,30 @@ TEST(Water, SlopeShiftsRefractedEdge) {
     EXPECT_TRUE(IsRed(sloped.At(264.0f, 240.0f)));
     EXPECT_TRUE(IsBlue(sloped.At(384.0f, 240.0f)));
 }
+
+TEST(WaterHost, ReusesGridStorageAndReplacesEarlierGeometry) {
+    WaterMeshDesc desc{
+        .min = {.x = 0, .y = 0, .z = 0, .w = 1},
+        .max = {.x = 4, .y = 0, .z = 4, .w = 1},
+        .rows = 4,
+        .columns = 4
+    };
+    std::vector<float> heights(16, 0.0f);
+    WaterMesh          mesh;
+    BuildWaterMesh(desc, heights, mesh);
+    ASSERT_EQ(mesh.size(), 3u);
+    const auto *storage = mesh[0].data();
+    const auto  capacity = mesh[0].capacity();
+    heights[1] = 2;
+    BuildWaterMesh(desc, heights, mesh);
+    EXPECT_EQ(mesh[0].data(), storage);
+    EXPECT_EQ(mesh[0].capacity(), capacity);
+    EXPECT_EQ(mesh[0].size(), 8u);
+    EXPECT_FLOAT_EQ(mesh[0][0].slope.y, -2.0f);
+    desc.rows = 2;
+    BuildWaterMesh(desc, heights, mesh);
+    EXPECT_EQ(mesh.size(), 1u);
+    desc.rows = 1;
+    BuildWaterMesh(desc, heights, mesh);
+    EXPECT_TRUE(mesh.empty());
+}

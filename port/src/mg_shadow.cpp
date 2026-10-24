@@ -1,7 +1,13 @@
 #include "common.h"
 
+#include <algorithm>
+#include <array>
+#include <bit>
 #include <cmath>
 #include <cstring>
+#include <map>
+#include <span>
+#include <unordered_map>
 #include <vector>
 
 #include "mg_drawenv.hpp"
@@ -22,6 +28,7 @@ constexpr float kIdentity[16] = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
 // Flat colour 1 is retail's RGBAQ (1, 1, 1) against a material of 0x80.
 constexpr float kShadowDiffuse = 1.0f / 128.0f;
 constexpr float kShadowAlpha = 0.5f;
+constexpr std::size_t kShadowCacheEntries = 128;
 
 // Z-fail counts the volume's far caps, which lie on the receiving plane. A cap on the plane passes
 // GEQUAL against the floor and is missed, so the drop is pushed past the plane by this fraction of
@@ -50,6 +57,144 @@ bool InClipVolume(const vu::Vec4 &p, const mgPortProjection &projection) {
     const float screen_x = std::fabs(p.x * projection.eye / p.z);
     const float screen_y = std::fabs(p.y * projection.eye * projection.aspect_y / p.z);
     return screen_x <= kGuardHalfRange && screen_y <= kGuardHalfRange;
+}
+
+using Triangle = std::array<vu::Vec4, 3>;
+using Neighbours = std::array<int32_t, 3>;
+
+struct Topology {
+    std::vector<Triangle>   triangles;
+    std::vector<Neighbours> neighbours;
+};
+
+// Position identities weld duplicated seam vertices without depending on the visual's index layout.
+std::array<uint32_t, 3> PositionKey(const vu::Vec4 &p) {
+    return {std::bit_cast<uint32_t>(p.x + 0.0f), std::bit_cast<uint32_t>(p.y + 0.0f), std::bit_cast<uint32_t>(p.z + 0.0f)};
+}
+
+Topology &ShadowTopology(const mgCShadowMDT &visual) {
+    static std::unordered_map<const mgCShadowMDT *, Topology> cache;
+    static thread_local std::vector<Triangle>                 triangles;
+    triangles.clear();
+    for (const mgFACE_GROUP *group = visual.face_group; group; group = group->next) {
+        for (const mgCFace *face = group->face; face; face = face->next) {
+            for (int t = 0; t < face->vertex_num; ++t) {
+                Triangle triangle;
+                for (int corner = 0; corner < 3; ++corner) {
+                    const float *p = visual.vertex[face->index[t * 3 + corner]];
+                    triangle[corner] = {.x = p[0], .y = p[1], .z = p[2], .w = 1.0f};
+                }
+                triangles.push_back(triangle);
+            }
+        }
+    }
+    // Cached geometry is owned, never read through retired arena pointers, and compared before reuse.
+    if (cache.size() >= kShadowCacheEntries && !cache.contains(&visual)) {
+        cache.clear();
+    }
+    auto &entry = cache[&visual];
+    if (entry.triangles.size() == triangles.size() &&
+        (triangles.empty() || std::memcmp(entry.triangles.data(), triangles.data(), triangles.size() * sizeof(Triangle)) == 0)) {
+        return entry;
+    }
+    entry.triangles = triangles;
+    entry.neighbours.assign(triangles.size(), {-1, -1, -1});
+
+    struct Edge {
+        uint64_t key;
+        uint32_t triangle;
+        uint32_t edge;
+        auto     operator<=>(const Edge &) const = default;
+    };
+
+    std::map<std::array<uint32_t, 3>, uint32_t> positions;
+    std::vector<Edge>                           edges;
+    edges.reserve(triangles.size() * 3);
+    for (uint32_t t = 0; t < triangles.size(); ++t) {
+        std::array<uint32_t, 3> ids{};
+        for (int corner = 0; corner < 3; ++corner) {
+            ids[corner] = positions.try_emplace(PositionKey(triangles[t][corner]), static_cast<uint32_t>(positions.size())).first->second;
+        }
+        for (uint32_t edge = 0; edge < 3; ++edge) {
+            const auto a = ids[edge];
+            const auto b = ids[(edge + 1) % 3];
+            if (a != b) {
+                edges.push_back({.key = (uint64_t{std::min(a, b)} << 32) | std::max(a, b), .triangle = t, .edge = edge});
+            }
+        }
+    }
+    std::ranges::sort(edges);
+    for (std::size_t first = 0; first < edges.size();) {
+        std::size_t end = first + 1;
+        while (end < edges.size() && edges[end].key == edges[first].key) {
+            ++end;
+        }
+        if (end - first == 2 && edges[first].triangle != edges[first + 1].triangle) {
+            const auto &a = edges[first];
+            const auto &b = edges[first + 1];
+            entry.neighbours[a.triangle][a.edge] = static_cast<int32_t>(b.triangle * 3 + b.edge);
+            entry.neighbours[b.triangle][b.edge] = static_cast<int32_t>(a.triangle * 3 + a.edge);
+        }
+        first = end;
+    }
+    return entry;
+}
+
+struct Prism {
+    Triangle            top{};
+    Triangle            drop{};
+    std::array<bool, 3> sides{true, true, true};
+    bool                down = false;
+    bool                valid = false;
+    uint32_t            first = 0;
+};
+
+bool SamePoint(const vu::Vec4 &a, const vu::Vec4 &b) {
+    return a.x == b.x && a.y == b.y && a.z == b.z;
+}
+
+// Only identical, planar sides between prisms on opposite sides of the shared plane cancel.
+bool SideCancelled(const Prism &a, int edge, const Prism &b, int other_edge) {
+    const int  next = (edge + 1) % 3;
+    const int  other_next = (other_edge + 1) % 3;
+    const bool forward = SamePoint(a.top[edge], b.top[other_edge]);
+    const int  b0 = forward ? other_edge : other_next;
+    const int  b1 = forward ? other_next : other_edge;
+    if (!SamePoint(a.top[edge], b.top[b0]) || !SamePoint(a.top[next], b.top[b1]) ||
+        !SamePoint(a.drop[edge], b.drop[b0]) || !SamePoint(a.drop[next], b.drop[b1])) {
+        return false;
+    }
+    const auto  base = a.top[edge];
+    const auto  normal = vu::Cross3(a.top[next] - base, a.drop[edge] - base);
+    const float length = std::sqrt(vu::Dot3(normal, normal));
+    const auto  far_corner = a.drop[next] - base;
+    if (!std::isfinite(length) || length == 0.0f ||
+        std::fabs(vu::Dot3(normal, far_corner)) > 1e-5f * length * std::sqrt(vu::Dot3(far_corner, far_corner))) {
+        return false;
+    }
+    const auto side = [&](const Prism &prism) {
+        float result = 0.0f;
+        for (const auto *corners : {&prism.top, &prism.drop}) {
+            for (const auto &corner : *corners) {
+                const auto  offset = corner - base;
+                const float distance = vu::Dot3(normal, offset);
+                if (std::fabs(distance) > 1e-5f * length * std::sqrt(vu::Dot3(offset, offset))) {
+                    if (result != 0.0f && (distance < 0.0f) != (result < 0.0f)) {
+                        return 0.0f;
+                    }
+                    result = distance;
+                }
+            }
+        }
+        return result;
+    };
+    const float sa = side(a);
+    const float sb = side(b);
+    return sa != 0.0f && sb != 0.0f && (sa < 0.0f) != (sb < 0.0f);
+}
+
+void Emit(std::vector<uint32_t> &indices, uint32_t a, uint32_t b, uint32_t c, bool forward) {
+    indices.insert(indices.end(), forward ? std::initializer_list<uint32_t>{a, b, c} : std::initializer_list<uint32_t>{a, c, b});
 }
 
 } // namespace
@@ -90,58 +235,12 @@ PORT_OVERRIDE int mgCShadowMDT::CreateRenderInfoPacket(u_int * /*packet*/, float
         return 0;
     }
 
-    sceVu0FMATRIX model_to_eye;
-    sceVu0FMATRIX drop_to_eye;
-    sceVu0FMATRIX shadow;
-    mgMulMatrix(model_to_eye, info->view, matrix);
-    mgMulMatrix(shadow, info->shadow, matrix);
-    mgMulMatrix(drop_to_eye, info->view, shadow);
-
-    const vu::Mat4                    to_eye = ToMat(model_to_eye);
-    const vu::Mat4                    drop_eye = ToMat(drop_to_eye);
-    const vu::Vec4                    light_world = {.x = info->shadow_light_dir[0], .y = info->shadow_light_dir[1], .z = info->shadow_light_dir[2], .w = 0.0f};
-    const vu::Vec4                    light_eye = vu::Mul(ToMat(info->view), light_world);
-    const vu::Vec4                    bias_dir = light_eye * (1.0f / std::sqrt(vu::Dot3(light_eye, light_eye)));
-    const mgPortProjection            projection = mgPortCurrentProjection();
-    std::vector<vu::SdwPrismTriangle> prisms;
-
-    for (mgFACE_GROUP *group = face_group; group != nullptr; group = group->next) {
-        for (mgCFace *face = group->face; face != nullptr; face = face->next) {
-            for (int t = 0; t < face->vertex_num; ++t) {
-                vu::Vec4 corner[3];
-                for (int j = 0; j < 3; ++j) {
-                    const float *p = vertex[face->index[3 * t + j]];
-                    corner[j] = {.x = p[0], .y = p[1], .z = p[2], .w = 1.0f};
-                }
-
-                vu::Vec4 top[3];
-                vu::Vec4 drop[3];
-                for (int j = 0; j < 3; ++j) {
-                    top[j] = vu::Mul(to_eye, corner[j]);
-                    drop[j] = vu::Mul(drop_eye, corner[j]);
-                }
-                AppendShadowPrism(top, drop, bias_dir, projection, prisms);
-            }
-        }
-    }
-
-    if (prisms.empty()) {
+    static thread_local std::vector<gfx::Vertex3D> vertices;
+    static thread_local std::vector<uint32_t>      indices;
+    const mgPortProjection                         projection = mgPortCurrentProjection();
+    mgShadowPortBuildMesh(*this, matrix, *info, projection, vertices, indices);
+    if (indices.empty()) {
         return 0;
-    }
-
-    std::vector<gfx::Vertex3D> vertices;
-    std::vector<uint32_t>      indices;
-    vertices.reserve(prisms.size() * 3);
-    indices.reserve(prisms.size() * 3);
-    for (const vu::SdwPrismTriangle &tri : prisms) {
-        for (const vu::Vec4 &v : tri.v) {
-            gfx::Vertex3D vertex{};
-            vertex.position[0] = v.x;
-            vertex.position[1] = v.y;
-            vertex.position[2] = v.z;
-            indices.push_back(static_cast<uint32_t>(vertices.size()));
-            vertices.push_back(vertex);
-        }
     }
 
     // Vertices are in eye space; the local transform carries them back to world so the display list's
@@ -182,4 +281,92 @@ PORT_OVERRIDE int mgCShadowMDT::CreateRenderInfoPacket(u_int * /*packet*/, float
     }
 
     return 0;
+}
+
+void mgShadowPortBuildMesh(const mgCShadowMDT &visual, float (*matrix)[4], mgRENDER_INFO &info,
+                           const mgPortProjection &projection, std::vector<gfx::Vertex3D> &vertices,
+                           std::vector<uint32_t> &indices) {
+    sceVu0FMATRIX model_to_eye;
+    sceVu0FMATRIX drop_to_eye;
+    sceVu0FMATRIX shadow;
+    mgMulMatrix(model_to_eye, info.view, matrix);
+    mgMulMatrix(shadow, info.shadow, matrix);
+    mgMulMatrix(drop_to_eye, info.view, shadow);
+    const auto                             to_eye = ToMat(model_to_eye);
+    const auto                             drop_eye = ToMat(drop_to_eye);
+    const auto                             light = vu::Mul(ToMat(info.view), {.x = info.shadow_light_dir[0], .y = info.shadow_light_dir[1], .z = info.shadow_light_dir[2], .w = 0});
+    const auto                             bias_dir = light * (1.0f / std::sqrt(vu::Dot3(light, light)));
+    const auto                            &topology = ShadowTopology(visual);
+    static thread_local std::vector<Prism> prisms;
+    prisms.resize(topology.triangles.size());
+    vertices.clear();
+    indices.clear();
+    vertices.reserve(prisms.size() * 6);
+    indices.reserve(prisms.size() * 24);
+    for (std::size_t t = 0; t < prisms.size(); ++t) {
+        auto &prism = prisms[t];
+        prism.valid = true;
+        prism.sides.fill(true);
+        for (int i = 0; i < 3; ++i) {
+            prism.top[i] = vu::Mul(to_eye, topology.triangles[t][i]);
+            prism.drop[i] = vu::Mul(drop_eye, topology.triangles[t][i]);
+            prism.valid = prism.valid && InClipVolume(prism.top[i], projection) && InClipVolume(prism.drop[i], projection);
+        }
+        if (!prism.valid) {
+            continue;
+        }
+        const float bias = kShadowDropBias * std::fabs(prism.drop[0].z);
+        for (auto &corner : prism.drop) {
+            corner = corner + bias_dir * bias;
+        }
+        prism.valid = vu::SdwPrismOrientation(prism.top.data(), prism.drop.data(), prism.down);
+        if (!prism.valid) {
+            continue;
+        }
+        prism.first = static_cast<uint32_t>(vertices.size());
+        for (const auto *corners : {&prism.top, &prism.drop}) {
+            for (const auto &corner : *corners) {
+                gfx::Vertex3D vertex{};
+                vertex.position[0] = corner.x;
+                vertex.position[1] = corner.y;
+                vertex.position[2] = corner.z;
+                vertices.push_back(vertex);
+            }
+        }
+    }
+    // Decide each pair once and remove both copies together.
+    for (std::size_t t = 0; t < prisms.size(); ++t) {
+        auto &prism = prisms[t];
+        if (!prism.valid) {
+            continue;
+        }
+        for (int edge = 0; edge < 3; ++edge) {
+            const int32_t link = topology.neighbours[t][edge];
+            if (link < 0) {
+                continue;
+            }
+            const auto other = static_cast<std::size_t>(link / 3);
+            const int  other_edge = link % 3;
+            if (t < other && prisms[other].valid && SideCancelled(prism, edge, prisms[other], other_edge)) {
+                prism.sides[edge] = false;
+                prisms[other].sides[other_edge] = false;
+            }
+        }
+    }
+    for (const auto &prism : prisms) {
+        if (!prism.valid) {
+            continue;
+        }
+        const auto first = prism.first;
+        Emit(indices, first, first + 1, first + 2, prism.down);
+        Emit(indices, first + 3, first + 4, first + 5, !prism.down);
+        for (uint32_t edge = 0; edge < 3; ++edge) {
+            if (!prism.sides[edge]) {
+                continue;
+            }
+            const auto next = (edge + 1) % 3;
+            Emit(indices, first + edge, first + 3 + edge, first + 3 + next, prism.down);
+            Emit(indices, first + edge, first + 3 + next, first + next, prism.down);
+        }
+    }
 }
