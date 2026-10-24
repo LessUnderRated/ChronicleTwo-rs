@@ -1404,15 +1404,13 @@ monsters spawned later.
 
 ### Event handles across a map change
 
-An event's object handles (`EventObjHandleMother`) are reset only when an event starts or a character is deleted, so a
-map deleted mid-event leaves the handles into it pointing at freed parts. After the Griffon fight in chapter 6, s35's
-event 500 loads the dungeon map `d06e01` (`LoadDungeonMapFile`) and then requests the next script; the event step in
-between still plays the object sequences of the parts `p04_s3501-0`, its piece `s350208-m0` and `p01_futa-0`. On the
-PS2 the freed parts still held a usable vtable; on PC the call through it faulted. `CScene::DeleteMap`
-(`port/src/sceneload.cpp`) first points every object, frame and function point handle inside the deleted map's stack
-at nothing, as `EventSeqInit` does, and then runs retail's delete through the `PortRetailDeleteMap` bridge. `GetPos`
-then fails for those handles and each sequence following one clears itself (`CSceneObjSeq::Play`), which is all the
-scripts expect: none uses such a handle after the map changes.
+An event can replace a map before its object sequences finish. CScene::DeleteMap
+(port/src/sceneload.cpp) resets object, frame and function-point handles whose targets fall inside the released
+map arena, then runs the retail deletion through PortRetailDeleteMap. Sequences following those handles stop
+through their existing failed-position lookup. Character and sprite handles, and pointers outside the arena,
+remain intact. Maps sharing the arena share this invalidation scope.
+
+This prevents a stale map-part access after the chapter 6 Griffon cutscenes load d06e01.
 
 ### Georama limits
 

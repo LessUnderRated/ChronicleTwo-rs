@@ -749,19 +749,15 @@ mgCTexture *EnterCatalog(mgCTextureManager *manager, int block, const texture_ca
     return texture;
 }
 
+/**
+ * Registers a native animation script against its owning texture blocks.
+ */
 void ApplyAnimation(mgCTextureManager *manager, const texture_catalog::Source &source, const texture_catalog::Entry &entry,
                     mgCMemory *stack, int base_block) {
     if (!stack) {
         return;
     }
-    // A set's script animates the set's own pictures, and its groups live in the memory the set is entered from. A
-    // lookup across every block finds the earliest registration of a name instead, and a record whose pictures are
-    // another set's would put a group from this memory into that set's block, which can outlive it. The dungeon's
-    // fire set in block 0x4B is hit both ways: polm's own fire_scr/fire_wrk resolve to the dungeon's copies, and the
-    // retail jet and fire effects (e808_mp_jet, e540_jet, e206_*fire...) name the bare fire_anm/fire_wrk they do not
-    // define. Their groups then dangle in block 0x4B once the effect's memory is reused, and restoring the block's
-    // animation faults. Retail's TexAnime skips a record whose pictures are outside the animated block, so these
-    // records never drew anything of their own.
+    // Animation groups share the set's arena, so their pictures must belong to the set's blocks.
     std::vector<int> own_blocks;
     for (const auto &picture : source.entries) {
         if (picture.type != "cfg" && std::ranges::find(own_blocks, base_block + picture.block) == own_blocks.end()) {
@@ -870,9 +866,7 @@ void ApplyAnimation(mgCTextureManager *manager, const texture_catalog::Source &s
             }
         } else if (op == "SCROLL") {
             if (data.type == MG_TEX_ANIME_TYPE_SCROLL) {
-                // As retail texSCROLL: an axis that does not move divides by zero, which fptosi saturates and the
-                // short truncates to a period of -1, so that axis is drawn unshifted. A period of 0 would divide by
-                // zero again when the record is drawn.
+                // Saturating float conversion preserves retail's still-axis period of -1.
                 const float sx = 16.0f * static_cast<float>(number(0));
                 const float sy = 16.0f * static_cast<float>(number(1));
                 data.period_x = static_cast<short>(fptosi(static_cast<float>(data.dest_w - 16) / sx));

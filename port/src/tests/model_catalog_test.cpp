@@ -274,6 +274,67 @@ TEST_F(NativeModel, CharacterTextureOwnershipDoesNotSkipDeletedReinitializedOrSu
     textures.Initialize(0x1000, -1);
 }
 
+TEST_F(NativeModel, BlocklessCharacterBorrowsItsMapsExistingTextures) {
+    Json model = game;
+    model["texture_sets"] = {0};
+    model["meshes"][0]["materials"][0]["texture"] = "shared";
+    const Json resource{
+        {"type",  "resource"},
+        {"kind",  "model"   },
+        {"index", 0         }
+    };
+    const Json textures_document{
+        {"schema_version", 3                                                                                                                          },
+        {"groups",         {1}                                                                                                                        },
+        {"entries",        Json::array({{{"name", "shared"}, {"block", 1}, {"pictures", Json::array({{{"canvas", {{"width", 2}, {"height", 2}}}}})}}})}
+    };
+    game = {
+        {"schema_version",  1                                                                                                   },
+        {"kind",            "character"                                                                                         },
+        {"default_profile", "info"                                                                                              },
+        {"models",          Json::array({model})                                                                                },
+        {"resources",       {{"texture_sets", Json::array({{{"document", textures_document}}})}}                                },
+        {"profiles",        {{"info", {{"commands", Json::array({{{"command", "MODEL"}, {"args", Json::array({resource})}}})}}}}}
+    };
+    Write(directory / "data/models/model.gltf", gltf);
+    std::vector<u_long128> texture_storage(4096);
+    mgCMemory              texture_memory;
+    mgCTextureManager      textures;
+    texture_memory.stSetBuffer(texture_storage.data(), static_cast<int>(texture_storage.size()));
+    textures.SetTableBuffer(8, 8, &texture_memory);
+    textures.Initialize(0x1000, -1);
+    CCharacter2                        character;
+    model_assets::CharacterLoadOptions options{.model_memory = &memory, .motion_memory = &memory, .image_memory = &memory, .textures = &textures, .parent = nullptr, .texture_block = 2, .outline = false};
+    std::string                        error;
+    auto                               load = [&] {
+        character.Initialize();
+        memory.stReset();
+        return model_assets::LoadCharacter(character, "models/model.gltf", "info", options, error);
+    };
+    const auto catalog_path = directory / "data/textures/map/piece.json";
+    std::filesystem::create_directories(catalog_path.parent_path());
+    Write(catalog_path, textures_document);
+    std::string catalog_error;
+    ASSERT_TRUE(texture_catalog::Load(directory / "data", catalog_error)) << catalog_error;
+    MgTextureEnterDocument(&textures, "textures/map/piece.json", 0, &texture_memory, nullptr);
+    char  name[] = "shared";
+    auto *map_texture = textures.GetTexture(name, 1);
+    ASSERT_NE(map_texture, nullptr);
+    options.texture_block = -1;
+    ASSERT_TRUE(load()) << error;
+    ASSERT_NE(character.GetFrame(), nullptr);
+    ASSERT_NE(character.GetFrame()->visual, nullptr);
+    ASSERT_NE(character.GetFrame()->visual->GetMaterial(0), nullptr);
+    EXPECT_EQ(character.GetFrame()->visual->GetMaterial(0)->texture, map_texture);
+    EXPECT_EQ(textures.GetTexture(name, 1), map_texture);
+    EXPECT_EQ(textures.GetTexture(name, 0), nullptr);
+    EXPECT_EQ(textures.texture_num, 1);
+    model_assets::DeleteCharacterTextures(character, 0, 0);
+    EXPECT_EQ(textures.GetTexture(name, 1), map_texture);
+    textures.Initialize(0x1000, -1);
+    texture_catalog::Clear();
+}
+
 TEST_F(NativeModel, StaleCharacterImagesKeepAnotherModelsSameNamedTexture) {
     // The item menu loads the Ridepod rider and then Max's hat into one slot: the rider's stale images must not delete
     // the face Max entered under the same name after the block was cleared and the slot reinitialised.

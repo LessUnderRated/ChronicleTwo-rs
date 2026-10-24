@@ -916,10 +916,16 @@ TEST(MgTexture, NativeSetScriptsAnimateTheirOwnPicturesOverEarlierPicturesOfTheS
         {.name = "TEX_ANIME_DATA_END", .args = {}                                                            },
         {.name = "TEX_ANIME_END",      .args = {}                                                            }
     };
-    const texture_catalog::Source dungeon{.source = "dungeon.gltf", .groups = {0}, .entries = {source, destination, script}};
-    const texture_catalog::Source effect{.source = "effect.gltf", .groups = {0}, .entries = {source, destination, script}};
-    unsigned char                 value = 10;
-    auto                          decode = [&value](const texture_catalog::Entry &, std::size_t, datapacks::DecodedTexture &decoded, std::string &) {
+    const texture_catalog::Source dungeon{
+        .source = "dungeon.gltf", .groups = {0},
+             .entries = {source, destination, script}
+    };
+    const texture_catalog::Source effect{
+        .source = "effect.gltf", .groups = {0},
+             .entries = {source, destination, script}
+    };
+    unsigned char value = 10;
+    auto          decode = [&value](const texture_catalog::Entry &, std::size_t, datapacks::DecodedTexture &decoded, std::string &) {
         decoded = {};
         decoded.width = decoded.height = 2;
         decoded.levels.emplace_back(16, value);
@@ -951,17 +957,25 @@ TEST(MgTexture, NativeSetScriptsAnimateTheirOwnPicturesOverEarlierPicturesOfTheS
     auto jet_script = script;
     jet_script.script[2].args[0] = text("jet_scr");
     jet_script.script.insert(jet_script.script.end() - 1, {
-        {.name = "TEX_ANIME_DATA",     .args = {number(0)}                                                   },
-        {.name = "SRC_TEX",            .args = {text("fire_scr"), number(0), number(0), number(1), number(1)}},
-        {.name = "DEST_TEX",           .args = {text("fire_wrk"), number(0), number(0), number(1), number(1)}},
-        {.name = "TEX_ANIME_DATA_END", .args = {}                                                            }
+                                                              {.name = "TEX_ANIME_DATA",     .args = {number(0)}                                                   },
+                                                              {.name = "SRC_TEX",            .args = {text("fire_scr"), number(0), number(0), number(1), number(1)}},
+                                                              {.name = "DEST_TEX",           .args = {text("fire_wrk"), number(0), number(0), number(1), number(1)}},
+                                                              {.name = "TEX_ANIME_DATA_END", .args = {}                                                            }
     });
-    const texture_catalog::Source jet{.source = "jet.gltf", .groups = {0}, .entries = {jet_source, jet_script}};
+    const texture_catalog::Source jet{
+        .source = "jet.gltf", .groups = {0},
+             .entries = {jet_source, jet_script}
+    };
     effect_memory.stSetBuffer(effect_storage.data(), static_cast<int>(effect_storage.size()));
     MgTextureEnterNativeSet(&h.manager, 3, jet, &effect_memory, decode);
     EXPECT_EQ(dungeon_animation->list[1], nullptr);
     EXPECT_EQ(h.manager.GetTexAnime(3), nullptr);
     h.manager.DeleteBlock(3);
+
+    const texture_catalog::Source script_only{.source = "animation.cfg", .entries = {script}};
+    MgTextureEnterNativeSet(&h.manager, 4, script_only, &h.memory, decode);
+    EXPECT_NE(dungeon_animation->list[1], nullptr);
+    EXPECT_EQ(h.manager.GetTexAnime(4), nullptr);
 }
 
 // Channel Entrance's water (d01en01, d01b17) scrolls one axis per record; the still axis must take retail's

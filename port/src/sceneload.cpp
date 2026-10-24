@@ -298,7 +298,9 @@ u8 *PortMapLoadBuffer(const SCN_LOADMAP_INFO2 &info) {
 
 namespace {
 
-// The event handle a map deletion leaves dangling: an object, frame or function point inside the map's stack.
+/**
+ * Checks whether a map-backed event handle points inside a memory arena.
+ */
 bool EventHandleIn(const CEoh &handle, std::uintptr_t begin, std::uintptr_t end) {
     const void *target = nullptr;
 
@@ -320,7 +322,9 @@ bool EventHandleIn(const CEoh &handle, std::uintptr_t begin, std::uintptr_t end)
     return address >= begin && address < end;
 }
 
-// Points every event handle into the stack at nothing, as EventSeqInit does.
+/**
+ * Resets event handles whose targets belong to a released map arena.
+ */
 void ForgetEventHandlesIn(const mgCMemory &memory) {
     if (memory.stack == nullptr || memory.stack_size <= 0) {
         return;
@@ -337,20 +341,15 @@ void ForgetEventHandlesIn(const mgCMemory &memory) {
         }
 
         CT_LOG_DEBUG(Data, "sceneload: event handle {} released with its map", slot);
-        handle.type = EOH_TYPE_NONE;
-        handle.scene_no = -1;
-        handle.world_coord = 1;
-        handle.object = NULL;
+        handle = CEoh{};
     }
 }
 
 } // namespace
 
-// An event can replace a map while its handles still name the map's parts. After the Griffon fight, s35's event 500
-// loads the dungeon map d06e01 (LoadDungeonMapFile) and requests the next script, and the event step between the two
-// still plays the object sequences of three s35 parts. Retail reads the freed parts there, which on the PS2 still held
-// a usable vtable; the port finds it zeroed. Handles into the deleted map refer to nothing instead, so GetPos fails and
-// each such sequence clears itself (CSceneObjSeq::Play).
+/**
+ * Releases event handles into a map before deleting its resources.
+ */
 PORT_OVERRIDE int CScene::DeleteMap(int map_index, int clear_stack) {
     CSceneMap *slot = GetSceneMap(map_index);
 

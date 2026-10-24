@@ -14,6 +14,8 @@
 #include "bounded_text.hpp"
 #include "dataread.hpp"
 #include "dataread_port.hpp"
+#include "event_func.hpp"
+#include "map.hpp"
 #include "mg_memory.hpp"
 #include "platform/paths.hpp"
 #include "sceneload_port.hpp"
@@ -166,4 +168,63 @@ TEST_F(SceneLoadMapBuffer, GrowsForALargerMapAndKeepsThePreviousOne) {
     SCN_LOADMAP_INFO2 again = Info(nullptr);
     EXPECT_EQ(scene.LoadMap(0, &again, 0), -1);
     EXPECT_EQ(again.files[0].map_data, large.files[0].map_data);
+}
+
+TEST(SceneDeleteMap, ReleasesOnlyMapBackedHandlesInsideTheDeletedArena) {
+    std::vector<u_long128> storage(256);
+    mgCMemory              memory;
+    memory.stSetBuffer(storage.data(), static_cast<int>(storage.size()));
+    CMap   loaded_map;
+    CScene scene;
+    scene.map_num = 1;
+    scene.map[0].AssignData(&loaded_map, const_cast<char *>("map"));
+    scene.map[0].stack = &memory;
+    EventObjHandleMother = CEohMother{};
+    auto &handles = EventObjHandleMother.eoh;
+    handles[0].Set(EOH_TYPE_OBJECT, reinterpret_cast<CObject *>(memory.stack), 0);
+    handles[1].Set(EOH_TYPE_FRAME, reinterpret_cast<mgCFrame *>(memory.stack + 1));
+    handles[2].Set(EOH_TYPE_FUNC_POINT, reinterpret_cast<CFuncPoint *>(memory.stack + 2));
+    handles[3].Set(EOH_TYPE_OBJECT, reinterpret_cast<CObject *>(memory.stack + memory.stack_size), 0);
+    handles[4].Set(EOH_TYPE_CHARA, 4, reinterpret_cast<CCharacter2 *>(memory.stack));
+    handles[5].Set(EOH_TYPE_SPRITE, reinterpret_cast<CEventSprite2 *>(memory.stack));
+    CObject outside;
+    handles[6].Set(EOH_TYPE_OBJECT, &outside, 0);
+    EXPECT_EQ(scene.DeleteMap(0, 0), 1);
+    for (int index = 0; index < 3; ++index) {
+        EXPECT_EQ(handles[index].type, EOH_TYPE_NONE);
+        EXPECT_EQ(handles[index].scene_no, -1);
+        EXPECT_EQ(handles[index].world_coord, 1);
+        EXPECT_EQ(handles[index].object, nullptr);
+    }
+    EXPECT_EQ(handles[3].type, EOH_TYPE_OBJECT);
+    EXPECT_EQ(handles[4].type, EOH_TYPE_CHARA);
+    EXPECT_EQ(handles[5].type, EOH_TYPE_SPRITE);
+    EXPECT_EQ(handles[6].object, &outside);
+    EXPECT_EQ(scene.GetMap(0), nullptr);
+    EventObjHandleMother = CEohMother{};
+}
+
+TEST(SceneDeleteMap, EmptySlotsPreserveHandlesAndSharedArenaMapsAreDeletedTogether) {
+    std::vector<u_long128> storage(256);
+    mgCMemory              memory;
+    memory.stSetBuffer(storage.data(), static_cast<int>(storage.size()));
+    CScene scene;
+    scene.map_num = 2;
+    EventObjHandleMother = CEohMother{};
+    auto &handle = EventObjHandleMother.eoh[0];
+    handle.Set(EOH_TYPE_OBJECT, reinterpret_cast<CObject *>(memory.stack), 0);
+    EXPECT_EQ(scene.DeleteMap(-1, 1), 0);
+    EXPECT_EQ(scene.DeleteMap(0, 1), 0);
+    EXPECT_EQ(handle.type, EOH_TYPE_OBJECT);
+    CMap first;
+    CMap second;
+    scene.map[0].AssignData(&first, const_cast<char *>("first"));
+    scene.map[1].AssignData(&second, const_cast<char *>("second"));
+    scene.map[0].stack = &memory;
+    scene.map[1].stack = &memory;
+    EXPECT_EQ(scene.DeleteMap(0, 1), 1);
+    EXPECT_EQ(handle.type, EOH_TYPE_NONE);
+    EXPECT_EQ(scene.GetMap(0), nullptr);
+    EXPECT_EQ(scene.GetMap(1), nullptr);
+    EventObjHandleMother = CEohMother{};
 }
