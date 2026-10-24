@@ -9,7 +9,7 @@
 #include "monster.hpp"
 #include "platform/model_assets.hpp"
 #include "runscript.hpp"
-#include "runscript_opcodes.hpp"
+#include "stubs/runscript_opcodes.hpp"
 
 namespace {
 
@@ -28,6 +28,40 @@ void SetStack(RS_STACKDATA *stack, float value) {
 }
 
 } // namespace
+
+/**
+ * Runs a monster program while preserving suspended behavior through unsupported stun requests.
+ */
+PORT_OVERRIDE void CMonsterMan::RunScript(int index) {
+    PortSetMonsterScriptScene(scene);
+    nowMonster = active[index];
+    if (nowMonster == nullptr) {
+        return;
+    }
+
+    const int script = nowMonster->req_prog;
+    if (script != MONSTER_PROG_RUNNING) {
+        if (nowMonster->mons_script.check_program(script) != 0) {
+            nowMonster->mons_script.run(script);
+            nowMonster->now_prog = script;
+            nowMonster->req_prog = MONSTER_PROG_RUNNING;
+        } else if (script == MONSTER_PROG_PIYORI) {
+            // Monsters without a stun program hold their suspended behavior until the stun expires.
+            nowMonster->piyori_mark = nowMonster->piyori_time;
+            nowMonster->piyori.Set(nowMonster, nowMonster->piyori_mark);
+            nowMonster->req_prog = MONSTER_PROG_RUNNING;
+        }
+        return;
+    }
+
+    if (nowMonster->piyori_mark > 0 && nowMonster->mons_script.check_program(MONSTER_PROG_PIYORI) == 0) {
+        return;
+    }
+    nowMonster->mons_script.resume();
+    if (nowMonster->mons_script.end != 0) {
+        nowMonster->req_prog = MONSTER_PROG_MAIN;
+    }
+}
 
 // Retail sums the entry address into an int; the uptr form of that sum in ps2/src does not compile identically under MWCC.
 PORT_OVERRIDE int _GET_INDEXOBJ_SIZE(RS_STACKDATA *stack, int argument_count) {

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../../src/mg_memory_port.hpp"
+
 // Expose the retail town ownership state without changing its logic or layout.
 extern int LoopMode asm("EditLoop_Mode");
 extern int ControlMode asm("EditLoop_Control");

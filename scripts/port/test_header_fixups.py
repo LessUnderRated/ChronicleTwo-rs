@@ -11,6 +11,12 @@ class UnitFixups(unittest.TestCase):
         self.assertEqual(mirrored.count("paint_top = 0; paint_return = 1;"), 1)
         self.assertEqual(mirrored.count("\n"), (source / "editmenu.hpp").read_bytes().count(b"\n"))
 
+    def test_monster_scheduler_preserves_callback_scene_context(self):
+        source = (Path(__file__).resolve().parents[2] / "ps2/src/runscript_opcodes.cpp").read_text(encoding="latin-1")
+        result = header_fixups.fixup_unit_text("runscript_opcodes.cpp", source)
+        self.assertEqual(result.count("void PortSetMonsterScriptScene(CScene *scene) { nowScene = scene; }"), 1)
+        self.assertEqual(result.count("\n"), source.count("\n"))
+
     def test_geostone_announcement_reserves_all_eight_nullable_message_slots(self):
         source = (Path(__file__).resolve().parents[2] / "ps2/src/editmenu.cpp").read_text()
         mirrored = header_fixups.fixup_unit_text("editmenu.cpp", source)
@@ -195,6 +201,14 @@ class UnitFixups(unittest.TestCase):
         result = header_fixups.fixup_unit_text("sceneload.cpp", source)
         self.assertNotIn("load_buf = info.load_buf;", result)
         self.assertEqual(result.count("load_buf = PortMapLoadBuffer(info);"), 1)
+        self.assertEqual(result.count("\n"), source.count("\n"))
+
+    def test_town_map_change_keeps_the_controlled_character_reserved(self):
+        source = (Path(__file__).resolve().parents[2] / "ps2/src/editloop.cpp").read_text(encoding="latin-1")
+        result = header_fixups.fixup_unit_text("editloop.cpp", source)
+        self.assertNotIn("ControlCharaBuff.Alloc(FixCharaBuffSize);", result)
+        self.assertEqual(result.count("MemoryAllocKept(ControlCharaBuff, FixCharaBuffSize);"), 2)
+        self.assertEqual(result.count("ControlCharaBuff.Alloc(size)"), 4)
         self.assertEqual(result.count("\n"), source.count("\n"))
 
 

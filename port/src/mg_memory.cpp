@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "arena_root.hpp"
+#include "character_motion.hpp"
 #include "dataread_port.hpp"
 #include "log/log.hpp"
 #include "mg_memory_port.hpp"
@@ -64,6 +65,15 @@ std::ptrdiff_t QuadwordsBetween(const void *from, const void *to) {
 
 mgMEMORY_BLOCK *BlockAt(const void *base, std::ptrdiff_t quadwords) {
     return reinterpret_cast<mgMEMORY_BLOCK *>(QuadwordsFrom(base, quadwords));
+}
+
+/**
+ * Invalidates motion data in arena storage before a new allocation or block header overwrites it.
+ */
+void Reuse(const void *start, std::ptrdiff_t quadwords) {
+    if (quadwords > 0) {
+        character_motion::ForgetStorage(start, QuadwordsFrom(start, quadwords));
+    }
 }
 
 struct PeakEntry {
@@ -141,7 +151,15 @@ void NotePeak(const mgCMemory &memory) {
     ArenaOverflow(static_cast<const void *>(&memory), clamped, memory.stack_size);
 }
 
-u_long128 *AllocQuadwords(mgCMemory &memory, int size) {
+/**
+ * Whether memory an arena hands out again still holds what the game left there.
+ */
+enum class Contents {
+    Released, /**< Handed out for new data. */
+    Kept,     /**< Reserved again by its owner, which goes on using what it holds. */
+};
+
+u_long128 *AllocQuadwords(mgCMemory &memory, int size, Contents contents = Contents::Released) {
     if (memory.lock != 0 || size <= 0) {
         return nullptr;
     }
@@ -156,6 +174,9 @@ u_long128 *AllocQuadwords(mgCMemory &memory, int size) {
     u_long128 *data = QuadwordsFrom(memory.stack, memory.stack_used);
     memory.stack_used = static_cast<int>(new_used);
     g_last_run = {.arena = &memory, .start = data, .quadwords = size};
+    if (contents == Contents::Released) {
+        Reuse(data, size);
+    }
     NotePeak(memory);
     return data;
 }
@@ -181,6 +202,7 @@ void GrowLastRun(const u_long128 *buffer, std::size_t bytes) {
         Overflow(memory, new_used);
     }
 
+    Reuse(QuadwordsFrom(run.start, run.quadwords), quadwords - run.quadwords);
     memory.stack_used = static_cast<int>(new_used);
     run.quadwords = quadwords;
     NotePeak(memory);
@@ -224,6 +246,8 @@ PORT_OVERRIDE void mgCMemory::SetHeapMem(u_long128 *buffer, int size) {
     if (buffer != nullptr && size >= 0x10 && !ArenaContains(buffer)) {
         const NameCopy label = CopyName(name);
         u_long128     *block = ArenaRoot(buffer, size, label.data());
+        // Binding the same buffer again maps the same root, so the copy lands on whatever the heap held.
+        Reuse(block, size);
         std::memcpy(block, buffer, static_cast<std::size_t>(size) * sizeof(u_long128));
         TextureSourceCopy(buffer, block, static_cast<std::size_t>(size) * sizeof(u_long128));
         DataReadCopyBuffer(buffer, block, static_cast<std::size_t>(size) * sizeof(u_long128));
@@ -239,6 +263,8 @@ PORT_OVERRIDE void mgCMemory::SetHeapMem(u_long128 *buffer, int size) {
         return;
     }
 
+    Reuse(buffer, kHeaderQuadwords);
+    Reuse(BlockAt(buffer, size - kHeaderQuadwords), kHeaderQuadwords);
     heap = buffer;
     heap_size = static_cast<u_int>(size);
     heap_top = reinterpret_cast<mgMEMORY_BLOCK *>(buffer);
@@ -322,6 +348,7 @@ PORT_OVERRIDE u_long128 *mgCMemory::StartStackMode(int mode, int size) {
         return nullptr;
     }
 
+    Reuse(chosen, kHeaderQuadwords);
     // Sized from the chosen gap. Retail sizes it from the last gap examined, so mode 2 can run the
     // stack region past the end of the gap it claimed and over the next header.
     stack_block = chosen;
@@ -389,6 +416,10 @@ PORT_OVERRIDE void *operator new(size_t size, u_long128 *buffer) {
 PORT_OVERRIDE void *operator new[](size_t size, u_long128 *buffer) {
     GrowLastRun(buffer, size);
     return buffer;
+}
+
+u_long128 *MemoryAllocKept(mgCMemory &memory, int size) {
+    return AllocQuadwords(memory, size, Contents::Kept);
 }
 
 mgMemoryUsage MemoryUsage(const mgCMemory &memory) {

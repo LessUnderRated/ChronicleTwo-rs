@@ -481,6 +481,30 @@ to move or throw away. `port/src/message_text.cpp` replaces the message in all
 five PAL languages with the translation's wording plus both, for example
 `You can only carry 999 "Thick Hide".`
 
+The PAL disc's Spanish script for the map where Max learns Spheda
+(`map/s/s17/s17_5.stb`) is a byte-for-byte copy of the Italian one, so its
+Spheda tutorial, prompts and dialogue read in Italian. `port/src/script_text.cpp`
+gives those 19 strings Spanish text when the script is read from the data index
+(`ResolveFile` in `port/src/dataread.cpp`), after the NTSC timing conversion. Each
+line is anchored on its push instruction and the Italian text it must find there;
+a script that does not show every line is left unchanged with a warning. A text
+that fits is written over the Italian one, a longer one is appended after the
+script, so the file reads 1 KB or so longer and size queries report the same.
+The wording keeps the PAL Spanish names (Esfera, Esfeda, Bastón Multiusos, Ayuda).
+
+The Spanish text of the Spheda lesson that follows (`event/e300/e314/e314_5.txt`)
+says there is nothing more to remember right before the colour rules, and has a
+Sphere turn black, a colour it never takes. The same file corrects those three
+lines by their exact text: "Tienes que acordarte de otra cosa más.", "De azul a
+rojo, de rojo a azul." and "...y cambiará el color.".
+
+The Spanish jump gate menus in Gundorada (`map/f/f04/f04_5.stb` and
+`map/s/s30/s30_5.stb`) put East and West on one line, "Puerta de salto Este --
+Oeste", so they show one destination fewer than the script offers: the last
+choice is blank and the ones after North lead one destination further than they
+say. The same file gives the three menus the English menu's lines, with East and
+West apart and the time gate named "Puerta del tiempo".
+
 ### darkchronicle
 
 ```
@@ -679,6 +703,7 @@ Writes are atomic: the file is written as `config.json.tmp` and renamed over `co
 | `input.mouse_invert_y` | bool | false | | invert the mouse's Y axis |
 | `input.mouse_capture` | bool | true | | capture the mouse |
 | `input.mouse_zoom` | bool | false | | mouse wheel zoom |
+| `input.keyboard_walk` | bool | false | | keyboard movement walks and the `walk` binding (Left Shift) runs; off, it runs and `walk` walks |
 | `input.mouse_fixed_look` | bool | true | | gentle mouse look in fixed-camera town rooms |
 | `input.menu_pointer_speed` | number | 1.5 | 0.25 to 4 | captured menu hand travel per mouse count; 1 is one window pixel |
 | `input.menu_pointer_acceleration` | bool | true | | fast captured motion moves the menu hand up to twice as far per count |
@@ -692,6 +717,7 @@ Writes are atomic: the file is written as `config.json.tmp` and renamed over `co
 | `input.glyph_device` | string | auto | auto, ps3, ps4, ps5, ps5color, xbox, switch, steamdeck, steamcontroller, keyboard | whose button symbols are drawn |
 | `input.mouse_release` | string or array of strings | empty | key names | keys that release the captured mouse |
 | `input.bindings` | object: action to string or array of strings | empty | key names | rebinds actions; action names are lowercased |
+| `input.gamepad_bindings` | object: action to string or array of strings | empty | SDL gamepad button names, `lefttrigger`, `righttrigger` | rebinds actions on a controller, a set apart from the keyboard's; see "Controller bindings" |
 | `log.level` | string | auto | auto, trace, debug, info, warning, error, critical, off | the lowest level logged; `auto` is `debug` in a Debug build and `info` otherwise. `--log-level` and `DC2_LOG` outrank it; applies live |
 | `log.file` | bool | true | | write the session log under `<save root>/../logs/`; `DC2_LOG_FILE=0` turns it off; applies live |
 | `log.keep` | int | 10 | 1 to 1000 | session logs kept in `logs/`, this session's included; older ones are deleted when the file opens |
@@ -741,8 +767,9 @@ The **PC SETTINGS** entry and the page are drawn at the UI scale, or smaller whe
 | Display | Windowed/fullscreen, resolution, FIFO/mailbox/immediate, frame cap, interpolation, auto/4:3 aspect, UI scale, original/sharp text font, FPS counter |
 | Audio | Master volume and PS2/custom soundtrack |
 | Controls | Mouse sensitivity, Y inversion and capture; menu pointer speed and acceleration; stick sensitivity and X/Y inversion; button symbols and glyph style |
-| Game | Autosave, quick loadout title, skip intro, auto-use event items, floor monster list, more monsters and debug mode |
-| Bindings | Keyboard and mouse bindings for pad buttons, movement, look, FPS and debug menu |
+| Game | Autosave, quick loadout title, skip intro, auto-use event items, floor monster list, more monsters, transformation stats, transformation EXP, shared badge EXP and debug mode |
+| Keyboard | Keyboard and mouse bindings for pad buttons, movement, look, walking, FPS, developer and mode debug menus, and quick loadout |
+| Gamepad | Controller bindings for pad buttons, FPS, developer and mode debug menus, gyro hold and quick loadout |
 
 Edits save to `config.json` and apply immediately. Soundtrack selection takes effect the next time a song starts, including one whose data is already loaded. Custom recordings use the actual sequence JSON path in `soundtrack/soundtrack.json`; `AUDIO_TRACE` prints that path. An absent or invalid recording falls back to the converted sequence. Current music is not restarted by moving the setting.
 
@@ -750,13 +777,53 @@ Turning to another tab, with L1/R1 or the mouse, plays the retail menu cursor so
 
 Resolution changes the windowed size; fullscreen uses the desktop. A command-line `--window` takes precedence. A refused window change is read back and reported on screen. Hand-edited resolutions and numeric values are shown as stored and stay unchanged until that row is edited. The PC UI offers a bounded set of scale presets; the configuration file still accepts the full documented range.
 
-Confirm on a binding shows **Press a key...**. Press a key or mouse button; Escape cancels and cannot be bound. The opening press is ignored, and the new input must be released before navigation resumes. Square or **Restore binding** removes that action's override and restores its defaults. Controller buttons retain their retail assignments. Glyph style changes the PC page's device-specific button prompts; keyboard prompts use current bindings. With **Button symbols** on New, the retail menus and messages draw the symbols of `glyphs/` for that style too (see [GLYPHS.md](GLYPHS.md)); Original keeps the PlayStation art everywhere.
+Confirm on a binding shows **Press a key...**. Press a key or mouse button; Escape cancels and cannot be bound. The opening press is ignored, and the new input must be released before navigation resumes. Square or **Restore binding** removes that action's override and restores its defaults. Controller buttons are rebound on the Gamepad page (see "Controller bindings"). Glyph style changes the PC page's device-specific button prompts; keyboard prompts use current bindings. With **Button symbols** on New, the retail menus and messages draw the symbols of `glyphs/` for that style too (see [GLYPHS.md](GLYPHS.md)); Original keeps the PlayStation art everywhere.
 
 A failed write shows a warning. Settings still work in the current session. Check the save root's parent directory and change a setting to retry. A configuration file that could not be read remains protected against replacement.
 
-`tools/input/pc-settings.input` replays all four tabs, a key rebind, Escape cancellation, and return to retail Options from `--jump town:10 --fast-load`. Its comments give capture frames. `tools/input/pc-settings-mouse.input` exercises clicking and mouse-button capture at `--window 1280x960`. Use fresh save roots and `--screenshot-display 2` for both.
+`tools/input/pc-settings.input` visits all six tabs, a key rebind, Escape cancellation, and return to retail Options from `--jump town:10 --fast-load`. Its comments give capture frames. `tools/input/pc-settings-mouse.input` exercises clicking and mouse-button capture at `--window 1280x960`. Use fresh save roots and `--screenshot-display 2` for both.
 
 `tools/input/pc-settings-display.input` checks fullscreen, return to windowed, and resizing in a real window. Start with a fresh config containing a nonzero window size, omit `--window`, and stop at frame 940. The optional `PcSettingsReplay` CTests run the headless pad and mouse flows and assert the saved configuration when `DC2_DATA` is available.
+
+### Monster transformation settings
+
+Three PC SETTINGS > Game settings retune Monica's monster transformations. Each is off by default, which keeps retail's numbers, and `port/src/userdata.cpp` overrides `MOS_CHANGE_PARAM::GetAttackVol`, `GetDefenceVol` and `CBattleCharaInfo::AddAbs`.
+
+| Setting | Key | Off (retail) | On |
+|---|---|---|---|
+| Transformation stats | `game.transformation_stats` | Attack is the badge's base × (1 + 2 × level / 98), three times the base at level 98; defence is the base plus 2 per 6 levels, at most 30 | Attack grows twice as fast, base × (1 + 4 × level / 98), five times the base at level 98 and still capped at 999; defence is Monica's when hers is higher than the badge's own |
+| Transformation EXP | `game.transformation_exp` | The badge in use gains each kill's absorption | It gains twice that |
+| Shared badge EXP | `game.shared_badge_exp` | Only the badge in use gains absorption | A quarter of every absorption Monica gains, armed or transformed, also goes to each other unlocked badge, which levels up when its gauge fills |
+
+Monica's defence starts at 8 and rises by 4 with each Witch Parfait, up to 128. The badge that adds a quarter to a transformation's attack and defence applies after these rules. Absorption and shared absorption apply at once; stats are read when Monica transforms, so they apply from the next transformation. Turning a setting off never changes a saved badge's level.
+
+### Controller bindings
+
+The controller has a set of bindings apart from the keyboard's, `input.gamepad_bindings`, which the **Gamepad** page
+of PC SETTINGS edits. An action left out keeps its default: the pad's own layout for the pad's buttons (on a PS4 or
+PS5 pad the touchpad click is Select and Share/Create presses nothing; on others Back/View is Select), `dpdown` for
+`quick_loadout`, `paddle1` for `debug_menu` (the developer menu), `paddle2` for the unused `developer_menu` host action,
+and `paddle4` for `gyro_hold`. The mode-debug-menu action, `mode_debug_menu`, has no default controller button;
+its keyboard default is F2. Names are
+SDL's (`a`, `b`, `x`, `y` by place, the bottom button being `a`; `back`, `guide`, `start`, `leftstick`,
+`rightstick`, `leftshoulder`, `rightshoulder`, `dpup`, `dpdown`, `dpleft`, `dpright`, `touchpad`, `misc1`,
+`paddle1` to `paddle4`) and `lefttrigger`, `righttrigger`; an empty list leaves the action without a button. Every
+controller follows the one set. The sticks stay the sticks.
+
+```json
+"input": {
+    "gamepad_bindings": {"cross": ["b"], "circle": ["a"], "quick_loadout": ["leftstick"]}
+}
+```
+
+On the Gamepad page, confirm on an action and press the button or trigger to give it; Escape, a right click,
+**Cancel capture** or five seconds without a press cancels, since every pad button can be bound. A pad button
+another pad button's action has moves over, and that action takes the buttons this one had, so the two swap. The
+port's own actions (quick loadout, FPS, debug menu, gyro hold) share buttons with the pad's: the button presses both.
+Square or **Restore binding** restores the action's default the same way. Button names follow the glyph style,
+and with **Button symbols** on New the game's symbols follow the controller bindings: Cross moved to the right face
+button shows the Circle symbol. Host actions bound in `input.bindings` with a `Gamepad:` name (the earlier way)
+still work beside these.
 
 ### Auto-use event items
 
@@ -777,6 +844,18 @@ Cancel. Enter retains the retail pause/resume action. WASD (or rebound left-stic
 keys) and a controller's left stick navigate menus through the same retail stick
 threshold, including Item and Character pages. In the field, stick movement does
 not change active-item slots. Arrow keys send the D-pad and can select those slots.
+
+Outside menus, holding the `walk` binding (Left Shift by default) makes keyboard
+movement deflect the left stick half way, so Max walks instead of running.
+**Keyboard movement** (`input.keyboard_walk`, PC SETTINGS > Controls) set to Walk
+swaps them: the keys walk and the `walk` binding runs. Controller sticks are unchanged.
+
+The name entry screen (renaming items, the robot, fish and keywords) takes typing
+outside Japanese: a letter, digit or one of the symbols the grid offers replaces the
+character at the caret and moves it on, as picking it on the grid does. Backspace and
+Delete act as the Back and Delete buttons, Return accepts the name, the arrow keys
+still move over the grid and Escape cancels. While typing, those keys do not press
+their pad bindings.
 
 ### Mouse menus
 
@@ -974,19 +1053,51 @@ town rooms use the separate fixed-camera look option below; photo view uses
 the direct aiming controls described below. A camera-reset request owns
 its frame; a later mouse yaw cancels an unfinished reset.
 
-Direct motion turns both current and pending camera poses. A fresh bounded
-polygon collection covers the orbit and follow corridor; conservative continuous
-geometry checks reject an invalid starting corridor and clip an obstructed turn.
-Retail wall and ground correction runs on both resulting eyes. A full polygon
-collector or exhausted validation budget drops unproved motion rather than
-queuing it. The conservative corridor may refuse motion that retail's endpoint
-checks would permit. Explicit MouseX/MouseY stick bindings retain ownership of
-their axes and suppress the independent mouse look on those axes.
+Direct yaw, from the stick or the mouse, uses retail's rotate-then-correct
+collision response: it rotates the pending eye around its look-at point, and
+retail's ground and wall correction, run on a fresh bounded polygon collection
+covering the orbit and follow corridor, brings it in front of any wall on its
+view. A turn along or into a wall therefore shortens the eye and goes on, and
+the next update moves it back out as retail's follow does. Retail's obstacle
+avoidance waits while the camera turns, as it did for the retail stick, so it
+cannot swing the eye back against the turn. Unlike retail, which left the drawn
+eye to ease after the pending one at a distance-dependent rate, direct yaw also
+turns the drawn eye by the same angle at once, so the view follows the input.
+After the turn, the view the tick's step shows is checked against every wall
+except those that already hid the drawn view, from the look-at point and, when
+retail's wall correction checks from an explicit collision target, from that
+target too. A view already blocked, as retail's eased view can be when a pillar
+comes between the eye and the player, therefore eases on behind that pillar,
+but no other wall may come between. Each placement is checked through the
+step itself. Where moving the drawn eye suffices, retail's pending pose is
+kept: a drawn eye the turn takes behind a wall moves on along its easing path
+toward a pending eye its look-at point can see, then in toward its look-at
+point. Failing both, both eyes are placed on a view from the stepped look-at
+point, at least ten units long so the camera keeps a usable direction: the
+stepped view itself, or the nearest in heading to it of views turned from it in
+eighths of a half turn either way. Each view's search starts just beyond ten
+units, so the view still measures ten once stored and stepped, and goes as far
+out as it finds in sight, five units nearer where there is room. This is a
+bounded search of sampled headings, not of every clear point. If none has a
+usable starting point, the turn is dropped for that update and retail's camera
+stays as it was. Recovery can change the heading abruptly in tight wall-end
+geometry. Presentation interpolation is cut when the eye itself would pass through
+a camera wall between display frames, or when any of those other walls crosses
+a sightline a display frame blends between the drawn pose and the next, the
+look-at point's or the explicit collision target's, such as a thin post the
+view passes across. Direct pitch keeps
+conservative continuous checks on the same collection and clips an obstructed
+tilt. A full polygon collector drops the motion rather than queuing it.
+Explicit MouseX/MouseY stick bindings retain ownership of their axes and
+suppress the independent mouse look on those axes.
 
 `tools/input/town-mouse-camera.input`, with `--jump town:10 --fast-load`, exercises
 yaw, vertical motion and a menu interruption. `tools/input/dungeon-mouse-camera.input`,
 with `--jump dungeon:0:1 --fast-load`, enters the first floor and exercises the
-same follow controls.
+same follow controls. `tools/input/dungeon-camera-wall-turn.input`, with the same
+options, turns into and along the first corridor's wall with the right stick and
+then the mouse; captures at frames 2600 and 2900 show the view turned on past
+the wall.
 `tools/input/dungeon-mouse-carry.input`, with `--jump dungeon:4:1 --fast-load`,
 lifts a rock in Mt. Gundor using R1 and Cross, then turns the mouse camera while
 carrying it (capture at frame 2374).
@@ -1181,7 +1292,7 @@ mouse pitch uses the same scale and floor/ceiling clearance still takes priority
 
 `input.bindings.zoom_reset` defaults to `Mouse3` (middle click). It restores the
 active camera's retail follow control immediately. Retail easing then returns
-to its normal distance range, as far as geometry permits. The Bindings page
+to its normal distance range, as far as geometry permits. The Keyboard page
 includes **Zoom reset**. The existing L2/cancel camera reset and turning the
 option off also release zoom immediately. When enabled, the reset binding owns its
 keyboard/mouse source ahead of conflicting actions; physical controller buttons
@@ -1199,7 +1310,7 @@ distance and runs retail's floor, ceiling and wall correction and obstacle
 avoidance on it, with the geometry gathered along that view. A view through
 dense geometry is gathered in shorter pieces. The look-at point always follows
 the player as in retail; only the eye is shortened, and it keeps six units from
-geometry so mouse turning can move it away from a wall.
+geometry so the view does not graze the wall it rests against.
 When the request is beyond retail's follow range, the characters' walking
 collision also blocks the view, because the camera's own collision data leaves
 out some facades seen from far away; the nearest wall from either source wins.
@@ -1212,19 +1323,30 @@ still hide the player from a longer zoomed view. Decorations without any
 collision, such as awnings, can also come between.
 
 Within retail's own follow distance (or a nearer request), walls shorten the
-eye on each tick as retail's correction does and release it as soon as
+eye on each game frame as retail's correction does and release it as soon as
 retail's would. Beyond it, the allowed distance drops at once when a wall cuts
-the view, then holds for three quarters of a second, doubled for each recent
-pull-in up to three seconds. It returns 4% of the remaining gap per tick (at
-least one unit) only after a view 32 units farther has stayed clear for 20
-ticks, both where the camera points and where it will point over the next
-second if it keeps turning as it is. Walking through rocks therefore keeps a
-shorter distance instead of returning toward each next rock. When the eased
-eye would be drawn behind a wall, it is placed in front of that wall on the
-drawn view, on the same side of the look-at point, and presentation
-interpolation is cut, so display frames do not pass through it; from there it
-eases at the camera's own speed again. Interpolation is also cut when a wall
-from the camera's collision crosses any view a display frame blends between
+the view. The camera updates once per game frame, 30 a second. The distance
+returns 10% of the remaining gap per game frame (at least two units) only
+after a view 32 units farther has stayed clear for 15 game frames, half a
+second, both where the camera points and where it will point over the next two
+seconds if it keeps turning as it is; a cleared eye is nine tenths of the way
+back within about a second and a third. Pulling in further before the eye
+begins moving out, such as backing into a wall, is one pull-in, and a first
+pull-in does not hold: walking away from the wall brings the eye back out to
+the selected distance, as retail's returns after a wall. A wall met again while recent
+pull-ins are remembered holds the distance first, for a second and a half,
+doubled for each further one up to six seconds; ten quiet seconds forget one.
+Walking through rocks therefore keeps a shorter distance instead of returning
+toward each next rock. A pull-in of less than ten units, such as foliage
+brushing a still view or a wall approached a step at a time, still shortens
+the eye but neither counts nor holds. When the eased eye would be drawn behind
+a wall, it is placed in front of that wall on the drawn view, on the same side
+of the look-at point, and from there it eases at the camera's own speed again.
+Presentation interpolation is cut to the placed eye only where a display frame
+blending to it would show a wall, the characters' walls included, between the
+eye and the look-at point; otherwise the display frames blend to it as to any
+pull-in. Interpolation is also cut when a wall from the camera's collision
+crosses any view a display frame blends between
 the drawn pose and the next, with the eye and look-at point each moving
 linearly, such as a post both views pass on either side. Walls only the
 walking collision knows are not part of that check: they limit each tick's own
@@ -1552,6 +1674,7 @@ Visual faces (`port/src/mg_visual.cpp`) keep their triangles on the CPU. `mgCVis
 - The full-frame rule that fills the flanks samples with clamped wrap, so a repeating texture shows no seam line at the frame's edges.
 - Copies of the frame (`mgSetPkMoveImage`: the heat haze in `sceneevent.cpp`, `map.cpp`'s screen, menu grabs) go to frame targets as 1:1 logical copies, so a grab is as wide as the window.
 - Culls: `mgPortVisibleExtent()` (`gfx::VisibleLogicalRect` of the current target, in screen units, with centred half extents and GS coordinates) replaces retail's 256/240 half extents in `mgCFrame::GetDrawRect` (`mg_frame_asm.cpp`). It also replaces them in `mgRENDER_INFO::screen_box_min`/`max`, which retail's `SetRenderInfo` sets from the screen size. `mgSetRenderInfo` is overridden to widen them, and `mgBeginFrame` refreshes them every game frame, since the window can change shape between scenes. `mgCFrame::Draw`'s `mgClipBoxW` reads them. A mesh at logical x = -40 is drawn at 16:9 and culled at 4:3 (`MglibAspect.*`). The GS guard band (2048) is unchanged.
+- The camera (`DrawTakePhoto`, `port/src/photo.cpp`) draws its black border, corner arcs and shutter on the edges of `mgPortVisibleUiExtent` and copies all of `mgPortVisibleExtent` from the frame grab into the 64x64 picture. A view wider than 4:3 keeps its shape inside the picture between black bars above and below (a taller one, at the sides), so the album, the idea board and the high-resolution copy show it unsquashed; the shot preview crops the bars and retains the captured crop and shape if the window or aspect setting changes. At 4:3, and with `video.aspect` `4:3`, the camera is retail's.
 - The dungeon floor map (`CDngFreeMap::DrawRoot` and `DrawRoomOne`, `port/src/dngmenu.cpp`) culls its rooms and passages at `mgPortVisibleUiExtent`, the visible extent in the UI units its 2D is drawn in, so floors in a wide window's flanks, or uncovered by `video.ui_scale` below 1, are drawn. Retail strokes each passage with three 1-pixel GS lines a pixel apart; each is filled as the pixel-wide band the GS covers, so a passage stays one solid stroke above 512x480 (`MglibAspect.FloorMap*`).
 - A layout change (`video.aspect`, `video.ui_scale`) is applied from the pump outside a recording, through `mgPortSetFrameLayout`. Letterboxing never draws or clears the bars, so a switch from `auto` to `4:3` first lets two ticks clear the main target outside the frame (one per main image, each also rendering the display image so presentation and display screenshots lose the art too) and then switches; otherwise the bars keep the last Fill frame's art (`MglibPresent.LetterboxSwitchClearsWhatFillDrewBesideTheFrame`).
 - `--window WxH` sets the window size (headless: the offscreen image's).

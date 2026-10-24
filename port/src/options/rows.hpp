@@ -30,6 +30,7 @@ struct Row {
     std::function<std::string(const Config &)> value;
     std::function<void(Config &, int)>         step;
     std::string                                action;
+    bool                                       pad = false; /**< Selects the action's controller binding. */
 };
 
 struct Page {
@@ -37,10 +38,22 @@ struct Page {
     std::vector<Row> rows;
 };
 
-std::span<const Page>        Pages();
-bool                         StepRow(const Row &row, Config &config, int direction);
-bool                         SetBinding(Config &config, std::string_view action, std::string_view key);
-void                         ResetBinding(Config &config, std::string_view action);
+std::span<const Page> Pages();
+bool                  StepRow(const Row &row, Config &config, int direction);
+bool                  SetBinding(Config &config, std::string_view action, std::string_view key);
+void                  ResetBinding(Config &config, std::string_view action);
+/**
+ * Binds a controller button to an action and swaps conflicting pad-button bindings.
+ */
+bool SetPadBinding(Config &config, std::string_view action, std::string_view button);
+/**
+ * Restores an action's default controller buttons and swaps conflicting pad-button bindings.
+ */
+void ResetPadBinding(Config &config, std::string_view action);
+/**
+ * Names a physical controller button using the configured glyph style.
+ */
+std::string                  PadButtonName(std::string_view button, const Config &config);
 std::vector<DisplayModeSize> ResolutionList(std::span<const DisplayModeSize> modes, int width, int height);
 void                         ListResolutions();
 // Names for the PC page's prompts, including keyboard rebinding and forced controller families.

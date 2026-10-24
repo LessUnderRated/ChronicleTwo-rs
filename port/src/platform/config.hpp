@@ -56,6 +56,9 @@ struct Config : HostSettings {
     bool floor_info_monsters = false;
     // game.more_monsters: a dungeon floor holds up to 60 monsters instead of 24, and all of them in range show and act.
     bool         more_monsters = false;
+    bool         transformation_stats = false; /**< Applies faster badge attack growth and Monica's defence when higher. */
+    bool         transformation_exp = false;   /**< Doubles absorption earned by the active transformation badge. */
+    bool         shared_badge_exp = false;     /**< Shares a quarter of Monica's absorption with other unlocked badges. */
     ConfigAspect aspect = ConfigAspect::Auto;
     float        ui_scale = 1.0f;
     bool         font_sharp = false;

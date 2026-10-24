@@ -14,6 +14,7 @@
 #include <cstdio>
 #include <cstring>
 #include <filesystem>
+#include <limits>
 #include <optional>
 #include <print>
 #include <span>
@@ -22,9 +23,11 @@
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include "bounded_text.hpp"
+#include "character_motion.hpp"
 #include "crash/crash.hpp"
 #include "dataread.hpp"
 #include "dataread_port.hpp"
@@ -37,6 +40,7 @@
 #include "platform/texture_catalog.hpp"
 #include "platform/vfs.hpp"
 #include "profile.hpp"
+#include "script_text.hpp"
 #include "script_timing.hpp"
 #include "texture_copy.hpp"
 #include "texture_source.hpp"
@@ -95,6 +99,13 @@ std::size_t PaddedSize(std::size_t size) {
 // here: the result must not depend on the caller's buffer.
 void ZeroSectorTail(void *buffer, std::size_t size) {
     std::memset(static_cast<char *>(buffer) + size, 0, PaddedSize(size) - size);
+}
+
+/**
+ * Invalidates motion data in a main-thread load destination, including any sector padding.
+ */
+void ReportDestination(void *buffer, std::size_t bytes) {
+    character_motion::ForgetStorage(buffer, static_cast<char *>(buffer) + bytes);
 }
 
 bool IsExcludedRootName(std::string_view name) {
@@ -229,7 +240,13 @@ int ReadUnregistered(const IndexedFile &file, void *buffer) {
     return *size;
 }
 
+/**
+ * Reads and records a sector-padded file buffer on the main thread.
+ */
 int ReadWhole(const IndexedFile &file, void *buffer) {
+    if (const std::optional<int> size = FileSize(file)) {
+        ReportDestination(buffer, PaddedSize(static_cast<std::size_t>(*size)));
+    }
     const int size = ReadUnregistered(file, buffer);
     if (size >= 0) {
         loaded_buffers[buffer] = static_cast<std::size_t>(size);
@@ -247,6 +264,22 @@ bool ConvertScriptTiming(const std::string &key, void *buffer, int size) {
     return ok;
 }
 
+/**
+ * Corrects PAL text and records the complete patched buffer extent.
+ */
+int PatchScriptText(const std::string &key, void *buffer, int size) {
+    if (size < 0 || (!key.ends_with(".stb") && !key.ends_with(".txt"))) {
+        return size;
+    }
+    const auto extra = script_text::Extra(key);
+    if (extra > 0) {
+        ReportDestination(static_cast<unsigned char *>(buffer) + size, extra);
+    }
+    const auto patched = static_cast<int>(script_text::Patch(key, static_cast<unsigned char *>(buffer), static_cast<std::size_t>(size)));
+    loaded_buffers[buffer] = static_cast<std::size_t>(patched);
+    return patched;
+}
+
 // sceOpen maps host0: onto the save tree, so this reads back whatever WriteFile put there. -1 when the
 // save tree does not have the file, which sends the caller on to the data index.
 int ReadSaveFile(const char *name, void *buffer, bool size_only) {
@@ -257,6 +290,7 @@ int ReadSaveFile(const char *name, void *buffer, bool size_only) {
     int  size = sceLseek(fd, 0, SCE_SEEK_END);
     bool ok = size >= 0;
     if (ok && !size_only) {
+        ReportDestination(buffer, PaddedSize(static_cast<std::size_t>(size)));
         ok = sceLseek(fd, 0, SCE_SEEK_SET) >= 0 && sceRead(fd, buffer, size) == size;
     }
     sceClose(fd);
@@ -291,6 +325,7 @@ int ResolveFile(const char *name, const std::string &key, void *buffer, bool siz
         if (const auto module = luau_runtime::ModuleForScript(key)) {
             const std::string handle = luau_runtime::MakeHandle(*module);
             if (buffer && !size_only) {
+                ReportDestination(buffer, handle.size());
                 std::memcpy(buffer, handle.data(), handle.size());
             }
             return static_cast<int>(handle.size());
@@ -301,17 +336,23 @@ int ResolveFile(const char *name, const std::string &key, void *buffer, bool siz
     if (!file) {
         return -1;
     }
+    const auto raw_size = FileSize(*file);
+    const auto extra = script_text::Extra(key);
+    if (!raw_size || std::cmp_greater(extra, std::numeric_limits<int>::max() - *raw_size)) {
+        return -1;
+    }
     if (!size_only) {
-        const int size = ReadWhole(*file, buffer);
+        int size = ReadWhole(*file, buffer);
         if (size >= 0) {
             if (!ConvertScriptTiming(key, buffer, size)) {
                 return -1;
             }
+            size = PatchScriptText(key, buffer, size);
             TextureSourceRegister(buffer, file->relative, static_cast<std::size_t>(size));
         }
         return size;
     }
-    return FileSize(*file).value_or(-1);
+    return *raw_size + static_cast<int>(extra);
 }
 
 CacheSlot *CacheFind(const std::string &key) {
@@ -693,6 +734,7 @@ PORT_OVERRIDE int LoadFileBG(char *name, u_long128 *buffer, int *out_size) {
     int size = 0;
 
     if (CacheSlot *cached = CacheFind(CacheKey(name))) {
+        ReportDestination(buffer, static_cast<std::size_t>(cached->size));
         PortTextureSourceCopy(buffer, cached->address, static_cast<std::size_t>(cached->size));
         cached->ref_count--;
         size = cached->size;
@@ -798,6 +840,7 @@ PORT_OVERRIDE int LoadFile2(char *path, void *buffer, int *out_size, int mode) {
 
     if (CacheSlot *cached = CacheFind(CacheKey(path))) {
         if (mode != LOAD_FILE_SIZE) {
+            ReportDestination(buffer, static_cast<std::size_t>(cached->size));
             PortTextureSourceCopy(buffer, cached->address, static_cast<std::size_t>(cached->size));
         }
         if (mode == LOAD_FILE_READ) {
@@ -860,7 +903,7 @@ PORT_OVERRIDE int LoadFileCacheBG(char *path) {
         cache_next += quadwords;
     }
 
-    if (!LoadFileBG(path, buffer, nullptr)) {
+    if (!LoadFileBG(path, buffer, &size)) {
         return 0;
     }
     return CacheRecord(key, buffer, size);

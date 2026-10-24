@@ -128,6 +128,9 @@ CHARA_MODEL_STACK_EXTRA = 12000
 # COFF has no inline-vs-strong resolution: map.cpp's out-of-line CMapParts::CMapParts is the single definition,
 # so the identical inline copies in editeff.cpp/editmap.cpp are blanked rather than kept.
 UNIT_FIXUPS = [
+    # Native monster scheduling retains the retail callback scene context.
+    ("runscript_opcodes.cpp", "static CScene *nowScene;",
+     "static CScene *nowScene; void PortSetMonsterScriptScene(CScene *scene) { nowScene = scene; }"),
     # The native texture-copy prelude includes host stdlib.h, which declares random().
     ("password.cpp", "static unsigned int random() {", "static unsigned int PortPasswordRandom() {"),
     # Replace party-ring palette copies with independently registered RGBA pixels.
@@ -280,6 +283,11 @@ UNIT_FIXUPS = [
     MenuBuffer__2.stSetBuffer(read_buffer = main_stack->stAlloc64(260000), 260000);
     read_buffer_end = read_buffer + 260000;
     WorkBuffer.stSetBuffer(main_stack->stAlloc64({WORK_STACK_QUADWORDS}), {WORK_STACK_QUADWORDS});"""),
+    # A town map change rewinds the character buffer and reserves the controlled character's memory again, but the
+    # character stays loaded there and keeps its motion sets.
+    ("editloop.cpp", "\n        ControlCharaBuff.Alloc(FixCharaBuffSize);",
+     "\n        MemoryAllocKept(ControlCharaBuff, FixCharaBuffSize);"),
+    ("editloop.cpp", "\n    ControlCharaBuff.Alloc(FixCharaBuffSize);", "\n    MemoryAllocKept(ControlCharaBuff, FixCharaBuffSize);"),
     # Map files are read into a buffer sized to them rather than the caller's fixed one.
     ("sceneload.cpp", "    u8        *load_buf = info.load_buf;", "    u8        *load_buf = PortMapLoadBuffer(info);"),
     # Every Georama part definition may be placed as often as the player can hold it.

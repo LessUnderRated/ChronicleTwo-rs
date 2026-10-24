@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "luau_runtime.hpp"
+#include "monster.hpp"
 #include "runscript.hpp"
 
 namespace {
@@ -203,6 +204,46 @@ TEST_F(LuauRuntime, RunWaitResumeEnd) {
 
     script.resume();
     EXPECT_EQ(calls.size(), 3u);
+}
+
+TEST_F(LuauRuntime, MonsterWithoutStunProgramResumesSuspendedBehaviorAfterStun) {
+    CActiveMonster monster{};
+    CMonsterMan    manager{};
+    manager.active[0] = &monster;
+    std::string  handle = luau_runtime::MakeHandle("facade/basic");
+    RS_STACKDATA slots[64]{};
+    RS_CALLDATA  call_stack[16]{};
+    monster.mons_script.ext_func(ext_table, 256);
+    monster.mons_script.load(reinterpret_cast<RS_PROG_HEADER *>(handle.data()), slots, 64, call_stack, 16);
+    ASSERT_EQ(monster.mons_script.check_program(MONSTER_PROG_PIYORI), 0);
+
+    monster.req_prog = MONSTER_PROG_MAIN;
+    manager.RunScript(0);
+    ASSERT_EQ(calls.size(), 1u);
+    EXPECT_EQ(calls.back().args[0].val.i, 1);
+    EXPECT_EQ(monster.now_prog, MONSTER_PROG_MAIN);
+
+    monster.piyori_time = 3;
+    monster.req_prog = MONSTER_PROG_PIYORI;
+    manager.RunScript(0);
+    EXPECT_EQ(monster.req_prog, MONSTER_PROG_RUNNING);
+    EXPECT_EQ(monster.now_prog, MONSTER_PROG_MAIN);
+    EXPECT_EQ(monster.piyori_mark, 3);
+    EXPECT_EQ(monster.piyori.target, &monster);
+    manager.RunScript(0);
+    EXPECT_EQ(calls.size(), 1u);
+
+    monster.piyori_mark = 0;
+    manager.RunScript(0);
+    ASSERT_EQ(calls.size(), 2u);
+    EXPECT_EQ(calls.back().args[0].val.i, 2);
+    EXPECT_EQ(monster.mons_script.end, 0);
+    manager.RunScript(0);
+    ASSERT_EQ(calls.size(), 3u);
+    EXPECT_EQ(calls.back().args[0].val.i, 3);
+    EXPECT_EQ(monster.mons_script.end, 1);
+    EXPECT_EQ(monster.req_prog, MONSTER_PROG_MAIN);
+    luau_runtime::Forget(&monster.mons_script);
 }
 
 TEST_F(LuauRuntime, GlobalsPersistPerInstance) {
