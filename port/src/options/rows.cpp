@@ -287,8 +287,6 @@ void TakeFromOthers(Config &config, std::string_view action, const std::vector<s
     }
 }
 
-} // namespace
-
 // The rows kAppPage leaves out.
 bool PcOnly(std::string_view key) {
     static constexpr std::string_view keys[] = {
