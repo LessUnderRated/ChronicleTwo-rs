@@ -6524,13 +6524,6 @@ void CMenuCostumeSel::LoadMenuData(mgCMemory *stack, int *tex_block) {
 }
 
 int CMenuCostumeSel::KeyStep() {
-    /**
-     *
-     * Background load phase associated with each costume list.
-     *
-     */
-    static s8 phasetbl[COSTUME_LIST_NUM] = {4, 1, 5};
-
     CActionChara *model = MenuActionChara[0];
     CDC2Mes      *ask = MenuDCMsg[7];
     sceVu0FVECTOR pos;
@@ -6671,7 +6664,15 @@ int CMenuCostumeSel::KeyStep() {
 
                             GetUserDataMan()->SetChrEquipDirect(chara, list[select][costume_select[select]]);
                             MenuCosutumeLoadPhase = 1;
-                            MenuLoadInfo.load_phase = phasetbl[select];
+                            // Retail reloaded only the changed part (load phase 4, 1 or 5), over the
+                            // character whose skin still pointed into that part's reset buffer. The native
+                            // character keeps its resources only while every producer is live, so that
+                            // reload was refused ("character profile requires live prior resources") and
+                            // the outfit never changed. Reload every part from an initialized character, as
+                            // the reset to the default costume does.
+                            MenuLoadInfo.load_all = true;
+                            MenuLoadInfo.load_phase = 0;
+                            MenuLoadInfo.request_phase = -1;
                         } else {
                             move_x = 0;
                         }
