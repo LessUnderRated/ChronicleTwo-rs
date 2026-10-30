@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <cstring>
+#include <limits>
 #include <string>
 
 #include "scriptinterpreter.hpp"
@@ -80,6 +81,35 @@ TEST(ScriptInterpreter, NumericAndEscapedTextArgumentsKeepTheirValues) {
     EXPECT_EQ(stack[4].value.integer, 12);
     ASSERT_EQ(stack[5].type, SPI_STACK_TYPE_STRING);
     EXPECT_STREQ(stack[5].value.string, "\x81\x5c");
+}
+
+TEST(ScriptInterpreter, DecimalArgumentsRejectMalformedAndOutOfRangeValues) {
+    for (const std::string text : {".", "-.", "1.2.3", "1.-2", "9999999999999999999999999999999999999999.0",
+                                   "0.00000000000000000000000000000000000000000000001"}) {
+        CScriptInterpreter interpreter;
+        SPI_STACK          stack[1]{};
+        std::string        script = text + ";";
+        interpreter.SetScript(script.data(), static_cast<int>(script.size()));
+        interpreter.SetStack(stack, 1);
+        ASSERT_EQ(interpreter.GetArg(), 1) << text;
+        EXPECT_EQ(stack[0].type, SPI_STACK_TYPE_INVALID) << text;
+    }
+}
+
+TEST(ScriptInterpreter, DecimalArgumentsPreserveSubnormalsAndSignedZero) {
+    CScriptInterpreter interpreter;
+    SPI_STACK          stack[3]{};
+    char               script[] = "0.000000000000000000000000000000000000000000001,-0.0,.5;";
+    interpreter.SetScript(script, std::strlen(script));
+    interpreter.SetStack(stack, 3);
+    ASSERT_EQ(interpreter.GetArg(), 3);
+    for (const auto &argument : stack) {
+        ASSERT_EQ(argument.type, SPI_STACK_TYPE_FLOAT);
+    }
+    EXPECT_EQ(stack[0].value.real, std::numeric_limits<float>::denorm_min());
+    EXPECT_EQ(stack[1].value.real, 0.0f);
+    EXPECT_TRUE(std::signbit(stack[1].value.real));
+    EXPECT_FLOAT_EQ(stack[2].value.real, 0.5f);
 }
 
 TEST(ScriptInterpreter, ByteReaderStopsAtItsExactSourceExtent) {

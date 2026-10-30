@@ -45,87 +45,61 @@ std::string_view NonFinite(double value) {
     return {};
 }
 
-// %a without its "0x", which std::to_chars leaves out. With no precision %a is already the shortest exact form.
+/**
+ * Formats a hexadecimal significand with round-to-nearest, ties-to-even rounding.
+ */
 template <typename T>
 std::string Hex(T value, int precision) {
-    auto number = static_cast<double>(value);
-    if constexpr (sizeof(T) == sizeof(float)) {
-        if (precision >= 0 && number != 0 && std::fabs(number) < std::numeric_limits<float>::min()) {
-            // A float subnormal is normal as a double. Format its bits at the float exponent.
-            constexpr std::string_view hex_digits = "0123456789abcdef";
-            long double                fraction = std::fabs(static_cast<long double>(value)) / std::numeric_limits<float>::min();
-            std::string                digits(static_cast<size_t>(precision), '0');
-            for (char &digit : digits) {
-                fraction *= 16;
-                const auto nibble = static_cast<unsigned>(fraction);
-                digit = hex_digits[nibble];
-                fraction -= nibble;
+    constexpr std::string_view hex_digits = "0123456789abcdef";
+    double                     fraction = std::fabs(static_cast<double>(value));
+    int                        exponent = 0;
+    if (fraction != 0) {
+        std::frexp(fraction, &exponent);
+        exponent = std::max(exponent - 1, std::numeric_limits<T>::min_exponent - 1);
+        fraction = std::ldexp(fraction, -exponent);
+    }
+    char leading = fraction >= 1 ? '1' : '0';
+    fraction -= leading - '0';
+    const bool shortest = precision < 0;
+    if (shortest) {
+        precision = (std::numeric_limits<T>::digits - 1 + 3) / 4;
+    }
+    std::string digits(static_cast<std::size_t>(precision), '0');
+    for (char &digit : digits) {
+        fraction *= 16;
+        const auto nibble = static_cast<unsigned>(fraction);
+        digit = hex_digits[nibble];
+        fraction -= nibble;
+    }
+    // The retained low bit decides which way an exact half rounds.
+    const auto last_digit = digits.empty() ? static_cast<std::size_t>(leading - '0') : hex_digits.find(digits.back());
+    if (fraction > 0.5 || (fraction == 0.5 && (last_digit & 1) != 0)) {
+        bool carry = true;
+        for (auto index = digits.size(); index > 0; --index) {
+            char &digit = digits[index - 1];
+            if (digit == 'f') {
+                digit = '0';
+            } else {
+                digit = hex_digits[hex_digits.find(digit) + 1];
+                carry = false;
+                break;
             }
-            fraction *= 16;
-            const auto next = static_cast<unsigned>(fraction);
-            const bool round_up = next > 8 || (next == 8 &&
-                                               (fraction > 8 || (!digits.empty() && (hex_digits.find(digits.back()) & 1) != 0)));
-            char       leading = '0';
-            if (round_up) {
-                bool carry = true;
-                for (auto index = digits.size(); index > 0; --index) {
-                    char &digit = digits[index - 1];
-                    if (digit == 'f') {
-                        digit = '0';
-                    } else {
-                        digit = hex_digits[hex_digits.find(digit) + 1];
-                        carry = false;
-                        break;
-                    }
-                }
-                if (carry) {
-                    leading = '1';
-                }
-            }
-            std::string text = std::signbit(value) ? "-" : "";
-            text += leading;
-            if (precision > 0) {
-                text += "." + digits;
-            }
-            return text + "p" + std::to_string(std::numeric_limits<float>::min_exponent - 1);
+        }
+        if (carry) {
+            ++leading;
         }
     }
-    int exponent_adjustment = 0;
-    if (precision < 0 && number != 0 && std::fabs(number) < std::numeric_limits<T>::min()) {
-        // Shortest hex output normalizes subnormals; explicit precision keeps printf's exponent.
-        int exponent = 0;
-        number = std::ldexp(std::frexp(number, &exponent), 1);
-        exponent_adjustment = exponent - 1;
-    }
-    std::string text;
-    if (precision < 0) {
-        int length = std::snprintf(nullptr, 0, "%a", number);
-        text.assign(static_cast<size_t>(length), '\0');
-        std::snprintf(text.data(), text.size() + 1, "%a", number);
-    } else {
-        text = Printf("%.*a", precision, number);
-    }
-    if (exponent_adjustment != 0) {
-        const auto start = text.find('p') + 1;
-        const int  exponent = std::stoi(text.substr(start)) + exponent_adjustment;
-        text.replace(start, std::string::npos, (exponent >= 0 ? "+" : "") + std::to_string(exponent));
-    }
-    if (size_t prefix = text.find("0x"); prefix != std::string::npos) {
-        text.erase(prefix, 2);
-    }
-    if (precision < 0) {
-        // Some C libraries pad the shortest %a with zeros.
-        size_t p = text.find('p');
-        size_t end = p;
-        while (end > 0 && text[end - 1] == '0' && text.find('.') < end - 1) {
-            end--;
+    if (shortest) {
+        while (!digits.empty() && digits.back() == '0') {
+            digits.pop_back();
         }
-        if (end > 0 && text[end - 1] == '.') {
-            end--;
-        }
-        text.erase(end, p - end);
     }
-    return text;
+    std::string text = std::signbit(value) ? "-" : "";
+    text += leading;
+    if (!digits.empty()) {
+        text += "." + digits;
+    }
+    return text + "p" + (exponent >= 0 ? "+" : "") + std::to_string(exponent);
 }
 
 // The fewest significant digits that read back as the value, and its decimal exponent.

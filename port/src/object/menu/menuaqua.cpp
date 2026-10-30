@@ -7323,7 +7323,8 @@ void GyoraceMenuInit(mgCMemory *memory, int *tex_block, int) {
     }
     const auto reserved = static_cast<std::size_t>(file_bytes) + scratch_bytes;
     const auto quadwords = reserved / sizeof(u_long128) + (reserved % sizeof(u_long128) != 0);
-    if (quadwords >= static_cast<std::size_t>(GyoraceStack.stGetRest()) || quadwords >= static_cast<std::size_t>(INT_MAX)) {
+    if (quadwords >= static_cast<std::size_t>(GyoraceStack.stGetRest()) ||
+        quadwords >= static_cast<std::size_t>(std::numeric_limits<int>::max())) {
         return;
     }
     if (dc2::memory::NewArray<u_long128>(GyoraceStack, quadwords) == nullptr) {
