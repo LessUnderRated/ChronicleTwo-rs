@@ -7,22 +7,28 @@
 #include <utility>
 #include <vector>
 
-#include "camera_control_port.hpp"
 #include "camera_mouse.hpp"
 #include "cameracontrol.hpp"
 #include "dng_main.hpp"
 #include "gameutil.hpp"
+#include "input/camera_control_state.hpp"
 #include "mainloop.hpp"
-#include "mainloop_port.hpp"
 #include "map.hpp"
-#include "mglib_port.hpp"
 #include "padcontrol.hpp"
 #include "photo.hpp"
+#include "platform/game_loop_state.hpp"
 #include "platform/input.hpp"
+#include "render/renderer.hpp"
 #include "scenesnd.hpp"
 #include "stubs/photo.hpp"
 
 namespace {
+struct GlobalCameraCleanup {
+    CScene &scene;
+
+    ~GlobalCameraCleanup() { scene.GetSceneCamera(0)->Initialize(); }
+};
+
 CCameraControl Camera() {
     CCameraControl camera;
     camera.SetPos(0, 40, 100);
@@ -109,7 +115,7 @@ public:
 class TownTurns {
 public:
     explicit TownTurns(std::vector<CCPoly> walls)
-        : map(std::move(walls)), scene(*GetMainScene()), saved_map(scene.map[0]), saved_active(scene.active_map) {
+        : map(std::move(walls)), scene(*GetMainScene()), saved_map(std::move(scene.map[0])), saved_active(scene.active_map) {
         scene.AssignMap(0, &map, const_cast<char *>("map"));
         scene.active_map = 0;
         scene.map[0].status |= SCENE_DATA_ACTIVE;
@@ -126,7 +132,8 @@ public:
     ~TownTurns() {
         InputSetScriptedDevices({});
         InputSetOverride(0, nullptr);
-        scene.map[0] = saved_map;
+        scene.GetSceneCamera(0)->Initialize();
+        scene.map[0] = std::move(saved_map);
         scene.active_map = saved_active;
     }
 
@@ -579,8 +586,9 @@ TEST(CameraMouse, CameraOwnershipRejectsScriptsLocksOtherViewsAndOtherCameras) {
 }
 
 TEST(CameraMouse, TownMouseKeepsTurningAfterAnEventTurnsFollowOff) {
-    auto    camera = Camera();
-    CScene &scene = *GetMainScene();
+    auto                camera = Camera();
+    CScene             &scene = *GetMainScene();
+    GlobalCameraCleanup clear_camera{scene};
     scene.AssignCamera(0, &camera, const_cast<char *>("MainCam"));
     scene.active_camera = 0;
     scene.event_run = 0;
@@ -609,8 +617,9 @@ TEST(CameraMouse, TownMouseKeepsTurningAfterAnEventTurnsFollowOff) {
 }
 
 TEST(CameraMouse, TownControlConsumesOneSampleAndDoesNotReplayLockedMotion) {
-    auto    camera = Camera();
-    CScene &scene = *GetMainScene();
+    auto                camera = Camera();
+    CScene             &scene = *GetMainScene();
+    GlobalCameraCleanup clear_camera{scene};
     scene.AssignCamera(0, &camera, const_cast<char *>("MainCam"));
     scene.active_camera = 0;
     scene.event_run = 0;
@@ -645,8 +654,9 @@ TEST(CameraMouse, TurnIsNotUndoneByObstacleAvoidance) {
     // retail's obstacle avoidance keeps clear, as a wall edge is when the eye
     // slides along it. Avoidance would swing the eye away from the post on the
     // turn's frame and fight the turn; as for the stick, it waits.
-    auto    camera = Camera();
-    CScene &scene = *GetMainScene();
+    auto                camera = Camera();
+    CScene             &scene = *GetMainScene();
+    GlobalCameraCleanup clear_camera{scene};
     scene.AssignCamera(0, &camera, const_cast<char *>("MainCam"));
     scene.active_camera = 0;
     scene.event_run = 0;
@@ -686,7 +696,8 @@ TEST(CameraMouse, TurnIsNotUndoneByObstacleAvoidance) {
 }
 
 TEST(CameraStick, RotationStartsAtFullRateReversesAndStopsWithoutDrift) {
-    CScene &scene = *GetMainScene();
+    CScene             &scene = *GetMainScene();
+    GlobalCameraCleanup clear_camera{scene};
     scene.active_camera = 0;
     scene.event_run = 0;
     PortLoopNo = LOOP_EDIT;
@@ -732,7 +743,8 @@ TEST(CameraStick, ResetWinsItsFrameAndManualYawCancelsAnUnfinishedReset) {
     auto  camera = Camera();
     auto &param = *camera.GetActiveParam();
     param.near_height = param.far_height = 0;
-    CScene &scene = *GetMainScene();
+    CScene             &scene = *GetMainScene();
+    GlobalCameraCleanup clear_camera{scene};
     scene.AssignCamera(0, &camera, const_cast<char *>("MainCam"));
     scene.active_camera = 0;
     scene.event_run = 0;

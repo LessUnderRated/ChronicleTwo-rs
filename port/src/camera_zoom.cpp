@@ -10,7 +10,7 @@
 #include "camera_mouse.hpp"
 #include "camera_zoom.hpp"
 #include "gameutil.hpp"
-#include "mglib_port.hpp"
+#include "render/renderer.hpp"
 #include "scenesnd.hpp"
 
 namespace {

@@ -13,6 +13,7 @@
 #include "platform/paths.hpp"
 #include "platform/settings.hpp"
 #include "platform_fixture.hpp"
+#include "scoped_global_object.hpp"
 
 namespace fs = std::filesystem;
 
@@ -461,8 +462,7 @@ TEST_F(PlatformConfig, ReadErrorsNeverReplaceOriginalOrPublishPartialBackup) {
             ConfigSetReadHook(nullptr);
             Write(original);
             ASSERT_TRUE(ConfigLoad());
-            FailingConfigBuffer buffer(bytes);
-            failing_config_buffer = &buffer;
+            dc2::test::ScopedGlobalObject<failing_config_buffer, FailingConfigBuffer> buffer_owner(bytes);
             ConfigSetReadHook(InjectConfigReadFailure);
             if (loading) {
                 EXPECT_FALSE(ConfigLoad());

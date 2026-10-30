@@ -14,7 +14,10 @@ include(GoogleTest)
 
 add_test(NAME PalettePaths.Check
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/port/check_palette_paths.py
-        ${CMAKE_BINARY_DIR}/ps2_src ${CMAKE_SOURCE_DIR}/port/src)
+        ${CMAKE_SOURCE_DIR}/port/src)
+add_test(NAME NativeArchitecture.Check
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/port/native_architecture.py
+        --root ${CMAKE_SOURCE_DIR} --build ${CMAKE_BINARY_DIR})
 
 file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*_test.cpp)
 add_executable(darkchronicle_tests ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp ${TEST_SOURCES})
@@ -29,7 +32,7 @@ add_custom_command(OUTPUT ${LOCAL_LAYOUT_PROBES}
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/port/local_layout_probes.py
         ${CMAKE_SOURCE_DIR} ${LOCAL_LAYOUT_PROBES}
     DEPENDS ${CMAKE_SOURCE_DIR}/scripts/port/local_layout_probes.py
-        ${CMAKE_SOURCE_DIR}/ps2/src/character.cpp ${CMAKE_SOURCE_DIR}/ps2/src/menusys.cpp
+        ${CMAKE_SOURCE_DIR}/port/src/object/menu/menusys.cpp
     VERBATIM)
 target_sources(darkchronicle_tests PRIVATE ${LOCAL_LAYOUT_PROBES})
 target_include_directories(darkchronicle_tests PRIVATE ${CMAKE_CURRENT_BINARY_DIR})

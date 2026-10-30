@@ -13,7 +13,7 @@
 #include "gameutil.hpp"
 #include "map.hpp"
 #include "mapparts.hpp"
-#include "mglib_port.hpp"
+#include "render/renderer.hpp"
 #include "scenesnd.hpp"
 
 namespace {

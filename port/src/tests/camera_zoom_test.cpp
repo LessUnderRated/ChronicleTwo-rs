@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <limits>
 #include <numbers>
+#include <utility>
 #include <vector>
 
 #include "camera_mouse.hpp"
@@ -12,14 +13,38 @@
 #include "dng_main.hpp"
 #include "gameutil.hpp"
 #include "mainloop.hpp"
-#include "mainloop_port.hpp"
 #include "map.hpp"
-#include "mglib_port.hpp"
 #include "platform/config.hpp"
+#include "platform/game_loop_state.hpp"
 #include "platform/input.hpp"
+#include "render/renderer.hpp"
 #include "scenesnd.hpp"
+#include "scoped_global_object.hpp"
 
 namespace {
+struct GlobalCameraCleanup {
+    CScene &scene;
+
+    ~GlobalCameraCleanup() { scene.GetSceneCamera(0)->Initialize(); }
+};
+
+/**
+ * Restores a moved scene-map slot before its replacement map leaves scope.
+ */
+struct GlobalMapCleanup {
+    CScene   &scene;
+    CSceneMap saved_map;
+    int       saved_active;
+
+    explicit GlobalMapCleanup(CScene &value)
+        : scene(value), saved_map(std::move(value.map[0])), saved_active(value.active_map) {}
+
+    ~GlobalMapCleanup() {
+        scene.map[0] = std::move(saved_map);
+        scene.active_map = saved_active;
+    }
+};
+
 CCameraControl Camera() {
     CCameraControl camera;
     camera.SetPos(0, 40, 100);
@@ -148,9 +173,10 @@ TEST(CameraZoom, CloseZoomKeepsViewingSlopeAndMousePitchDoesNotSpringBack) {
 
 TEST(CameraZoom, PadOnlyCameraRemainsRetailWithOptionOffOrOn) {
     for (bool enabled : {false, true}) {
-        auto    camera = Camera();
-        auto    retail = camera;
-        CScene &scene = *GetMainScene();
+        auto                camera = Camera();
+        auto                retail = camera;
+        CScene             &scene = *GetMainScene();
+        GlobalCameraCleanup clear_camera{scene};
         scene.AssignCamera(0, &camera, const_cast<char *>("MainCam"));
         scene.active_camera = 0;
         PortLoopNo = LOOP_EDIT;
@@ -182,18 +208,18 @@ TEST(CameraZoom, PadOnlyCameraRemainsRetailWithOptionOffOrOn) {
 }
 
 TEST(CameraZoom, DungeonMenusEventsLockOnAndEyeViewOwnWheelAndReset) {
-    CScene scene;
+    dc2::test::ScopedGlobalObject<DngMainScene> scene_owner;
+    auto                                       &scene = scene_owner.Get();
     scene.event_run = 0;
-    DNG_BATTLE_AREA area{};
-    CActionChara    chara;
+    dc2::test::ScopedGlobalObject<BattleAreaScene> area_owner;
+    auto                                          &area = area_owner.Get();
+    dc2::test::ScopedGlobalObject<MainChara__2>    chara_owner;
+    auto                                          &chara = chara_owner.Get();
     chara.menu_flag = 1;
     chara.hold_type = ACTION_HOLD_NONE;
     chara.lock_on = 0;
     chara.damage_req = ACTION_DAMAGE_REQ_NONE;
     area.script.event_no = -1;
-    DngMainScene = &scene;
-    BattleAreaScene = &area;
-    MainChara__2 = &chara;
     DngStatus = {};
     NowFloorInfoPtr = nullptr;
     DebugFlag = DebugInfo.debug_camera = 0;
@@ -1043,10 +1069,10 @@ TEST(CameraZoom, MouseTurnBehindACharacterWallIsCorrectedByTheWrapper) {
     // by mouse swings the eye behind it.
     WallMap map;
     map.walking.push_back(Triangle({120, -2000, 0}, {120, 2000, 0}, {120, 0, 2000}, {1, 0, 0}));
-    auto       camera = Camera();
-    CScene    &scene = *GetMainScene();
-    const auto saved_map = scene.map[0];
-    const int  saved_active = scene.active_map;
+    auto                camera = Camera();
+    CScene             &scene = *GetMainScene();
+    GlobalCameraCleanup clear_camera{scene};
+    GlobalMapCleanup    restore_map{scene};
     scene.AssignMap(0, &map, const_cast<char *>("map"));
     scene.active_map = 0;
     scene.map[0].status |= SCENE_DATA_ACTIVE;
@@ -1098,8 +1124,6 @@ TEST(CameraZoom, MouseTurnBehindACharacterWallIsCorrectedByTheWrapper) {
     InputSetOverride(0, nullptr);
     InputResetBindings();
     const_cast<Config &>(ConfigGet()).mouse_zoom = old_option;
-    scene.map[0] = saved_map;
-    scene.active_map = saved_active;
 }
 
 TEST(CameraZoom, DenseGeometryAfterSettlingKeepsTheZoomedDistance) {
@@ -1133,8 +1157,9 @@ TEST(CameraZoom, DenseGeometryAfterSettlingKeepsTheZoomedDistance) {
 }
 
 TEST(CameraZoom, TownConsumesWheelOnceAndRejectsLockedMenuAndEventSamples) {
-    auto    camera = Camera();
-    CScene &scene = *GetMainScene();
+    auto                camera = Camera();
+    CScene             &scene = *GetMainScene();
+    GlobalCameraCleanup clear_camera{scene};
     scene.AssignCamera(0, &camera, const_cast<char *>("MainCam"));
     scene.active_camera = 0;
     scene.event_run = 0;

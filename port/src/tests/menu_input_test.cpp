@@ -1,7 +1,9 @@
 #include <SDL3/SDL.h>
 #include <gtest/gtest.h>
 
+#include <array>
 #include <cstring>
+#include <memory>
 #include <utility>
 
 #include "gamepad.hpp"
@@ -15,6 +17,7 @@
 #include "platform/clock.hpp"
 #include "platform/input.hpp"
 #include "platform/input_script.hpp"
+#include "scenesnd.hpp"
 #include "stubs/nameregi.hpp"
 
 namespace {
@@ -439,4 +442,70 @@ TEST_F(NameEntryInput, JapaneseAndAnOpenMessageBypassPhysicalTyping) {
     EXPECT_STREQ(menu.name, "");
 }
 
+TEST_F(NameEntryInput, ForcedExitRetiresTheBorrowedControllerAndReleasesTextInput) {
+    dc2::menu::ResetNameRegistration();
+    EXPECT_EQ(NameRegiMenuPtr, nullptr);
+    menu.name[0] = 'x';
+    EXPECT_EQ(NameRegistKey(), 1);
+    EXPECT_EQ(menu.name[0], 'x');
+    NameRegistDraw();
+    InputKeyboardMouse held;
+    held.keys = {SDL_SCANCODE_E};
+    EXPECT_EQ(InputApplyKeyboardMouse({}, held).buttons & kInputSquare, kInputSquare);
+    dc2::menu::ResetNameRegistration();
+}
+
+TEST_F(NameEntryInput, CompletedCloseRetiresTheControllerBeforeItsBackingArenaReset) {
+    auto    scene = std::make_unique<CScene>();
+    CScene *previous_scene = MenuMainScene;
+    MenuMainScene = scene.get();
+    scene->fade.end = 1;
+    menu.mode = NAMEREGI_MODE_CLOSE;
+    EXPECT_EQ(NameRegistKey(), 1);
+    EXPECT_EQ(NameRegiMenuPtr, nullptr);
+    MenuMainScene = previous_scene;
+}
+
+TEST_F(NameEntryInput, SelectedGlyphRejectsInvalidModesAndCellsWithoutWriting) {
+    std::array<char, 2> glyph{'x', 'y'};
+    menu.select_mode = 2;
+    menu.select.pos = 0;
+    ASSERT_TRUE(menu.GetSelectedActiveFont(glyph));
+    EXPECT_EQ(glyph[0], 'A');
+    EXPECT_EQ(glyph[1], char{});
+    glyph = {'x', 'y'};
+    menu.select.pos = 32767;
+    EXPECT_FALSE(menu.GetSelectedActiveFont(glyph));
+    EXPECT_EQ(glyph, (std::array<char, 2>{'x', 'y'}));
+    menu.select_mode = -1;
+    EXPECT_FALSE(menu.GetSelectedActiveFont(glyph));
+    EXPECT_EQ(glyph, (std::array<char, 2>{'x', 'y'}));
+}
+
 } // namespace
+
+TEST(MenuQuestion, CommandsCopyTypedFieldsAndResetWithoutAliasing) {
+    CBaseMenuClass    menu;
+    MENU_ASKMODE_PARA request;
+    for (std::size_t i = 0; i < std::size(request.cmd_msg); ++i) {
+        request.cmd_msg[i] = static_cast<int>(i + 10);
+        request.cmd_color[i] = static_cast<u32>(i + 100);
+        request.cmd_shade[i] = static_cast<s16>(i + 200);
+        request.cmd_mark[i] = static_cast<s16>(i + 300);
+    }
+    menu.SetAskParam(&request);
+    menu.SetAskParam(&menu.ask_para);
+    for (std::size_t i = 0; i < std::size(request.cmd_msg); ++i) {
+        EXPECT_EQ(menu.ask_para.cmd_msg[i], request.cmd_msg[i]);
+        EXPECT_EQ(menu.ask_para.cmd_color[i], request.cmd_color[i]);
+        EXPECT_EQ(menu.ask_para.cmd_shade[i], request.cmd_shade[i]);
+        EXPECT_EQ(menu.ask_para.cmd_mark[i], request.cmd_mark[i]);
+    }
+    menu.SetAskParam(nullptr);
+    for (std::size_t i = 0; i < std::size(request.cmd_msg); ++i) {
+        EXPECT_EQ(menu.ask_para.cmd_msg[i], 0);
+        EXPECT_EQ(menu.ask_para.cmd_color[i], 0u);
+        EXPECT_EQ(menu.ask_para.cmd_shade[i], 0);
+        EXPECT_EQ(menu.ask_para.cmd_mark[i], 0);
+    }
+}

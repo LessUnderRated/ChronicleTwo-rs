@@ -53,10 +53,10 @@ constexpr int kCmpLe = 43;
 constexpr int kCmpGe = 45;
 
 constexpr std::int32_t kTag = 0x4E544D54;
-constexpr std::size_t kInsnSize = 12;
-constexpr std::size_t kBlockSize = 0x38;
-constexpr std::size_t kHeaderSize = 0x1C;
-constexpr int         kMaxPrograms = 4096;
+constexpr std::size_t  kInsnSize = 12;
+constexpr std::size_t  kBlockSize = 0x38;
+constexpr std::size_t  kHeaderSize = 0x1C;
+constexpr int          kMaxPrograms = 4096;
 
 constexpr std::int32_t Bits(float value) {
     return std::bit_cast<std::int32_t>(value);
@@ -526,7 +526,7 @@ bool AddWrite(Plan &plan, std::size_t offset, const Insn &insn) {
     return true;
 }
 
-bool BuildPlan(std::string_view key, const Program &program, const std::vector<std::vector<Insn> > &canonical, Plan &plan) {
+bool BuildPlan(std::string_view key, const Program &program, const std::vector<std::vector<Insn>> &canonical, Plan &plan) {
     const Family          family = FamilyOf(key);
     std::set<std::size_t> sites;
     for (std::size_t f = 0; f < program.functions.size(); ++f) {
@@ -586,8 +586,8 @@ bool BuildPlan(std::string_view key, const Program &program, const std::vector<s
             return true;
         };
         auto find = [&](bool converted) {
-            std::vector<std::pair<std::size_t, std::size_t> > hits; // function, index
-            std::set<std::size_t>                             hit_offsets;
+            std::vector<std::pair<std::size_t, std::size_t>> hits; // function, index
+            std::set<std::size_t>                            hit_offsets;
             for (std::size_t f = 0; f < program.functions.size(); ++f) {
                 const std::vector<Insn> &code = canonical[f];
                 for (std::size_t at = 0; at < code.size(); ++at) {
@@ -691,8 +691,8 @@ Result Apply(std::string_view key, unsigned char *bytes, std::size_t size, const
     }
     result.decoded = true;
 
-    std::vector<std::vector<Insn> > canonical(program.functions.size());
-    bool                            bad_marker = false;
+    std::vector<std::vector<Insn>> canonical(program.functions.size());
+    bool                           bad_marker = false;
     for (std::size_t f = 0; f < program.functions.size(); ++f) {
         canonical[f] = program.functions[f].insns;
         for (Insn &insn : canonical[f]) {

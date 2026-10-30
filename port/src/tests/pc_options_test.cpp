@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <cstdlib>
 #include <set>
 #include <string>
 #include <vector>
@@ -332,52 +333,57 @@ TEST(PcOptions, PromptsFollowBindingsAndControllerFamilyWithoutChangingPadAction
 }
 
 TEST(PcOptions, ControllerBindingsAreASetApartThatSwapsOnConflict) {
-    using Names = std::vector<std::string>;
-    InputApplyConfig(Config{});
-    EXPECT_EQ(InputPadBindingNames("cross"), Names{"a"});
-    EXPECT_EQ(InputPadBindingNames("l2"), Names{"lefttrigger"});
-    EXPECT_EQ(InputPadBindingNames("select"), Names{"touchpad"});
-    EXPECT_EQ(InputPadBindingNames("quick_loadout"), Names{"dpdown"});
-    EXPECT_EQ(InputPadBindingNames("debug_menu"), Names{"paddle1"});
-    EXPECT_TRUE(InputPadBindingNames("lx-").empty());
-    EXPECT_EQ(Find("input.bindings.quick_loadout").label, "Quick loadout");
-    EXPECT_TRUE(Find("input.gamepad_bindings.quick_loadout").pad);
+    ASSERT_EXIT(
+        {
+            using Names = std::vector<std::string>;
+            InputApplyConfig(Config{});
+            EXPECT_EQ(InputPadBindingNames("cross"), Names{"a"});
+            EXPECT_EQ(InputPadBindingNames("l2"), Names{"lefttrigger"});
+            EXPECT_EQ(InputPadBindingNames("select"), Names{"touchpad"});
+            EXPECT_EQ(InputPadBindingNames("quick_loadout"), Names{"dpdown"});
+            EXPECT_EQ(InputPadBindingNames("debug_menu"), Names{"paddle1"});
+            EXPECT_TRUE(InputPadBindingNames("lx-").empty());
+            EXPECT_EQ(Find("input.bindings.quick_loadout").label, "Quick loadout");
+            EXPECT_TRUE(Find("input.gamepad_bindings.quick_loadout").pad);
 
-    Config config;
-    EXPECT_FALSE(options::SetPadBinding(config, "lx-", "a"));
-    EXPECT_FALSE(options::SetPadBinding(config, "cross", "not a button"));
-    EXPECT_FALSE(options::SetPadBinding(config, "cross", "a"));
-    EXPECT_TRUE(config.pad_bindings.empty());
-    // Circle gives up b and takes Cross's a.
-    ASSERT_TRUE(options::SetPadBinding(config, "cross", "b"));
-    ASSERT_EQ(config.pad_bindings.size(), 2);
-    EXPECT_EQ(config.pad_bindings[1].action, "circle");
-    EXPECT_EQ(config.pad_bindings[1].keys, Names{"a"});
-    EXPECT_TRUE(config.key_bindings.empty());
-    EXPECT_EQ(ConfigParse(ConfigSerialize(config)), config);
-    // A host action shares a button with a pad button.
-    ASSERT_TRUE(options::SetPadBinding(config, "quick_loadout", "leftstick"));
-    EXPECT_EQ(config.pad_bindings.size(), 3);
-    InputApplyConfig(config);
-    EXPECT_EQ(InputPadBindingNames("cross"), Names{"b"});
-    EXPECT_EQ(InputPadBindingNames("l3"), Names{"leftstick"});
-    EXPECT_EQ(InputPadGlyphAction("cross"), "circle");
-    EXPECT_EQ(InputPadGlyphAction("circle"), "cross");
-    EXPECT_EQ(InputPadGlyphAction("square"), "square");
-    config.glyph_device = ConfigGlyphDevice::Xbox;
-    EXPECT_EQ(options::ButtonName("cross", config), "B");
-    EXPECT_EQ(options::PadButtonName("b", config), "B");
-    config.glyph_device = ConfigGlyphDevice::Switch;
-    EXPECT_EQ(options::PadButtonName("a", config), "B");
-    config.glyph_device = ConfigGlyphDevice::Ps5;
-    EXPECT_EQ(options::PadButtonName("back", config), "Create");
+            Config config;
+            EXPECT_FALSE(options::SetPadBinding(config, "lx-", "a"));
+            EXPECT_FALSE(options::SetPadBinding(config, "cross", "not a button"));
+            EXPECT_FALSE(options::SetPadBinding(config, "cross", "a"));
+            EXPECT_TRUE(config.pad_bindings.empty());
+            // Circle gives up b and takes Cross's a.
+            ASSERT_TRUE(options::SetPadBinding(config, "cross", "b"));
+            ASSERT_EQ(config.pad_bindings.size(), 2);
+            EXPECT_EQ(config.pad_bindings[1].action, "circle");
+            EXPECT_EQ(config.pad_bindings[1].keys, Names{"a"});
+            EXPECT_TRUE(config.key_bindings.empty());
+            EXPECT_EQ(ConfigParse(ConfigSerialize(config)), config);
+            // A host action shares a button with a pad button.
+            ASSERT_TRUE(options::SetPadBinding(config, "quick_loadout", "leftstick"));
+            EXPECT_EQ(config.pad_bindings.size(), 3);
+            InputApplyConfig(config);
+            EXPECT_EQ(InputPadBindingNames("cross"), Names{"b"});
+            EXPECT_EQ(InputPadBindingNames("l3"), Names{"leftstick"});
+            EXPECT_EQ(InputPadGlyphAction("cross"), "circle");
+            EXPECT_EQ(InputPadGlyphAction("circle"), "cross");
+            EXPECT_EQ(InputPadGlyphAction("square"), "square");
+            config.glyph_device = ConfigGlyphDevice::Xbox;
+            EXPECT_EQ(options::ButtonName("cross", config), "B");
+            EXPECT_EQ(options::PadButtonName("b", config), "B");
+            config.glyph_device = ConfigGlyphDevice::Switch;
+            EXPECT_EQ(options::PadButtonName("a", config), "B");
+            config.glyph_device = ConfigGlyphDevice::Ps5;
+            EXPECT_EQ(options::PadButtonName("back", config), "Create");
 
-    // Cross takes a back, and Circle, left without a button, its b.
-    options::ResetPadBinding(config, "cross");
-    InputApplyConfig(config);
-    EXPECT_EQ(InputPadBindingNames("cross"), Names{"a"});
-    EXPECT_EQ(InputPadBindingNames("circle"), Names{"b"});
-    InputApplyConfig(Config{});
+            // Cross takes a back, and Circle, left without a button, its b.
+            options::ResetPadBinding(config, "cross");
+            InputApplyConfig(config);
+            EXPECT_EQ(InputPadBindingNames("cross"), Names{"a"});
+            EXPECT_EQ(InputPadBindingNames("circle"), Names{"b"});
+            InputApplyConfig(Config{});
+            std::_Exit(testing::Test::HasFailure() ? 1 : 0);
+        },
+        testing::ExitedWithCode(0), "");
 }
 
 TEST(PcOptions, ZoomResetHasAVisibleRebindableRow) {

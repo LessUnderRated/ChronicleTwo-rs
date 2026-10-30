@@ -5,8 +5,8 @@
 #include <format>
 #include <memory>
 
-#include "mainloop_port.hpp"
 #include "platform/config.hpp"
+#include "platform/game_loop_state.hpp"
 #include "platform/paths.hpp"
 #include "platform_fixture.hpp"
 #include "savedata.hpp"

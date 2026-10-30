@@ -11,15 +11,15 @@
 #include <string>
 #include <vector>
 
-#include "bounded_text.hpp"
+#include "assets/data_registry.hpp"
 #include "dataread.hpp"
-#include "dataread_port.hpp"
 #include "event_func.hpp"
 #include "map.hpp"
 #include "mg_memory.hpp"
+#include "object/world/map_load_size.hpp"
 #include "platform/paths.hpp"
-#include "sceneload_port.hpp"
 #include "scenesnd.hpp"
+#include "text/bounded.hpp"
 
 namespace {
 namespace fs = std::filesystem;
@@ -38,11 +38,11 @@ std::size_t Pad64(std::size_t size) {
 
 void SetMapFiles(SCN_LOADMAP_INFO2::MapFiles &files, const char *dir, const char *name) {
     files.enable = 1;
-    bounded_text::Copy(files.dir, dir);
+    dc2::text::Copy(files.dir, dir);
     for (auto *field : {&files.map_name, &files.cfg_name, &files.mpk_name, &files.ipk_name, &files.efp_name, &files.sky_name}) {
-        bounded_text::Copy(*field, name);
+        dc2::text::Copy(*field, name);
     }
-    bounded_text::Copy(files.def_sky_name, "none");
+    dc2::text::Copy(files.def_sky_name, "none");
 }
 
 SCN_LOADMAP_INFO2 Info(u8 *load_buf, const char *dir = "map/t/t01/", const char *name = "t01") {
@@ -77,6 +77,7 @@ protected:
         WriteMap("map/t/t01", "t01", kMapBytes, 'm');
         WriteMap("map/t/t02", "t02", kAddMapBytes, 'n');
         WriteMap("map/t/l01", "l01", kLargeMapBytes, 'l');
+        WriteMap("map/t/l02", "l02", kLargeMapBytes * 2, 'v');
         fs::create_directories(root / "map" / "dsky.sky");
         Write(root / "map" / "dsky.sky" / "pack.json", std::string(kDefaultSkyBytes, 'd'));
         DataReadIndex(root);
@@ -127,7 +128,7 @@ TEST_F(SceneLoadMapBuffer, MeasuresTheSecondFileSetAndTheLargerOfTheMapAndDefaul
     const std::size_t first = Pad64(kMapBytes) + Pad64(kCfgBytes) + Pad64(kPackBytes) * 2;
     const std::size_t second = Pad64(kAddMapBytes) + Pad64(kCfgBytes) + Pad64(kPackBytes) * 2;
     EXPECT_EQ(PortMapLoadBytes(info), first + second + DATAREAD_SECTOR_SIZE);
-    bounded_text::Copy(info.files[1].def_sky_name, "dsky");
+    dc2::text::Copy(info.files[1].def_sky_name, "dsky");
     EXPECT_EQ(PortMapLoadBytes(info), first + second - Pad64(kPackBytes) + Pad64(kDefaultSkyBytes) + DATAREAD_SECTOR_SIZE);
 }
 
@@ -167,7 +168,9 @@ TEST_F(SceneLoadMapBuffer, GrowsForALargerMapAndKeepsThePreviousOne) {
 
     SCN_LOADMAP_INFO2 again = Info(nullptr);
     EXPECT_EQ(scene.LoadMap(0, &again, 0), -1);
-    EXPECT_EQ(again.files[0].map_data, large.files[0].map_data);
+    EXPECT_NE(again.files[0].map_data, large.files[0].map_data);
+    EXPECT_EQ(MapText(again.files[0]), std::string(kMapBytes, 'm'));
+    EXPECT_EQ(MapText(large.files[0]), std::string(kLargeMapBytes, 'l'));
 }
 
 TEST(SceneDeleteMap, ReleasesOnlyMapBackedHandlesInsideTheDeletedArena) {
@@ -227,4 +230,26 @@ TEST(SceneDeleteMap, EmptySlotsPreserveHandlesAndSharedArenaMapsAreDeletedTogeth
     EXPECT_EQ(scene.GetMap(0), nullptr);
     EXPECT_EQ(scene.GetMap(1), nullptr);
     EventObjHandleMother = CEohMother{};
+}
+
+TEST_F(SceneLoadMapBuffer, CopiesKeepTheirFileBytesAcrossThreeGrowingLoadsAndOriginalRequestReset) {
+    SCN_LOADMAP_INFO2 first = Info(nullptr);
+    EXPECT_EQ(scene.LoadMap(0, &first, 0), -1);
+    SCN_LOADMAP_INFO2 retained = first;
+    first.Initialize();
+    SCN_LOADMAP_INFO2 second = Info(nullptr, "map/t/l01/", "l01");
+    EXPECT_EQ(scene.LoadMap(0, &second, 0), -1);
+    SCN_LOADMAP_INFO2 third = Info(nullptr, "map/t/l02/", "l02");
+    EXPECT_EQ(scene.LoadMap(0, &third, 0), -1);
+    EXPECT_EQ(MapText(retained.files[0]), std::string(kMapBytes, 'm'));
+    EXPECT_EQ(MapText(second.files[0]), std::string(kLargeMapBytes, 'l'));
+    EXPECT_EQ(MapText(third.files[0]), std::string(kLargeMapBytes * 2, 'v'));
+    SCN_LOADMAP_INFO2 shared = second;
+    EXPECT_EQ(scene.LoadMap(0, &second, 0), -1);
+    EXPECT_NE(second.files[0].map_data, shared.files[0].map_data);
+    EXPECT_EQ(MapText(shared.files[0]), std::string(kLargeMapBytes, 'l'));
+    const std::weak_ptr<dc2::scene::MapReadStorage> lifetime = retained.map_read_storage;
+    EXPECT_FALSE(lifetime.expired());
+    retained.Initialize();
+    EXPECT_TRUE(lifetime.expired());
 }

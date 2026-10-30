@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <bit>
 #include <chrono>
+#include <climits>
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
@@ -13,11 +14,13 @@
 #include <map>
 #include <optional>
 #include <print>
+#include <span>
 #include <string>
+#include <utility>
 #include <vector>
 
+#include "assets/data_registry.hpp"
 #include "dataread.hpp"
-#include "dataread_port.hpp"
 #include "log_capture.hpp"
 #include "luau_runtime.hpp"
 #include "runscript.hpp"
@@ -114,7 +117,7 @@ struct Built {
     std::vector<std::size_t>   code_at; // header offset of each function's first instruction
 };
 
-Built Assemble(const std::vector<Fn> &fns, const std::vector<std::pair<int, int> > &programs, int main_fn) {
+Built Assemble(const std::vector<Fn> &fns, const std::vector<std::pair<int, int>> &programs, int main_fn) {
     const std::size_t        prog = 0x40;
     const std::size_t        code = prog + 8 * programs.size();
     std::vector<std::size_t> block(fns.size());
@@ -166,7 +169,7 @@ Built Assemble(const std::vector<Fn> &fns, const std::vector<std::pair<int, int>
     return out;
 }
 
-std::vector<I> Join(std::initializer_list<std::vector<I> > parts) {
+std::vector<I> Join(std::initializer_list<std::vector<I>> parts) {
     std::vector<I> out;
     for (const auto &part : parts) {
         out.insert(out.end(), part.begin(), part.end());
@@ -178,9 +181,9 @@ std::vector<I> Join(std::initializer_list<std::vector<I> > parts) {
 
 std::vector<RS_STACKDATA> recorded;
 
-int RecordExt(RS_STACKDATA *args, int count) {
+int RecordExt(dc2::script::RunArguments args, int count) {
     if (count >= 1) {
-        recorded.push_back(args[0]);
+        recorded.push_back(args.At(0));
     }
     return 1;
 }
@@ -192,11 +195,13 @@ struct VmRun {
 
 VmRun Execute(std::vector<unsigned char> bytes, int program) {
     recorded.clear();
-    static int (*table[1])(RS_STACKDATA *, int) = {RecordExt};
-    std::vector<RS_STACKDATA> stack(256);
-    std::vector<RS_CALLDATA>  calls(64);
-    CRunScript                vm;
-    vm.load(reinterpret_cast<RS_PROG_HEADER *>(bytes.data()), stack.data(), 256, calls.data(), 64);
+    static dc2::script::RunFunction table[]{RecordExt};
+    std::vector<RS_STACKDATA>       stack(256);
+    std::vector<RS_CALLDATA>        calls(64);
+    CRunScript                      vm;
+    if (!vm.load(std::span<u8>(bytes), std::span<RS_STACKDATA>(stack), std::span<RS_CALLDATA>(calls))) {
+        return {};
+    }
     vm.ext_func(table, 1);
     VmRun run;
     if (vm.run(program) == 1) {
@@ -224,7 +229,7 @@ float FloatAt(const VmRun &run, std::size_t i) {
     return run.values[i].val.f;
 }
 
-Expected Want(std::initializer_list<std::pair<script_timing::Recipe, int> > recipes, int anchors = 0, int windows = 0) {
+Expected Want(std::initializer_list<std::pair<script_timing::Recipe, int>> recipes, int anchors = 0, int windows = 0) {
     Expected e{.path = "synthetic", .recipes = {}, .anchors = static_cast<std::uint8_t>(anchors), .windows = static_cast<std::uint8_t>(windows)};
     for (auto [recipe, count] : recipes) {
         e.recipes[recipe] = static_cast<std::uint16_t>(count);
@@ -276,6 +281,116 @@ std::vector<I> ReturnZero() {
 }
 
 } // namespace
+
+TEST(ScriptBytecodeBounds, RejectsTruncatedHeaderTableAndFunction) {
+    Fn                        program{.local = 0, .arg = 0, .code = ReturnZero()};
+    const auto                valid = Assemble({
+                                                   program
+    },
+                                               {{100, 0}}, 0);
+    std::vector<RS_STACKDATA> values(16);
+    std::vector<RS_CALLDATA>  calls(8);
+    auto                      can_load = [&](std::vector<u8> bytes) {
+        CRunScript vm;
+        return vm.load(std::span<u8>(bytes), std::span<RS_STACKDATA>(values), std::span<RS_CALLDATA>(calls));
+    };
+    EXPECT_TRUE(can_load(valid.bytes));
+    for (std::size_t length = 0; length < sizeof(RS_PROG_HEADER); ++length) {
+        EXPECT_FALSE(can_load({valid.bytes.begin(), valid.bytes.begin() + length}));
+    }
+    auto               malformed = valid.bytes;
+    const std::int32_t beyond = static_cast<std::int32_t>(malformed.size());
+    std::memcpy(malformed.data() + 12, &beyond, sizeof beyond);
+    EXPECT_FALSE(can_load(malformed));
+    malformed = valid.bytes;
+    std::memcpy(malformed.data() + 0x40 + 4, &beyond, sizeof beyond);
+    EXPECT_FALSE(can_load(malformed));
+}
+
+TEST(ScriptBytecodeBounds, RejectsJumpAndInstructionOutsideTheProgram) {
+    Fn   jump{.local = 0, .arg = 0, .code = {Op(kJmp, INT_MAX)}};
+    auto built = Assemble({
+                              jump
+    },
+                          {{100, 0}}, 0);
+    EXPECT_DEATH(Execute(std::move(built.bytes), 100), "invalid script jump");
+
+    Fn truncated{.local = 0, .arg = 0, .code = ReturnZero()};
+    built = Assemble({
+                         truncated
+    },
+                     {{100, 0}}, 0);
+    built.bytes.resize(built.code_at[0] + sizeof(vmcode_t));
+    EXPECT_DEATH(Execute(std::move(built.bytes), 100), "invalid script instruction");
+}
+
+TEST(ScriptBytecodeBounds, RejectsOutOfRangeStackAddressAndInvalidStorePointer) {
+    Fn read{
+        .local = 0, .arg = 0, .code = {Load(999), Push(0), Op(kRet)}
+    };
+    auto built = Assemble({
+                              read
+    },
+                          {{100, 0}}, 0);
+    EXPECT_DEATH(Execute(std::move(built.bytes), 100), "invalid script stack index");
+
+    Fn store{
+        .local = 0, .arg = 0, .code = {Push(1), Push(2), Op(kStore), Push(0), Op(kRet)}
+    };
+    built = Assemble({
+                         store
+    },
+                     {{100, 0}}, 0);
+    EXPECT_DEATH(Execute(std::move(built.bytes), 100), "invalid script stack pointer");
+}
+
+TEST(ScriptBytecodeStack, RejectsMissingExternalCommandAndOperandUnderflow) {
+    for (const int count : {0, 2, -1}) {
+        Fn program{
+            .local = 0, .arg = 0, .code = {Push(0), Op(kExt, count), Push(0), Op(kRet)}
+        };
+        auto built = Assemble({
+                                  program
+        },
+                              {{100, 0}}, 0);
+        EXPECT_DEATH(Execute(std::move(built.bytes), 100), "invalid external call stack");
+    }
+}
+
+TEST(ScriptBytecodeStack, DoesNotTreatLocalStorageAsExternalArguments) {
+    Fn program{
+        .local = 1, .arg = 0, .code = {Op(kExt, 1), Push(0), Op(kRet)}
+    };
+    auto built = Assemble({
+                              program
+    },
+                          {{100, 0}}, 0);
+    EXPECT_DEATH(Execute(std::move(built.bytes), 100), "invalid external call stack");
+}
+
+TEST(ScriptBytecodeStack, RejectsPopAndPrintUnderflow) {
+    for (const auto instruction : {Op(kPop), Op(RS_OP_PRINT, 1)}) {
+        Fn program{
+            .local = 0, .arg = 0, .code = {instruction, Push(0), Op(kRet)}
+        };
+        auto built = Assemble({
+                                  program
+        },
+                              {{100, 0}}, 0);
+        EXPECT_DEATH(Execute(std::move(built.bytes), 100), "stack underflow");
+    }
+}
+
+TEST(ScriptBytecodeStack, IgnoresExternalCommandWithWrongType) {
+    Fn program{
+        .local = 0, .arg = 0, .code = {PushF(0.0f), Op(kExt, 1), Push(0), Op(kRet)}
+    };
+    auto built = Assemble({
+                              program
+    },
+                          {{100, 0}}, 0);
+    EXPECT_TRUE(Execute(std::move(built.bytes), 100).values.empty());
+}
 
 TEST(ScriptTiming, Op22MarkerIsANoOp) {
     // Opcode 22 has no case in CRunScript::exe(): the patcher's marker must leave stacks and flow alone.
@@ -590,7 +705,7 @@ TEST(ScriptTiming, LanguageAnchorsWriteNtscLiteralsOnce) {
 TEST(ScriptTiming, AttackWindowsUseNtscBounds) {
     // c02's two special-shot window ends sit at 0xb308 and 0xb3bc in the PAL script. Two program entries
     // put the function's instructions on that 12-byte grid.
-    const std::vector<std::pair<int, int> > programs = {
+    const std::vector<std::pair<int, int>> programs = {
         {100, 0},
         {101, 0}
     };
@@ -682,7 +797,7 @@ protected:
     fs::path root = base / "data";
 
     void SetUp() override {
-        InitFileCache(nullptr, FILE_CACHE_NONE);
+        InitFileCache({}, FILE_CACHE_NONE);
         SetCurrentDir(nullptr);
         // The timing conversion applies to interpreter programs, so no Luau module may replace them.
         luau_runtime::SetScriptsRoot(base);
@@ -709,10 +824,10 @@ protected:
     static std::vector<unsigned char> Load() {
         std::string name = std::string("/") + kStartupScript;
         int         size = 0;
-        EXPECT_EQ(LoadFile2(name.data(), nullptr, &size, LOAD_FILE_SIZE), 1);
+        EXPECT_EQ(LoadFile2(name.data(), std::span<u8>{}, &size, LOAD_FILE_SIZE), 1);
         std::vector<unsigned char> bytes((static_cast<std::size_t>(size) + DATAREAD_SECTOR_SIZE - 1) &
                                          ~static_cast<std::size_t>(DATAREAD_SECTOR_SIZE - 1));
-        EXPECT_EQ(LoadFile2(name.data(), bytes.data(), &size, LOAD_FILE_READ), 1);
+        EXPECT_EQ(LoadFile2(name.data(), std::span(bytes), &size, LOAD_FILE_READ), 1);
         bytes.resize(static_cast<std::size_t>(size));
         return bytes;
     }
@@ -829,33 +944,28 @@ TEST_F(ScriptTimingStartup, EachAssetLogsOnlyOnceAcrossReloads) {
 namespace {
 
 struct DataScripts {
-    fs::path                 root;
     std::vector<std::string> keys;
 };
 
 std::optional<DataScripts> ReadScripts() {
     const char *data = std::getenv("DC2_DATA");
-    if (!data || !fs::is_directory(data)) {
+    if (!data) {
         return std::nullopt;
     }
-    DataReadIndex(fs::path(data));
-    InitFileCache(nullptr, FILE_CACHE_NONE);
+    const fs::path root(data);
+    if (!fs::is_directory(root) && !fs::is_regular_file(root.parent_path() / "data.zip")) {
+        return std::nullopt;
+    }
+    DataReadIndex(root);
+    InitFileCache({}, FILE_CACHE_NONE);
     SetCurrentDir(nullptr);
-    return DataScripts{.root = fs::path(data), .keys = DataReadScriptKeys()};
+    return DataScripts{.keys = DataReadScriptKeys()};
 }
 
 const std::optional<DataScripts> &Scripts() {
     // The index and key list are shared by all real-data cases in this binary.
     static const auto scripts = ReadScripts();
     return scripts;
-}
-
-std::vector<unsigned char> ReadAll(const fs::path &path) {
-    std::ifstream              in(path, std::ios::binary | std::ios::ate);
-    std::vector<unsigned char> bytes(static_cast<std::size_t>(in.tellg()));
-    in.seekg(0);
-    in.read(reinterpret_cast<char *>(bytes.data()), static_cast<std::streamsize>(bytes.size()));
-    return bytes;
 }
 
 // The shard a script belongs to; each shard's case stays well inside the per-case time limit.
@@ -924,10 +1034,13 @@ void CheckShard(const std::string &shard) {
             continue;
         }
         files++;
-        const auto original = ReadAll(scripts->root / key);
-        auto       bytes = original;
-        Options    options;
-        auto       result = script_timing::Apply(key, bytes.data(), bytes.size(), options);
+        const auto file = DataReadFind(key.c_str());
+        ASSERT_TRUE(file.has_value()) << key;
+        std::vector<unsigned char> original;
+        ASSERT_TRUE(vfs::Read(*file, original)) << key;
+        auto    bytes = original;
+        Options options;
+        auto    result = script_timing::Apply(key, bytes.data(), bytes.size(), options);
         EXPECT_TRUE(result.decoded) << key << ": " << result.error;
         EXPECT_TRUE(result.ok) << key << ": " << result.error;
         ASSERT_EQ(bytes.size(), original.size());
@@ -961,7 +1074,12 @@ void CheckShard(const std::string &shard) {
         buffer.assign((original.size() + 2 * DATAREAD_SECTOR_SIZE) & ~static_cast<std::size_t>(DATAREAD_SECTOR_SIZE - 1), 0);
         std::string name = "/" + key;
         int         size = 0;
-        ASSERT_EQ(LoadFile2(name.data(), buffer.data(), &size, LOAD_FILE_READ), 1) << key;
+        ASSERT_EQ(LoadFile2(name.data(), std::span(buffer), &size, LOAD_FILE_READ), 1) << key;
+        if (key.ends_with("_5.stb") && static_cast<std::size_t>(size) != bytes.size()) {
+            // Spanish script text is also converted by the loader and can change the file size.
+            EXPECT_GT(size, 0) << key;
+            continue;
+        }
         ASSERT_EQ(static_cast<std::size_t>(size), bytes.size()) << key;
         EXPECT_EQ(std::memcmp(buffer.data(), bytes.data(), bytes.size()), 0) << key << ": NTSC loader bytes differ";
     }

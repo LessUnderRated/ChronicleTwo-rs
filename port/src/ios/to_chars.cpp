@@ -49,11 +49,53 @@ std::string_view NonFinite(double value) {
 template <typename T>
 std::string Hex(T value, int precision) {
     auto number = static_cast<double>(value);
-    int  exponent_adjustment = 0;
-    if (number != 0 && std::fabs(number) < std::numeric_limits<T>::min()) {
-        // printf receives a double; retain the source type's exponent for subnormal floats.
-        exponent_adjustment = std::numeric_limits<double>::min_exponent - std::numeric_limits<T>::min_exponent;
-        number = std::ldexp(number, exponent_adjustment);
+    if constexpr (sizeof(T) == sizeof(float)) {
+        if (precision >= 0 && number != 0 && std::fabs(number) < std::numeric_limits<float>::min()) {
+            // A float subnormal is normal as a double. Format its bits at the float exponent.
+            constexpr std::string_view hex_digits = "0123456789abcdef";
+            long double                fraction = std::fabs(static_cast<long double>(value)) / std::numeric_limits<float>::min();
+            std::string                digits(static_cast<size_t>(precision), '0');
+            for (char &digit : digits) {
+                fraction *= 16;
+                const auto nibble = static_cast<unsigned>(fraction);
+                digit = hex_digits[nibble];
+                fraction -= nibble;
+            }
+            fraction *= 16;
+            const auto next = static_cast<unsigned>(fraction);
+            const bool round_up = next > 8 || (next == 8 &&
+                                               (fraction > 8 || (!digits.empty() && (hex_digits.find(digits.back()) & 1) != 0)));
+            char       leading = '0';
+            if (round_up) {
+                bool carry = true;
+                for (auto index = digits.size(); index > 0; --index) {
+                    char &digit = digits[index - 1];
+                    if (digit == 'f') {
+                        digit = '0';
+                    } else {
+                        digit = hex_digits[hex_digits.find(digit) + 1];
+                        carry = false;
+                        break;
+                    }
+                }
+                if (carry) {
+                    leading = '1';
+                }
+            }
+            std::string text = std::signbit(value) ? "-" : "";
+            text += leading;
+            if (precision > 0) {
+                text += "." + digits;
+            }
+            return text + "p" + std::to_string(std::numeric_limits<float>::min_exponent - 1);
+        }
+    }
+    int exponent_adjustment = 0;
+    if (precision < 0 && number != 0 && std::fabs(number) < std::numeric_limits<T>::min()) {
+        // Shortest hex output normalizes subnormals; explicit precision keeps printf's exponent.
+        int exponent = 0;
+        number = std::ldexp(std::frexp(number, &exponent), 1);
+        exponent_adjustment = exponent - 1;
     }
     std::string text;
     if (precision < 0) {
@@ -65,7 +107,7 @@ std::string Hex(T value, int precision) {
     }
     if (exponent_adjustment != 0) {
         const auto start = text.find('p') + 1;
-        const int  exponent = std::stoi(text.substr(start)) - exponent_adjustment;
+        const int  exponent = std::stoi(text.substr(start)) + exponent_adjustment;
         text.replace(start, std::string::npos, (exponent >= 0 ? "+" : "") + std::to_string(exponent));
     }
     if (size_t prefix = text.find("0x"); prefix != std::string::npos) {

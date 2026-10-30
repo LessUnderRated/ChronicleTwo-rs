@@ -1,21 +1,25 @@
 #include <SDL3/SDL.h>
 #include <gtest/gtest.h>
 
+#include <array>
+#include <memory>
+
 #include "debug_fixture.hpp"
 #include "debug_mode.hpp"
+#include "scoped_global_object.hpp"
 #include "test_hooks.hpp"
 
 using GamePadDebugChord = dc::test::DebugFixture;
 #include "dng_debug.hpp"
 #include "dng_main.hpp"
-#include "editctrl_port.hpp"
 #include "editdebug.hpp"
 #include "editloop.hpp"
 #include "gamepad.hpp"
 #include "mainloop.hpp"
-#include "mainloop_port.hpp"
 #include "mg_memory.hpp"
+#include "object/world/town_control.hpp"
 #include "options/screen.hpp"
+#include "platform/game_loop_state.hpp"
 #include "platform/input.hpp"
 #include "platform/settings.hpp"
 #include "scenesnd.hpp"
@@ -27,6 +31,29 @@ using GamePadDebugChord = dc::test::DebugFixture;
 namespace {
 
 constexpr int kAllShoulders = PAD_L1 | PAD_R1 | PAD_L2 | PAD_R2;
+
+class SphidaLeaseGuard {
+public:
+    SphidaLeaseGuard() : previous(dc2::sphida::Lease()) { InitSphida(); }
+
+    ~SphidaLeaseGuard() {
+        InitSphida();
+        if (!previous.Bytes().empty()) {
+            dc2::sphida::Publish(previous);
+        }
+    }
+
+    SphidaLeaseGuard(const SphidaLeaseGuard &) = delete;
+    SphidaLeaseGuard &operator=(const SphidaLeaseGuard &) = delete;
+
+private:
+    dc2::memory::ArenaBuffer previous;
+};
+
+bool PublishTestSphida(mgCMemory &memory, CSphida &sphida) {
+    return dc2::sphida::Publish(dc2::memory::ArenaBuffer::Bind(
+        memory, {reinterpret_cast<u8 *>(&sphida), sizeof(sphida)}));
+}
 
 } // namespace
 
@@ -116,7 +143,7 @@ protected:
         BattleAreaScene = &area;
         dngGetDebugInfo()->active = false;
         SubGame = SUBGAME_NONE;
-        Sphida = nullptr;
+        InitSphida();
         PortTownLoopMode = EDIT_LOOP_WALK;
         PortTownControlMode = EDIT_CONTROL_PLAYER;
         PortTownLockChara = 0;
@@ -134,7 +161,7 @@ protected:
         DngStatus = status;
         BattleAreaScene = battle_area;
         SubGame = sub_game;
-        Sphida = sphida;
+
         PortTownLoopMode = town_loop;
         PortTownControlMode = town_control;
         PortTownLockChara = town_lock;
@@ -168,7 +195,7 @@ protected:
     DNG_STATUS       status = DngStatus;
     DNG_BATTLE_AREA *battle_area = BattleAreaScene;
     int              sub_game = SubGame;
-    CSphida         *sphida = Sphida;
+    SphidaLeaseGuard sphida_scope;
     int              town_loop = PortTownLoopMode;
     int              town_control = PortTownControlMode;
     int              town_lock = PortTownLockChara;
@@ -249,12 +276,16 @@ TEST_F(DebugMenuKey, DropsThePressWhileADungeonSubGameOrSphedaRuns) {
     ExpectDropped(LOOP_DUNGEON);
     SubGame = SUBGAME_NONE;
 
-    CSphida spheda;
-    Sphida = &spheda;
-    spheda.play_flag = 1;
+    alignas(16) u_long128 storage[128]{};
+    mgCMemory             memory;
+    memory.stSetBuffer(storage, 128);
+    auto *spheda = dc2::memory::NewObject<CSphida>(memory);
+    ASSERT_NE(spheda, nullptr);
+    ASSERT_TRUE(PublishTestSphida(memory, *spheda));
+    spheda->play_flag = 1;
     ExpectDropped(LOOP_DUNGEON);
     // A floor's Spheda object that is not being played leaves the key alone.
-    spheda.play_flag = 0;
+    spheda->play_flag = 0;
     EXPECT_EQ(DebugModeMenuButtons(LOOP_DUNGEON), PAD_R3);
 }
 
@@ -410,4 +441,93 @@ TEST_F(GamePadDebugChord, DeveloperShortcutDoesNotAlsoQueueTheModeShortcut) {
     EXPECT_TRUE(GameDeveloperMenuRequested(LOOP_EDIT));
     EXPECT_FALSE(GameDeveloperMenuRequested(LOOP_EDIT));
     EXPECT_FALSE(InputHostPressed(InputHostAction::ModeDebugMenu));
+}
+
+TEST(SphidaLifetime, ResetRejectsTheOldObjectAndItsReusedAddress) {
+    alignas(16) u_long128 storage[128]{};
+    mgCMemory             memory;
+    memory.stSetBuffer(storage, 128);
+    SphidaLeaseGuard guard;
+    auto            *first = dc2::memory::NewObject<CSphida>(memory);
+    ASSERT_NE(first, nullptr);
+    ASSERT_TRUE(PublishTestSphida(memory, *first));
+    const auto previous = dc2::sphida::Lease();
+    EXPECT_EQ(GetSphidaPtr(), first);
+    memory.stReset();
+    EXPECT_EQ(GetSphidaPtr(), nullptr);
+    auto *replacement = dc2::memory::NewObject<CSphida>(memory);
+    ASSERT_EQ(replacement, first);
+    EXPECT_FALSE(dc2::sphida::Publish(previous));
+    EXPECT_EQ(GetSphidaPtr(), nullptr);
+    ASSERT_TRUE(PublishTestSphida(memory, *replacement));
+    EXPECT_EQ(GetSphidaPtr(), replacement);
+    InitSphida();
+    EXPECT_EQ(GetSphidaPtr(), nullptr);
+}
+
+TEST(SphidaLifetime, PublicationRejectsAnIncompleteExtentWithoutReplacingTheLiveGame) {
+    alignas(16) u_long128 storage[128]{};
+    mgCMemory             memory;
+    memory.stSetBuffer(storage, 128);
+    SphidaLeaseGuard guard;
+    auto            *sphida = dc2::memory::NewObject<CSphida>(memory);
+    ASSERT_NE(sphida, nullptr);
+    ASSERT_TRUE(PublishTestSphida(memory, *sphida));
+    const auto lease = dc2::sphida::Lease();
+    EXPECT_FALSE(dc2::sphida::Publish(lease.Subspan(0, sizeof(CSphida) - 1)));
+    EXPECT_FALSE(dc2::sphida::Publish({}));
+    EXPECT_EQ(GetSphidaPtr(), sphida);
+}
+
+TEST(SphidaLifetime, HeapFreeRevokesTheGameAndUnrelatedFreePreservesIt) {
+    alignas(16) u_long128 storage[256]{};
+    mgCMemory             memory;
+    memory.SetHeapMem(storage, 256);
+    SphidaLeaseGuard guard;
+    const auto       game = memory.StartStackMode(MG_STACK_MODE_FIT, 128);
+    ASSERT_NE(game, nullptr);
+    auto *sphida = dc2::memory::NewObject<CSphida>(memory);
+    ASSERT_NE(sphida, nullptr);
+    ASSERT_TRUE(PublishTestSphida(memory, *sphida));
+    memory.EndStackMode();
+    const auto unrelated = memory.StartStackMode(MG_STACK_MODE_FIT, 16);
+    ASSERT_NE(unrelated, nullptr);
+    ASSERT_NE(memory.Alloc(1), nullptr);
+    memory.EndStackMode();
+    memory.Free(unrelated);
+    EXPECT_EQ(GetSphidaPtr(), sphida);
+    const auto old = dc2::sphida::Lease();
+    memory.Free(game);
+    EXPECT_EQ(GetSphidaPtr(), nullptr);
+    const auto reused = memory.StartStackMode(MG_STACK_MODE_FIT, 128);
+    ASSERT_NE(reused, nullptr);
+    auto *replacement = dc2::memory::NewObject<CSphida>(memory);
+    ASSERT_EQ(replacement, sphida);
+    EXPECT_FALSE(dc2::sphida::Publish(old));
+    ASSERT_TRUE(PublishTestSphida(memory, *replacement));
+    memory.EndStackMode();
+    EXPECT_EQ(GetSphidaPtr(), replacement);
+}
+
+TEST(SphidaLifetime, DestructionAndReconstructedAllocatorIdentityKeepTheOldLeaseRetired) {
+    alignas(16) u_long128                         storage[128]{};
+    alignas(mgCMemory) std::byte                  owner_storage[sizeof(mgCMemory)];
+    auto                                          destroy = [](mgCMemory *memory) { std::destroy_at(memory); };
+    std::unique_ptr<mgCMemory, decltype(destroy)> owner(
+        std::construct_at(reinterpret_cast<mgCMemory *>(owner_storage)), destroy);
+    owner->stSetBuffer(storage, 128);
+    SphidaLeaseGuard guard;
+    auto            *first = dc2::memory::NewObject<CSphida>(*owner);
+    ASSERT_NE(first, nullptr);
+    ASSERT_TRUE(PublishTestSphida(*owner, *first));
+    const auto previous = dc2::sphida::Lease();
+    owner.reset();
+    EXPECT_EQ(GetSphidaPtr(), nullptr);
+    owner.reset(std::construct_at(reinterpret_cast<mgCMemory *>(owner_storage)));
+    owner->stSetBuffer(storage, 128);
+    auto *replacement = dc2::memory::NewObject<CSphida>(*owner);
+    ASSERT_EQ(replacement, first);
+    EXPECT_FALSE(dc2::sphida::Publish(previous));
+    EXPECT_EQ(GetSphidaPtr(), nullptr);
+    ASSERT_TRUE(PublishTestSphida(*owner, *replacement));
 }

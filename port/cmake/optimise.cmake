@@ -1,5 +1,5 @@
 # Optimisation of the shipped configurations (docs/PC.md). Release, RelWithDebInfo and MinSizeRel link the
-# game with link-time optimisation, so ps2/src, port/src and the host code inline across units; symbols.cmake
+# game with link-time optimisation, so the native port and host code inline across units; symbols.cmake
 # keeps their line tables through it. x86-64 builds target x86-64-v2 (SSE4.2 and POPCNT) in every
 # configuration. -ffp-contract=off still holds, so no configuration fuses multiply-adds.
 #

@@ -12,14 +12,14 @@
 #include "gfx/gfx.hpp"
 #include "gfx_fixture.hpp"
 #include "inventmn.hpp"
-#include "mg_drawprim_port.hpp"
 #include "mg_texture.hpp"
 #include "mglib.hpp"
-#include "mglib_port.hpp"
 #include "padcontrol.hpp"
 #include "photo.hpp"
 #include "platform/clock.hpp"
 #include "platform/window.hpp"
+#include "render/primitive_submission.hpp"
+#include "render/renderer.hpp"
 #include "stubs/photo.hpp"
 
 // Register macros must follow the host and test headers.
@@ -206,9 +206,9 @@ TEST(Photo, ShutterReadbackContainsTheFirstCaptureAndItsCurrentSubjectDepth) {
         mgBeginFrame(nullptr);
         u_long128 image[512]{};
         u_long128 values[16]{};
-        mgStoreImage(&work, image);
+        mgStoreImage(&work, std::as_writable_bytes(std::span(image)));
         mgRect<int> lens(252, 204, 260, 212);
-        mgStoreZBuffImage(lens, values);
+        mgStoreZBuffImage(lens, std::as_writable_bytes(std::span(values)));
         const auto *pixels = reinterpret_cast<const uint16_t *>(image);
         EXPECT_EQ(pixels[32 * 64 + 16] & 0x7FFF, 0x001F);
         EXPECT_EQ(pixels[32 * 64 + 48] & 0x7FFF, 0x7C00);

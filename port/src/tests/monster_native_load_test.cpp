@@ -5,13 +5,14 @@
 
 #include <array>
 #include <chrono>
+#include <cstdint>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <memory>
 #include <vector>
 
-#include "dataread_port.hpp"
+#include "assets/data_registry.hpp"
 #include "dng_main.hpp"
 #include "mg_memory.hpp"
 #include "monster.hpp"
@@ -28,7 +29,7 @@ protected:
     std::filesystem::path root = std::filesystem::temp_directory_path() / ("native_monster_" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     std::filesystem::path previous = PathsDataRoot();
     u_long128            *previous_buffer = BuffReadData;
-    alignas(16) std::array<u_long128, 128> scratch {};
+    alignas(16) std::array<u_long128, 128> scratch{};
     std::vector<u_long128>       storage = std::vector<u_long128>(16384);
     mgCMemory                    memory;
     std::unique_ptr<CMonsterMan> manager = std::make_unique<CMonsterMan>();
@@ -113,6 +114,28 @@ TEST_F(NativeMonsterLoad, LoadsOversizedGltfWithoutWritingOriginalReadScratch) {
     EXPECT_EQ(manager->refer[0].id, 511);
     EXPECT_EQ(manager->refer[0].chara.tbl, &table);
     ASSERT_NE(manager->refer[0].chara.GetFrame(), nullptr);
-    ASSERT_NE(manager->refer[0].script, nullptr);
-    EXPECT_EQ(std::memcmp(manager->refer[0].script, "SB2", 4), 0);
+    ASSERT_GE(manager->refer[0].script.size(), 4u);
+    EXPECT_EQ(std::memcmp(manager->refer[0].script.data(), "SB2", 4), 0);
+}
+
+TEST_F(NativeMonsterLoad, RejectsSwordEffectCountsBeyondCharacterSlots) {
+    BASE_MONSTER_TBL table{};
+    table.sw_effect_num = CHARA_SWORD_EFFECT_MAX + 1;
+    EXPECT_FALSE(manager->LoadReferMonsterFile(511, &table, &memory));
+    EXPECT_EQ(manager->refer[0].id, -1);
+}
+
+TEST_F(NativeMonsterLoad, SwordEffectUsesItsFullHostAllocation) {
+    BASE_MONSTER_TBL table{};
+    std::strcpy(table.model, "p00_23a");
+    std::strcpy(table.script, "native_fixture");
+    table.sw_effect_num = 1;
+    ASSERT_TRUE(manager->LoadReferMonsterFile(511, &table, &memory));
+    auto *effect = manager->refer[0].chara.sword_effect[0];
+    ASSERT_NE(effect, nullptr);
+    const auto lease = dc2::memory::AllocationBytes(memory, effect);
+    ASSERT_GE(lease.size(), sizeof(CSWordAfterEffect));
+    ASSERT_NE(effect->point0, nullptr);
+    EXPECT_GE(reinterpret_cast<std::uintptr_t>(effect->point0),
+              reinterpret_cast<std::uintptr_t>(effect) + sizeof(CSWordAfterEffect));
 }

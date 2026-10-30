@@ -15,8 +15,8 @@
 #include "dualsense_haptics.hpp"
 #include "event_func.hpp"
 #include "mainloop.hpp"
-#include "mainloop_port.hpp"
 #include "platform/config.hpp"
+#include "platform/game_loop_state.hpp"
 #include "sceneseq.hpp"
 #include "scenesnd.hpp"
 #ifdef SDL_PLATFORM_IOS

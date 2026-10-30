@@ -76,8 +76,8 @@ void BuildWaterMesh(const WaterMeshDesc &desc, std::span<const float> height, Wa
         // Retail steps columns by 27 but pointers by 26, dropping columns for N >= 28; every column is emitted.
         for (int c = 0; c < columns; ++c) {
             for (int r = 0; r < 2; ++r) {
-                const int         i = row + r;
-                const auto        cell = static_cast<std::size_t>(i * columns + c);
+                const int  i = row + r;
+                const auto cell = static_cast<std::size_t>(i * columns + c);
 
                 float slope_x = 0.0f;
                 if (i > 0) {

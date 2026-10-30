@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 #include <nlohmann/json.hpp>
 
+#include <algorithm>
 #include <array>
 #include <chrono>
 #include <cstring>
@@ -10,7 +11,7 @@
 #include <fstream>
 #include <vector>
 
-#include "dataread_port.hpp"
+#include "assets/data_registry.hpp"
 #include "effscript.hpp"
 #include "luau_runtime.hpp"
 #include "mg_memory.hpp"
@@ -20,6 +21,36 @@
 #include "platform/datapacks.hpp"
 #include "platform/model_assets.hpp"
 #include "texture_source.hpp"
+
+TEST(NativeEffectPath, RejectsInsufficientOutputAndUnterminatedDefinitionNames) {
+    CEffectScriptMan      manager;
+    std::array<char, 128> resource{};
+    std::array<char, 128> script{};
+    ASSERT_TRUE(manager.GetNeedFilePath(0, resource, script));
+    EXPECT_STREQ(resource.data(), "dungeon/eff_script/Explosion_s.gltf");
+    EXPECT_STREQ(script.data(), "dungeon/eff_script/explosion.stb");
+
+    std::array<char, 8> short_resource{};
+    short_resource.fill('x');
+    script.fill('y');
+    EXPECT_FALSE(manager.GetNeedFilePath(0, short_resource, script));
+    EXPECT_EQ(short_resource.front(), 'x');
+    EXPECT_EQ(script.front(), 'y');
+
+    const EFF_SPT_BASE_DEF original = eff_spt_base_def[0];
+    std::fill_n(eff_spt_base_def[0].file, sizeof eff_spt_base_def[0].file - 1, 'z');
+    eff_spt_base_def[0].file[sizeof eff_spt_base_def[0].file - 1] = '\0';
+    std::array<char, 48> limited_resource{};
+    limited_resource.fill('q');
+    EXPECT_FALSE(manager.GetNeedFilePath(0, limited_resource, script));
+    EXPECT_EQ(limited_resource.front(), 'q');
+
+    std::fill_n(eff_spt_base_def[0].file, sizeof eff_spt_base_def[0].file, 'z');
+    resource.fill('x');
+    EXPECT_FALSE(manager.GetNeedFilePath(0, resource, script));
+    EXPECT_EQ(resource.front(), 'x');
+    eff_spt_base_def[0] = original;
+}
 
 namespace {
 using Json = nlohmann::json;

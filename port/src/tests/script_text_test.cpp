@@ -13,7 +13,7 @@
 #include <utility>
 #include <vector>
 
-#include "dataread_port.hpp"
+#include "assets/data_registry.hpp"
 #include "runscript.hpp"
 #include "script_text.hpp"
 

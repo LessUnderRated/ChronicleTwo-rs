@@ -413,7 +413,7 @@ void Repeat::Reset(std::uint16_t held) {
 
 } // namespace options
 
-PORT_OVERRIDE int MenuOptionKey() {
+int MenuOptionKey() {
     // The original menu still owns opening, saving retail options, closing and all pad behavior.
     // SELECT is unused by its KeyStep; L1/R1 keep their retail page-scroll meaning there.
     const bool ready = PortMenuOption->mode == MENU_ASK_MODE_NONE && GetMenuMainFrameEndFlag() != 0;
@@ -428,7 +428,7 @@ PORT_OVERRIDE int MenuOptionKey() {
     return finished;
 }
 
-PORT_OVERRIDE void MenuOptionDraw() {
+void MenuOptionDraw() {
     MenuPosData->FormDraw();
     if (PortMenuOption->mode == MENU_ASK_MODE_NONE) {
         options::Draw();

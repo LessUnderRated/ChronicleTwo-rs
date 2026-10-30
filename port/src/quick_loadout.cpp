@@ -23,24 +23,22 @@
 #include "item_icon3d.hpp"
 #include "log/log.hpp"
 #include "mainloop.hpp"
-#include "mainloop_port.hpp"
 #include "maintex.hpp"
 #include "menumain.hpp"
 #include "mg_texture.hpp"
 #include "mglib.hpp"
-#include "mglib_port.hpp"
 #include "photo.hpp"
 #include "platform/config.hpp"
+#include "platform/game_loop_state.hpp"
 #include "platform/input.hpp"
 #include "platform/paths.hpp"
 #include "prespr.hpp"
 #include "quick_loadout.hpp"
+#include "render/renderer.hpp"
 #include "scenesnd.hpp"
 #include "snd_mngr.hpp"
 #include "subgame.hpp"
 #include "userdata.hpp"
-
-int PortRetailDngMainKey() asm("DngMain_DngMainKey");
 
 namespace {
 
@@ -721,7 +719,7 @@ void DrawHalo(float x0, float y0, float w, float h, float alpha) {
 } // namespace
 
 // The request a tap leaves is acted on here, where the dungeon opens its menus, before anything else reads the pad.
-PORT_OVERRIDE int DngMainKey() {
+int DngMainKey() {
     if (request_slot >= 0) {
         const int slot = request_slot;
         request_slot = -1;
@@ -729,7 +727,7 @@ PORT_OVERRIDE int DngMainKey() {
             return 0;
         }
     }
-    return PortRetailDngMainKey();
+    return dc2::dungeon::MainKeyCore();
 }
 
 void PortQuickLoadoutPad() {

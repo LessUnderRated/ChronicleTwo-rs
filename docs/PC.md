@@ -89,7 +89,7 @@ The default and `Game` frame tracks mark completed game frames; `Display` marks 
 
 ### Optimisation
 
-Release, RelWithDebInfo and MinSizeRel link the game with ThinLTO (`port/cmake/optimise.cmake`), so ps2/src, port/src and the host code inline across units; Release compiles and links at `-O3`. `-DCT_LTO=full` uses monolithic LTO instead, and `-DCT_LTO=off` disables it. x86-64 builds target `x86-64-v2` (SSE4.2 and POPCNT) in every configuration; `-DCT_X86_64_LEVEL` changes the baseline. lld keeps a ThinLTO cache in `lto-cache/` of the build directory. On macOS, ld64 keeps the LTO objects in `lto/`, where `dsymutil` reads their DWARF. CI ships the macOS and Windows Release builds and the Release Flatpak; the Linux job stays Debug for the Vulkan validation layer and assertions.
+Release, RelWithDebInfo and MinSizeRel link the game with ThinLTO (`port/cmake/optimise.cmake`), so the native `port/src` tree and host code inline across units; the PC build does not compile PS2 sources. Release compiles and links at `-O3`. `-DCT_LTO=full` uses monolithic LTO instead, and `-DCT_LTO=off` disables it. x86-64 builds target `x86-64-v2` (SSE4.2 and POPCNT) in every configuration; `-DCT_X86_64_LEVEL` changes the baseline. lld keeps a ThinLTO cache in `lto-cache/` of the build directory. On macOS, ld64 keeps the LTO objects in `lto/`, where `dsymutil` reads their DWARF. CI ships the macOS and Windows Release builds and the Release Flatpak; the Linux job stays Debug for the Vulkan validation layer and assertions.
 
 ### Debug information
 
@@ -487,7 +487,7 @@ file before changing the live game state.
 Retail gives two of Starlight Temple's (`f02`) chests the same opened flag 7: the
 Fruit of Eden by the weapon platform (`item19`) and the one by Starlight Items
 (`item11`), so opening either hid the other for good. The `UpdateTrBoxFlag`
-override (`port/src/editloop.cpp`) records `item11` under flag 9, which no other
+override (`port/src/object/world/editloop.cpp`) records `item11` under flag 9, which no other
 chest of the town uses; the save layout is unchanged. A save whose flag 7 is
 already set offers `item11` again, which restores it to saves that lost it.
 
@@ -502,7 +502,7 @@ The PAL disc's Spanish script for the map where Max learns Spheda
 (`map/s/s17/s17_5.stb`) is a byte-for-byte copy of the Italian one, so its
 Spheda tutorial, prompts and dialogue read in Italian. `port/src/script_text.cpp`
 gives those 19 strings Spanish text when the script is read from the data index
-(`ResolveFile` in `port/src/dataread.cpp`), after the NTSC timing conversion. Each
+(`ResolveFile` in `port/src/platform/dataread.cpp`), after the NTSC timing conversion. Each
 line is anchored on its push instruction and the Italian text it must find there;
 a script that does not show every line is left unchanged with a warning. A text
 that fits is written over the Italian one, a longer one is appended after the
@@ -562,7 +562,7 @@ Environment, with the `DC2` prefix that `GameSetIdentity` sets:
 
 Debug builds request the validation layer (`gfx::RendererConfig::validation`, on unless `NDEBUG` is defined). Release builds never request it. Without the layer installed, the renderer prints `gfx: validation requested but VK_LAYER_KHRONOS_validation is not installed` and goes on.
 
-Exit statuses (`port/src/exitcodes.hpp`, and `port/src/mglib.cpp` for the screenshot write):
+Exit statuses (`port/src/exitcodes.hpp`, and `port/src/render/mglib.cpp` for the screenshot write):
 
 - 0: a normal exit, with the window closed or `--frames` reached. Retail's `LoadFile` on a missing file also exits 0, after printing `File open error "<name>"`, as retail does.
 - 1: an SDL, window or renderer fatal error, or a screenshot write failure.
@@ -654,19 +654,19 @@ Fixtures and extracted game data stay outside the repository.
 7. `AudioInit(options.headless)` selects device-driven or tick-driven mixer ownership (see "Audio"). `AudioShutdown` is registered with `atexit`.
 8. The clock starts at a fixed 60 Hz; headless runs use an unbounded clock. In that mode, frame-field measurements use logic ticks instead of wall elapsed time, including the sound sequencer's frame budget. Interactive runs retain the measured wall cadence. A pump hook runs once per clock pump, after the tick callback has run for each elapsed tick, and polls the window, the input and the input script. The config change hook is installed.
 9. The main thread takes priority 10.
-10. The `--frames` limit and screenshot, if any, are set, and `MainLoop()` (`port/src/mainloop.cpp`) runs the retail sequence (see "MainLoop").
+10. The `--frames` limit and screenshot, if any, are set, and `MainLoop()` (`port/src/platform/mainloop.cpp`) runs the retail sequence (see "MainLoop").
 
-Before `main`, the game's static constructors run. The three VU0 helpers they need, `mgUnitMatrix`, `mgZeroMatrix` and `mgZeroVectorW` (`port/src/mg_math.cpp`), are real C++. On the PS2 the constructors run after the IOP set-up inside `mwInit`; on the host `mwInit` is empty (`port/src/runtime.cpp`). An SIF RPC client that no game code has bound yet gets an answer from `sceSifCheckStatRpc` and `sceSifCallRpc` instead of an abort, because the constructors reach the RPC layer before the game binds its clients (`tools/kazarov/src/cpp/sce/sifrpc.cpp`).
+Before `main`, the game's static constructors run. The three VU0 helpers they need, `mgUnitMatrix`, `mgZeroMatrix` and `mgZeroVectorW` (`port/src/render/mg_math.cpp`), are real C++. On the PS2 the constructors run after the IOP set-up inside `mwInit`; on the host `mwInit` is empty (`port/src/runtime.cpp`). An SIF RPC client that no game code has bound yet gets an answer from `sceSifCheckStatRpc` and `sceSifCallRpc` instead of an abort, because the constructors reach the RPC layer before the game binds its clients (`tools/kazarov/src/cpp/sce/sifrpc.cpp`).
 
 ### Memory
 
-`mgCMemory` is replaced whole (`port/src/mg_memory.cpp`). Its pointers are host pointers, and the `mgMEMORY_BLOCK` header is two quadwords on the host. Blocks are 64-byte aligned through `uintptr_t`. The arenas themselves are described in "Arenas" below.
+`mgCMemory` is replaced whole (`port/src/memory/mg_memory.cpp`). Its pointers are host pointers, and the `mgMEMORY_BLOCK` header is two quadwords on the host. Blocks are 64-byte aligned through `uintptr_t`. The arenas themselves are described in "Arenas" below.
 
 Each arena's high-water mark is tracked, and `MainLoop` logs `mg_memory: <name> peak P of C quadwords (F free)` after every loop exit. C includes the headroom, so `main_buffer`'s is four times retail's 0x1A0000 quadwords. This line is how the headroom for 8-byte pointers is measured.
 
 ### MainLoop
 
-`port/src/mainloop.cpp` retains the retail boot and mode-dispatch order. Native changes include pointer-width alignment; mapped arenas and native-sized sub-game storage; retained static helpers through link-name bridges; writable file paths; and arena high-water reporting. `InitCDFile` runs from `main` before NTSC script validation and renderer startup.
+`port/src/platform/mainloop.cpp` retains the retail boot and mode-dispatch order. Native changes include pointer-width alignment; mapped arenas and native-sized sub-game storage; retained static helpers through link-name bridges; writable file paths; and arena high-water reporting. `InitCDFile` runs from `main` before NTSC script validation and renderer startup.
 
 Launch hooks prepare an explicit scene jump and give requested items on arrival. Jumps skip the ordinary boot logo and select English. `game.skip_intro` keeps the language select but drops the boot logo's fades, the copyright notice and the Level-5 logo movie. Configured debug mode or a jump unlocks debug controls; the one-controller modifier, developer-menu chord and capture/resume handling are native additions. Mode changes cut interpolation, and the final frame border follows the live visible extent rather than fixed retail screen edges. Ordinary launches preserve the retail scene route and default debug gate.
 
@@ -804,7 +804,7 @@ A failed write shows a warning. Settings still work in the current session. Chec
 
 ### Monster transformation settings
 
-Three PC SETTINGS > Game settings retune Monica's monster transformations. Each is off by default, which keeps retail's numbers, and `port/src/userdata.cpp` overrides `MOS_CHANGE_PARAM::GetAttackVol`, `GetDefenceVol` and `CBattleCharaInfo::AddAbs`.
+Three PC SETTINGS > Game settings retune Monica's monster transformations. Each is off by default, which keeps retail's numbers, and `port/src/platform/userdata.cpp` overrides `MOS_CHANGE_PARAM::GetAttackVol`, `GetDefenceVol` and `CBattleCharaInfo::AddAbs`.
 
 | Setting | Key | Off (retail) | On |
 |---|---|---|---|
@@ -1141,7 +1141,7 @@ distance moves at the stick's ratio of 15 units for each 0.1 radian of turn,
 within retail's 400 to 800. The wheel, L1/R1 and the mouse buttons keep their
 existing roles; retail has no Georama zoom button, so the wheel adds none.
 
-The `EditMode` port override (`port/src/editmode.cpp`) applies each pad read's
+The `EditMode` port override (`port/src/object/world/editmode.cpp`) applies each pad read's
 mouse sample to the active edit camera before the retail cursor step, which then
 adds the stick, follows the cursor and pulls the camera in from walls and under
 the map's height limit exactly as it does for the stick alone. The sample is
@@ -1417,17 +1417,17 @@ Retail keeps 24 monster slots, scene characters `DNG_CHARA_SLOT_MONSTER` (24) to
 monsters (`CMonsterMan::priority_limit`) show and act; `CActiveMonster::CheckView` fades the rest out and `ThinkHost`
 skips them. The port's mirror of `monster.hpp` raises `MONSTER_ACTIVE_MAX` to 60, so the slots run to scene character
 83 of 128. `CMonsterMan::Initialize` reads `game.more_monsters` once per floor through `PortMonsterLatchLimits`
-(`port/src/monster.cpp`): off, the floor uses 24 slots and a priority limit of 5, exactly as retail; on, it uses all 60
+(`port/src/object/dun/monster.cpp`): off, the floor uses 24 slots and a priority limit of 5, exactly as retail; on, it uses all 60
 and every monster in range shows and acts. Unit fixups hold `AutoSetMonster`'s spawn count,
 `CMonsterMan::SearchActiveMonsterBlock` and the event scene's slot memory to that limit, and `PrepareMonsterMemory`
-(`port/src/dng_event.cpp`) carves script memory only for the slots in use. A floor's placement list holds at most 32
+(`port/src/object/dun/dng_event.cpp`) carves script memory only for the slots in use. A floor's placement list holds at most 32
 monsters (`MONSTER_LOCATE_MAX`), so the setting raises a floor's opening count to at most 32; the remaining slots take
 monsters spawned later.
 
 ### Event handles across a map change
 
 An event can replace a map before its object sequences finish. CScene::DeleteMap
-(port/src/sceneload.cpp) resets object, frame and function-point handles whose targets fall inside the released
+(port/src/object/event/sceneload.cpp) resets object, frame and function-point handles whose targets fall inside the released
 map arena, then runs the retail deletion through PortRetailDeleteMap. Sequences following those handles stop
 through their existing failed-position lookup. Character and sprite handles, and pointers outside the arena,
 remain intact. Maps sharing the arena share this invalidation scope.
@@ -1441,13 +1441,13 @@ a per-town polygon and drawing budget, each definition's `MAX_NUM` and a save
 record of 300 parts, and its save quits the game past 300. The port keeps none of
 these, always:
 
-- `GetMaxPolyn` and `GetMaxDrawMem` (`port/src/editdata.cpp`) give every town no
+- `GetMaxPolyn` and `GetMaxDrawMem` (`port/src/object/world/editdata.cpp`) give every town no
   budget, and a unit fixup makes every Georama menu run its `POLYOF` script, which
   hides the polygon counter as retail does for its fifth town.
 - A unit fixup sets every part definition's `max_num` to 9999, the limit of a held
   part count; the build menu clamps to 99 before quadrupling a map-wide part's limit
   (a second fixup), so the lifted value cannot overflow its `s16`.
-- `CEditMap::CreateTable` (`port/src/editmap.cpp`) reserves one block for the edit
+- `CEditMap::CreateTable` (`port/src/object/world/editmap.cpp`) reserves one block for the edit
   part slots and one for their placement log, each sized for 32767 slots (the log
   names slots in an `s16`), and constructs slots as the town needs them:
   `eNewPlaceParts` reuses a free slot first and constructs the next one otherwise,
@@ -1466,12 +1466,12 @@ these, always:
   above 4095 finds them.
 - The Georama menu's placed-part, part-name, placed and house lists
   (`CMenuGeorama::place_no`, `place_name`, `placed_list`, `house_list`) are vectors
-  of `port/src/editmenu.cpp`, as long as the town has slots; header fixups make them
+  of `port/src/object/world/editmenu.cpp`, as long as the town has slots; header fixups make them
   pointers that `UpdateGeoramaPartsList` sets. It shows the culture points once
   rather than once per part. `stubs/editmenu.hpp` exposes the menu's town, menu and
   buildable-part table to it.
 - The town's frame work stack grows with its slots before each draw (`EditDraw`,
-  `port/src/editloop.cpp`): 256 sorted packets and their draw-table slots per part
+  `port/src/object/world/editloop.cpp`): 256 sorted packets and their draw-table slots per part
   slot beyond retail's 10000 packets, and twice its size for the next frame once a
   frame has used more than half of it.
 - `RemoveEditParts` keeps retail's rule without its recursion: a removed part takes
@@ -1484,10 +1484,10 @@ these, always:
   The analysis conditions (`editanalyze.cpp`) still count at most 0x200 parts of a
   kind, which only saturates their thresholds.
 - A town's layout is saved beside its save record rather than in it: `SaveData` and
-  `LoadData` (`port/src/editdata.cpp`) write and read the layout kept for the record
+  `LoadData` (`port/src/object/world/editdata.cpp`) write and read the layout kept for the record
   (`PortTownLayout`, `port/src/save_json.cpp`), with every part, house, log entry and
   grid; the record's own arrays stay cleared. `GetPlaceEditPartsNum`
-  (`port/src/savedata.cpp`) counts placed parts in those layouts. Clearing a record
+  (`port/src/platform/savedata.cpp`) counts placed parts in those layouts. Clearing a record
   (a new game) forgets its layout; loading a save replaces them (see "Save file
   format").
 
@@ -1496,17 +1496,9 @@ houses beyond 32, the slot ceiling, removal against retail's recursion, tall sta
 culture points against `CultureAnalyzeParts`, fence painting against retail's
 recursion, and a 5000-part town saved and loaded back.
 
-## Decision 1: long64 is kept
+## Native integer widths
 
-The PS2's `long` is 64-bit, and on Windows (LLP64) it is not. `scripts/port/long64.py` rewrites the build-tree copies of `ps2/src` and the `ps2/include` mirror, on every host, so the port keeps the PS2's width:
-
-- `long` becomes `long long`, `L` and `UL` integer suffixes become `LL` and `ULL`, and `%l` integer conversions become `%ll`.
-- It tokenizes, so comments, string and character literals (other than printf conversions), `long double`, `long long`, identifiers containing `long`, and the MIPS `%lo(` relocation operator are untouched. Line numbers are preserved.
-- Over the real sources it changes 87 tokens in 21 files: 80 keywords, 6 hex `UL` suffixes, and 1 format (`password.cpp`'s `"err %lu\n"`). It changes no line count and no string otherwise.
-
-Proof is by test. `scripts/port/test_long64.py` has 91 cases. The `Long64` GoogleTest suite (`port/src/tests/long64_test.cpp`) runs retail `mgSetPkTEX0`, where both forms write full 64-bit TEX1, TEX0 and TEXA words, and retail `password.cpp`, where `ConvertBinToTxt` and `ConvertTxtToBin` round-trip 64-bit groups up to `0xFFFFFFFFFFFFFFFF`, and `EncodePassword` and `DecodePassword` round-trip, and a one-character change to a password is rejected or decodes to different bytes. Both run on Linux and Windows.
-
-The rewrite covers `u_long`, `mgSetPkTEX0` and `password.cpp`. No per-function `u64` overrides are needed.
+The tracked native source spells 64-bit game words with fixed-width types. Native `uptr`, `sptr` and `size_t` follow Kazarov's pointer-width types. The password codec tests cover its 64-bit groups and round trips. No build-time rewrite of PS2 `long` is used.
 
 ## Decision 2: threads
 
@@ -1514,19 +1506,19 @@ PS2 kernel threads run as cooperative fibers on one OS thread, so the retail thr
 
 ## Arenas
 
-The blocks come from `ArenaBlock` in Kazarov's `tools/kazarov/include/platform/arena.hpp`, the same code Dark Cloud 1 uses. Each block is zeroed, 64-byte aligned and followed by a guard page, and holds `kArenaHeadroom` (4) times the quadwords retail asked for. A debug build checks that a block lies above 4 GiB, so a mapping that drifted low cannot hide a pointer the game truncates (see "Pointers and 32-bit integers"). `port/src/tests/arena_test.cpp` covers roots, children, the guard page and placement growth.
+`ArenaBlock` in Kazarov's `tools/kazarov/include/platform/arena.hpp` supplies zeroed, aligned storage with a guard page. Its logical extent is the requested size, excluding page-rounding padding and the guard. A debug build checks that mapped storage lies above 4 GiB so low addresses cannot hide pointer truncation. `port/src/tests/arena_test.cpp` covers roots, children, guard pages, and allocation identities.
 
-Retail buffers that lie inside no mapped block become blocks. `MainLoop` maps `main_buffer` (`MainBuffer`), `InfoBuff` (`InfoStack`) and `SystemSeBuff` (`SystemSeStack`) explicitly through `ArenaRoot` (`port/src/arena_root.cpp`). `mgCMemory::stSetBuffer` and `SetHeapMem` treat any other buffer that lies outside every block the same way: retail statics, function-local arrays and member arrays (`editdata.cpp`, `gamedata.cpp`, `inventmn.cpp`, `character.cpp`, `mg_visual.cpp`, `menuaqua.cpp`, `scenesnd.cpp`, `event_func.cpp` and others) are roots. A root is keyed by the retail buffer's address, takes a copy of the retail bytes (`gamedata.cpp` memsets its buffer before handing it over), and gets four times the quadwords. Each mapping is logged once, as `arena: <name> <bytes> bytes at <address>`, followed by ` (above 4 GiB)` or ` (below 4 GiB)` according to the address.
+`MainLoop` establishes named `MainBuffer`, `InfoStack`, and `SystemSeStack` roots through `ArenaRoot` (`port/src/arena_root.cpp`). Legacy external-buffer binding can copy source bytes into a separate mapped root with `kArenaHeadroom` (4) times the requested quadwords. Explicit `ArenaBlock` roots retain their exact requested extent; this compatibility expansion must not be assumed by capacity checks or fixtures. Mapping logs identify each root's size and address. A raw address alone does not establish a retained consumer's storage lifetime.
 
-A buffer inside a block is a child view, and it stays exactly where retail carves it. Dark Chronicle carves sub-arenas from a parent's top (`stGetTop`, `stGetRest`), often through local `mgCMemory` objects whose allocations outlive them, and re-carves overlapping regions by design (`menuchr`, `menusys`, `inventmn`, `dng_main`, `editloop`). Per-object blocks, as in Dark Cloud 1, would break that. An audit of every `stSetBuffer` and `SetHeapMem` site found more than 20 that depend on it. Headroom reaches a child through its parent, since most children take the parent's rest.
+An arena view retains its actual backing allocation, logical owner, generations, and requested extent. Child workspaces reserve their parent storage before binding. Sharing a temporary view preserves its upstream owner; the temporary allocator object is not the storage owner. Reset, free, rebinding, and address reuse invalidate the relevant leases. `ArenaBuffer` also distinguishes individual heap allocations, so freeing an unrelated block does not invalidate a live view. Parent headroom does not authorize access beyond a child's explicit extent.
 
 `stAlloc` and `Alloc` past an arena's end abort, naming `mgCMemory::name` or, when it has none, the arena's address, where retail printed and returned NULL. `stAllocTest` keeps retail's probe.
 
-Headroom does not reach a stack carved with an explicit size. `charasetup.cpp`'s `mem_table` carves each character's stacks that way, and host model and metadata records outgrow its counts: with a datapack, Max's body exceeds human stack 0's 68500 quadwords on entering a dungeon. A unit fixup adds 12000 quadwords (`CHARA_MODEL_STACK_EXTRA` in `scripts/port/header_fixups.py`) to every model stack: human 0 and 1, ridepod 0 to 2, edit 0 and monster 0. `GetCharaMemAllocSize` sums the table, so the parent buffers grow with it. `chara_mem_budget_test.cpp` covers the carved sizes.
+Headroom does not reach a stack carved with an explicit size. The native `charasetup.cpp` model stacks reserve 12000 extra quadwords each: human 0 and 1, ridepod 0 to 2, edit 0 and monster 0. `GetCharaMemAllocSize` sums the table, so the parent buffers grow with it. `chara_mem_budget_test.cpp` covers the carved sizes.
 
-Retail's `LoadMapData` reads a map's `.map`, `.cfg`, `.mpk` and `.sky` one after another into the caller's fixed load buffer (the dungeon's `BuffReadData`, the town's read buffer) with no bound, so a large map or a datapack's replacement ran into the objects carved after it. A unit fixup makes it read into `PortMapLoadBuffer` (`port/src/sceneload.cpp`) instead: host memory outside the arenas, 64-byte aligned and sized to the files' 64-byte-rounded sizes plus the last read's sector tail. It grows when a map needs more and keeps the buffer it replaced for a deferred map build still reading it. `sceneload_map_buffer_test.cpp` covers it.
+Each native map-load request owns aligned read storage sized for its files and sector tails. Deferred request copies share that exact allocation; a later write acquires independent storage when the allocation is shared. Concurrent and growing requests therefore do not depend on a fixed number of retired global buffers. `sceneload_map_buffer_test.cpp` covers request growth, copies, reset, and owner destruction.
 
-Retail places objects in runs with hand-written quadword counts. The placement operators in `port/src/mg_memory.cpp` grow the run to the host object's size while it is still its arena's last, as Dark Cloud 1 does. `arena_placement_test.cpp` lists the 50 literal-count sites whose host object outgrows its run, such as `CCharacter2` (2496 bytes in 0x68 quadwords), and the 8 cast-not-placed runs that nothing can grow: the script stacks `RS_STACKDATA` and `RS_CALLDATA` (`actscript.cpp`, `effscript.cpp`, `event.cpp`, `runscript_opcodes.cpp`) and `mgSORT_PACKET` (`mg_drawprim.cpp`). Each of those overruns its run on the host until `ps2/src` sizes it with `sizeof`.
+Native arena objects use checked typed allocation based on their actual host size and alignment. `NewObject` and `NewArray` begin object lifetimes and reject overflow, insufficient capacity, locked storage, and nontrivial destruction that requires an ordinary owner. Controllers with owning members use explicit heap owners and retirement hooks. The historical retail-run comparisons in `arena_placement_test.cpp` identify layout growth; they are not permission to use an undersized native allocation. The [memory safety ledger](port/memory_safety.md) records remaining raw-allocation and lifetime reviews.
 
 On Windows the executable is linked with `--dynamicbase` and `--high-entropy-va`, lld's MinGW defaults pinned in `port/cmake/arena.cmake`. The image base is 0x140000000, relocated by high-entropy ASLR, and the image is `LARGE_ADDRESS_AWARE`, so the image and the `VirtualAlloc` mappings lie above 4 GiB, and a truncated pointer faults at once. Linux stays `-pie -z separate-code`. Dark Cloud 1 links Windows with the same defaults.
 
@@ -1536,13 +1528,13 @@ PS2 kernel threads run as cooperative fibers on the one OS thread: ucontext on L
 
 Switches happen only in `StartThread`, `RotateThreadReadyQueue`, a blocking `WaitSema`, `SignalSema` preemption, and thread exit. A switch attempted inside `ClockPump` (its callback or hooks) aborts; death tests on both OSes cover this. An uncontended semaphore pair never yields. A `WaitSema` with nothing else ready aborts as a deadlock.
 
-`WaitVSync` loops until `frames` ticks have passed since `start`. Each pass rotates the ready queue when a rotate priority is set (`mgSetRotateThread`), waits for the next tick, then pumps the clock. `sceGsSyncV` goes through `ClockSyncV`. In bounded mode, `mgNowFrameRate` comes from wall elapsed seconds times `ClockTickRate`, the same unit as retail's `T0/262`. In unbounded mode, `mgTimeFrameFields()` instead counts the logic ticks since `mgTimeFrameBegin()`, so rendering time and host delays cannot change the sequencer's field budget. A clock reset reanchors an open frame.
+`WaitVSync` loops until `frames` ticks have passed since `start`. Each pass rotates the ready queue when a rotate priority is set (`mgSetRotateThread`), waits for the next tick, then pumps the clock. `sceGsSyncV` goes through `ClockSyncV`. In bounded mode, `mgNowFrameRate` comes from wall elapsed seconds times `ClockTickRate`, the same unit as retail's `T0/262`. In unbounded mode, `dc2::timing::FrameFields()` instead counts the logic ticks since `dc2::timing::BeginFrame()`, so rendering time and host delays cannot change the sequencer's field budget. A clock reset reanchors an open frame.
 
 The reason for this design: the retail thread loops (`GamePadStep`, `NowLoadingLoop`, fishing's `StepDataLoading`, the movie threads) run unchanged, and host state stays on the main thread.
 
 ### Disc scripts under the NTSC timing
 
-The PAL scripts (`.stb`) hold the NTSC frame counts and convert them while they run. `port/src/script_timing.cpp` removes those conversions when a script is read from the data index (`ResolveFile` in `port/src/dataread.cpp`), so every loader and the file cache get the converted bytes.
+The PAL scripts (`.stb`) hold the NTSC frame counts and convert them while they run. `port/src/script_timing.cpp` removes those conversions when a script is read from the data index (`ResolveFile` in `port/src/platform/dataread.cpp`), so every loader and the file cache get the converted bytes.
 
 - Event and map scripts count fields: the shared event helpers scale their counts by `* 50 / 60`, and some loop bounds and cues are written as `(N * 50) / 60`. Monster scripts count game frames through a `conv(n) = ftoi(itof(n) / 30.0f * 25.0f)` helper, and a few scripts divide by 30 and multiply by 25 in integers. Each conversion becomes opcode-22 no-ops, which `CRunScript::exe()` steps over, so the value reaches its consumer unchanged; the converter keeps its `FTOI`.
 - The lip-sync helper's cue assignment, which PAL derives from the already scaled timeout, is removed whole.
@@ -1556,7 +1548,7 @@ The PAL scripts (`.stb`) hold the NTSC frame counts and convert them while they 
 
 ## Rendering
 
-`port/src/mglib.cpp` and `port/src/mglib_time.cpp` replace retail's `mglib`. Their `PORT_OVERRIDE` definitions replace the retail bodies of the same names. The rest of retail's `ps2/src/mglib.cpp` is compiled from the stripped copy, `mgSetLight`, `mgSetFogParam` and `mgGetCameraPos` among them. `port/src/mglib_port.hpp` is the seam between the `mglib` replacement and the units that call it. Its groups:
+The native `render/mglib.cpp` contains the renderer-facing implementation and retained game behavior. `port/include/render/renderer.hpp` exposes the rendering interface used by other units. Its groups:
 
 - Frame: renderer state, the frame count, and `--frames` exit.
 - Projection: the eye, clip and view-to-clip mapping.
@@ -1572,7 +1564,7 @@ The PAL scripts (`.stb`) hold the NTSC frame counts and convert them while they 
 
 `mgBeginFrame` opens a display-list recording (`gfx::BeginRecording`), not an immediate frame. It sets the main target, CLAMP repeat and the default frame buffer, and clears the colour to `mgBackColor` and the depth to far. The game's draws between `mgBeginFrame` and `mgEndFrame` are recorded into the tick's list. Draws keep going through `mgPortDraw2D`, `mgPortDrawMesh` and `mgPortDrawMeshImmediate`.
 
-`mgEndFrame` queues the four `mgPickZBuff` 8x8 reads. A pick within 4 pixels of the screen edge gets `z` of -1, as retail does. It seals the list and renders it once, canonically. That render ends the gfx frame and fills `mgPickZBuff[].z` in GS units. `--screenshot`, `mgStoreImage`, `mgPortCanonicalReadColor`, `StoreImage`, `mgPickZBuff` and the depth queries (`mgPortQueueDepthRead`) all read that canonical render. Two exceptions: `--screenshot-fps` reads a presented frame (`PresentScreenshotFps`), and `ReadNow` falls back to the presented frame when the main target's canonical readback fails. It then waits for the next game frame (see "Ticks and display frames"). It sets `mgNowFrameRate` from `mgTimeFrameFields()`, with retail's upper clamp of `1 + mgFrameRate`. When the frame count reaches the `--frames` limit, it writes the screenshot and exits before the wait.
+`mgEndFrame` queues the four `mgPickZBuff` 8x8 reads. A pick within 4 pixels of the screen edge gets `z` of -1, as retail does. It seals the list and renders it once, canonically. That render ends the gfx frame and fills `mgPickZBuff[].z` in GS units. `--screenshot`, `mgStoreImage`, `mgPortCanonicalReadColor`, `StoreImage`, `mgPickZBuff` and the depth queries (`mgPortQueueDepthRead`) all read that canonical render. Two exceptions: `--screenshot-fps` reads a presented frame (`PresentScreenshotFps`), and `ReadNow` falls back to the presented frame when the main target's canonical readback fails. It then waits for the next game frame (see "Ticks and display frames"). It sets `mgNowFrameRate` from `dc2::timing::FrameFields()`, with retail's upper clamp of `1 + mgFrameRate`. When the frame count reaches the `--frames` limit, it writes the screenshot and exits before the wait.
 
 ### Ticks and display frames
 
@@ -1581,10 +1573,10 @@ The PAL scripts (`.stb`) hold the NTSC frame counts and convert them while they 
 - Interpolated: the models of tagged mesh draws, and the camera (`tools/kazarov/src/cpp/gfx/README.md`, "Display lists"). A draw is tagged with `mgPortInterpScope(object, teleport_distance, blend_vertices, no_interpolation)`, keyed by the `mgCFrame` or, outside a frame, the visual's record. `kMgPortFrameTeleportDistance` is 200 units. Skinned prog0 draws blend their 32-bone model-space palette (`gfx::Prog0Palette::bones`) per bone: translation lerped, rotation slerped from the Gram-Schmidt rotation, scale and shear lerped in its frame. A bone that moved further than the draw's teleport distance keeps the newest pose. The rest of the per-draw block follows the interpolated model and camera: `model_world` is the interpolated model, `clip_or_view` and the object-space eye are re-based through the tick's and the interpolated object-to-eye transforms, and point lights shift with the object's origin. Dark Cloud 1's port, which shares the renderer, records no prog0 block, so it takes no such path.
 - Depth-tested screen effects set `gfx::DrawState::screen_space` so the depth-of-field layers stay screen-aligned while sampling the display camera's refreshed grabs. World sprites retain camera reprojection.
 - Dungeon pickup sprites (`CPullItem`, including coins, ABS and floating items) opt into keyed world-corner interpolation. `SetItem` starts a new emission generation; matched corners blend in world space under the display camera, including bobbing, glow size and opacity. Atlas animation stays newest. Reused slots, unmatched/incompatible draws, motion beyond 200 units, near-plane crossings and multi-camera lists keep newest own motion. Canonical and alpha-1 rendering remain exact.
-- The healing point's lights (`CHealingEffectMan`, `port/src/dng_effect.cpp`) draw each glow and halo as a sprite of its own, keyed by its light and kind, with keyed world-corner interpolation, so their orbit, bob, size and fade blend between game frames. Retail batched all 32 sprites into one draw, which could not be matched sprite by sprite. A culled light leaves the others' keys unchanged, and each `Set` (a new healing point) starts a new generation. Canonical rendering is unchanged.
-- The recovery effect, the blue (or, for a power-up, yellow) sparkles that rise around a character healed by the healing point, food or drink, Resurrection Powder or an item used from the menu, is the effect script `n_heal` with the `n_heal_sub` sparkles it starts. Its sprites interpolate (`CEffectScriptMan::Draw`, `port/src/effscript.cpp`): each visible sprite is a batch of its own (`mgPortTag3DSpriteBatch`, `port/src/mg_sprite.cpp`), keyed by the sprite, with keyed world-corner interpolation, so their drift, spin and fade blend between game frames while the effect follows its character. Retail batched all of an effect's sprites that share a blend into one draw. A sprite's generation is its incarnation, a serial renewed whenever the script assigns the effect's sprites (`_SPT_ASSIGN_SPRITE`) or resets the slot (`_SPT_INIT_SPRITE`), so a particle reset and shown again in place between two game frames keeps its newest corners instead of blending from the one it replaced; a new effect assigns new sprites, so it starts afresh even where the last one stood. A hidden sprite leaves the others' keys unchanged. A refused assignment (the effect already has sprites) renews nothing, and a reset's slot index converts through `fptosi` as retail's does, so a NaN index renews slot 0, the slot retail resets. Only recovery effects keep incarnations. `DeleteEffSpt`, which every stop and clear goes through, drops an effect's. A game mode can retire its arena without clearing its manager (dungeon exit leaves `FxScriptMan`'s effects in place), so a manager's reset (`Initialize`, which its construction runs) drops every effect it started; other managers' effects are kept, including those in a work memory they share. Until that reset, or a new effect at the same address replacing the entry in `CreateEffSpt`, a retired arena's entries are inspected by cleanup but never used to dereference a retired effect. The seams wrap retail's routines through `RETAIL_BRIDGES` (`PortRetailInitialize`, `PortRetailDeleteEffSpt`, `PortRetailSptAssignSprite`, `PortRetailSptInitSprite`), and `port/src/effscript_config_bridge.inc` reads the running effect. The shipped `n_heal` resets its sprites only before its main loop and shows each slot once, so its sparkles interpolate throughout. Other effect scripts keep retail's batches, so their sprites' own motion still moves at the game rate. Two places still snap: the dungeon pause frame keeps the player-effect tag that the playerless capture needs, and on the Items page the sprites draw with no 3D scene to unproject through (that page also steps the effect on every other 60 Hz frame). Canonical rendering is unchanged.
+- The healing point's lights (`CHealingEffectMan`, `port/src/object/dun/dng_effect.cpp`) draw each glow and halo as a sprite of its own, keyed by its light and kind, with keyed world-corner interpolation, so their orbit, bob, size and fade blend between game frames. Retail batched all 32 sprites into one draw, which could not be matched sprite by sprite. A culled light leaves the others' keys unchanged, and each `Set` (a new healing point) starts a new generation. Canonical rendering is unchanged.
+- The recovery effect, the blue (or, for a power-up, yellow) sparkles that rise around a character healed by the healing point, food or drink, Resurrection Powder or an item used from the menu, is the effect script `n_heal` with the `n_heal_sub` sparkles it starts. Its sprites interpolate (`CEffectScriptMan::Draw`, `port/src/script/effscript.cpp`): each visible sprite is a batch of its own (`mgPortTag3DSpriteBatch`, `port/src/render/mg_sprite.cpp`), keyed by the sprite, with keyed world-corner interpolation, so their drift, spin and fade blend between game frames while the effect follows its character. Retail batched all of an effect's sprites that share a blend into one draw. A sprite's generation is its incarnation, a serial renewed whenever the script assigns the effect's sprites (`_SPT_ASSIGN_SPRITE`) or resets the slot (`_SPT_INIT_SPRITE`), so a particle reset and shown again in place between two game frames keeps its newest corners instead of blending from the one it replaced; a new effect assigns new sprites, so it starts afresh even where the last one stood. A hidden sprite leaves the others' keys unchanged. A refused assignment (the effect already has sprites) renews nothing, and a reset's slot index converts through `fptosi` as retail's does, so a NaN index renews slot 0, the slot retail resets. Only recovery effects keep incarnations. `DeleteEffSpt`, which every stop and clear goes through, drops an effect's. A game mode can retire its arena without clearing its manager (dungeon exit leaves `FxScriptMan`'s effects in place), so a manager's reset (`Initialize`, which its construction runs) drops every effect it started; other managers' effects are kept, including those in a work memory they share. Until that reset, or a new effect at the same address replacing the entry in `CreateEffSpt`, a retired arena's entries are inspected by cleanup but never used to dereference a retired effect. The seams wrap retail's routines through `RETAIL_BRIDGES` (`PortRetailInitialize`, `PortRetailDeleteEffSpt`, `PortRetailSptAssignSprite`, `PortRetailSptInitSprite`), and `port/src/effscript_config_bridge.inc` reads the running effect. The shipped `n_heal` resets its sprites only before its main loop and shows each slot once, so its sparkles interpolate throughout. Other effect scripts keep retail's batches, so their sprites' own motion still moves at the game rate. Two places still snap: the dungeon pause frame keeps the player-effect tag that the playerless capture needs, and on the Items page the sprites draw with no 3D scene to unproject through (that page also steps the effect on every other 60 Hz frame). Canonical rendering is unchanged.
 - Enemy anger-counter marks (`CEnemyGekirin`) have independent screen-space keys, so their movement and break-away bounce interpolate even when HP changes or neighbouring marks disappear. `ResetGekirin` starts a new generation for refills and reused monsters. Game steps, rage counts and canonical rendering are unchanged.
-- The quick-change name banner (`PortDrawQuickChangeBanner`, `port/src/menuchr.cpp`) tags its strip and logo with one screen-space key, so the slide in and out and the strip's fade interpolate between game frames. Each banner shown starts a new generation, so a new banner starts at the left edge instead of sliding from the last one; one reappearing after a menu hid it starts where it is. The first and last visible game frames have nothing to slide from or to, so they appear and leave as recorded. Its timing and canonical rendering are unchanged.
+- The quick-change name banner (`PortDrawQuickChangeBanner`, `port/src/object/menu/menuchr.cpp`) tags its strip and logo with one screen-space key, so the slide in and out and the strip's fade interpolate between game frames. Each banner shown starts a new generation, so a new banner starts at the left edge instead of sliding from the last one; one reappearing after a menu hid it starts where it is. The first and last visible game frames have nothing to slide from or to, so they appear and leave as recorded. Its timing and canonical rendering are unchanged.
 - Not interpolated: ordinary HUD/text without depth; untagged 3D sprites' own motion; objects and cameras past their teleport thresholds; the first tick after `mgInit` and after `mgPortCutInterpolation()`, which `mainloop.cpp` calls on every loop change. Damage scores, lock-on markers, HP bars, anger-counter marks, target names and the quick-change name banner have separate opt-in screen-space presentation paths.
 - `video.interpolation = false` presents each canonical image once.
 - Headless, the clock is unbounded: one canonical render and one present per game frame. `--display-per-tick N` also renders N display frames at k/N and discards them. Screenshots are byte-identical with it (`PresentIdentity.DisplayPerTickScreenshot`).
@@ -1601,11 +1593,11 @@ No packet is built or sent, so there are no packet buffers. `mgInitVif1Packet` a
 
 ### Sprites and window backings
 
-- The GS evaluates a sprite's UV at integer pixel positions and a nearest filter takes `floor(u)`; the GPU samples at pixel centres of an upscaled window. For nearest-filtered UV sprites, `AssembleSprite` (`port/src/mg_drawprim.cpp`) therefore maps the quad onto exactly the texels the GS reads (`mgPortSpriteTexelSpan`) and adds `kMgPortNearestTexelBias` (1/64 texel) so a sample exactly on a texel boundary takes the texel after it, as the GS does. This keeps the font's one-texel-wider UV rects (`set2DSpriteEasyFont`) from bleeding the next glyph, and 1:1 background tiles from showing a black seam at 2.5x. Linear-filtered UV sprites subtract half a destination pixel times the UV slope from both corners, so their samples also correspond to the GS integer pixel locations rather than Vulkan pixel centres. This handles stretched and flipped sprites without identifying textures or changing atlas rectangles. TME/FST-off draws keep their UVs. `MgDrawPrim.*` checks the slopes; `MgDrawPrimRender.LinearAtlasCellsKeepTopOutlinesWithoutSamplingTheNextCell` checks RGBA and indexed atlas cells at 2.5x. The bilinear sampler's half-texel footprint is separate from this pixel-location correction.
-- The versatile dialog backing (`FillRect`, `port/src/nd_meswin.cpp`) extends one pixel above and left of its requested rectangle while retaining its right and bottom edges, covering the gaiji frame opening with one translucent quad at fractional display scales. The selected-line dialog (`DrawVersatileWin_3`) measures its upper side from the window's top-side position rather than its height, keeping the backing continuous down to the selected band. Collapsed sections are omitted during window animation. Geometry tests cover these bounds and opacity; `MgDrawPrimRender.HelpWindowTranslucentTilesHaveContinuousCoverage` checks the tiled help background at 2.5x.
+- The GS evaluates a sprite's UV at integer pixel positions and a nearest filter takes `floor(u)`; the GPU samples at pixel centres of an upscaled window. For nearest-filtered UV sprites, `AssembleSprite` (`port/src/render/mg_drawprim.cpp`) therefore maps the quad onto exactly the texels the GS reads (`mgPortSpriteTexelSpan`) and adds `kMgPortNearestTexelBias` (1/64 texel) so a sample exactly on a texel boundary takes the texel after it, as the GS does. This keeps the font's one-texel-wider UV rects (`set2DSpriteEasyFont`) from bleeding the next glyph, and 1:1 background tiles from showing a black seam at 2.5x. Linear-filtered UV sprites subtract half a destination pixel times the UV slope from both corners, so their samples also correspond to the GS integer pixel locations rather than Vulkan pixel centres. This handles stretched and flipped sprites without identifying textures or changing atlas rectangles. TME/FST-off draws keep their UVs. `MgDrawPrim.*` checks the slopes; `MgDrawPrimRender.LinearAtlasCellsKeepTopOutlinesWithoutSamplingTheNextCell` checks RGBA and indexed atlas cells at 2.5x. The bilinear sampler's half-texel footprint is separate from this pixel-location correction.
+- The versatile dialog backing (`FillRect`, `port/src/object/menu/nd_meswin.cpp`) extends one pixel above and left of its requested rectangle while retaining its right and bottom edges, covering the gaiji frame opening with one translucent quad at fractional display scales. The selected-line dialog (`DrawVersatileWin_3`) measures its upper side from the window's top-side position rather than its height, keeping the backing continuous down to the selected band. Collapsed sections are omitted during window animation. Geometry tests cover these bounds and opacity; `MgDrawPrimRender.HelpWindowTranslucentTilesHaveContinuousCoverage` checks the tiled help background at 2.5x.
 - Item-page panel anchors use their inward action destinations, so the bag, character panels and their contents retain their sides during entry and exit. Shared root-menu icons, area/time boards and area text retain their original coordinates throughout the transition back to the root menu. The paused world dissolves into the returning menu background with an eased blend synchronized to the closing frame animation; presentation interpolation also blends between its logic ticks.
-- The English PAL Characters layout leaves Monica's grey slot at its original vertical position and height despite moving and stretching her portrait for PAL. `MenuAlignCharacterSlot` (`port/src/menudraw.cpp`) corrects that specific legacy rectangle to match the other PAL layouts; the correction applies only when the original mismatched dimensions are present.
-- The menu background tile grid (`DrawMenuTilePattern`, `port/src/menudraw.cpp`) starts at or left of x = -256 and runs to 256 past the right edge, with rows reaching 256 past the bottom, so 16:9 and 9:16 windows show no uncovered flank. The 4:3 letterbox clips the extra tiles, so the canonical image is unchanged; `port/src/tests/menudraw_tile_test.cpp` covers the column range.
+- The English PAL Characters layout leaves Monica's grey slot at its original vertical position and height despite moving and stretching her portrait for PAL. `MenuAlignCharacterSlot` (`port/src/object/menu/menudraw.cpp`) corrects that specific legacy rectangle to match the other PAL layouts; the correction applies only when the original mismatched dimensions are present.
+- The menu background tile grid (`DrawMenuTilePattern`, `port/src/object/menu/menudraw.cpp`) starts at or left of x = -256 and runs to 256 past the right edge, with rows reaching 256 past the bottom, so 16:9 and 9:16 windows show no uncovered flank. The 4:3 letterbox clips the extra tiles, so the canonical image is unchanged; `port/src/tests/menudraw_tile_test.cpp` covers the column range.
 
 ### Initial GS state
 
@@ -1702,26 +1694,26 @@ to compare presentation captures (`caption-display-0.png`) at those resolutions.
 
 Draws are recorded into display lists (see "Ticks and display frames").
 
-Visual faces (`port/src/mg_visual.cpp`) keep their triangles on the CPU. `mgCVisualMDT::Draw` batches each stretch of consecutive face groups that share a material and VU microprogram: their faces are concatenated in draw order into one mesh, and the stretch is drawn once for each run of consecutive faces with the same face flags (`MG_FACE_NO_TEXTURE`, `MG_FACE_COLOUR`, `MG_FACE_NO_NORMAL`). Native models give most faces a group of their own, so this cuts Ocean's Roar's scene from about 3,200 to 700 draws. Batches of fixed and motion visuals are uploaded as GPU meshes and released after 1,800 unused frames, keeping their CPU copy for re-upload and for immediate draws when no mesh slot is free. A plain visual's batches stay on the CPU, because its faces are rebuilt every tick. A refreshed face is a new mesh, so a batch built from the old one is rebuilt when it next draws.
+Visual faces (`port/src/render/mg_visual.cpp`) keep their triangles on the CPU. `mgCVisualMDT::Draw` batches each stretch of consecutive face groups that share a material and VU microprogram: their faces are concatenated in draw order into one mesh, and the stretch is drawn once for each run of consecutive faces with the same face flags (`MG_FACE_NO_TEXTURE`, `MG_FACE_COLOUR`, `MG_FACE_NO_NORMAL`). Native models give most faces a group of their own, so this cuts Ocean's Roar's scene from about 3,200 to 700 draws. Batches of fixed and motion visuals are uploaded as GPU meshes and released after 1,800 unused frames, keeping their CPU copy for re-upload and for immediate draws when no mesh slot is free. A plain visual's batches stay on the CPU, because its faces are rebuilt every tick. A refreshed face is a new mesh, so a batch built from the old one is rebuilt when it next draws.
 
 ### Window aspect
 
 - Logical space stays 512x480 (`mgScreenWidth`/`mgScreenHeight`); `mgScreenOffx`/`mgScreenOffy` are the 2048-centred offsets. Nothing in `port/src` outside `platform/` and `mglib.cpp` reads the window's pixel size. The check `grep -rnE "SDL_GetWindowSize|SDL_GetWindowSizeInPixels|\bWindowSize\(|WindowCurrentMode|DisplayShownMode|SDL_GetCurrentDisplayMode" port/src --include=*.cpp --include=*.hpp | grep -vE "^port/src/(platform/|mglib\.cpp)"` prints nothing.
 - `video.aspect` `auto` is `gfx::AspectMode::Fill`. `mgPortEyeToClip` maps retail's projection through the target's logical mapping, so the frame's 480 rows fill the window's height at retail's vertical field of view. A wider window shows more at the sides; a narrower one keeps the width and shows more above and below. `4:3` is `gfx::AspectMode::Letterbox`: it clips every main-target draw and clear to the frame, so the bars stay black. `video.ui_scale` (0.25 to 4) scales depthless 2D about the centre and reaches `gfx::SetFrameLayout`.
-- HUD anchoring: `gfx::UiAnchor::Side(x, y, true)` anchors a piece to a frame side, and its third argument moves the piece's scissor with it. The human dungeon status board (`port/src/dng_status.cpp`, `DrawStatusBord`) anchors HP/items top-left and both weapons top-right, including numbers, bars, charge icons and warnings. The mini map (`port/src/automap.cpp`, `CMiniMapSymbol::Draw`, `DrawSymbolOpen`..`DrawSymbolClose`, `DrawSymbol_Chara`) is anchored top-right and clips to its own rect. DC2 has no town clock HUD. Menus, message windows and help bars stay in the frame.
-- Parked menu panels: retail moves unused menu forms just past its 512x480 screen (the item description at x = 570 after the Make menu, the Make menu's invention cards at x = -262, the character page's 513-wide backdrop at x = -512), which a wider or taller window would show at its sides. `CMenuPosDataForm::MenuFormDraw` (`port/src/menudraw.cpp`) measures part forms and the invention card list against the screen whenever the window shows past it in either the target's logical units (`mgPortVisibleExtent`, where depth-tested fills draw) or its UI units (`mgPortVisibleUiExtent`, where menu sprites draw at `video.ui_scale`), allowing 2 pixels of overlap. A part form wholly outside it is skipped; one that leaves retail's sliver inside, a part form with a full-screen part and the card list are drawn under `mgPortScreenClipScope`, which clips their 2D draws to the screen without extending the scissor. A message form's window is classified once `StepMsg` has laid it out and `SetPutPos` has put it, in `CDC2Mes::DrawMsg` (`port/src/menucls1.cpp`, which wraps retail's draw through the `PortRetailDrawMsg` bridge): `MenuMessageParked` reads every laid-out character's pen from the window's table, so anything that moved the pen while laying out (number padding, spacing codes, indents, lines placed by themselves) is included, and adds the reach of each other draw of `DrawMesWin`: the frame, a floating window's 13-pixel tail, the choice cursor where it is easing to, and placed marks. Only plain, floating and the two other versatile windows put past the screen's right edge park; a window put at a negative position sits at its default place, and message windows never park vertically. A form that overlaps the screen draws whole, so slides still cross the sides, and the 4:3 picture is unchanged (`MglibAspect.MenuForms*`).
+- HUD anchoring: `gfx::UiAnchor::Side(x, y, true)` anchors a piece to a frame side, and its third argument moves the piece's scissor with it. The human dungeon status board (`port/src/object/dun/dng_status.cpp`, `DrawStatusBord`) anchors HP/items top-left and both weapons top-right, including numbers, bars, charge icons and warnings. The mini map (`port/src/object/dun/automap.cpp`, `CMiniMapSymbol::Draw`, `DrawSymbolOpen`..`DrawSymbolClose`, `DrawSymbol_Chara`) is anchored top-right and clips to its own rect. DC2 has no town clock HUD. Menus, message windows and help bars stay in the frame.
+- Parked menu panels: retail moves unused menu forms just past its 512x480 screen (the item description at x = 570 after the Make menu, the Make menu's invention cards at x = -262, the character page's 513-wide backdrop at x = -512), which a wider or taller window would show at its sides. `CMenuPosDataForm::MenuFormDraw` (`port/src/object/menu/menudraw.cpp`) measures part forms and the invention card list against the screen whenever the window shows past it in either the target's logical units (`mgPortVisibleExtent`, where depth-tested fills draw) or its UI units (`mgPortVisibleUiExtent`, where menu sprites draw at `video.ui_scale`), allowing 2 pixels of overlap. A part form wholly outside it is skipped; one that leaves retail's sliver inside, a part form with a full-screen part and the card list are drawn under `mgPortScreenClipScope`, which clips their 2D draws to the screen without extending the scissor. A message form's window is classified once `StepMsg` has laid it out and `SetPutPos` has put it, in `CDC2Mes::DrawMsg` (`port/src/object/menu/menucls1.cpp`, which wraps retail's draw through the `PortRetailDrawMsg` bridge): `MenuMessageParked` reads every laid-out character's pen from the window's table, so anything that moved the pen while laying out (number padding, spacing codes, indents, lines placed by themselves) is included, and adds the reach of each other draw of `DrawMesWin`: the frame, a floating window's 13-pixel tail, the choice cursor where it is easing to, and placed marks. Only plain, floating and the two other versatile windows put past the screen's right edge park; a window put at a negative position sits at its default place, and message windows never park vertically. A form that overlaps the screen draws whole, so slides still cross the sides, and the 4:3 picture is unchanged (`MglibAspect.MenuForms*`).
 - The full-frame rule that fills the flanks samples with clamped wrap, so a repeating texture shows no seam line at the frame's edges.
 - Copies of the frame (`mgSetPkMoveImage`: the heat haze in `sceneevent.cpp`, `map.cpp`'s screen, menu grabs) go to frame targets as 1:1 logical copies, so a grab is as wide as the window.
 - Culls: `mgPortVisibleExtent()` (`gfx::VisibleLogicalRect` of the current target, in screen units, with centred half extents and GS coordinates) replaces retail's 256/240 half extents in `mgCFrame::GetDrawRect` (`mg_frame_asm.cpp`). It also replaces them in `mgRENDER_INFO::screen_box_min`/`max`, which retail's `SetRenderInfo` sets from the screen size. `mgSetRenderInfo` is overridden to widen them, and `mgBeginFrame` refreshes them every game frame, since the window can change shape between scenes. `mgCFrame::Draw`'s `mgClipBoxW` reads them. A mesh at logical x = -40 is drawn at 16:9 and culled at 4:3 (`MglibAspect.*`). The GS guard band (2048) is unchanged.
-- The camera (`DrawTakePhoto`, `port/src/photo.cpp`) draws its black border, corner arcs and shutter on the edges of `mgPortVisibleUiExtent` and copies all of `mgPortVisibleExtent` from the frame grab into the 64x64 picture. A view wider than 4:3 keeps its shape inside the picture between black bars above and below (a taller one, at the sides), so the album, the idea board and the high-resolution copy show it unsquashed; the shot preview crops the bars and retains the captured crop and shape if the window or aspect setting changes. At 4:3, and with `video.aspect` `4:3`, the camera is retail's.
-- The dungeon floor map (`CDngFreeMap::DrawRoot` and `DrawRoomOne`, `port/src/dngmenu.cpp`) culls its rooms and passages at `mgPortVisibleUiExtent`, the visible extent in the UI units its 2D is drawn in, so floors in a wide window's flanks, or uncovered by `video.ui_scale` below 1, are drawn. Retail strokes each passage with three 1-pixel GS lines a pixel apart; each is filled as the pixel-wide band the GS covers, so a passage stays one solid stroke above 512x480 (`MglibAspect.FloorMap*`).
+- The camera (`DrawTakePhoto`, `port/src/object/character/photo.cpp`) draws its black border, corner arcs and shutter on the edges of `mgPortVisibleUiExtent` and copies all of `mgPortVisibleExtent` from the frame grab into the 64x64 picture. A view wider than 4:3 keeps its shape inside the picture between black bars above and below (a taller one, at the sides), so the album, the idea board and the high-resolution copy show it unsquashed; the shot preview crops the bars and retains the captured crop and shape if the window or aspect setting changes. At 4:3, and with `video.aspect` `4:3`, the camera is retail's.
+- The dungeon floor map (`CDngFreeMap::DrawRoot` and `DrawRoomOne`, `port/src/object/dun/dngmenu.cpp`) culls its rooms and passages at `mgPortVisibleUiExtent`, the visible extent in the UI units its 2D is drawn in, so floors in a wide window's flanks, or uncovered by `video.ui_scale` below 1, are drawn. Retail strokes each passage with three 1-pixel GS lines a pixel apart; each is filled as the pixel-wide band the GS covers, so a passage stays one solid stroke above 512x480 (`MglibAspect.FloorMap*`).
 - A layout change (`video.aspect`, `video.ui_scale`) is applied from the pump outside a recording, through `mgPortSetFrameLayout`. Letterboxing never draws or clears the bars, so a switch from `auto` to `4:3` first lets two ticks clear the main target outside the frame (one per main image, each also rendering the display image so presentation and display screenshots lose the art too) and then switches; otherwise the bars keep the last Fill frame's art (`MglibPresent.LetterboxSwitchClearsWhatFillDrewBesideTheFrame`).
 - `--window WxH` sets the window size (headless: the offscreen image's).
 - Config keys: `video.interpolation` (`true`), `video.max_fps` (`0`), `video.present_mode` (`fifo`, `mailbox` or `immediate`), `video.aspect` (`auto` or `4:3`), `video.ui_scale` (`1`), `video.show_fps`, `video.fps_detail`.
 
 ## Character motion
 
-Characters play their motions as named glTF actions (see [model format](PORT_MODEL_FORMAT.md#named-actions)). The loader gives each action of a character its own interval of game frames and hands the game's `KEY` records those intervals under the original motion names, so `CCharacter2::Step`, `SetMotion`, the `KEY`/`SE`/`SELP` handlers and every caller of them run unchanged. `SetMotionTime` and `ChangeMotion` (`port/src/gameutil.cpp`) pose the action whose interval holds the frame through `character_motion` (`port/src/character_motion.cpp`). `CreateAnimeDataEX` reports retail motion data as unsupported; native profiles never reach it. Event and extension motions take their actions from the bundle of the model the character was built from, where the exporter published them.
+Characters play their motions as named glTF actions (see [model format](PORT_MODEL_FORMAT.md#named-actions)). The loader gives each action of a character its own interval of game frames and hands the game's `KEY` records those intervals under the original motion names, so `CCharacter2::Step`, `SetMotion`, the `KEY`/`SE`/`SELP` handlers and every caller of them run unchanged. `SetMotionTime` and `ChangeMotion` (`port/src/platform/gameutil.cpp`) pose the action whose interval holds the frame through `character_motion` (`port/src/character_motion.cpp`). `CreateAnimeDataEX` reports retail motion data as unsupported; native profiles never reach it. Event and extension motions take their actions from the bundle of the model the character was built from, where the exporter published them.
 
 A model bundle holds every action its characters play, including event and extension motions, so the main characters' bundles reach tens of megabytes. The game reads a model file into its own buffer only to hand that buffer to a model loader, which finds the glTF by the buffer's registered name and reads it from the data itself; nothing reads the glTF bytes from the game's buffer. `dataread` therefore no longer copies a `.gltf` into that buffer: the file occupies one zeroed sector there, and its reported size is that sector, so game buffers and size-based allocations stay small however large the bundle is.
 
@@ -1738,7 +1730,7 @@ A game model's frame holds its whole authored transform in its matrix with unit 
 
 ## Audio
 
-The sound driver runs on Kazarov's shared audio stack. `CSound` in `port/src/sound.cpp`, with `snd_mngr.cpp`, `ezmidi.cpp` and `ezbgm.cpp`, plays through `audio::DefaultMixer()` (`tools/kazarov/include/audio/mixer.hpp`). The port has no IOP, no SIF RPC and no SPU2 path. The mixer's 48-voice synth stands in for the SPU2.
+The sound driver runs on Kazarov's shared audio stack. `CSound` in `port/src/audio/sound.cpp`, with `snd_mngr.cpp`, `ezmidi.cpp` and `ezbgm.cpp`, plays through `audio::DefaultMixer()` (`tools/kazarov/include/audio/mixer.hpp`). The port has no IOP, no SIF RPC and no SPU2 path. The mixer's 48-voice synth stands in for the SPU2.
 
 `AudioInit(bool headless)` and `AudioShutdown()` (`port/src/audio_init.cpp`) own mixer advancement and output. Interactive runs use the playback device callback. Headless runs without WAV capture register a logic-clock pump hook that renders the full mixer using cumulative sample budgets, including fractional samples and tick-rate changes. Voice levels, synth state and stream completion therefore follow game ticks. `DC2_AUDIO=off` suppresses playback but retains headless audio state.
 
@@ -1746,7 +1738,7 @@ With `DC2_AUDIO_WAV`, the existing platform WAV capture owns tick-driven mixer r
 
 ### Banks and sequences
 
-`sndLoadSound` (`port/src/snd_mngr.cpp`) loads the actual `.sound.json`
+`sndLoadSound` (`port/src/audio/snd_mngr.cpp`) loads the actual `.sound.json`
 bundle through `SoundLoadBundlePath` or its bounded-byte equivalent. Its bank,
 sequence and control documents reference their actual native files.
 `audio::Bank::CreateFromJsonCandidates` loads bank JSON and PCM WAV samples
@@ -1812,7 +1804,7 @@ When neither a device nor the headless tick mixer owns playback, `CSound::Step` 
 
 ### ezMidi
 
-The retail `CSound::Stop`, `SetVol`, `SetStereoMode` and the stream methods other than the open calls stay as they are. `StreamOpenFast`, `StreamOpenFromFPLFast` (`port/src/sound.cpp`) and `StreamOpenState` (`port/src/ezbgm.cpp`) are replaced. `ezMidi` serves the scalar commands: `0x00` play, `0x20` stop, `0x30` rewind, `0xA0` attribute, `0xB0` volume, `0xC0` stereo (1) or mono (0), `0x8090` is playing and `0x80E0` volume. The commands that carry addresses have no host equivalent. `ezMidi` traces them and returns 0.
+The retail `CSound::Stop`, `SetVol`, `SetStereoMode` and the stream methods other than the open calls stay as they are. `StreamOpenFast`, `StreamOpenFromFPLFast` (`port/src/audio/sound.cpp`) and `StreamOpenState` (`port/src/audio/ezbgm.cpp`) are replaced. `ezMidi` serves the scalar commands: `0x00` play, `0x20` stop, `0x30` rewind, `0xA0` attribute, `0xB0` volume, `0xC0` stereo (1) or mono (0), `0x8090` is playing and `0x80E0` volume. The commands that carry addresses have no host equivalent. `ezMidi` traces them and returns 0.
 
 ### Open
 
@@ -1828,7 +1820,7 @@ converted banks, sequences, and stream WAVs through the driver.
 
 ## Movies
 
-`port/src/movie.cpp` overrides `CMovie::Load` (the seven-argument overload; the other two forward to it), `Play`, `SwitchThread`, `Term`, `EndCheck` and `IsStarted`. Nothing else reaches the retail player, so its three threads, the VBlank and DMAC channel 2 handlers, the IPU and DMAC channel 3/4 register writes, `setImageTag`'s GIF chains and the IOP transfers have no caller and are dropped by `--gc-sections`, and so are the `libmpeg` stubs. One movie plays at a time, as the retail file-scope statics did.
+`port/src/video/movie.cpp` overrides `CMovie::Load` (the seven-argument overload; the other two forward to it), `Play`, `SwitchThread`, `Term`, `EndCheck` and `IsStarted`. Nothing else reaches the retail player, so its three threads, the VBlank and DMAC channel 2 handlers, the IPU and DMAC channel 3/4 register writes, `setImageTag`'s GIF chains and the IOP transfers have no caller and are dropped by `--gc-sections`, and so are the `libmpeg` stubs. One movie plays at a time, as the retail file-scope statics did.
 
 `MoviePortPath` normalizes the actual MP4 path by removing device prefixes,
 leading separators and ISO version suffixes, and folding case. For example,
@@ -1906,152 +1898,41 @@ retail `L5LOGO` cases use the converted MP4 when available.
 
 ## Layout
 
-The root `CMakeLists.txt` selects the platform: `PS2` builds `ps2/`, and `PC` enables testing and builds `port/`.
+The root CMake build selects the platform: PS2 builds ps2/, and PC enables testing and builds port/.
 
-- `ps2/src` and `ps2/include` hold the game as the PS2 build compiles it. `ps2/CMakeLists.txt` and `ps2/cmake/` are that build. Port code does not live there, except the `#ifndef PORT` guards, the `#ifdef PORT` `uptr`/`sptr` selection in `ps2/include/types.h`, the `PORT_RECORD_ASSERT` hook in `ps2/include/common.h` (compiled out on the PS2, a `static_assert` on PC via `port/include/port.h`), and the edits listed in "Keeping the PS2 build matching".
-- `port/src` holds code only the port compiles. `main.cpp` starts the game. `identity.cpp` sets the game's name and directories. `<unit>.cpp` replaces functions of `ps2/src/<unit>.cpp`. `*_asm.cpp` defines the functions `ps2/src` writes in MWCC assembly. `linknames.cpp` supplies link-time names (below). `tests/` holds the GoogleTest cases, one process per case.
-- `port/include` holds `port.h`, included ahead of every unit the port compiles, and `stubs/`, the per-unit headers (below).
-- `port/assets` holds the data the port ships beside the game's: `glyphs/`, the button symbols the build copies to `glyphs/` beside the executable (see [GLYPHS.md](GLYPHS.md)), and `icon/`, the window and package icons.
-- `tools/kazarov` is the shared-code submodule. `tools/kazarov/src/cpp` holds the code both games share: `gfx`, `audio`, `platform`, `sce` (the SDK replacements) and `tests`. `cmake/KazarovPort.cmake` gives the port its targets:
-  - `kz_port_host_library(ct_host)` builds `gfx`, `audio` and `platform`.
-  - `kz_port_sce_sources(... LIBS libvu0 libpad libmc sifdev sifrpc eekernel libcdvd libgraph libdma libpkt eekernel_threads libdev libmpeg libsdr modmsin sifdma)` selects the SDK families.
-  - `kz_port_tests(darkchronicle_tests)` adds the shared test cases.
-- `tools/windows` holds the Windows scripts. `scripts/port/header_fixups.py` builds the header mirror (below). `scripts/build/verify.py` checks the PS2 build.
+- ps2/src and ps2/include remain the matching PS2 source tree. The PC build does not compile or include files from either directory.
+- port/src and port/include contain the PC game's source, declarations, host integration, UI, and tests. Domain directories sit directly below these roots, including object/dun, object/menu, render, audio, platform, script, and video. port/src/main.cpp starts the host process; port/assets contains bundled glyphs and icons.
+- tools/kazarov is the shared-code submodule. Its renderer, audio, platform, SDK replacements, and tests are linked by the native port.
+
+port/CMakeLists.txt compiles tracked native files directly. It does not generate a mirror of ps2/include, copy ps2/src into the build directory, or select function definitions by PORT_OVERRIDE tags. The active architecture guard, scripts/port/native_architecture.py, checks native source, headers, and the compilation database for PS2 inputs, override macros, and old suffixed replacement files. NativeArchitecture.Check runs it through CTest.
 
 ### The shared-code pin
 
-The `tools/kazarov` gitlink records the shared renderer, platform, input and mixer dependency. Read its exact revision with `git ls-tree HEAD tools/kazarov`; the checkout must use that revision. Changes to the shared code land in the submodule first, on the shared code's main line. Both games that use it must build and test green on that commit before either one pins it. A game never edits a submodule checkout in place. To move the pin: land the change in `tools/kazarov`, check both games on that commit, then commit the new submodule pointer in this repository.
+The tools/kazarov gitlink records the shared renderer, platform, input and mixer dependency. Read its exact revision with git ls-tree HEAD tools/kazarov; the checkout must use that revision. Changes to shared code land in the submodule and are pinned in this repository only after both consumers have been checked.
 
-## How `port/src` takes precedence
+## Native game code
 
-A definition in `port/src` that replaces one of `ps2/src`'s is tagged `PORT_OVERRIDE`, which `tools/kazarov/include/kazarov/port.h` defines as nothing:
+Each game translation unit is owned by the port. Native implementations and retained game behavior are together in the same source file, so the linker has one definition of each function. Game declarations and PC support headers share port/include, grouped by responsibility. Decompilation matching remains confined to ps2/; native C++ can use host ownership and string types without changing retail layouts that are serialized or shared with the renderer.
 
-```cpp
-PORT_OVERRIDE void mgInit(int screen_mode, int video_mode) {
-```
+Some retained game routines still call named PortRetail helpers when a PC behavior wraps the original body. Those bodies are tracked source rather than generated copies. Configuration bridges and a few retail link-name aliases remain where native code still uses file-local game state. They should be simplified as each caller is modernized.
 
-`port/CMakeLists.txt` builds the two halves on every platform, with `PORT` and `PAL` defined:
-
-1. `tools/kazarov/scripts/build/port_override.py list` reads the tags in `port/src` and writes the name each tagged definition links under to `port/build/pc/port_overrides.txt`.
-2. `scripts/port/unit_copy.py`, run once per unit, writes a copy of each `ps2/src` unit under `<build dir>/ps2_src` (for example `port/build/windows-x64/ps2_src`) without the overridden definitions (`port_override`'s `strip_unit`), plus the preserved retail bridges described below, then with the unit fixups and long64 applied. Each copy opens with a `#line 1` marker naming its `ps2/src` source, so lines keep their numbers and diagnostics point into `ps2/src`.
-3. `port_override.py check` stops the build if a tagged name is defined by no unit of `ps2/src`, since its replacement would be unused wherever the signatures differ.
-4. The copies are compiled with `PORT` defined, and the units in `port/src` are linked with them.
-
-`unit_copy.py` also preserves the routines listed in `RETAIL_BRIDGES` under new definition names in the generated unit. It reads each body from the unstripped retail source, changes only the definition name, and appends it before the unit fixups and long64 rewrites. Calls in the original unit keep the public name, so they reach the native `PORT_OVERRIDE`; that override can add native behavior and delegate to the preserved routine. Each appended body has its own `#line` marker naming the original retail source and definition line, keeping diagnostics and debugger locations valid.
-
-`port/src/<unit>_config_bridge.inc`, when it exists, is appended to that unit's copy, so native code can reach the unit's file-local record types and statics (`menuaqua`'s prize groups, `editdebug`'s gyorace counter, `movieviewlp`'s movie table); `character_metadata_bridge.inc` is appended to `character.cpp`. `CONFIG_SEAMS` replaces only the configuration interpreter run inside a retail loader that does other work around it (`LoadSkyPack`, `CEditMap::LoadEditInfo`, `CDynamicAnime::Load`) with a call into `port/src`, keeping every line number.
-
-Use this mechanism when a native seam needs to wrap retail behavior rather than replace it, as with the camera-cut seams around `ResetViewMode` and `ResetEyeView`, the outfit-index guard around `GetRoboPartsInfo`, the chest-flag split before `UpdateTrBoxFlag`, and the Georama mouse camera before `EditMode`. Add the unit, exact signature, original name and bridge name to `RETAIL_BRIDGES`, declare the bridge's asm link name in both `port/include/stubs/<unit>.hpp` and the native caller, and call it from the public override. The bridge body is generated from retail rather than transcribed into native source; `ps2/` stays unchanged. `NativeRetailBridges` runs `scripts/port/test_unit_copy.py` through CTest, alongside the other native unit-copy Python tests.
-
-Each name then has one definition. A replacement without the tag leaves `ps2/src`'s definition in, and the link fails on the duplicate symbol. A replacement takes the signature `ps2/src` gives the function: parameter types as spelled; names and default arguments may differ. By convention a replacement goes in the file that mirrors its unit.
-
-A `static` function cannot be replaced, so its non-static callers are replaced instead. A `static` function guarded `#ifndef PORT` in `ps2/src` is the one exception, whether it is written in assembly (`collision.cpp`'s `pre_trance_normal`) or in C (`editmap2.cpp`'s `PlaneNormalXZ`). The port defines a non-static function of the same name, declared to the unit by `port/include/stubs/<unit>.hpp`.
-
-The 22 `#ifndef PORT` guards are 21 in the eight `.cpp` files that hold assembly (`collision.cpp`, `editcoll.cpp`, `editmap2.cpp`, `gameutil.cpp`, `mg_drawprim.cpp`, `mg_frame.cpp`, `mg_math.cpp` and `mg_visual.cpp`), and one in `ps2/include/sce/eekernel.h` around `ExitHandler`, which expands to `asm volatile("sync.l; ei")`. The port defines each guarded function untagged: in `port/src/*_asm.cpp`, `port/src/mg_math.cpp`, `port/src/editcoll.cpp` (`ClipBoxXZ`) or `port/src/editmap2.cpp` (`PlaneNormalXZ`).
-
-## Per-unit adjustments
-
-`port/include/stubs/<unit>.hpp`, when it exists, is included ahead of `ps2/src/<unit>.cpp`, after `port.h` and nothing else. It declares what the port defines in place of code `PORT` leaves out, and it renames or supplies what the unit takes from MWCC or from the PS2 link alone. Only the port's build sees `port/include`.
-
-The 27 native unit headers are `charasetup`, `collision`, `dataread`, `dng_event`, `dng_main`, `dngfloor`, `dngmenu`, `editctrl`, `editmap2`, `editmenu`, `effect`, `event`, `event_func`, `gamepad`, `gameutil`, `inventmn`, `mainloop`, `menudraw`, `menumain`, `menuop`, `menusys`, `mg_frame`, `mg_math`, `mglib`, `nowload`, `photo`, `title`. `mg_dataset` declares the `CopyFrame` bridge. Their link-name bridges and native caller declarations remain outside retail source.
-
-## Header fixups
-
-`scripts/port/header_fixups.py` mirrors `ps2/include` into `port/build/pc/ps2_include` before the units compile, with these textual fixups. The game's headers include each other with quotes, so the port compiles against the mirror.
-
-- `dng_event.hpp`: `CRedMarkModel::Draw` is declared `int`, not `void`.
-- `dng_hud.hpp`: `CLockOnModel::Draw` is declared `int`, not `void`.
-
-MWCC accepts a `void Draw()` that hides the base's `int Draw()` and gives it a new vtable slot. clang rejects that, and no standard spelling keeps the PS2 vtables. The `int` declarations make the two draws overrides instead. This is an accepted difference. The port's definitions (`port/src/dng_event.cpp`, `port/src/dng_hud.cpp`) are real bodies that return 0; the `int` return type is the whole fixup.
-
-- `editmap.hpp`: `CEditMap::house` and `RemoveInfo::house_npc` are pointers, and `CEditMap` declares `PortRetailClearAllParts`, the retail bridge the town clear calls (see "Georama limits").
-- `collision.hpp`: `CCPOLY_PARTS_EDIT` is `0x8000` and `CCPOLY_PARTS_SLOT_MASK` `0x7FFF`, so collision polygons name Georama slots above 4095.
-- `editmenu.hpp`: `CMenuGeorama::place_no`, `place_name`, `placed_list` and `house_list` are pointers to the port's vectors, set to `NULL` by the constructor in place of its four `memset`s.
-- `dngmenu.hpp`: `CMenuTreeMap` declares `PortRetailStep` and `PortRetailDraw`, the retail bridges that the floor monster list's `Step` and `Draw` seams call (see "How `port/src` takes precedence").
-- `scenesnd.hpp`: `CScene` declares `PortRetailDeleteMap`, the retail bridge the map delete calls after it releases the event handles into the map (see "Event handles across a map change").
-- `nd_meswin.hpp`: `#ifndef MES_WINDOW_OUT_OF_LINE_INIT` becomes `#if 1`, so `ClsMes::Init` is inline in every unit. `dngmenu.cpp`'s out-of-line copy was a strong definition and collided with the COMDAT copies on COFF.
-- `collision.hpp`: `memset` takes `static_cast<void *>`, because `mgVu0FBOX` is not trivially copyable and `-Wnontrivial-memcall` rejects it.
-- `mapload.hpp`: `CFuncPoint` gets a memberwise copy assignment on its constructor's line. `InventData`'s `mgVu0FBOX` makes the union's implicit copy deleted under clang; MWCC generated it, and `CFuncPointMngr::GetLight` and `CMap::GetCharaLight` assign points with it. Retail's bodies then compile unchanged.
-- `sce/eekernel.h`: `CreateThread`, `TerminateThread` and `GetThreadId` get the asm link names `Ps2CreateThread`, `Ps2TerminateThread` and `Ps2GetThreadId`, because kernel32 exports the unprefixed names.
-- MWCC-only `#pragma cpp_extensions ...`, `#pragma push` and `#pragma pop` lines are blanked, keeping the line count. `port/src` builds with `-Wall` and without `-Wno-unknown-pragmas`, so they cannot stay.
-
-Headers then go through the long64 rewrite (see "Decision 1: long64 is kept").
-
-Each fixup's text must occur exactly once in its file, or the script stops before it writes anything.
-
-### Unit fixups
-
-`unit_copy.py` applies the unit fixups (`header_fixups.fixup_unit_text`) to each `ps2_src` copy after the override strip and before long64:
-
-- `editeff.cpp` and `editmap.cpp`: the identical inline `CMapParts::CMapParts()` copies are blanked, so `map.cpp`'s out-of-line definition is the only one. COFF has no inline-versus-strong resolution.
-- `dng_debug.cpp`: `CTreasureBox::Initialize()` becomes `inline`. `CTreasureBox`'s vtable becomes COMDAT with it.
-- `dngmenu.cpp`: the floor list's debug panel prints a room's four next-floor IDs into a `FONT_STR_MAX`-byte line. Retail's 32 bytes cannot hold even one-digit IDs and the terminator. In the Windows Release build the overflow reaches the panel font's string, and copying the line into it runs off the stack.
-- `pbuggy.cpp`: the train fight reads the player's and the bomb carrier's motion frames through `PortBuggyRetailFrame` (`port/src/pbuggy.cpp`). It takes the bomb at frame 15 of the lift, throws it at 44 and reloads it at 18 and 30.9, retail frames of motions that start at 11, 38 and 9 in retail's `info.cfg`. Native motion sets lay their motions out back to back from frame 2, so the lift and throw started at 367 and 400 and the bomb was never taken.
-- `menusys.cpp`: closing the item overflow notice resets `TrushMesCls` with a range loop and `nullptr`, bounded by its four message slots. Retail's reset writes eight pointers, corrupting adjacent PC state and hiding dungeon overlays until the next floor. The array size and all other message handling stay unchanged.
-- `nowload.cpp`: `SCElogoFade`'s fade loop also stops on `PortSkipIntro()` (`game.skip_intro`), keeping the language select and the title image load.
-- `menuop.cpp`: `CMenuOption::KeyStep` moves the cursor's `op_cursorlimmit` bottom (y 274) down to the selected row's place in the settled list through `PortOptionCursorBottom` (`port/src/menuop.cpp`). Retail PAL settles the ninth shown row at 288, so on the last shown row its cursor and frame stopped between the last two rows.
-- `inventmn.cpp`: the native copy removes `inline` from `CMenuInvent::CMenuInvent()` so callers in other units have one emitted constructor. Retail source retains its original spelling.
-- `charasetup.cpp`: `mem_table`'s character model stacks take 12000 more quadwords each (see "Arenas").
-- `editinfo.cpp`: every Georama part definition's `max_num` is 9999; `editmenu.cpp`: the build menu clamps a part's limit to 99 before quadrupling it, and every town's Georama menu hides the polygon counter (`POLYOF`) (see "Georama limits").
-- `dng_main.cpp` and `editloop.cpp`: the frame work stacks `BuffWorkData` and `WorkBuffer` hold 10000 `mgSORT_PACKET`s rather than 10000 quadwords, since each sorted packet and its draw-table slot grow with pointer width. The town's total data buffer gives up the difference.
-
-Each unit fixup's text must also occur exactly once; missing, duplicate and already-transformed constructor text is rejected by `NativeUnitFixups`.
-
-## Names the PS2 build renames
-
-The PS2 link binds some names through the object fixups and the linker script, not through the source. The port reproduces each one:
-
-- `stubs/dng_main.hpp` renames `MainBuffer`, `BuffWorkData` and `EventCamera` to their `__2` retail names.
-- `stubs/event_func.hpp` renames `VectMatMul` to `VectMatMul__2`.
-- `stubs/dataread.hpp` and `stubs/mglib.hpp` rename `Exit__2` to `Exit`. Retail's `Exit__2` is a separate symbol; the port terminates through the SDK's `Exit`.
-- `port/src/linknames.cpp` defines the VU microprogram placeholders `My_dma_start0`, `Vu_progmain`, `Vu_prog0`, `Vu_prog_sdw`, `Vu_prog_3dsp` and `Vu_prog_wtr`, and `_gp`. The retail microcode lives only in the retail ELF's `.vutext` and `.vudata`. The placeholders keep the addresses the game stores resolvable.
-- `port/src/cameracontrol.cpp` defines `CameraCtrlParam::operator=`, which retail has only as assembly.
-- `port/src/menudraw_primquad.cpp` forwards `PrimQuad<float>` and `PrimQuad<int>` to retail's `PrimQuad_f_` and `PrimQuad_i_`, since the template has no definition.
+The build still defines PORT for SDK and host selection and uses explicit native compatibility flags for retained game code. These are independent from the retired override and source-copy pipeline. The PS2 source tree is not changed by native fixes.
 
 ## Windows link
 
-- `-Wl,--allow-multiple-definition` stays only as a guard. The eekernel.h fixup gives the PS2 kernel's three thread calls their own link names, so they no longer shadow KERNEL32's import thunk. The Windows link now reports no duplicate symbols.
-- `-Xclang -mno-constructor-aliases`: a constructor alias points C1 into a COMDAT section that lld discards under `--allow-multiple-definition`.
-- `-municode` and a `wmain` forwarder: the arguments arrive as UTF-16 and are converted to UTF-8.
-- `port.h` supplies `index()` for mingw, whose `<strings.h>` has none; the PS2 libc's `index()` is `strchr()`.
-- `u_long` is 64-bit on the host (`port.h` defines it as `u64`). The long64 rewrite makes the retail `unsigned long` 64-bit on Windows too (see "Decision 1: long64 is kept").
-
-## The stub list
-
-`PS2_UNIMPLEMENTED()` prints the function and source location and aborts. The generated [stub inventory](port/stubs.md) counts **2 game bodies** and **89 SDK bodies** at the current shared-code pin, including unreachable source. Disassembly of the Windows release executable has **one direct call or tail-call caller**, `sgLoopGyoRace(SubGameInfo*)`. The other game stub, `GetScrPad`, is unreachable and removed by section collection. Native rendering does not use scratchpad storage.
-
-Chapter setup, `CMenuItemUse::UseItem`, pad capture/play/save/load, `sceCdSearchFile`, advisory `sceCdSeek`, `sceMcRename`, `scePadEnd` and `scePadPortClose` are implemented. Disc lookup uses extracted files rather than a disc device; seek accepts an advisory preload hint and does not perform disc I/O. The SDK source inventory still includes interrupt/DMAC handlers, unsupported SIF/IOP operations, device control and unused disc reads. These are distinct from the successful host substitutes.
-
-Assembly replacements in `collision_asm.cpp`, `editcoll.cpp`, `editmap2.cpp`, `gameutil_asm.cpp`, `mg_drawprim_asm.cpp`, `mg_frame_asm.cpp`, `mg_math.cpp` and `mg_visual_asm.cpp` contain no abort-stub bodies. `SendDMA` is empty because native draws submit through Vulkan. `mgCVisualMDT::SetMaterialRef` returns 0 for replaced packet-builder callers, and `mgSendPacket` flips bookkeeping buffers. The retail movie player is replaced by the native video pipeline.
-
-Regenerate source counts with `python scripts/port/stub_inventory.py`. Add `--binary <executable> --objdump <objdump>` to include linked caller names. A source count alone does not establish reachability.
+The executable is position independent and can use addresses above 4 GiB. Windows retains lld's multiple-definition tolerance for remaining retail-origin inline definitions; these should be resolved at their declaration sites. Windows arguments arrive as UTF-16 and are converted to UTF-8 by the host entry point. The native u_long compatibility spelling is 64-bit where game data requires it.
 
 ## Hardware audit
 
-Grep for hardware addresses and registers in the unit copies:
-
-```sh
-grep -nE "0x1[0-2][0-9A-F]{6}\b|0x7000[0-9A-F]{4}|0x20000000|0x0FFFFFFF|DmaCH[0-9]|D_STAT|D_CTRL|IPU_|T0_(COUNT|MODE)" port/build/pc/ps2_src/*.cpp
-```
-
-It gives 137 hits:
-
-- 105 are constants or names that only look like hardware.
-- 1 is a comment.
-- 21 are packet-tag writes.
-- 10 are real hardware accesses, none of them linked. `mg_visual.cpp`'s `SendDMA` body is under `#ifndef PORT`, and its replacement is empty. In `movie.cpp`, none of the retail player survives the link (see "Movies").
-
-`GetScrPad` (`port/src/mg_visual.cpp`) has a `PS2_UNIMPLEMENTED` body, but it is not in the linked binary: nothing reachable calls it. The retail scratchpad paths of the five `CreateRenderInfoPacket` functions (`mgC3DSprite`, `mgCShadowMDT`, `mgCVisualMDT`, `mgCVisualPrim`, `CWater`) call it; nothing in `port/src` does.
-
-`nm` of the executable shows no unresolved hardware symbol. The hardware-named definitions are Kazarov `sce` replacements or game code that is not `PS2_UNIMPLEMENTED`.
+The native renderer submits through Kazarov's graphics API. Source-level PS2 packet and DMA paths are removed when call-site and linked-symbol checks show they are unused; host movie playback likewise replaces the retail MPEG and IPU reader. Inspect the tracked port/src tree for hardware register accesses rather than an obsolete generated source copy. scripts/port/stub_inventory.py reports remaining unimplemented game and SDK calls; source counts alone do not establish reachability.
 
 ## Pointers and 32-bit integers
 
-Pointers are 64-bit on PC, and the arenas lie above 4 GiB (see "Arenas"). An address the game keeps in a 32-bit integer is truncated. `docs/port/truncations.md` is the per-site table of every cast of a pointer to a narrower integer in `ps2/src`, `port/src` and their headers. `scripts/port/truncations.py` writes it.
+Pointers are 64-bit on PC, and the arenas lie above 4 GiB (see "Arenas"). An address kept in a 32-bit integer is truncated. `scripts/port/truncations.py` audits the native compile inputs and writes the per-site table in `docs/port/truncations.md`.
 
 ### The types
 
-`ps2/include/types.h` defines `uptr` and `sptr` as `__UINTPTR_TYPE__` and `__INTPTR_TYPE__` under `PORT`, and as `unsigned int` and `int` on the PS2. Every operation compiles to the same instructions on the PS2 except the signed-sensitive ones.
+`port/include/types.h` defines `uptr` and `sptr` from Kazarov's native pointer-width aliases, and `s8`, `u8`, `s16`, `u16`, `s32`, and `u32` from standard fixed-width types. Serialized records keep their explicit on-disc widths.
 
 ### The policy
 
@@ -2059,98 +1940,31 @@ Pointers are 64-bit on PC, and the arenas lie above 4 GiB (see "Arenas"). An add
 
 `sptr` is used only where the integer is compared with `<`, `>`, `<=` or `>=`, shifted right, divided or reduced modulo, converted to `float` or `double`, widened into a 64-bit `long` or `u_long`, or stored in a signed field and so used. It is used only where the original type was signed. An original unsigned type becomes `uptr` everywhere.
 
-Parameter types never change, because they are part of mangled names. Declarations that are already pointers are not touched. Pointer arithmetic is not rewritten as integer arithmetic.
+Native function parameters can use types that express their actual values; retained game ABI boundaries require matching declarations. Declarations that already carry pointers remain pointers. Pointer arithmetic is not rewritten as integer arithmetic.
 
 ### Records
 
 Structs read from a file in place keep their 32-bit offsets and never take `uptr`. The inventory is `docs/port/records.md`: 598 structs with a `STATIC_ASSERT`, of which 65 are records and 533 are runtime. 57 records keep the disc layout and carry `PORT_RECORD_ASSERT`; `DATA_HEADER` is PS2 only (the host index replaces DATA.HD4); the seven save-image structs that hold `USER_PICTURE_INFO::image` are host layout on PC, sized by sizeof in memcard.cpp. `scripts/port/records.py` checks the table, the asserts, the host sizes and that no asserted record has a pointer member (ctest `Records.Check`).
 
-`funcdata::name` (`ps2/include/runscript.hpp`) is the one pointer-typed declaration changed, a documented exception to the uptr rule that a declaration already typed as a pointer never changes: retail declares it `char *`, but in the `.stb` record it is a 32-bit field the script compiler writes as 0 in every disc script and retail never resolves, so it is `u32`, which keeps `local` and `arg` at their disc offsets 8 and 12 on PC. The error messages in `runscript.cpp` print it through `(char *) (uptr)`.
+`funcdata::name` in the native `runscript.hpp` is a 32-bit disc field, even though retail declared it as a pointer. The script compiler writes zero there and the game never resolves it; keeping the field at four bytes preserves the offsets of `local` and `arg`.
 
-`PORT_RECORD_ASSERT(expr)` in `port/include/port.h` is a `static_assert` on PC. `ps2/include/common.h` defines it empty for the PS2.
+`PORT_RECORD_ASSERT(expr)` in the native declarations is a `static_assert` on PC. The PS2 source retains its own record declarations and assertions unchanged.
 
-### Strides and hand-counted sizes
+### Strides and allocations
 
-A hand-written stride is rewritten as indexing only where `verify.py` stays identical.
-
-| Function | Unit | State |
-|---|---|---|
-| `mgCTextureManager::SearchHash` (`hash_table[bucket]`) | - | indexed, landed |
-| `CEditGrid::GetFast` (`&data[x + y * num_x]`) | - | indexed, landed; correct on PC as it stands |
-| `mgCTextureManager::Initialize` (blocks `<< 4`, `hash_table` `<< 2`) | `port/src/mg_texture.cpp` | native override uses typed pointer tables and block slots |
-| `mgCTextureManager::SetTableBuffer` | `port/src/mg_texture.cpp` | stride fix; the port override keeps the indexing |
-| `mgCTextureAnime::NewTexAnimeGroupData` (`(group << 2) + this + 0x64`) | `port/src/mg_tanime.cpp` | native override appends to `list[group]` while retaining the retail stride source |
-| `CScene::ClearStack` (`(u8 *) this + 8 + i * 4`) | `port/src/scene.cpp` | native override walks `stack[i]` while retaining the retail stride source |
-| `mgCDrawManager::BeginDraw`, `ClearTable`, `PreEndDraw` (pointer tables sized `n / 4 + 1` quadwords and cleared as `int`s) | `port/src/mg_drawprim.cpp` | stride fix: the overrides size the tables by `sizeof` and clear them as pointers |
-| `mgRENDER_INFO::GetPlight` (`index * 0x30 + ... + 0x90`) | - | retail stride remains valid because `mgLIGHT_INFO` contains floats only |
-| `CRepairManager::Generate` (`slot * sizeof(mgCMemory)`) | - | retail sizeof-based runtime stride remains valid |
-| `CAutoMapGen::CreatTermParts` | - | correct on PC as it stands |
-| `_SWE_SET_COLOR`, `_SWE_SET_TEXTURE`, `_SWE_START_EFFECT` (`(slot << 2) + chara + offsetof(sword_effect)`) | `event_func.cpp` | scene event bindings in `port/src/event.cpp` use the native pointer array; the byte-matched PS2 handlers remain intact |
-| `CVillagerMngr::GetAppearVlgr` (`time * sizeof(void *) + schedule + offset + 8`) | `port/src/villagermngr.cpp` | stride fix |
-| `mgCMemory::SetHeapMem`, `mgCMemory::StartStackMode` | `port/src/mg_memory.cpp` | stride fix; kept |
-
-Hand-counted allocation sizes are rewritten with `sizeof` and are byte-identical: the script stacks in `SetActionScript`, `SetEffectScript` (stack), `SetEventScript` and `SetMonsterScript` (`(sizeof(RS_STACKDATA) * N + 15) / 16` and `(sizeof(RS_CALLDATA) * N + 15) / 16`), `mgCDrawManager::AddPacket` (`(sizeof(mgSORT_PACKET) + 15) / 16`), and `mgCVisualMDT::CopyMDTDataPointer` (`material_num * (int) sizeof(mgMaterial) / 16`).
-
-### Override pairs
-
-An address passed through an `int` parameter is fixed by replacing the callee and its callers on PC.
-
-| Callee#param | Callers |
-|---|---|
-| `ezMidi(int, int)`, arg 2 | `CSound` |
-| `ezBgm(int, int)`, arg 2 | `CSound` |
-| `CSound::LoadHdBd`, `CSound::LoadHdBdAdd`, args 2 and 4 | `sndLoadSound` |
-| `CSound::LoadHdBd2`, args 2 and 4 | `CSound::LoadHdBd` |
-| `CSound::LoadSeq`, arg 2 | `sndLoadSound` |
-| `align_size(u_int, u_int)` | `InitFileCache`, `LoadFileCacheBG` (both already replaced in `port/src/dataread.cpp`) |
-
-### Other corrections
-
-`SPI_STACK::operator=` copies `value.string`, the widest member, instead of `value.integer`. String arguments of every cfg script lost their upper half.
-
-`CScriptInterpreter::GetArg` is replaced in `port/src/scriptinterpreter.cpp`. It accumulates arguments in native strings, preserves quoted empty strings and escape handling, and checks emptiness before inspecting a closing quote. A missing argument no longer indexes before its buffer or wraps through a 32-bit offset.
-
-### What is left
-
-- The generated [truncation table](port/truncations.md) records 14 counted narrowing sites in compiled `ps2/` code, in three units:
-  - `menusys.cpp`, 1: the save record `CMenuSystemData::item_cursor`.
-  - `mg_visual.cpp`, 1: packet and DMA tag words. The port builds and sends no packets (see "Packets").
-  - `movie.cpp`, 12: DMA, IPU and IOP addresses. The sites are compiled but unreachable: `viBufRestartDMA`, `viBufGetTs` and the `AudioDec` functions (`audioDecCreate`, `audioDecPause`, `audioDecResume`, `audioDecSendToIOP`, `iopGetArea`) are called only through `CMovie::Load`, `Play` and the threads and callbacks they start, which the port replaces (see "Movies").
-- 18 more are benign: low bits (`& K`), residues (`% K`) and differences of two addresses.
-- 38 counted sites sit in replaced functions.
-- 65 literal placement-new runs stay as they are; the placement operators in `mg_memory.cpp` grow them at run time.
-- Native `SetEffectScript` reserves call storage with rounded-up native sizes and 64-byte alignment in `port/src/effscript.cpp`. `CreateEffSpt` and `AssignCharacter` reserve native character/copy storage and alignment before entering an arena gap. Disc records remain fixed-width.
-- Open round trips in linked code: 0. All eight that were open are closed by the conversion, and so is `MenuCalcBufAlignment`'s, which crashed `LoadGameDataAnalyze`.
+Native source uses sizeof and typed indexing for runtime pointer arrays and arena objects. The rendering manager, texture manager, sound loaders, and script stacks have explicit native allocation sizes. Tests cover representative arena placement, character memory budgets, texture animation, password groups, and script argument storage.
 
 ### The check
 
-```sh
-tools/kazarov/scripts/kazarov shell python3 scripts/port/truncations.py --build port/build/pc --check
-tools/kazarov/scripts/kazarov shell python3 -m unittest scripts/port/test_truncations.py
-```
-
-`truncations.py` runs libclang over `compile_commands.json` and parses each `ps2/src` unit as compiled. Header fixups and long64 are applied in memory, so replaced functions are seen too.
-
-`--check` fails on:
-
-- a stale `docs/port/truncations.md`;
-- an open round trip in linked code;
-- a narrowing site in compiled code with no `NARROWING_OWNER` entry;
-- a stale `PHASE_OF` entry.
-
-The ctest case is `Truncations.Check` (Linux; it skips when `clang.cindex` is missing). `scripts/port/test_truncations.py` covers the classifier. `--worklist FILE` writes the per-site TSV used for the conversion. `--verbose` prints libclang diagnostics; all of them are in replaced bodies.
-
-The checker sees casts and implicit conversions. It does not see an address copied through an int member of a union; `SPI_STACK` was found at run time.
-
-The tests are `port/src/tests/uptr_test.cpp` (`Uptr.*`). They cover pointer width, an address above 4 GiB through `(u_char *) ((uptr) p + ofs)`, through `MenuCalcBufAlignment`, through a `uptr` field and through a `uptr` return.
+Run scripts/port/truncations.py with --build pointing to a configured native build and --check to compare docs/port/truncations.md. The checker reads compile_commands.json, classifies narrowing conversions, and reports linked native inputs. Truncations.Check runs the same audit in CTest when libclang is available. Uptr tests check native width and address round trips above 4 GiB.
 
 ## Memory safety
 
 On PC, script strings have no length cap, and datapacks can replace any script. The fixed-size fields and tables that retail fills from script, save and player data are therefore replaced or guarded. [The memory safety audit](port/memory_safety.md) lists every site: replaced, guarded and still open.
 
-- `port/src/bounded_text.hpp` reads and writes the game's terminated text fields bounded by their size, without splitting a Shift-JIS character.
-- `port/src/script_guards.cpp` holds argument rules (index ranges, string lengths, argument caps) keyed by handler function. `CRunScript::ext` refuses an external that breaks one. `CScriptInterpreter::GetNextTAG` skips a tag handler or caps its argument count. A refusal is reported once per handler as `script guard: ...`.
-- The effect-script loader (`port/src/effect.cpp`) owns its open emitter in a `std::unique_ptr`. This is the one manual `new`/`delete` pair in `ps2/src`.
+- `port/src/text/bounded.hpp` reads and writes the game's terminated text fields bounded by their size, without splitting a Shift-JIS character.
+- `RunArguments` and `TagArguments` carry checked slot extents, kinds, text provenance, and writable outputs. Script and configuration dispatch reject malformed invocation data. Retained text has an explicit owning copy or a checked allocation lease.
+- The native effect-script parser stages owned emitters and publishes checked host-sized objects; reset and unlink paths retire associated script state before releasing its arena storage.
 - The binary script reader (`GetArgBin`, `SearchCommand`) stays inside the script and the 64-slot argument stack.
 - Item names, photo and memo titles, the Sphida score name, the treasure and item tables, `MotionProc2`'s deform buffer, the effect-list names and `GetCurrentDir` are bounded native replacements.
 
@@ -2158,7 +1972,7 @@ On PC, script strings have no length cap, and datapacks can replace any script. 
 
 ## Keeping the PS2 build matching
 
-Every retail source edit requires the complete PAL byte-identity check. Native-only code shaping belongs in the header/unit mirror, and host replacements belong in `port/src` through `PORT_OVERRIDE`. The current source changes relative to the native-port baseline cover these ten files:
+Every retail source edit requires the complete PAL byte-identity check. This migration makes no edits to `ps2/`; native changes live in tracked files under `port/`. Earlier retail source edits relative to the native-port baseline covered these ten files:
 
 | File | Individual exception and PS2 constraint |
 |---|---|
@@ -2173,12 +1987,11 @@ Every retail source edit requires the complete PAL byte-identity check. Native-o
 | `ps2/src/nowload.cpp` | The memory-manager copy view uses `sizeof(mgCMemory)`, preserving the native stack state and original retail extent. |
 | `ps2/include/scenesnd.hpp` | Motion-blur alias padding uses `offsetof(CFadeInOut, blur_alpha)` with `<cstddef>`, preserving the retail offset while following the native texture pointer's growth. |
 
-`ps2/src/inventmn.cpp` retains the original `inline CMenuInvent::CMenuInvent()` spelling. Only the native build copy removes `inline` through the exactly-once unit fixup. Constructor restoration and every subsequent retail source edit require a fresh check of the integrated PS2 tree; native tests do not qualify that tree.
+The PS2 tree retains its original inline constructor spelling. Native declarations can choose a separate standard C++ spelling without changing the PS2 build. Every subsequent retail source edit requires a fresh check of the integrated PS2 tree; native tests do not qualify that tree.
 
 Existing base-build accommodations also remain: declaration order in `mg_tanime.hpp`; split initializations and switch scopes in menu/edit/title/message units; the named fishing union; enum casts in inventory and texture-animation arithmetic; `u_long` spelling in memory-card and TEX0 calls; target-width address types; and assembly guards. SDK prototypes under `ps2/include/sce` retain the game's transcriptions, with shared implementations adapting to the included prototypes. Disc records keep their 32-bit layout.
 
-Retail's own mistakes stay in `ps2/src`, because the match reproduces them. The port gives them defined behaviour instead, through flags `ct_ps2` sets in `port/CMakeLists.txt`: `-ftrivial-auto-var-init=zero`, `-fno-strict-return`, and `-fno-strict-aliasing` with `-fwrapv`.
-Where retail reads a variable before setting it or falls off the end of a non-void function, `ps2/src` states the port's value with `PORT_INIT(value)` on the declaration or `PORT_RETURN(value)` before the closing brace. `common.h` defines both as nothing for the PS2 build; `kazarov/port.h` turns them into an initializer and a return.
+Retail's matching behavior remains in `ps2/src`. Native code expresses its own initial values and returns directly. The native game target still has `-fwrapv`, `-ftrivial-auto-var-init=zero`, and `-fno-strict-aliasing`; removing these requires the explicit arithmetic, initialization, and aliasing evidence described in the [memory safety ledger](port/memory_safety.md). These flags are open work, not proof that the modernization is complete.
 
 Configure `-DCT_PAL_TIMING_BASE=<ref>` to register `PalTiming.Ps2Identity`.
 An unavailable supplied baseline fails the test; with no supplied baseline the
@@ -2211,6 +2024,6 @@ After any edit to `ps2/`, run `./build.sh ps2-pal`, then `BUILD_DIR=build/pal py
 
 ## Presentation matrix
 
-`scripts/port/matrix.py` compares logical-frame PSNR across resolutions, plain and `--display-per-tick 4` identity, and letterbox geometry. Below-35 dB PSNR is advisory unless `--psnr-gate` is supplied; run failures, display-per-tick pixel differences and letterbox failures are hard failures. There are no HUD probe claims.
+`scripts/port/matrix.py` compares logical-frame PSNR across resolutions, plain and `--display-per-tick 4` identity, and letterbox geometry. Below-35 dB PSNR is advisory unless `--psnr-gate` is supplied; run failures, display-per-tick pixel differences and letterbox failures are hard failures. Side bars must be exactly black. The letterbox frame may differ from Fill at the frame's size by at most two colour values on at most 0.05% of pixels. There are no HUD probe claims.
 
-Each fresh run explicitly disables debug in its config and removes `DC2_JUMP`, `DC2_GIVE` and `DC2_FAST_LOAD` from the launch environment. It records the exact process exit status, duration, binary/input hashes, launch config hash, saved config hash, frame count, window, aspect, data path and display-per-tick mode in `result.json`. `--no-run` requires matching identities and retains a failed or timed-out status even when a PNG exists. Changing extracted data in place is outside this provenance check; use the same verified extraction for comparisons. `Matrix.Title` and `Matrix.Costume` carry `matrix;gpu` labels. `Matrix.Runner` checks the runner synthetically without game data or a device.
+Each fresh run writes `config.json` beside its `save/` directory, where the game reads it, explicitly disables debug, and removes `DC2_JUMP`, `DC2_GIVE` and `DC2_FAST_LOAD` from the launch environment. It records the exact process exit status, duration, binary/input hashes, launch config hash, saved config hash, frame count, window, aspect, data path, explicit launch arguments and display-per-tick mode in `result.json`. `--no-run` requires matching identities and retains a failed or timed-out status even when a PNG exists. Changing extracted data in place is outside this provenance check; use the same verified extraction for comparisons. `Matrix.Title` captures the visible title before its scripted Start press; `Matrix.Costume` starts at the title, selects New Game and captures the Select Costume menu. Both carry `matrix;gpu` labels. `Matrix.Runner` checks the runner synthetically without game data or a device.
