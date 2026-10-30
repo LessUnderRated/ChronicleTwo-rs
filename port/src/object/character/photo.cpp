@@ -335,7 +335,6 @@ void DrawTakePhotoSystem(int texture, CInventUserData *user_data) {
 #include "render/renderer.hpp"
 #include "render/texture_runtime.hpp"
 #include "snd_mngr.hpp"
-#include "stubs/photo.hpp"
 #include "userdata.hpp"
 
 namespace {

@@ -3,6 +3,7 @@
 
 #include <libvu0.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
