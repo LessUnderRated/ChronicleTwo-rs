@@ -327,14 +327,14 @@ void CSphida::SetUp(int arg) {
     box.max[3] = 1.0f;
     box.min[3] = 1.0f;
 
-    *reinterpret_cast<u_long128 *>(from) = *reinterpret_cast<u_long128 *>(this->ball_pos);
-    *reinterpret_cast<u_long128 *>(to) = *reinterpret_cast<u_long128 *>(this->ball_pos);
+    std::memmove(from, this->ball_pos, sizeof(float) * 4);
+    std::memmove(to, this->ball_pos, sizeof(float) * 4);
     from[1] += 18.0f;
     to[1] -= 18.0f;
     count = DngMainScene->GetColPoly(polys, box, 0x80);
 
     if (CheckHit(polys, count, from, to, hit, 1, 0xC) >= 0) {
-        *reinterpret_cast<u_long128 *>(this->ball_pos) = *reinterpret_cast<u_long128 *>(hit);
+        std::memmove(this->ball_pos, hit, sizeof(float) * 4);
     }
 
     this->ball_pos[1] += 3.0f;

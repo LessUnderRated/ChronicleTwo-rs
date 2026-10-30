@@ -6,7 +6,7 @@ FetchContent_Declare(googletest
     URL https://codeload.github.com/google/googletest/tar.gz/refs/tags/v1.18.0
     URL_HASH SHA256=6e3191c1455468b3fc35a417fb565c1c5071aee1b7e7f85e30cf48a98d37d8b5
     DOWNLOAD_EXTRACT_TIMESTAMP FALSE
-    FIND_PACKAGE_ARGS NAMES GTest)
+    FIND_PACKAGE_ARGS 1.18.0 EXACT NAMES GTest)
 set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
 set(BUILD_GMOCK OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
@@ -21,6 +21,10 @@ add_test(NAME NativeArchitecture.Check
 
 file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*_test.cpp)
 add_executable(darkchronicle_tests ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp ${TEST_SOURCES})
+if(WIN32)
+    include(${KZ_ROOT}/cmake/KazarovWindowsRuntime.cmake)
+    kz_windows_runtime_post_build(darkchronicle_tests)
+endif()
 # Decoder fixtures remain available in tests without linking proprietary texture decoding into the game.
 target_sources(darkchronicle_tests PRIVATE ${KZ_ROOT}/src/cpp/gfx/tim2.cpp)
 set_target_properties(darkchronicle_tests PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})

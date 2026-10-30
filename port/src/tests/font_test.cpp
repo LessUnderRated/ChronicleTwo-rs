@@ -217,3 +217,30 @@ TEST(FontPortGpu, SharpDrawingKeepsRetailLayoutAndLineBreaks) {
         EXPECT_LE(right.x, 48.0f);
     }
 }
+
+TEST(FontTags, BoundedUnicodeTagsRejectEveryTruncatedPrefix) {
+    FontState state;
+    LanguageCode = LANG_FRENCH;
+    constexpr std::array<char, 9> tag{'[', 'U', 'N', 'I', '0', '0', 'a', '1', ']'};
+    const std::string_view        complete(tag.data(), tag.size());
+    EXPECT_EQ(dc2::font::AlphabeticalCode(complete), 0x5E);
+    for (std::size_t size = 0; size < tag.size(); ++size) {
+        EXPECT_EQ(dc2::font::AlphabeticalCode(complete.substr(0, size)), 0);
+    }
+    EXPECT_EQ(dc2::font::AlphabeticalCode("[UNI00a1x"), 0);
+    LanguageCode = LANG_ENGLISH;
+    EXPECT_EQ(dc2::font::AlphabeticalCode(complete), 0);
+}
+
+TEST(FontTags, AccentAliasesPreserveTheirCanonicalGlyphs) {
+    FontState state;
+    LanguageCode = LANG_FRENCH;
+    constexpr std::array<std::pair<std::string_view, std::string_view>, 5> tags{
+        {{"[UNI011d]", "[UNI00e8]"}, {"[UNI0129]", "[UNI00ea]"}, {"[UNI0155]", "[UNI00e0]"}, {"[UNI0171]", "[UNI00fb]"}, {"[UNI017f]", "[UNI00f9]"}}
+    };
+    for (const auto &[alias, canonical] : tags) {
+        const auto expected = dc2::font::AlphabeticalCode(canonical);
+        ASSERT_NE(expected, 0);
+        EXPECT_EQ(dc2::font::AlphabeticalCode(alias), expected);
+    }
+}

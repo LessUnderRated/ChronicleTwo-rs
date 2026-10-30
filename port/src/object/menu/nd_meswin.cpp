@@ -1989,7 +1989,7 @@ void ClsMes::MakeMesWinTbl_str(const char *input, int *x, int *y) {
             return;
         }
         suffix = &str[position];
-        gaiji_no = length - position >= 9 ? GetAlphabeticalFontNo_cp(suffix) : 0;
+        gaiji_no = length - position >= 9 ? dc2::font::AlphabeticalCode(std::string_view(suffix, static_cast<std::size_t>(length - position))) : 0;
 
         if (0 < gaiji_no) {
             SetMesWinTbl(gaiji_no, *x, *y);
@@ -3320,7 +3320,7 @@ void ClsMes::NeedMesWinWH(const char *text) {
             }
             cursor = message + position;
 
-            if (length - position >= 9 && 0 < static_cast<u16>(GetAlphabeticalFontNo_cp(cursor))) {
+            if (length - position >= 9 && 0 < static_cast<u16>(dc2::font::AlphabeticalCode(std::string_view(cursor, static_cast<std::size_t>(length - position))))) {
                 AddYokoHaba(line, fptosi(static_cast<float>(font_w) * half_font_w_percent));
                 position += 9;
             } else {

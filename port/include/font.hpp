@@ -2,6 +2,8 @@
 
 #include "common.h"
 
+#include <string_view>
+
 #include "mg_drawprim.hpp"
 #include "mg_tanime.hpp"
 
@@ -502,15 +504,14 @@ int GetGaijiLen(unsigned short code);
  */
 unsigned short GetAlphabeticalFontNo_uc(unsigned char c);
 
+namespace dc2::font {
 /**
  *
- * Gives the font number of the accented character tag a string starts with, or zero.
+ * Returns the accented glyph represented by a complete bounded Unicode tag.
  *
- * @mangled GetAlphabeticalFontNo_cp__FPc
- * @address 0x2D9310
- * @size 0x1A0
  */
-unsigned short GetAlphabeticalFontNo_cp(char *text);
+unsigned short AlphabeticalCode(std::string_view text);
+} // namespace dc2::font
 
 /**
  *

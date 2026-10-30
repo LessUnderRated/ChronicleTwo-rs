@@ -40,6 +40,11 @@ if(CT_BUILD_TESTS)
 endif()
 
 if(WIN32)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/../kazarov/cmake/KazarovWindowsRuntime.cmake)
+    kz_windows_runtime_post_build(dc2data)
+    if(TARGET dc2data_bridge_test)
+        kz_windows_runtime_post_build(dc2data_bridge_test)
+    endif()
     # Rust archive/PNG conversion can have deep call paths; the MinGW default is 1 MiB.
     # Heap-backed I/O buffers remain necessary, but allow ordinary converter frames headroom.
     target_link_options(dc2data PRIVATE -municode -Wl,--stack,16777216)

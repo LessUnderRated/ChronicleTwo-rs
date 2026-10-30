@@ -15,10 +15,16 @@ configure_file(${luau_SOURCE_DIR}/LICENSE.txt ${CMAKE_BINARY_DIR}/Luau-LICENSE.t
 install(FILES ${CMAKE_BINARY_DIR}/Luau-LICENSE.txt DESTINATION ${CMAKE_INSTALL_DATADIR}/licenses/chronicletwo)
 
 # ct_options is the interface ct_link_game hands to the game and to darkchronicle_tests.
-target_link_libraries(ct_options INTERFACE Luau.VM Luau.Compiler Luau.CodeGen)
+target_link_libraries(ct_options INTERFACE Luau.VM Luau.Compiler)
+if(NOT NINTENDO_SWITCH)
+    target_link_libraries(ct_options INTERFACE Luau.CodeGen)
+endif()
 
 # Analysis calls std::abs without including <cstdlib>, which libc++ does not include for it.
 target_compile_options(Luau.Analysis PRIVATE -include cstdlib)
+if(NINTENDO_SWITCH)
+    target_compile_options(Luau.VM PRIVATE -include climits)
+endif()
 add_custom_target(ct_luau_tools DEPENDS Luau.Analyze.CLI Luau.Compile.CLI)
 
 # The native command tables for the kinds Luau runs, generated from the command catalog.
@@ -65,7 +71,7 @@ add_custom_command(OUTPUT ${ct_luau_stamp}
 # compiling the source when the module first runs (port/src/luau_bytecode.hpp). It is on for iOS, where the scripts run
 # interpreted and the compile would land mid-game on the device. luau-precompile is built for the build machine from
 # the same Luau sources, at CT_LUAU_PRECOMPILE_LEVEL (the game compiles at -O1; -O2 adds inlining and loop unrolling).
-if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+if(CMAKE_SYSTEM_NAME STREQUAL "iOS" OR NINTENDO_SWITCH)
     set(ct_luau_precompile_default ON)
 else()
     set(ct_luau_precompile_default OFF)

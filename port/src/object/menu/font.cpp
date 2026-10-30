@@ -388,46 +388,25 @@ u16 GetAlphabeticalFontNo_uc(u8 ch) {
     return 0;
 }
 
-u16 GetAlphabeticalFontNo_cp(char *text) {
-    char code[12];
-    int  i = {};
-
-    if (LanguageCode == 1) {
+u16 dc2::font::AlphabeticalCode(std::string_view text) {
+    if (LanguageCode == LANG_ENGLISH || text.size() < 9 || !text.starts_with("[UNI0")) {
         return 0;
     }
-
-    if (strncmp(text, "[UNI0", 5) != 0) {
-        return 0;
-    }
-
-    strncpy(code, &text[5], 5);
-
-    if (strncmp(code, "11d]", 4) == 0) {
-        strncpy(code, "0e8]", 4);
-    }
-
-    if (strncmp(code, "129]", 4) == 0) {
-        strncpy(code, "0ea]", 4);
-    }
-
-    if (strncmp(code, "155]", 4) == 0) {
-        strncpy(code, "0e0]", 4);
-    }
-
-    if (strncmp(code, "171]", 4) == 0) {
-        strncpy(code, "0fb]", 4);
-    }
-
-    if (strncmp(code, "17f]", 4) == 0) {
-        strncpy(code, "0f9]", 4);
-    }
-
-    for (i = 0; i < 63; i++) {
-        if (strncmp(code, alphabetical_chara_tbl[i], 4) == 0) {
-            return i + 0x5E;
+    auto                                                                   code = text.substr(5, 4);
+    constexpr std::array<std::pair<std::string_view, std::string_view>, 5> remaps{
+        {{"11d]", "0e8]"}, {"129]", "0ea]"}, {"155]", "0e0]"}, {"171]", "0fb]"}, {"17f]", "0f9]"}}
+    };
+    for (const auto &[source, destination] : remaps) {
+        if (code == source) {
+            code = destination;
+            break;
         }
     }
-
+    for (std::size_t index = 0; index < std::size(alphabetical_chara_tbl); ++index) {
+        if (code == std::string_view(alphabetical_chara_tbl[index], 4)) {
+            return static_cast<u16>(index + 0x5E);
+        }
+    }
     return 0;
 }
 
@@ -886,7 +865,7 @@ void CFont::CalcDrawWH(char *text, int *width, int *height) {
         do {
             cursor = &text[pos];
 
-            if (0 < GetAlphabeticalFontNo_cp(cursor)) {
+            if (0 < dc2::font::AlphabeticalCode(std::string_view(cursor, static_cast<std::size_t>(len - pos)))) {
                 pen_x += clearance_w / 2;
                 pos += 9;
                 UpDateWH(&max_width, &max_height, pen_x, pen_y + clearance_h);
@@ -966,7 +945,7 @@ void CFont::DrawDirect(char *text, int x, int y) {
     if (0 < len) {
         do {
             cursor = &text[pos];
-            font_no = GetAlphabeticalFontNo_cp(cursor);
+            font_no = dc2::font::AlphabeticalCode(std::string_view(cursor, static_cast<std::size_t>(len - pos)));
 
             if (0 < font_no) {
                 DrawChar(&prim, font_no, pos_x + pen_x, pos_y + pen_y, 1, color, static_cast<int>(alpha));

@@ -465,3 +465,22 @@ TEST(MenuMemory, EffectsConstructAndResetEveryFieldInPoisonedStorage) {
     EXPECT_EQ(dc2::memory::NewObject<CMenuEffect>(memory), nullptr);
     EXPECT_EQ(memory.stGetUsed(), used);
 }
+
+TEST(MenuMemory, IconNamesOwnTheirStorageAndHandleExtremeIdentifiers) {
+    const auto first = dc2::menu::MainIconName(2);
+    const auto second = dc2::menu::MainIconName(42);
+    EXPECT_EQ(first, "mi0");
+    EXPECT_EQ(second, "mi40");
+    EXPECT_EQ(dc2::menu::MainIconName(std::numeric_limits<int>::min()), "mi-2147483650");
+    EXPECT_EQ(dc2::menu::MainIconName(std::numeric_limits<int>::max()), "mi2147483645");
+}
+
+TEST(MenuMemory, IconEffectsRejectMissingAndExhaustedStorage) {
+    MENUFORMPARTS_TYPE part{};
+    MenuItemBrdItemIconEffectMalloc(nullptr, &part, 1);
+    mgCMemory empty;
+    MenuItemBrdItemIconEffectMalloc(&empty, &part, 1);
+    MenuItemBrdItemIconEffectMalloc(&empty, nullptr, 1);
+    MenuItemBrdItemIconEffectMalloc(&empty, &part, 0);
+    EXPECT_EQ(part.name, nullptr);
+}

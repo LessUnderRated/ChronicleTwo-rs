@@ -290,6 +290,11 @@ void TakeFromOthers(Config &config, std::string_view action, const std::vector<s
 // The rows kAppPage leaves out.
 bool PcOnly(std::string_view key) {
     static constexpr std::string_view keys[] = {
+#ifdef __SWITCH__
+        "video.interpolation",
+        "video.aspect",
+        "video.max_fps",
+#endif
         "video.fullscreen",
         "video.width",
         "video.present_mode",
