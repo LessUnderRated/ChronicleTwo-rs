@@ -160,7 +160,8 @@ jstring JNICALL Extract(JNIEnv *env, jclass, jstring image, jstring root) {
         // As many workers as iOS gives it: each adds to the extractor's working set.
         const unsigned jobs = std::clamp(std::thread::hardware_concurrency(), 1u, 2u);
         std::fprintf(stderr, "extract: %s into %s, %u jobs\n", source.c_str(), data.c_str(), jobs);
-        kazarov::extract_tracked(source, data.string(), jobs);
+        // As on iOS: the game runs the scripts' Luau modules, so the compiled scripts are not published.
+        kazarov::extract_tracked_with_script_policy(source, data.string(), jobs, kazarov::ScriptPublicationPolicy::LuauOnly);
         std::fprintf(stderr, "extract: done\n");
         if (FirstRunDataMissing(data)) {
             return Java(env, "The extraction finished without current game data.");

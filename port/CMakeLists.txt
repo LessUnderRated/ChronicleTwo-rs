@@ -517,9 +517,14 @@ foreach(dependency IN ITEMS cpptrace fastgltf googletest libdwarf luau nlohmann_
         ct_quiet_dependency_directory("${${dependency}_SOURCE_DIR}")
     endif()
 endforeach()
-# SDL's package marks its headers as non-system.
+# SDL's package marks its headers as non-system. Built from source (Android), SDL3::Headers is an alias of the
+# target that takes the property.
 if(TARGET SDL3::Headers)
-    set_property(TARGET SDL3::Headers PROPERTY SYSTEM TRUE)
+    get_target_property(ct_sdl_headers SDL3::Headers ALIASED_TARGET)
+    if(NOT ct_sdl_headers)
+        set(ct_sdl_headers SDL3::Headers)
+    endif()
+    set_property(TARGET ${ct_sdl_headers} PROPERTY SYSTEM TRUE)
 endif()
 
 if(WIN32)
