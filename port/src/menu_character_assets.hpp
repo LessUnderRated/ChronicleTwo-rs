@@ -7,6 +7,7 @@
 
 #include "dataread.hpp"
 
+class CCharacter2;
 class mgCMemory;
 
 namespace menu_character {
@@ -15,6 +16,10 @@ namespace menu_character {
  */
 bool PrepareArena(mgCMemory &memory, const std::filesystem::path &model, std::string_view profile,
                   std::string &error, std::size_t extra_quadwords = 0);
+/**
+ * Readies a menu character's body to be built again in its reset slot.
+ */
+void PrepareBody(CCharacter2 &body);
 } // namespace menu_character
 
 /**

@@ -5223,6 +5223,7 @@ static void MenuItemCharaDataLoadPack(int chara_no, CActionChara *chara, CAction
                     AccumulateEffect.mode = 0;
                     chara->accume_effect = &AccumulateEffect;
                 } else {
+                    menu_character::PrepareBody(*chara);
                     chara->Initialize(stack);
                 }
 
@@ -8098,6 +8099,12 @@ bool menu_character::PrepareArena(mgCMemory &memory, const std::filesystem::path
     }
     error.clear();
     return true;
+}
+
+void menu_character::PrepareBody(CCharacter2 &body) {
+    // The body's picture records outlive Initialize, and a rebuilt body adopts every live one as its own producer: a
+    // skin's pictures in a part's slot would make the new body retire when that slot is reset for the next skin.
+    model_assets::DeleteCharacterTextures(body, 0, CHARA_IMAGE_MAX - 1);
 }
 
 void PortPrepareMenuCharacterArena(mgCMemory &memory, const void *model, const char *profile, int part) {

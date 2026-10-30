@@ -632,6 +632,129 @@ TEST_F(NativeModel, KeysSelectNamedActionsInProfileOrderWithDisjointGameFrames) 
     EXPECT_NEAR(root->trans_matrix[3][0], 15, 1e-4f);
 }
 
+// The costume menu (menuchr.cpp) keeps the body and each costume part in its own slot, views shared from one pool
+// (MenuMemoryAdjust), each sized from its asset before construction (PrepareArena): the body in part 0's slot, a
+// clothes skin applied onto the body from part 1's, both entering their pictures in the menu's texture block.
+// EndCheck resets a slot before loading its part again.
+class CostumeMenu : public NativeModel {
+protected:
+    static constexpr int   kBlock = 2;
+    std::vector<u_long128> pool_storage = std::vector<u_long128>(1 << 16);
+    std::vector<u_long128> texture_storage = std::vector<u_long128>(4096);
+    mgCMemory              pool;
+    mgCMemory              slots[2];
+    mgCMemory              rest;
+    mgCMemory              texture_memory;
+    mgCTextureManager      textures;
+    CCharacter2            body;
+
+    void SetUp() override {
+        NativeModel::SetUp();
+        for (const char *name : {"body", "skin"}) {
+            Json model = game;
+            model["texture_sets"] = {0};
+            model["meshes"][0]["materials"][0]["texture"] = name;
+            const Json pictures{
+                {"schema_version", 3                                                                                                      },
+                {"groups",         {0}                                                                                                    },
+                {"entries",        Json::array({{{"name", name}, {"pictures", Json::array({{{"canvas", {{"width", 2}, {"height", 2}}}}})}}})}
+            };
+            const Json set{
+                {"type",  "resource"   },
+                {"kind",  "texture_set"},
+                {"index", 0            }
+            };
+            // A body names its image slot; a skin's pictures go to slot 0. A skin's visuals replace the body's under
+            // its MOTION.
+            const bool is_body = std::string_view(name) == "body";
+            Json       commands = Json::array({
+                {{"command", "MODEL"},  {"args", {{{"type", "resource"}, {"kind", "model"}, {"index", 0}}}}},
+                {{"command", "MOTION"}, {"args", {IntegerArgument(0), AnimationArgument(0)}}               }
+            });
+            if (is_body) {
+                commands.push_back({{"command", "KEY_START"}, {"args", Json::array()}});
+                commands.push_back({{"command", "KEY"}, {"args", {TextArgument("idle"), RealArgument(1)}}});
+                commands.push_back({{"command", "KEY_END"}, {"args", Json::array()}});
+            }
+            commands.push_back({{"command", "IMG"}, {"args", is_body ? Json::array({IntegerArgument(0), set}) : Json::array({set})}});
+            commands.push_back({{"command", "IMG_END"}, {"args", Json::array()}});
+            Json document = NamedActionCharacter(model, commands);
+            document["resources"]["texture_sets"] = Json::array({{{"document", pictures}}});
+            std::ofstream(directory / "data/models" / (std::string(name) + ".gltf")) << gltf.dump(2);
+            std::ofstream(directory / "data/models" / (std::string(name) + ".game.json")) << document.dump(2);
+        }
+        datapacks::Load(directory / "data");
+        texture_memory.stSetBuffer(texture_storage.data(), static_cast<int>(texture_storage.size()));
+        textures.SetTableBuffer(8, 8, &texture_memory);
+        textures.Initialize(0x1000, -1);
+        body.Initialize();
+    }
+
+    void Carve(int slot_quadwords) {
+        pool.stSetBuffer(pool_storage.data(), static_cast<int>(pool_storage.size()));
+        u_long128 *cursor = pool.stGetTop();
+        for (auto &slot : slots) {
+            ASSERT_TRUE(slot.stShareBuffer(pool, std::span(cursor, static_cast<std::size_t>(slot_quadwords))));
+            cursor += slot_quadwords;
+        }
+        ASSERT_TRUE(rest.stShareBuffer(pool, std::span(cursor, static_cast<std::size_t>(1024))));
+    }
+
+    // One part as EndCheck loads it (MenuItemCharaDataLoadPack): its slot reset and sized, then the body built again
+    // or the skin applied onto it.
+    bool Load(int part, std::string &error) {
+        auto &slot = slots[part];
+        slot.stReset();
+        const char *path = part == 0 ? "models/body.gltf" : "models/skin.gltf";
+        if (!menu_character::PrepareArena(slot, path, "info", error)) {
+            return false;
+        }
+        model_assets::CharacterLoadOptions options{.model_memory = &slot, .motion_memory = &slot, .image_memory = &slot, .textures = &textures, .texture_block = kBlock};
+        if (part == 0) {
+            menu_character::PrepareBody(body);
+            body.Initialize();
+            return model_assets::LoadCharacter(body, path, "info", options, error);
+        }
+        return model_assets::LoadSkin(body, std::filesystem::path(path), "info", "", options, error);
+    }
+
+    // A whole costume as EndCheck loads it with load_all: the texture block cleared, then every part.
+    void LoadCostume() {
+        std::string error;
+        textures.DeleteBlock(kBlock);
+        ASSERT_TRUE(Load(0, error)) << error;
+        const auto *bare = body.GetFrame()->visual;
+        ASSERT_TRUE(Load(1, error)) << error;
+        ASSERT_TRUE(dc2::character::ResourcesLive(body));
+        // The skin's visual replaced the body's, from the skin's slot.
+        const auto *dressed = reinterpret_cast<const u_long128 *>(body.GetFrame()->visual);
+        EXPECT_NE(body.GetFrame()->visual, bare);
+        EXPECT_TRUE(dressed >= slots[1].stack && dressed < slots[1].stack + slots[1].stack_size);
+    }
+};
+
+TEST_F(CostumeMenu, EveryChangeReloadsTheBodyAndItsParts) {
+    for (int slot_quadwords : {64, 8192}) {
+        Carve(slot_quadwords);
+        LoadCostume();
+        for (int change = 0; change < 3; ++change) {
+            // KeyStep's phase 1 resets the read stack before the reads EndCheck consumes.
+            rest.stReset();
+            rest.Alloc(16);
+            LoadCostume();
+        }
+    }
+}
+
+// Retail changed only the part: the body keeps the old skin's pictures and visuals in the reset slot.
+TEST_F(CostumeMenu, ReloadingOnlyTheSkinIsRefused) {
+    Carve(64);
+    LoadCostume();
+    std::string error;
+    EXPECT_FALSE(Load(1, error));
+    EXPECT_EQ(error, "character profile requires live prior resources or an empty character");
+}
+
 TEST_F(NativeModel, ExternalMotionPlaysActionsPublishedIntoTheCharacterModelAndBlendsAcrossSets) {
     const Json  base_commands = Json::array({
         {{"command", "MODEL"},     {"args", {{{"type", "resource"}, {"kind", "model"}, {"index", 0}}}}},

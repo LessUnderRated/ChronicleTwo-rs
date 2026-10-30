@@ -3,10 +3,13 @@ add_test(NAME Luau.Tools
     COMMAND "${Python3_EXECUTABLE}" -m unittest discover -s "${CMAKE_SOURCE_DIR}/tools/luau" -p "test_*.py")
 set_tests_properties(Luau.Tools PROPERTIES LABELS cpu TIMEOUT 300)
 
-# The checked-in catalog and report must match the published corpus; skipped without game data.
-add_test(NAME Luau.Survey
-    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/luau/survey.py" --check --dc2data $<TARGET_FILE:dc2data>)
-set_tests_properties(Luau.Survey PROPERTIES LABELS cpu SKIP_RETURN_CODE 77 TIMEOUT 600)
+# The checked-in catalog and report must match the published corpus; skipped without game data, and without dc2data,
+# which an Android build does not make.
+if(TARGET dc2data)
+    add_test(NAME Luau.Survey
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/luau/survey.py" --check --dc2data $<TARGET_FILE:dc2data>)
+    set_tests_properties(Luau.Survey PROPERTIES LABELS cpu SKIP_RETURN_CODE 77 TIMEOUT 600)
+endif()
 
 # The runtime tests assemble a scripts directory from their modules and the shared vm library.
 target_compile_definitions(darkchronicle_tests PRIVATE

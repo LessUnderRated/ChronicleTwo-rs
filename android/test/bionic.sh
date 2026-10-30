@@ -6,7 +6,12 @@
 #   android/test/bionic.sh app     the release build's libdarkchronicle.so loaded with dlopen, as the app's activity
 #                                  loads it, extracting a fake disc (fake_disc.py) through it with the app's settings
 #   android/test/bionic.sh all     both
+#   android/test/bionic.sh port [FILTER]
+#                                  the game's own tests (port/src/tests) built for Android and run there, those
+#                                  FILTER names (a --gtest_filter; default the model and costume menu tests); tests
+#                                  that need a window, a GPU or a death test's re-exec cannot run under qemu
 #
+# CT_CMAKE_ARGS adds CMake arguments to the `port` build, such as FETCHCONTENT_SOURCE_DIR_* for offline sources.
 # Needs qemu-user (qemu-aarch64), debugfs (e2fsprogs), python3, the NDK (ANDROID_NDK_ROOT, or the newest under
 # ANDROID_HOME), and Rust with the aarch64-linux-android target; `app` needs a release build (./gradlew
 # assembleRelease). The system image, about 830 MB, and the unpacked root are kept in CT_BIONIC_CACHE (default
@@ -100,4 +105,24 @@ if [ "$what" = app ] || [ "$what" = all ]; then
 names = set(zipfile.ZipFile(sys.argv[1]).namelist())
 missing = [f"fake/m{i:04}.{s}" for i in range(24) for s in ("gltf", "gltf.bin", "game.json") if f"fake/m{i:04}.{s}" not in names]
 sys.exit(f"not published: {missing}" if missing else print("models published: 24"))' "$work/game/data.zip"
+fi
+
+if [ "$what" = port ]; then
+    filter=${2:-'NativeModel.*:CostumeMenu.*'}
+    build=${CT_BIONIC_PORT_BUILD:-$cache/port}
+    cmake=$(ls "${ANDROID_HOME:-/opt/android-sdk}"/cmake/*/bin/cmake 2>/dev/null | sort -V | tail -1)
+    cmake=${cmake:-cmake}
+    # shellcheck disable=SC2086 # CT_CMAKE_ARGS holds separate arguments.
+    "$cmake" -S "$repo" -B "$build" -G Ninja -DCMAKE_MAKE_PROGRAM="$(dirname "$cmake")/ninja" \
+        -DCMAKE_TOOLCHAIN_FILE="$ndk/build/cmake/android.toolchain.cmake" -DANDROID_ABI=arm64-v8a \
+        -DANDROID_PLATFORM=android-$api -DANDROID_STL=c++_shared -DCMAKE_BUILD_TYPE=RelWithDebInfo -DPLATFORM=PC \
+        -DCMAKE_CXX_SCAN_FOR_MODULES=OFF -DCT_BUILD_TESTS=ON ${CT_CMAKE_ARGS:-} > "$work/configure.log" ||
+        { tail -n 30 "$work/configure.log" >&2; exit 1; }
+    "$cmake" --build "$build" --target darkchronicle_tests
+    mkdir -p "$work/stubs" "$work/tmp"
+    for stub in libandroid libvulkan libOpenSLES libGLESv1_CM libGLESv2 libEGL libnativewindow; do
+        cp "$toolchain/sysroot/usr/lib/aarch64-linux-android/$api/$stub.so" "$work/stubs/"
+    done
+    sdl=$(dirname "$(find "$build" -name 'libSDL3*.so' | head -n 1)")
+    (cd "$build" && TMPDIR=$work/tmp LD_LIBRARY_PATH=$work/stubs:$sdl run ./darkchronicle_tests --gtest_filter="$filter")
 fi
