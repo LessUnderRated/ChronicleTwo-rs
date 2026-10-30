@@ -123,15 +123,16 @@ jboolean JNICALL DataMissing(JNIEnv *env, jclass, jstring root) {
     return FirstRunDataMissing(fs::path(Utf8(env, root)) / "data") ? JNI_TRUE : JNI_FALSE;
 }
 
-// Extracts the disc at image into root, on the calling (background) thread; null, or why it failed.
+// Extracts the disc at image for the game root root, on the calling (background) thread; null, or why it failed.
+// The extractor's output is <game-root>/data; data.zip and data.json go beside it.
 jstring JNICALL Extract(JNIEnv *env, jclass, jstring image, jstring root) {
     const std::string source = Utf8(env, image);
-    const std::string target = Utf8(env, root);
+    const fs::path    data = fs::path(Utf8(env, root)) / "data";
     try {
         // Two jobs at most: the extractor's working set grows with each, and a phone's memory runs out first.
         const unsigned jobs = std::clamp(std::thread::hardware_concurrency(), 1u, 2u);
-        kazarov::extract_tracked(source, target, jobs);
-        if (FirstRunDataMissing(fs::path(target) / "data")) {
+        kazarov::extract_tracked(source, data.string(), jobs);
+        if (FirstRunDataMissing(data)) {
             return Java(env, "The extraction finished without current game data.");
         }
         return nullptr;
