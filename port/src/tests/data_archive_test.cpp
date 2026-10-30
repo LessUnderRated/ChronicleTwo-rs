@@ -2,6 +2,8 @@
 
 #include <gtest/gtest.h>
 
+#include "test_fixtures.hpp"
+
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -415,7 +417,7 @@ TEST_F(DataArchive, GameplayDocumentsPreservePackPriorityAcrossNamespacedAndLega
 }
 
 TEST_F(DataArchive, MoviePlaysIdenticallyFromAStoredArchiveEntry) {
-    const auto fixture = fs::path(__FILE__).parent_path() / "fixtures/movie.mp4";
+    const auto fixture = dc2::testing::FixtureDirectory(__FILE__) / "movie.mp4";
     fs::create_directories(root / "movies/movie");
     fs::copy_file(fixture, root / "movies/movie/clip.mp4");
     Pack(root / "movies", root / "data.zip");

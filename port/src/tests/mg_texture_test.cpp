@@ -996,6 +996,67 @@ TEST(MgTexture, NativeSetsReuseLiveAnimationGroupsAndRecreateDeletedOrChangedScr
     EXPECT_EQ(h.manager.texture_num, 2);
 }
 
+TEST(MgTexture, AnimationsSurviveTheLoadArenaThatEnteredThem) {
+    Harness                h;
+    texture_catalog::Entry source;
+    source.type = "texture";
+    source.name = "pond";
+    source.width = source.height = 2;
+    source.bpp = 32;
+    source.variants = {
+        {.selector = "pond", .levels = {{.path = "#/images/0"}}}
+    };
+    auto destination = source;
+    destination.name = "pond_out";
+    destination.variants[0].selector = "pond_out";
+    auto text   = [](std::string value) { return texture_catalog::Entry::Argument{.text = std::move(value), .number = 0}; };
+    auto number = [](double value) { return texture_catalog::Entry::Argument{.text = std::nullopt, .number = value}; };
+    texture_catalog::Entry script;
+    script.type = "cfg";
+    script.name = "#animation";
+    script.script = {
+        {.name = "TEX_ANIME",          .args = {text("flow"), number(1)}                            },
+        {.name = "TEX_ANIME_DATA",     .args = {number(0)}                                          },
+        {.name = "SRC_TEX",            .args = {text("pond"), number(0), number(0), number(1), number(1)}     },
+        {.name = "DEST_TEX",           .args = {text("pond_out"), number(0), number(0), number(1), number(1)}},
+        {.name = "TEX_ANIME_DATA_END", .args = {}                                                   },
+        {.name = "TEX_ANIME_END",      .args = {}                                                   }
+    };
+    texture_catalog::Source document{
+        .source = "model.gltf", .groups = {0},
+             .entries = {source, destination, script}
+    };
+    auto decode = [](const texture_catalog::Entry &, std::size_t, datapacks::DecodedTexture &decoded, std::string &) {
+        decoded = {};
+        decoded.width = decoded.height = 2;
+        decoded.levels.emplace_back(16, 33);
+        return true;
+    };
+
+    // A scene or map load enters its textures from its own arena, and sceneload resets that arena
+    // when the scene's resources unload (sceneload.cpp's memory->stReset()). The animation a block
+    // plays must not retire with it: EditDraw switches blocks through ReloadTexture, which reads
+    // the block's animation records after every such reset.
+    Quads     scene_storage = Quads(kStorageQuads, 0);
+    mgCMemory scene_stack;
+    scene_stack.stSetBuffer(scene_storage.data(), static_cast<int>(kStorageQuads));
+    MgTextureEnterNativeSet(&h.manager, 0, document, &scene_stack, decode);
+
+    auto *animation = h.manager.GetTexAnime(0);
+    ASSERT_NE(animation, nullptr);
+    EXPECT_GE(dc2::memory::AllocationBytes(h.memory, animation).size(), sizeof(mgCTextureAnime));
+    ASSERT_NE(animation->list[0], nullptr);
+    EXPECT_GE(dc2::memory::AllocationBytes(h.memory, animation->list[0]).size(), sizeof(CList<mgCTexAnimeData>));
+
+    scene_stack.stReset();
+    std::memset(scene_storage.data(), 0x48, scene_storage.size() * sizeof(scene_storage[0]));
+    h.manager.ReloadTexture(0, static_cast<sceVif1Packet *>(nullptr));
+    ASSERT_NE(h.manager.GetTexAnime(0), nullptr);
+    EXPECT_GE(dc2::memory::AllocationBytes(h.memory, h.manager.GetTexAnime(0)).size(), sizeof(mgCTextureAnime));
+    EXPECT_GE(dc2::memory::AllocationBytes(h.memory, h.manager.GetTexAnime(0)->list[0]).size(),
+              sizeof(CList<mgCTexAnimeData>));
+}
+
 TEST(MgTexture, NativeSetScriptsAnimateTheirOwnPicturesOverEarlierPicturesOfTheSameName) {
     Harness                h;
     texture_catalog::Entry source;

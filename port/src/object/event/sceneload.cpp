@@ -414,6 +414,18 @@ int CScene::DeleteMapResources(int map_index, int clear_stack) {
         textures->DeleteBlock(loaded_map->effect_list.block);
     }
 
+    // The sky was loaded from this map's arena; retire it before the arena resets, so nothing
+    // keeps drawing a sky whose models and texture records are about to be reclaimed.
+    CSceneSky *sky_slot = GetSceneSky(0);
+    if (sky_slot != nullptr && sky_slot->sky != nullptr && sky_slot->stack == memory) {
+        if (sky_slot->tex_block >= 0 && sky_slot->tex_block_num > 0) {
+            for (int band = 0; band < sky_slot->tex_block_num; ++band) {
+                textures->DeleteBlock(sky_slot->tex_block + band);
+            }
+        }
+        sky_slot->Initialize();
+    }
+
     for (index = 0;; index++) {
         file_name = loaded_map->map_info.GetImgName(index);
 
@@ -652,6 +664,14 @@ int CScene::LoadMapFromMemory(int map_no, int step, SCN_LOADMAP_INFO2 *info) {
                 sky->Initialize();
                 sky->LoadPack(files->sky_data, info->sky_tex_block, stack);
                 AssignSky(0, sky, nullptr);
+                // The sky's models and texture records live in this map's arena; record the producer
+                // and its blocks so the slot is retired with them instead of keeping a stale sky.
+                if (auto *slot = GetSceneSky(0); slot != nullptr) {
+                    slot->stack = stack;
+                    slot->BindResources(dc2::memory::ArenaLifetime::Capture(*stack));
+                    slot->tex_block = info->sky_tex_block;
+                    slot->tex_block_num = 4;
+                }
             }
         }
 

@@ -101,6 +101,11 @@ public:
     [[nodiscard]] std::span<u8> Bytes() const;
 
     /**
+     * The logical owner whose resets retire this view, when it has one.
+     */
+    [[nodiscard]] const mgCMemory *Owner() const noexcept { return owner; }
+
+    /**
      * Reports whether an operation would retire this currently live allocation view.
      */
     [[nodiscard]] bool WouldRetireOnReset(const mgCMemory &memory, ArenaResetKind kind = ArenaResetKind::Stack) const;

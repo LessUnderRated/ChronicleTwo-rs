@@ -1435,10 +1435,16 @@ bool ValidAnimationNumbers(const texture_catalog::Entry &entry) {
 }
 
 void ApplyAnimation(mgCTextureManager *manager, const texture_catalog::Source &source, const texture_catalog::Entry &entry,
-                    mgCMemory *stack, int base_block) {
-    if (!stack || !ValidAnimationNumbers(entry)) {
+                    mgCMemory *load_stack [[maybe_unused]], int base_block) {
+    // Animation records must live as long as the blocks that play them. Allocating them from the
+    // caller's load stack leaves block->anime dangling once sceneload resets that stack, and the
+    // next ReloadTexture block switch then reads retired memory; the table's own arena retires
+    // together with the blocks through ValidateTableStorage instead.
+    mgCMemory *table_arena = manager->TableArena();
+    if (table_arena == nullptr || !ValidAnimationNumbers(entry)) {
         return;
     }
+    mgCMemory *const stack = table_arena;
     // Animation groups share the set's arena, so their pictures must belong to the set's blocks.
     std::vector<int> own_blocks;
     for (const auto &picture : source.entries) {
@@ -2081,6 +2087,11 @@ MgTextureHandles MgTextureLookupTex0(uint64_t tex0) {
     }
 
     return handles;
+}
+
+mgCMemory *mgCTextureManager::TableArena() {
+    const auto &anchor = table_storage[0];
+    return anchor.Bytes().empty() ? nullptr : const_cast<mgCMemory *>(anchor.Owner());
 }
 
 void mgCTextureManager::SetTableBuffer(int texture_count, int block_total, mgCMemory *memory) {

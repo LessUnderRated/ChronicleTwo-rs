@@ -1,4 +1,5 @@
 #include "common.h"
+#include "test_fixtures.hpp"
 
 #include <gtest/gtest.h>
 #include <nlohmann/json.hpp>
@@ -334,7 +335,7 @@ TEST_F(AudioAssetsTest, WaveOverrideWinsAndMalformedReplacementFallsBack) {
 }
 
 TEST_F(AudioAssetsTest, SelfContainedH264AacMp4OverrideAndInvalidFallback) {
-    const fs::path fixtures = fs::path(__FILE__).parent_path() / "fixtures";
+    const fs::path fixtures = dc2::testing::FixtureDirectory(__FILE__);
     const auto     base = root / "data/movie/test.mp4";
     fs::create_directories(base.parent_path());
     fs::copy_file(fixtures / "movie.mp4", base);

@@ -1,4 +1,5 @@
 #include "common.h"
+#include "test_fixtures.hpp"
 
 #include <gtest/gtest.h>
 
@@ -208,7 +209,7 @@ TEST(MovieGlue, PathMapsGameNamesToPublishedMp4) {
 
 TEST(MoviePlayer, StandardMp4ContainsVideoAndEmbeddedLosslessAudio) {
     video::MoviePlayer player;
-    const fs::path     fixture = fs::path(__FILE__).parent_path() / "fixtures/movie.mp4";
+    const fs::path     fixture = dc2::testing::FixtureDirectory(__FILE__) / "movie.mp4";
     ASSERT_TRUE(player.Open(fixture, true));
     EXPECT_EQ(player.Width(), 16);
     EXPECT_EQ(player.Height(), 16);
@@ -233,7 +234,7 @@ TEST(MoviePlayer, StandardMp4ContainsVideoAndEmbeddedLosslessAudio) {
 TEST(MoviePlayer, LengthIsTheContainerDuration) {
     video::MoviePlayer player;
     EXPECT_EQ(player.Length(), 0);
-    ASSERT_TRUE(player.Open(fs::path(__FILE__).parent_path() / "fixtures/movie.mp4", true));
+    ASSERT_TRUE(player.Open(dc2::testing::FixtureDirectory(__FILE__) / "movie.mp4", true));
     // Three 25 fps pictures and 5760 frames of 48 kHz audio: 0.12 s.
     EXPECT_EQ(player.Length(), 10800);
     player.Close();
@@ -479,7 +480,7 @@ TEST(MoviePlayer, FitKeepsRetailMultiplesAndResamplesOtherSizes) {
 }
 
 TEST(MoviePlayer, RetailSizeResamplesEveryPictureAndKeepsTheSourceSize) {
-    const fs::path     fixture = fs::path(__FILE__).parent_path() / "fixtures/movie.mp4";
+    const fs::path     fixture = dc2::testing::FixtureDirectory(__FILE__) / "movie.mp4";
     video::MoviePlayer plain;
     ASSERT_TRUE(plain.Open(fixture, false));
     EXPECT_EQ(plain.SourceWidth(), 16);
@@ -507,7 +508,7 @@ TEST(MoviePlayer, RetailSizeResamplesEveryPictureAndKeepsTheSourceSize) {
 }
 
 TEST(MoviePlayer, ResamplingShrinksOneSideWithAreaAveraging) {
-    const fs::path     fixture = fs::path(__FILE__).parent_path() / "fixtures/movie.mp4";
+    const fs::path     fixture = dc2::testing::FixtureDirectory(__FILE__) / "movie.mp4";
     video::MoviePlayer plain;
     ASSERT_TRUE(plain.Open(fixture, false));
     video::MoviePlayer halved;
@@ -533,7 +534,7 @@ TEST(MoviePlayer, ResamplingShrinksOneSideWithAreaAveraging) {
 
 TEST(MoviePlayer, ThreadedDecodingShowsTheSamePicturesInOrder) {
     // 24 pictures with B-frames, more than the decoder thread cap; picture N's top-left pixel is grey 9.31 * N.
-    const fs::path    fixture = fs::path(__FILE__).parent_path() / "fixtures/movie_h264_bframes.mp4";
+    const fs::path    fixture = dc2::testing::FixtureDirectory(__FILE__) / "movie_h264_bframes.mp4";
     constexpr int64_t picture_ticks = 3600;
     constexpr int     picture_count = 24;
     // Every picture boundary, a jump over five pictures, the rest, then past the end to drain the decoder.
@@ -589,9 +590,9 @@ struct FixtureMovieRoot {
 
     FixtureMovieRoot() {
         fs::create_directories(root / "movie");
-        fs::copy_file(fs::path(__FILE__).parent_path() / "fixtures/movie.mp4", root / "movie/hd.mp4",
+        fs::copy_file(dc2::testing::FixtureDirectory(__FILE__) / "movie.mp4", root / "movie/hd.mp4",
                       fs::copy_options::overwrite_existing);
-        fs::copy_file(fs::path(__FILE__).parent_path() / "fixtures/movie_future_picture.mp4", root / "movie/future.mp4",
+        fs::copy_file(dc2::testing::FixtureDirectory(__FILE__) / "movie_future_picture.mp4", root / "movie/future.mp4",
                       fs::copy_options::overwrite_existing);
         datapacks::Load(root);
     }

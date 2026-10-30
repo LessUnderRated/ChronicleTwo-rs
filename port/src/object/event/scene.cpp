@@ -1116,6 +1116,19 @@ void RetireSceneResources(CScene &scene, const mgCMemory &memory, dc2::memory::A
                 retired = true;
             }
         }
+        for (auto &slot : scene.sky) {
+            if ((slot.sky != nullptr || slot.resource_lifetime.HasValue()) &&
+                (!slot.ResourcesLive() || slot.ResourcesWouldRetireOnReset(memory, kind))) {
+                // The sky's texture records live in the texture manager, not in the retiring arena.
+                if (slot.tex_block >= 0 && slot.tex_block_num > 0) {
+                    for (int band = 0; band < slot.tex_block_num; ++band) {
+                        mgTexManager.DeleteBlock(slot.tex_block + band);
+                    }
+                }
+                slot.Initialize();
+                retired = true;
+            }
+        }
     } while (retired);
 }
 } // namespace
@@ -1782,6 +1795,14 @@ int CScene::DeleteSky(int index) {
 
     if (slot == nullptr) {
         return 0;
+    }
+
+    // The sky's texture records may outlive the arena the sky was loaded from, so the slot's
+    // recorded blocks are released through the texture manager instead of through the sky object.
+    if (slot->tex_block >= 0 && slot->tex_block_num > 0) {
+        for (int band = 0; band < slot->tex_block_num; ++band) {
+            mgTexManager.DeleteBlock(slot->tex_block + band);
+        }
     }
 
     slot->Initialize();
