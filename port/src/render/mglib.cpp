@@ -2132,8 +2132,10 @@ void mgSetDataBuffer(mgCMemory *pool_a, mgCMemory *pool_b, int skip_header) {
     if (!first || !second) {
         throw std::length_error("packet data buffer has insufficient arena storage");
     }
-    data_buf[0].stSetBorrowedBuffer(*pool_a, std::span(first->data, static_cast<std::size_t>(first->quadwords)));
-    data_buf[1].stSetBorrowedBuffer(*pool_b, std::span(second->data, static_cast<std::size_t>(second->quadwords)));
+    if (!data_buf[0].stShareBuffer(*pool_a, std::span(first->data, static_cast<std::size_t>(first->quadwords))) ||
+        !data_buf[1].stShareBuffer(*pool_b, std::span(second->data, static_cast<std::size_t>(second->quadwords)))) {
+        throw std::logic_error("packet data buffer has no live arena backing");
+    }
     data_buf[0].stReset();
     data_buf[1].stReset();
 }

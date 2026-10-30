@@ -1512,6 +1512,10 @@ PS2 kernel threads run as cooperative fibers on one OS thread, so the retail thr
 
 An arena view retains its actual backing allocation, logical owner, generations, and requested extent. Child workspaces reserve their parent storage before binding. Sharing a temporary view preserves its upstream owner; the temporary allocator object is not the storage owner. Reset, free, rebinding, and address reuse invalidate the relevant leases. `ArenaBuffer` also distinguishes individual heap allocations, so freeing an unrelated block does not invalidate a live view. Parent headroom does not authorize access beyond a child's explicit extent.
 
+Title submenus borrow the remaining `Stack_ReadBuff` storage explicitly. The menu retains that read arena as its owner when it shares the temporary cursor, so costume selection and the save browser remain live after title-menu initialization returns.
+
+The renderer shares packet-data views while retaining their backing owner. Title initialization passes borrowed views of main-arena allocations, allowing model drawing to use those allocations after its temporary cursors are destroyed. Resetting the main arena still retires the renderer's views.
+
 `stAlloc` and `Alloc` past an arena's end abort, naming `mgCMemory::name` or, when it has none, the arena's address, where retail printed and returned NULL. `stAllocTest` keeps retail's probe.
 
 Headroom does not reach a stack carved with an explicit size. The native `charasetup.cpp` model stacks reserve 12000 extra quadwords each: human 0 and 1, ridepod 0 to 2, edit 0 and monster 0. `GetCharaMemAllocSize` sums the table, so the parent buffers grow with it. `chara_mem_budget_test.cpp` covers the carved sizes.
