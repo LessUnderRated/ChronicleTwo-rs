@@ -17,6 +17,11 @@ on:
 permissions:
   contents: read
 
+# A newer push to the same branch replaces a run still going.
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   apk:
     name: APK (arm64-v8a)
@@ -75,19 +80,17 @@ jobs:
           unzip -l "$apk" | grep -E 'lib/arm64-v8a/lib(darkchronicle|SDL3|c\+\+_shared)\.so|assets/(chronicletwo-assets\.txt|assets/data\.zip)'
           test -n "$(unzip -l "$apk" | grep -E 'assets/scripts/.*\.luauc$' | head -n 1)"
 
-      # Android's linker, C library and allocator under qemu (android/test/bionic.sh): Kazarov's tests built for
-      # Android, the APK's library loaded as the app loads it, extracting a fake disc, and the game's model and
-      # costume menu tests.
+      # The APK's library loaded as the app loads it on Android's linker and C library under qemu, extracting a fake disc
+      # (android/test/bionic.sh app). The longer emulated tests run alongside, in the job below.
       - uses: actions/cache@v5
         with:
           path: ~/.cache/chronicletwo-bionic/arm64-v8a-37.0_r06.zip
           key: bionic-arm64-v8a-37.0_r06
 
-      - name: Test on Android's C library
+      - name: Extract a fake disc on Android's C library
         run: |
           sudo apt-get install -y qemu-user e2fsprogs
-          android/test/bionic.sh all
-          android/test/bionic.sh port
+          android/test/bionic.sh app
 
       - uses: actions/upload-artifact@v7
         with:
@@ -126,3 +129,40 @@ jobs:
           SHA-256: \`${sha}\`
           NOTES
           gh release create "$tag" "$apk" "$symbols" --target "$GITHUB_SHA" --title "Chronicle Two ${version} (Android)" --notes-file notes.md
+
+  # Kazarov's Rust tests and the game's own tests (the model, costume menu and Luau runtime suites) built for Android and
+  # run on Android's linker, C library and allocator under qemu. They build the game a second time, so they run beside
+  # the APK rather than ahead of its release.
+  emulated:
+    name: Tests on Android's C library
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+
+      - name: Install the toolchains
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y glslang-tools ninja-build qemu-user e2fsprogs
+          rustup default stable
+          rustup target add aarch64-linux-android
+          cargo install cxxbridge-cmd --version 1.0.205 --locked
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install --package_file=android/app/packages.txt
+
+      - uses: actions/cache@v5
+        with:
+          path: ~/.cache/chronicletwo-bionic/arm64-v8a-37.0_r06.zip
+          key: bionic-arm64-v8a-37.0_r06
+
+      - uses: actions/cache@v5
+        with:
+          path: .kazarov/ffmpeg/android-arm64
+          key: ffmpeg-android-${{ hashFiles('tools/kazarov/tools/ffmpeg/kz-ffmpeg', 'android/patches/*.patch') }}
+
+      - name: Kazarov's tests
+        run: android/test/bionic.sh tests
+
+      - name: The game's tests
+        run: android/test/bionic.sh port

@@ -12,8 +12,7 @@
 #                                  that need a window, a GPU or a death test's re-exec cannot run under qemu
 #
 # CT_CMAKE_ARGS adds CMake arguments to the `port` build, such as FETCHCONTENT_SOURCE_DIR_* for offline sources.
-# Needs qemu-user (qemu-aarch64), debugfs (e2fsprogs), python3, the NDK (ANDROID_NDK_ROOT, or the newest under
-# ANDROID_HOME), and Rust with the aarch64-linux-android target; `app` needs a release build (./gradlew
+# Needs qemu-user (qemu-aarch64), debugfs (e2fsprogs), python3, the app's NDK under ANDROID_HOME, and Rust with the aarch64-linux-android target; `app` needs a release build (./gradlew
 # assembleRelease). The system image, about 830 MB, and the unpacked root are kept in CT_BIONIC_CACHE (default
 # ~/.cache/chronicletwo-bionic).
 set -euo pipefail
@@ -23,7 +22,8 @@ repo=$(cd "$(dirname "$0")/../.." && pwd)
 cache=${CT_BIONIC_CACHE:-$HOME/.cache/chronicletwo-bionic}
 image=arm64-v8a-37.0_r06.zip
 image_sha256=ffccd67f6e26b1f4911854ba4e8510b2990ab6c71af33f71864d38bf5d80c57e
-ndk=${ANDROID_NDK_ROOT:-$(ls -d "${ANDROID_HOME:-/opt/android-sdk}"/ndk/* | sort -V | tail -1)}
+# The NDK the app is built with (ndkVersion), not whichever ANDROID_NDK_ROOT names: CI runners point that at an older one.
+ndk=${ANDROID_HOME:-/opt/android-sdk}/ndk/$(sed -n 's/^ *ndkVersion = "\(.*\)"$/\1/p' "$repo/android/app/build.gradle.kts")
 toolchain=$ndk/toolchains/llvm/prebuilt/linux-x86_64
 api=33
 root=$cache/root
