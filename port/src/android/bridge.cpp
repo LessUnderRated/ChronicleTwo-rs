@@ -157,8 +157,8 @@ jstring JNICALL Extract(JNIEnv *env, jclass, jstring image, jstring root) {
     const std::string source = Utf8(env, image);
     const fs::path    data = fs::path(Utf8(env, root)) / "data";
     try {
-        // One job: the extractor's working set grows with each, and a phone's memory runs out first.
-        const unsigned jobs = 1;
+        // As many workers as iOS gives it: each adds to the extractor's working set.
+        const unsigned jobs = std::clamp(std::thread::hardware_concurrency(), 1u, 2u);
         std::fprintf(stderr, "extract: %s into %s, %u jobs\n", source.c_str(), data.c_str(), jobs);
         kazarov::extract_tracked(source, data.string(), jobs);
         std::fprintf(stderr, "extract: done\n");

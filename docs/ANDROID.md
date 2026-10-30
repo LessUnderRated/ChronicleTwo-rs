@@ -44,7 +44,7 @@ addresses in a report.
 | Where | What |
 |---|---|
 | `android/` | The Gradle project: SDL's activity, the setup screen, the menu, the touch overlay; `native.cmake` (SDL from source, FFmpeg for Android), `kazarov.cmake` (Kazarov with `android/patches`), `assets.cmake` (what the APK carries) |
-| `android/patches/kazarov-0001-android.patch` | What Android needs of Kazarov, applied to a copy in the build tree: `flock` for the extractor's stage lock, which `File::try_lock` does not support on Android; an `android-arm64` target for `kz-ffmpeg`; the extractor's iOS memory paths (the disc read a resource at a time, waiting bytes spilled to a file) and an available-memory query on Android; no desktop setup window; `KAZAROV_GAMEPLAY_SEED` naming the gameplay seed; the PS2 threads' fibers on iOS's arm64 switch, since bionic has no `swapcontext`; the swapchain sized from the window; no `/proc/self/exe` (which is Android's `app_process`) |
+| `android/patches/kazarov-0001-android.patch` | What Android needs of Kazarov, applied to a copy in the build tree: mimalloc as the Rust side's allocator (Android's, scudo, keeps each small size class in a 256 MiB region and then maps every allocation on its own; the model pass's small JSON nodes used up the process's ~65k mappings and the extraction aborted), built with local-dynamic TLS, since Android's linker refuses initial-exec TLS in a library loaded with `dlopen`; `flock` for the extractor's stage lock, which `File::try_lock` does not support on Android; an `android-arm64` target for `kz-ffmpeg`; the extractor's iOS memory paths (the disc read a resource at a time, waiting bytes spilled to a file) and an available-memory query on Android; no desktop setup window; `KAZAROV_GAMEPLAY_SEED` naming the gameplay seed; the PS2 threads' fibers on iOS's arm64 switch, since bionic has no `swapcontext`; the swapchain sized from the window; no `/proc/self/exe` (which is Android's `app_process`) |
 | `port/src/android/bridge.cpp` | The app's native side: the game's command line and environment in the app's storage, extraction and its progress, the Options pages, the touch gamepad's state (`InputSetTouchOverlay`), pause and speed; stdout and stderr to logcat |
 | `port/CMakeLists.txt` | `libdarkchronicle.so` on Android, `-fsigned-char` (the PS2's `char` is signed, Android's on arm64 is not), no `_FORTIFY_SOURCE` (it stops the process on the retail code's small overruns), Tracy and the tests off, the Luau scripts precompiled as on iOS |
 
@@ -68,8 +68,28 @@ and `CHRONICLE_KEY_PASSWORD`, or with `android/app/chronicletwo-dev.jks` (passwo
 key is public, so it says nothing about who built an APK; it makes each build install over the last.
 `.github/workflows/android.yml` builds every push, and a push whose `versionName` has no release yet publishes it.
 
+## Testing without a phone
+
+`android/test/bionic.sh` runs arm64 Android code on Android's own linker, C library and allocator under qemu-user:
+the bionic of an Android 17 emulator image, unpacked by `bionic_root.py` (the image, about 830 MB, is downloaded
+once into `~/.cache/chronicletwo-bionic`). CI runs it after each build.
+
+- `bionic.sh` (or `tests`): Kazarov's Rust tests, with `android/patches` applied, built for `aarch64-linux-android`.
+  Besides the usual suite this runs the Android-only paths (the disc mapped whole, waiting bytes spilled to a file,
+  the archive read by position, `flock`), `disc_image_extracts_on_one_worker_as_the_android_app_does` (a fake disc
+  image extracted the way the app extracts one) and `small_allocations_hold_past_a_scudo_size_class`, which on
+  scudo dies as the 0.1.7 extraction did.
+- `bionic.sh app`: the release build's `libdarkchronicle.so`, loaded with `dlopen` as the app's activity loads it,
+  extracting the fake disc of `fake_disc.py` through `kazarov::extract_tracked` with the app's settings
+  (`load_extract.cpp`). This is where a library Android's linker refuses shows up, as 0.1.5's did.
+- `bionic.sh all`: both.
+
+It needs qemu-user, e2fsprogs (`debugfs`), Python 3, the NDK and Rust's `aarch64-linux-android` target. What it
+cannot show is a phone's memory: the fake disc is small, and the real one's conversion has only run on a phone.
+
 ## Not done yet
 
 - Importing saves from a PS2 memory card (Chronicle-rs has it for Dark Cloud; Dark Cloud 2's save format differs).
-- It has not been run on a device: the first runs' logs will say what needs fixing.
+- A full extraction and the game itself are not yet confirmed on a phone: 0.1.7 reached the model pass on a Galaxy S26
+  before scudo's mappings ran out.
 - Snapdragon Galaxy S22-class phones whose stock driver is Vulkan 1.1 are refused by the renderer.
