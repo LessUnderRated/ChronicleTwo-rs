@@ -11,7 +11,7 @@ local helper_f50d89ab = require("@lib/monster/helper_f50d89ab")
 local function helper_fd06d627(arg0: f32)
 	local var5: f32 = 0
 	helper_f50d89ab(helper_787df986(arg0))
-	monster.Ext(75, var5) -- retail: the handler rejects 1 arguments
+	monster.call_command(75, var5) -- retail: the handler rejects 1 arguments
 	local _ = helper_64fbd1fc(helper_28452e16(var5), arg0, 360.0)
 	helper_79d6eaca()
 end

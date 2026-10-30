@@ -10,7 +10,7 @@ local set_window_mode = require("@lib/event/set_window_mode")
 local function helper_d025a590(arg0: s32)
 	local at: number = 0
 	return vm.guard(function()
-		event.SetMesPreset(1, 4)
+		event.apply_message_window_preset(1, 4)
 		set_window_mode(1, 4)
 		if arg0 == 0 then
 			at = 1

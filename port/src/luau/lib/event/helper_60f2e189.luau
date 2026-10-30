@@ -6,12 +6,12 @@ local helper_70e4ac93 = require("@lib/event/helper_70e4ac93")
 --- Helper function.
 local function helper_60f2e189(arg0: s32, arg1: any)
 	local var2: s32 = 0
-	event.SetMesPreset(0, 0)
-	var2 = event.GetChapter() or var2
+	event.apply_message_window_preset(0, 0)
+	var2 = event.get_chapter() or var2
 	if var2 ~= 8 then
-		event.MesMake_2(0, "Bitte nutze meine neue\nKraft, wann immer du willst.")
+		event.open_message_window_2(0, "Bitte nutze meine neue\nKraft, wann immer du willst.")
 	else
-		event.MesMake_2(
+		event.open_message_window_2(
 			0,
 			"Die Welt der Bilder ist gro[UNI00df].\nMalen zu lernen mag ein Leben\ndauern, doch es ist die Zeit wert."
 		)

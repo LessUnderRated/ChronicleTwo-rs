@@ -8,13 +8,13 @@ local set_window_mode = require("@lib/event/set_window_mode")
 local function helper_506285df()
 	local var0: s32 = 0
 	local flag: s32 = 0
-	var0 = event.GetEventData_2(13) or var0
+	var0 = event.get_triggered_event_data_2(13) or var0
 	set_window_mode(0, 1)
-	flag = event.GetFlag(648) or flag
+	flag = event.get_save_flag(648) or flag
 	if flag == 0 then
-		event.MesMake_2(0, "Je vous attendrai ici.\nJ'esp[UNI00e8]re que tout ira bien.")
+		event.open_message_window_2(0, "Je vous attendrai ici.\nJ'esp[UNI00e8]re que tout ira bien.")
 	else
-		event.MesMake_2(0, "Je vous attendrai ici.\nNe le ratez pas !")
+		event.open_message_window_2(0, "Je vous attendrai ici.\nNe le ratez pas !")
 	end
 	helper_1c04a0eb(var0, -1, 0, 0)
 end

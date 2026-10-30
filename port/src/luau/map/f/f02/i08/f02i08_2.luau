@@ -20,9 +20,9 @@ local function helper_1c4d8()
 	local var0: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.SetMesWindowMode(0, 1)
-		event.SetMesShippo(0, 0)
-		event.MesMake_2(
+		event.set_message_window_mode(0, 1)
+		event.set_message_bubble_tail(0, 0)
+		event.open_message_window_2(
 			0,
 			"Donnons-lui une Fleur de vent-blanc\npour qu'il fasse son plat miracle.\n(Pour ouvrir le menu : (#))"
 		)
@@ -59,22 +59,22 @@ function script.default_event()
 	local flag_3: s32 = 0
 	local argc: s32 = 0
 	helper_1ef0d4b2()
-	flag = event.GetFlag(320) or flag
-	flag_2 = event.GetFlag(324) or flag_2
-	flag_3 = event.GetFlag(364) or flag_3
+	flag = event.get_save_flag(320) or flag
+	flag_2 = event.get_save_flag(324) or flag_2
+	flag_3 = event.get_save_flag(364) or flag_3
 	helper_13169207(0)
 	if flag_3 == 1 then
 		if flag == 0 then
 			helper_28199468()
 		else
-			argc = event.GetItemHaveNum(363) or argc
+			argc = event.get_owned_item_count(363) or argc
 			if flag_2 == 0 and argc >= 1 then
-				event.FuncPointShow("", "syumai", 1)
+				event.set_function_point_enabled("", "syumai", 1)
 			end
 		end
 	end
 	helper_13169207(1)
-	event.ResetCamera(1, 0.0)
+	event.reset_follow_camera(1, 0.0)
 end
 
 --- The event the town walk runs when the square button is pressed, after reloading the map script.
@@ -90,11 +90,11 @@ function script.event_500()
 	local item: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.Initialize()
+		event.initialize_event()
 		at = 1
 		vm.wait(1)
-		event.SetMotion(0, "立ち")
-		var0 = event.GetEventData_2(6) or var0
+		event.set_character_motion(0, "立ち")
+		var0 = event.get_triggered_event_data_2(6) or var0
 		if var0 == 1 then
 			at = 2
 			if helper_1c4d8() ~= 0 then
@@ -102,15 +102,15 @@ function script.event_500()
 			end
 		end
 		if var0 == 2 then
-			event.GotoUseItem(363)
+			event.open_use_item_menu(363)
 			at = 3
 			vm.wait(3)
 			item = vmhost.used_item() or item
 			if item == 363 then
-				event.AddItem(364)
-				event.FuncPointShow("", "syumai", 0)
-				event.FadeOutBgm(30)
-				event.SetFadeOut(30)
+				event.add_inventory_item(364)
+				event.set_function_point_enabled("", "syumai", 0)
+				event.fade_out_music(30)
+				event.fade_out_screen(30)
 				at = 4
 				wait_frames(30)
 				helper_13169207(0)

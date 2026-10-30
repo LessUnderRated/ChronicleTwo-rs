@@ -24,34 +24,34 @@ script.event_151 = helper_f9ed45d9
 --- Event 152, which map data, a script or the engine runs by number.
 function script.event_152()
 	local argc: s32 = 0
-	event.SetLocalFlag(0, 0)
+	event.set_local_event_flag(0, 0)
 	helper_e80a7a24()
-	event.SndInReverb(0)
-	argc = event.GetLocalFlag(0) or argc
+	event.set_sound_reverb_enabled(0)
+	argc = event.get_local_event_flag(0) or argc
 	if argc == 1 then
-		event.SetCrossfade(60)
+		event.start_crossfade(60)
 	else
-		event.SetFadeIn(60)
+		event.fade_in_screen(60)
 	end
 	vm.wait(2)
-	event.AssignStack(5)
-	event.ClearStack(5)
-	event.SetBgColor(0, 0, 0)
-	event.SetMovieCc(0, 0)
-	event.SetMovieCc(1, 0, 105.0, "I was so scared then.", 90)
-	event.SetMovieCc(1, 1, 210.0, "But, in a way it was really fun.", 90)
-	event.SetMovieCc(1, 2, 390, "I mean, every boring day had been just the same for me.", 90)
-	event.SetMovieCc(1, 3, 540, "But this...this was the beginning of a real adventure.", 150)
-	event.SetMovieCc(0, 1)
-	event.LoadMovie(5, "movie/open1.mp4")
-	event.SetFadeOut(0)
+	event.assign_memory_stack(5)
+	event.clear_memory_stack(5)
+	event.set_background_color(0, 0, 0)
+	event.set_movie_caption(0, 0)
+	event.set_movie_caption(1, 0, 105.0, "I was so scared then.", 90)
+	event.set_movie_caption(1, 1, 210.0, "But, in a way it was really fun.", 90)
+	event.set_movie_caption(1, 2, 390, "I mean, every boring day had been just the same for me.", 90)
+	event.set_movie_caption(1, 3, 540, "But this...this was the beginning of a real adventure.", 150)
+	event.set_movie_caption(0, 1)
+	event.play_movie(5, "movie/open1.mp4")
+	event.fade_out_screen(0)
 	vm.wait(3)
 	vm.wait(4)
-	event.SetMovieCc(0, 0)
-	event.SndInReverb(1)
-	event.BgmLoadCancel()
-	event.SoundLoadCancel()
-	event.MapJump_3(-1, "d01e01", 151)
+	event.set_movie_caption(0, 0)
+	event.set_sound_reverb_enabled(1)
+	event.skip_next_music_load()
+	event.skip_next_map_sound_load()
+	event.jump_to_map_3(-1, "d01e01", 151)
 end
 
 return script

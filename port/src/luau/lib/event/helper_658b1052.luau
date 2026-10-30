@@ -3,13 +3,13 @@
 
 --- Helper function.
 local function helper_658b1052()
-	event.Initialize()
-	event.SetMesWindowMode(0, 1)
-	event.SetAi(1, 24)
-	event.CharaActive(1, 0)
-	event.CharaActive(1, 24)
-	event.ResetCamera(1)
-	event.SetFadeIn(30)
+	event.initialize_event()
+	event.set_message_window_mode(0, 1)
+	event.set_villager_ai_enabled(1, 24)
+	event.set_character_active(1, 0)
+	event.set_character_active(1, 24)
+	event.reset_follow_camera(1)
+	event.fade_in_screen(30)
 end
 
 return helper_658b1052

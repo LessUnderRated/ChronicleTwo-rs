@@ -1318,7 +1318,7 @@ def driver_head(module: str, namespace: str, kind_catalog: dict, names: dict[int
         lines.append(f"    [{no}] = {{ " + ", ".join(f"[{argc}] = {_string(reads)}" for argc, reads in sorted(arities.items())) + " },")
     lines.append("}")
     lines.append(
-        f"{namespace}.Ext = function(no, ...)\n"
+        f"{namespace}.{api.EXT_NAME} = function(no, ...)\n"
         "    if vmhost.skipping() then\n"
         "        return\n"
         "    end\n"

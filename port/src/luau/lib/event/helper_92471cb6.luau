@@ -7,8 +7,8 @@ local set_window_mode = require("@lib/event/set_window_mode")
 --- Helper function.
 local function helper_92471cb6()
 	set_window_mode(1, 7)
-	event.SetMesPreset(1, 2)
-	event.MesMake_2(1, "It stops with (O) button.")
+	event.apply_message_window_preset(1, 2)
+	event.open_message_window_2(1, "It stops with (O) button.")
 	open_message(1, -1, 15, 0, 0)
 end
 

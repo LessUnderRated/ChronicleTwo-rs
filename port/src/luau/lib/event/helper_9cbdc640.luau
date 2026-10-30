@@ -8,15 +8,15 @@ local function helper_9cbdc640(arg0: s32)
 	local stream_open_state: s32 = 0
 	while true do
 		vm.wait(1)
-		stream_open_state = event.StreamOpenCheck() or stream_open_state
+		stream_open_state = event.get_voice_stream_open_state() or stream_open_state
 		if stream_open_state == 0 then
 			break
 		end
 	end
-	event.StreamStandby(arg0)
+	event.ready_voice_stream(arg0)
 	while true do
 		vm.wait(2)
-		stream_open_state = event.StreamOpenCheck() or stream_open_state
+		stream_open_state = event.get_voice_stream_open_state() or stream_open_state
 		if stream_open_state == 0 then
 			break
 		end

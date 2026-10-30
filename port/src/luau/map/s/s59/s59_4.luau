@@ -12,16 +12,16 @@ function script.setup() end
 --- The event the town walk runs when the square button is pressed, after reloading the map script.
 function script.key_open()
 	helper_3306dbdc()
-	event.BgmLoadCancel()
-	event.MapJump_3(-1, "s37", 510)
+	event.skip_next_music_load()
+	event.jump_to_map_3(-1, "s37", 510)
 	vm.wait(2)
 end
 
 --- Event 500, which map data, a script or the engine runs by number.
 function script.event_500()
 	helper_3306dbdc()
-	event.BgmLoadCancel()
-	event.MapJump_3(-1, "s37", 510)
+	event.skip_next_music_load()
+	event.jump_to_map_3(-1, "s37", 510)
 	vm.wait(2)
 end
 

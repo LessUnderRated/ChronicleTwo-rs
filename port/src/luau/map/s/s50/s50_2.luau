@@ -18,24 +18,24 @@ local wait_frames_skipping = require("@lib/event/wait_frames_skipping")
 --- Event 99, which map data, a script or the engine runs by number.
 local function event_99()
 	local flag: s32 = 0
-	event.StopBgm(0)
-	event.LoadSound(7686)
-	flag = event.GetFlag(708) or flag
+	event.stop_music(0)
+	event.load_map_sounds(7686)
+	flag = event.get_save_flag(708) or flag
 	if flag == 1 then
-		event.FuncPointShow("", "e708", 0)
-		event.EohSyncObj_2(0, "p06s50")
-		event.EohSetShow(0, 1)
-		event.EohSyncObj_2(0, "p04s50")
-		event.EohSetRot(0, 0.0, -1.22, 0.0)
-		event.EohSyncObj_2(1, "p05s50")
-		event.EohSetRot(1, 0.0, 1.22, 0.0)
+		event.set_function_point_enabled("", "e708", 0)
+		event.attach_object_handle_to_map_part_2(0, "p06s50")
+		event.set_object_handle_visible(0, 1)
+		event.attach_object_handle_to_map_part_2(0, "p04s50")
+		event.set_object_handle_rotation(0, 0.0, -1.22, 0.0)
+		event.attach_object_handle_to_map_part_2(1, "p05s50")
+		event.set_object_handle_rotation(1, 0.0, 1.22, 0.0)
 	end
-	event.DngPause(8192, 1)
-	event.SetCharaChangeMask(2, 0)
-	event.SetCharaChangeMask(3, 0)
-	event.SetBitCtrl(1, 1)
-	event.SetCharaShow(1, 0)
-	event.SetCharaShow(2, 0)
+	event.set_dungeon_pause_flags(8192, 1)
+	event.set_character_change_unmasked(2, 0)
+	event.set_character_change_unmasked(3, 0)
+	event.set_save_control_bits(1, 1)
+	event.set_character_visible(1, 0)
+	event.set_character_visible(2, 0)
 end
 
 local script: { [any]: (...any) -> ...any } = {}
@@ -46,18 +46,18 @@ function script.setup() end
 --- Event 0, which map data, a script or the engine runs by number.
 function script.event_0()
 	local active_chr_no: s32 = 0
-	event.SetMotion(0, "立ち")
-	event.SetMesPreset(0, 4)
-	event.SetMesWindowMode(0, 4)
-	event.SetMesDrawspeed(0, 1)
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	event.set_character_motion(0, "立ち")
+	event.apply_message_window_preset(0, 4)
+	event.set_message_window_mode(0, 4)
+	event.set_message_draw_speed(0, 1)
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no == 0 then
-		event.MesMake_2(
+		event.open_message_window_2(
 			0,
 			"-- Recherche d'Id[UNI00e9]es de Max --\nDans ce livre, Max apprend qu'il\npourrait cr[UNI00e9]er quelque chose avec :\n  ●une arme\n  ●une colonne lunaire\n  ●des bois de cerf"
 		)
 	else
-		event.MesMake_2(
+		event.open_message_window_2(
 			0,
 			"-- [UNI00c9]tude des monstres de Monica --\nDans ce document, Monica apprend\nque le Carreau aime beaucoup\nceci : les diamants"
 		)
@@ -71,32 +71,32 @@ script.event_99 = event_99
 function script.default_event()
 	event_99()
 	helper_9dafbc83(0.0, 0.0, 200.0, vm.f32(3.14))
-	event.SetCameraRef(0.0, 30.0, 200.0)
-	event.SetCameraPos(0.0, 40.0, 320.0)
-	event.ResetCamera(0)
-	event.SetFadeIn(30)
-	event.Finish()
+	event.set_camera_look_at(0.0, 30.0, 200.0)
+	event.set_camera_position(0.0, 40.0, 320.0)
+	event.reset_follow_camera(0)
+	event.fade_in_screen(30)
+	event.finish_event()
 end
 
 --- The event the town walk runs when the square button is pressed, after reloading the map script.
 function script.key_open()
-	event.Initialize()
-	event.CmrsInit()
-	event.CmrsQuake(0.0, 1.0, 0.0, 16)
+	event.initialize_event()
+	event.clear_camera_sequence()
+	event.shake_camera_sequence(0.0, 1.0, 0.0, 16)
 	wait_camera()
 end
 
 --- Event 200, which map data, a script or the engine runs by number.
 function script.event_200()
 	if helper_463fb8f7(2) ~= 0 then
-		event.SetCharaShow(1, 1)
-		event.SetCharaShow(2, 1)
-		event.DngPause(8192, 0)
-		event.ActchrSetDefMotion(0)
-		event.SetCharaChangeMask(2, 1)
-		event.SetCharaChangeMask(3, 1)
-		event.SetBitCtrl(1, 0)
-		event.LoadScript("d06/d06.stb", 1000)
+		event.set_character_visible(1, 1)
+		event.set_character_visible(2, 1)
+		event.set_dungeon_pause_flags(8192, 0)
+		event.reset_action_character_motion(0)
+		event.set_character_change_unmasked(2, 1)
+		event.set_character_change_unmasked(3, 1)
+		event.set_save_control_bits(1, 0)
+		event.load_event_script("d06/d06.stb", 1000)
 	end
 end
 
@@ -106,29 +106,29 @@ function script.event_210()
 	local stage_id: s32 = 0
 	local var2: s32 = 0
 	local argc: s32 = 0
-	flag = event.GetFlag(708) or flag
+	flag = event.get_save_flag(708) or flag
 	if flag == 1 then
 		if helper_463fb8f7(1) ~= 0 then
-			stage_id = event.DngGetStageId() or stage_id
-			var2 = event.DngGetFloorId() or var2
-			argc = event.GetNextFloor(var2, 0) or argc
-			event.DngSetFloorId(argc)
-			event.SetFloorInfo(stage_id, var2, 5, 2)
-			event.SetFloorInfo(stage_id, argc, 5, 1)
-			event.SetCharaShow(1, 1)
-			event.SetCharaShow(2, 1)
-			event.DngPause(8192, 0)
-			event.ActchrSetDefMotion(0)
-			event.SetCharaChangeMask(2, 1)
-			event.SetCharaChangeMask(3, 1)
-			event.SetBitCtrl(1, 0)
-			event.LoadScript("d06/d06.stb", 1000)
+			stage_id = event.get_dungeon_stage_id() or stage_id
+			var2 = event.get_dungeon_floor() or var2
+			argc = event.get_dungeon_next_floor(var2, 0) or argc
+			event.set_dungeon_floor(argc)
+			event.set_dungeon_floor_info(stage_id, var2, 5, 2)
+			event.set_dungeon_floor_info(stage_id, argc, 5, 1)
+			event.set_character_visible(1, 1)
+			event.set_character_visible(2, 1)
+			event.set_dungeon_pause_flags(8192, 0)
+			event.reset_action_character_motion(0)
+			event.set_character_change_unmasked(2, 1)
+			event.set_character_change_unmasked(3, 1)
+			event.set_save_control_bits(1, 0)
+			event.load_event_script("d06/d06.stb", 1000)
 		end
 	else
-		event.SetMesWindowMode(0, 1)
-		event.SetMesShippo(0, 0)
-		event.SetMotion(0, "立ち")
-		event.MesMake_2(0, "La porte est verrouill[UNI00e9]e.\nCette pi[UNI00e8]ce renfermerait-elle\nun secret ?")
+		event.set_message_window_mode(0, 1)
+		event.set_message_bubble_tail(0, 0)
+		event.set_character_motion(0, "立ち")
+		event.open_message_window_2(0, "La porte est verrouill[UNI00e9]e.\nCette pi[UNI00e8]ce renfermerait-elle\nun secret ?")
 		helper_75684dd8(0, -1, 5, 0, 0)
 	end
 end
@@ -141,12 +141,12 @@ function script.event_500()
 	local var3: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.Initialize()
-		event.SetMotion(0, "立ち")
-		active_chr_no = event.GetActiveChrNo() or active_chr_no
+		event.initialize_event()
+		event.set_character_motion(0, "立ち")
+		active_chr_no = event.get_playable_character() or active_chr_no
 		if active_chr_no == 2 or active_chr_no == 3 then
-			event.SetMesWindowMode(0, 1)
-			event.SetMesDrawspeed(0, 1)
+			event.set_message_window_mode(0, 1)
+			event.set_message_draw_speed(0, 1)
 			if active_chr_no == 2 then
 				at = 1
 				helper_75684dd8(0, 22, 5, 256, 208)
@@ -154,14 +154,14 @@ function script.event_500()
 				at = 2
 				helper_75684dd8(0, 23, 5, 256, 208)
 			end
-			event.Finish()
+			event.finish_event()
 			return
 		end
-		var1 = event.GetEventData_2(6) or var1
+		var1 = event.get_triggered_event_data_2(6) or var1
 		if var1 == 1 then
-			event.SetMesWindowMode(0, 1)
-			event.SetMesShippo(0, 0)
-			event.MesMake_2(0, "Il y a un vase [UNI00e9]trange.\n(Pour ouvrir le menu : (#))")
+			event.set_message_window_mode(0, 1)
+			event.set_message_bubble_tail(0, 0)
+			event.open_message_window_2(0, "Il y a un vase [UNI00e9]trange.\n(Pour ouvrir le menu : (#))")
 			at = 3
 			var3 = helper_c292fa16(0, -1, 5, 256, 208, var3)
 			if var3 == 1 then
@@ -169,40 +169,40 @@ function script.event_500()
 			end
 		end
 		if var1 == 2 then
-			event.GotoUseItem(374)
+			event.open_use_item_menu(374)
 			at = 4
 			vm.wait(4)
 			item = vmhost.used_item() or item
 			if item > 0 then
 				if item == 374 then
-					event.SetStatusbarShow(0, 1.0)
-					event.EohSyncObj_2(0, "p06s50")
-					event.EohSetShow(0, 1)
-					event.FuncPointShow("", "e708", 0)
-					event.FuncPointShow("", "next_floor", 1)
-					event.SetFadeOut(3, 255, 255, 255)
+					event.show_dungeon_status_bar(0, 1.0)
+					event.attach_object_handle_to_map_part_2(0, "p06s50")
+					event.set_object_handle_visible(0, 1)
+					event.set_function_point_enabled("", "e708", 0)
+					event.set_function_point_enabled("", "next_floor", 1)
+					event.fade_out_screen(3, 255, 255, 255)
 					at = 5
 					wait_frames(3)
-					event.SetFadeIn(8)
+					event.fade_in_screen(8)
 					at = 6
 					wait_frames(10)
-					event.SetFadeOut(3, 255, 255, 255)
+					event.fade_out_screen(3, 255, 255, 255)
 					at = 7
 					wait_frames(3)
-					event.SetFadeIn(8)
+					event.fade_in_screen(8)
 					at = 8
 					wait_frames(20)
-					event.SetFadeOut(30, 255, 255, 255)
+					event.fade_out_screen(30, 255, 255, 255)
 					at = 9
 					wait_frames(30)
 					at = 10
 					helper_7ff88f68()
 					helper_9dafbc83(30.0, vm.f32(-2.8), -80.0, vm.f32(3.14))
-					event.SetCameraRef(30.0, 27.2, -80.0)
-					event.SetCameraPos(30.0, 37.2, 40.0)
-					event.ResetCamera(0)
-					event.SetFadeIn(10)
-					event.Finish()
+					event.set_camera_look_at(30.0, 27.2, -80.0)
+					event.set_camera_position(30.0, 37.2, 40.0)
+					event.reset_follow_camera(0)
+					event.fade_in_screen(10)
+					event.finish_event()
 					return
 				else
 					at = 11
@@ -246,11 +246,11 @@ function script.event_500()
 				helper_7ff88f68()
 				return vm.continue_with(function()
 					helper_9dafbc83(30.0, vm.f32(-2.8), -80.0, vm.f32(3.14))
-					event.SetCameraRef(30.0, 27.2, -80.0)
-					event.SetCameraPos(30.0, 37.2, 40.0)
-					event.ResetCamera(0)
-					event.SetFadeIn(10)
-					event.Finish()
+					event.set_camera_look_at(30.0, 27.2, -80.0)
+					event.set_camera_position(30.0, 37.2, 40.0)
+					event.reset_follow_camera(0)
+					event.fade_in_screen(10)
+					event.finish_event()
 					return
 				end)
 			end
@@ -271,9 +271,9 @@ end
 
 --- Event 17080, which map data, a script or the engine runs by number.
 function script.event_17080()
-	event.SetCharaShow(1, 0)
-	event.SetCharaShow(2, 0)
-	event.SetStatusbarShow(0, 1.0)
+	event.set_character_visible(1, 0)
+	event.set_character_visible(2, 0)
+	event.show_dungeon_status_bar(0, 1.0)
 	helper_7ff88f68()
 end
 

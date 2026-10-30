@@ -3,10 +3,10 @@
 
 --- Helper function.
 local function helper_65eb2b74(value: s32)
-	monster.VPush2(5, value)
+	monster.set_secondary_variable(5, value)
 	if value == 0 then
-		monster.SetEscapeRate(-1, 1.0)
-		monster.SetGuardRate(-1, 1.0)
+		monster.set_monster_escape_rate(-1, 1.0)
+		monster.set_monster_guard_rate(-1, 1.0)
 	end
 end
 

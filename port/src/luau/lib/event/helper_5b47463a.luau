@@ -5,7 +5,7 @@
 local function helper_5b47463a()
 	local stage_id: s32 = 0
 	local var1: s32 = 0
-	stage_id = event.DngGetStageId() or stage_id
+	stage_id = event.get_dungeon_stage_id() or stage_id
 	var1 = 0
 	if stage_id == 0 or stage_id == 1 or stage_id == 6 then
 		var1 = 110

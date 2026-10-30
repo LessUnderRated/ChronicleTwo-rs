@@ -38,30 +38,30 @@ local function helper_3c75670a(arg0: s32, count: s32)
 	local stage_id: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.DngPause(535, 1)
-		event.AssignStack(5)
-		event.ClearStack(5)
+		event.set_dungeon_pause_flags(535, 1)
+		event.assign_memory_stack(5)
+		event.clear_memory_stack(5)
 		do
-			local out1, out2, out3, out4 = event.GetDunWorldCoord(1)
+			local out1, out2, out3, out4 = event.get_dungeon_event_point(1)
 			var2 = out1 or var2
 			var3 = out2 or var3
 			var4 = out3 or var4
 			var5 = out4 or var5
 		end
-		event.SetWorldCoord(var2, var3, var4, var5)
+		event.set_event_world_coordinate(var2, var3, var4, var5)
 		at = 1
 		vm.wait(1)
 		if arg0 >= 0 then
-			event.SetLoadbgFile_3(arg0, 1, "effect/itemget.gltf")
+			event.start_background_file_loads_3(arg0, 1, "effect/itemget.gltf")
 		else
-			event.SetLoadbgFile_1("effect/itemget.gltf")
+			event.start_background_file_loads_1("effect/itemget.gltf")
 		end
-		event.SetTbAngle(0.0)
-		event.SetTbStatus(2)
-		event.CmrsInit()
-		event.CmrsSetPos(0.0, 29.0, 57.0)
-		event.CmrsSetRef(0.0, 10.0, 0.0)
-		event.CmrsMove(0.0, 22.27, 41.0, 0.0, 14.27, 0.0, 80)
+		event.set_nearest_treasure_box_lid_open(0.0)
+		event.set_nearest_treasure_box_state(2)
+		event.clear_camera_sequence()
+		event.set_camera_sequence_position(0.0, 29.0, 57.0)
+		event.set_camera_sequence_look_at(0.0, 10.0, 0.0)
+		event.move_camera_sequence(0.0, 22.27, 41.0, 0.0, 14.27, 0.0, 80)
 		at = 2
 		wait_frames(15)
 		at = 3
@@ -70,33 +70,33 @@ local function helper_3c75670a(arg0: s32, count: s32)
 		wait_frames(5)
 		at = 5
 		helper_479dc9e9()
-		event.LoadChara(5, "effect/itemget.gltf", "info", 12)
-		event.CharaActive(12)
-		event.EohSyncChara(1, 12)
-		event.ObjsInit(1)
-		event.ObjsSyncObj(1, 1)
-		event.ObjsSetPos(1, 0.0, 0.0, 0.0)
-		event.ObjsSetRot(1, 0.0, 0.0, 0.0)
-		event.ObjsSetMotion(1, "ゲット", 6)
+		event.load_character(5, "effect/itemget.gltf", "info", 12)
+		event.set_character_active(12)
+		event.attach_object_handle_to_character(1, 12)
+		event.clear_object_sequence(1)
+		event.set_object_sequence_object(1, 1)
+		event.set_object_sequence_position(1, 0.0, 0.0, 0.0)
+		event.set_object_sequence_rotation(1, 0.0, 0.0, 0.0)
+		event.set_object_sequence_motion(1, "ゲット", 6)
 		at = 6
 		wait_frames(5)
 		at = 7
 		var6 = helper_562b5326(var6)
 		if arg0 >= 0 then
-			event.LoadItem(5, arg0, "info", 13, 1)
-			event.CharaActive(1, 13)
-			event.EohSyncChara(0, 13)
+			event.load_item_model(5, arg0, "info", 13, 1)
+			event.set_character_active(1, 13)
+			event.attach_object_handle_to_character(0, 13)
 			var7 = helper_e6c23a00(13, arg0, var7)
-			event.EohSetScale(0, var7, var7, var7)
-			event.SetCharaShow(13, 1, 1, 0.1)
-			event.ObjsInit(0)
-			event.ObjsSyncObj(0, 0)
-			event.ObjsSetPos(0, 0.0, -2.5, 0.0)
-			event.ObjsSetRot(0, 0.0, 0.0, 0.0)
-			event.ObjsPosDelay(0, 4)
-			event.ObjsJump(0, 0.0, 17.0, 0.0, -0.3, 20)
-			event.ObjsJump(0, 0.0, 17.0, 0.0, -0.4, 8)
-			event.ObjsJump(0, 0.0, 17.0, 0.0, -0.2, 5)
+			event.set_object_handle_scale(0, var7, var7, var7)
+			event.set_character_visible(13, 1, 1, 0.1)
+			event.clear_object_sequence(0)
+			event.set_object_sequence_object(0, 0)
+			event.set_object_sequence_position(0, 0.0, -2.5, 0.0)
+			event.set_object_sequence_rotation(0, 0.0, 0.0, 0.0)
+			event.delay_object_sequence_position_track(0, 4)
+			event.jump_object_sequence(0, 0.0, 17.0, 0.0, -0.3, 20)
+			event.jump_object_sequence(0, 0.0, 17.0, 0.0, -0.4, 8)
+			event.jump_object_sequence(0, 0.0, 17.0, 0.0, -0.2, 5)
 		end
 		at = 8
 		var6 = helper_1ebb0be6(var6)
@@ -105,69 +105,69 @@ local function helper_3c75670a(arg0: s32, count: s32)
 		if arg0 >= 0 then
 			argc = 0
 			argc_2 = 0
-			count_2 = event.CheckGetItemLimit(arg0, count) or count_2
+			count_2 = event.get_item_limit_status(arg0, count) or count_2
 			if count_2 >= 1 then
-				event.AddItem(arg0, count_2)
+				event.add_inventory_item(arg0, count_2)
 				at = 10
 				helper_9594e622(arg0, count_2)
 			else
-				event.SetMesWindowMode(0, 4)
-				event.SetMesDrawspeed(0, 1)
-				event.SetMesItem(0, 1, arg0)
-				event.MesMake_2(0, "Tu as trouv[UNI00e9] [アイテム１],\nmais il n'y avait plus de place.")
+				event.set_message_window_mode(0, 4)
+				event.set_message_draw_speed(0, 1)
+				event.set_message_item_name(0, 1, arg0)
+				event.open_message_window_2(0, "Tu as trouv[UNI00e9] [アイテム１],\nmais il n'y avait plus de place.")
 				at = 11
 				helper_75684dd8(0, -1, 8, 0, 0)
-				event.SetMesDrawspeed(0, 0)
+				event.set_message_draw_speed(0, 0)
 			end
-			argc = event.CheckGetItemLimit() or argc
-			argc_2 = event.CheckItemOver() or argc_2
+			argc = event.get_item_limit_status() or argc
+			argc_2 = event.get_overflow_item_count() or argc_2
 			print("CHECK_GET_ITEM_LIMIT = ", argc, "\n")
 			print("CHECK_ITEM_OVER      = ", argc_2, "\n")
 			if argc_2 >= 1 then
-				event.SetFadeOut(10)
+				event.fade_out_screen(10)
 				at = 12
 				wait_frames(10)
-				event.GotoMenu(17)
+				event.open_event_menu(17)
 				at = 13
 				vm.wait(13)
 			end
 		else
-			event.SetMesWindowMode(0, 4)
-			event.SetMesDrawspeed(0, 1)
+			event.set_message_window_mode(0, 4)
+			event.set_message_draw_speed(0, 1)
 			at = 14
 			helper_75684dd8(0, 2240, 8, 0, 0)
-			event.SetMesDrawspeed(0, 0)
+			event.set_message_draw_speed(0, 0)
 		end
-		event.CharaActive(1, 0)
-		event.DeleteChara(12)
-		event.DeleteChara(13)
-		event.SetTbAngle(1.0)
-		event.SetCrossfade(10)
-		event.SetWorldCoord(0.0, 0.0, 0.0, 0.0)
+		event.set_character_active(1, 0)
+		event.delete_character(12)
+		event.delete_character(13)
+		event.set_nearest_treasure_box_lid_open(1.0)
+		event.start_crossfade(10)
+		event.set_event_world_coordinate(0.0, 0.0, 0.0, 0.0)
 		do
-			local out1, out2, out3 = event.GetBeforeCameraNextPos()
+			local out1, out2, out3 = event.get_previous_camera_next_position()
 			position_x = out1 or position_x
 			position_y = out2 or position_y
 			position_z = out3 or position_z
 		end
-		event.SetCameraPos(position_x, position_y, position_z)
+		event.set_camera_position(position_x, position_y, position_z)
 		do
-			local out1, out2, out3 = event.GetBeforeCameraNextRef()
+			local out1, out2, out3 = event.get_previous_camera_next_look_at()
 			position_x = out1 or position_x
 			position_y = out2 or position_y
 			position_z = out3 or position_z
 		end
-		event.SetCameraRef(position_x, position_y, position_z)
-		event.ResetCamera(0)
-		var14 = event.GetTrialVersion() or var14
-		stage_id = event.DngGetStageId() or stage_id
+		event.set_camera_look_at(position_x, position_y, position_z)
+		event.reset_follow_camera(0)
+		var14 = event.is_trial_version() or var14
+		stage_id = event.get_dungeon_stage_id() or stage_id
 		if arg0 == 306 and (stage_id == 0 or var14 == 1) then
-			event.SetMesWindowMode(0, 4)
+			event.set_message_window_mode(0, 4)
 			at = 15
 			helper_75684dd8(0, 2250, 8, 0, 0)
 		end
-		event.DngPause(535, 0)
-		event.Finish()
+		event.set_dungeon_pause_flags(535, 0)
+		event.finish_event()
 		return
 	end, function(received: { any })
 		if at <= 15 then

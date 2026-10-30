@@ -3,7 +3,7 @@
 
 --- Helper function.
 local function helper_ce85b54c()
-	event.ActchrSetDefMotion(0)
+	event.reset_action_character_motion(0)
 end
 
 return helper_ce85b54c

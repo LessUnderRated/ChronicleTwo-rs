@@ -6,9 +6,9 @@ local helper_e91d3484 = require("@lib/event/helper_e91d3484")
 
 --- Helper function.
 local function helper_b2cb6e46()
-	event.Initialize()
+	event.initialize_event()
 	helper_e91d3484()
-	event.SetFadeOut(0)
+	event.fade_out_screen(0)
 	vm.wait(1)
 end
 

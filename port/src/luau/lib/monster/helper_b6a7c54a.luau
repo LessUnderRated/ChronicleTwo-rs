@@ -12,41 +12,41 @@ local function helper_b6a7c54a()
 	local argc: s32 = 0
 	local var1: f32 = 0
 	local var2: f32 = 0
-	var1 = monster.GetTargetDist() or var1
-	argc = monster.GetRnd(100) or argc
+	var1 = monster.get_target_distance() or var1
+	argc = monster.get_random(100) or argc
 	if argc < 80 then
-		argc = monster.GetRnd(100) or argc
+		argc = monster.get_random(100) or argc
 		if argc < 30 then
-			argc = monster.GetRnd(100) or argc
+			argc = monster.get_random(100) or argc
 			if argc < 80 then
-				monster.SetMos("歩き", -1, 0)
+				monster.set_motion("歩き", -1, 0)
 				helper_6d5002db(2.0, 3.0, 40.0, 60)
-				monster.SetMos("立ち", -1, 0)
+				monster.set_motion("立ち", -1, 0)
 			else
-				monster.SetMos("立ち", -1, 0)
+				monster.set_motion("立ち", -1, 0)
 				helper_7ca8a12f(40.0, 45.0, 75)
 			end
 		else
-			argc = monster.GetRnd(100) or argc
+			argc = monster.get_random(100) or argc
 			if argc < 50 then
 				var2 = -30.0
 			else
 				var2 = 30.0
 			end
-			monster.SetMos("歩き", -1, 0)
+			monster.set_motion("歩き", -1, 0)
 			helper_890ee63a(3.0)
-			monster.SetMos("歩き", -1, 0)
+			monster.set_motion("歩き", -1, 0)
 			helper_8be991f0(2.0, 3.0, var2, var1, 90.0, 45)
-			monster.SetMos("歩き", -1, 0)
+			monster.set_motion("歩き", -1, 0)
 			helper_890ee63a(3.0)
-			monster.SetMos("立ち", -1, 0)
+			monster.set_motion("立ち", -1, 0)
 			helper_7ca8a12f(40.0, 45.0, 30)
 		end
 	else
-		monster.SetMos("歩き", -1, 0)
+		monster.set_motion("歩き", -1, 0)
 		helper_890ee63a(3.0)
 		helper_3cc46fef()
-		monster.SetMos("立ち", -1, 0)
+		monster.set_motion("立ち", -1, 0)
 	end
 end
 

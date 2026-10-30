@@ -27,25 +27,25 @@ local function event_210()
 	local var2: f32 = 0
 	local var3: f32 = 0
 	local var4: f32 = 0
-	event.Initialize()
+	event.initialize_event()
 	helper_a57b0158()
-	var0 = event.GetSndId(2) or var0
-	event.SndSePlay(var0, 61)
+	var0 = event.get_sound_id(2) or var0
+	event.play_sound_effect(var0, 61)
 	do
-		local out1, out2, out3 = event.FuncPointGetPos("", "func3")
+		local out1, out2, out3 = event.get_function_point_position("", "func3")
 		var1 = out1 or var1
 		var2 = out2 or var2
 		var3 = out3 or var3
 	end
-	var4 = event.FuncPointGetRot("", "func3") or var4
+	var4 = event.get_function_point_rotation("", "func3") or var4
 	var4 = vm.f32(var4 - vm.f32(3.1415927))
-	var4 = event.AngleLimit(var4) or var4
-	event.SetCharaPos(0, var1, var2, var3)
-	event.SetCharaRot(0, 0.0, var4, 0.0)
-	event.SetMotion(0, "立ち", 4)
-	event.CharaResetDa(0)
-	event.ResetCamera(1, 0.0, 10.0)
-	event.SetFadeIn(30)
+	var4 = event.wrap_angle(var4) or var4
+	event.set_character_position(0, var1, var2, var3)
+	event.set_character_rotation(0, 0.0, var4, 0.0)
+	event.set_character_motion(0, "立ち", 4)
+	event.reset_character_cloth_and_hair(0)
+	event.reset_follow_camera(1, 0.0, 10.0)
+	event.fade_in_screen(30)
 end
 
 --- Helper function.
@@ -58,9 +58,9 @@ local function helper_22884()
 	local var5: f32 = 0
 	local var6: s32 = 0
 	local flag: s32 = 0
-	event.Initialize()
+	event.initialize_event()
 	do
-		local out1, out2, out3 = event.GetCharaPos(0)
+		local out1, out2, out3 = event.get_character_position(0)
 		var0 = out1 or var0
 		var1 = out2 or var1
 		var2 = out3 or var2
@@ -68,36 +68,36 @@ local function helper_22884()
 	var3 = vm.f32(vm.f32(vm.sin(vm.f32(-2.76)) * 30.0) + var0)
 	var4 = var1
 	var5 = vm.f32(vm.f32(vm.cos(vm.f32(-2.76)) * 30.0) + var2)
-	event.EohSyncChara(0, 0)
-	event.ObjsInit(0)
-	event.ObjsSyncObj(0, 0)
-	event.ObjsMove(0, var3, var4, var5, 30, 1)
-	event.ObjsReference(0, var3, var4, var5, 10)
-	event.ObjsSetMotion(0, "歩き")
+	event.attach_object_handle_to_character(0, 0)
+	event.clear_object_sequence(0)
+	event.set_object_sequence_object(0, 0)
+	event.move_object_sequence(0, var3, var4, var5, 30, 1)
+	event.turn_object_sequence_toward(0, var3, var4, var5, 10)
+	event.set_object_sequence_motion(0, "歩き")
 	var6 = 0
 	while var6 < 30 do
 		do
-			local out1, out2, out3 = event.GetCharaPos(0)
+			local out1, out2, out3 = event.get_character_position(0)
 			var0 = out1 or var0
 			var1 = out2 or var1
 			var2 = out3 or var2
 		end
 		var1 = vm.f32(var1 + 30.0)
-		event.SetCameraRef(var0, var1, var2)
+		event.set_camera_look_at(var0, var1, var2)
 		var6 = var6 + 1
 		vm.wait(1)
 	end
-	event.ObjsSetMotion(0, "立ち")
-	event.SetMesWindowMode(0, 1)
-	event.SetMesShippo(0, 0)
-	flag = event.GetFlag(304) or flag
+	event.set_object_sequence_motion(0, "立ち")
+	event.set_message_window_mode(0, 1)
+	event.set_message_bubble_tail(0, 0)
+	flag = event.get_save_flag(304) or flag
 	if flag == 0 then
-		event.MesMake_2(
+		event.open_message_window_2(
 			0,
 			"Il y a peut-[UNI00ea]tre quelqu'un dans la\nderni[UNI00e8]re maison. Allons v[UNI00e9]rifier."
 		)
 	else
-		event.MesMake_2(0, "On n'a pas le temps.\nIl faut se d[UNI00e9]p[UNI00ea]cher d'aider Lin !")
+		event.open_message_window_2(0, "On n'a pas le temps.\nIl faut se d[UNI00e9]p[UNI00ea]cher d'aider Lin !")
 	end
 	show_message(0, -1, 5, 256, 208)
 end
@@ -121,30 +121,30 @@ function script.default_event()
 	local at: number = 0
 	return vm.guard(function()
 		helper_a57b0158()
-		mc_load = event.CheckMcLoad() or mc_load
+		mc_load = event.take_memory_card_load_state() or mc_load
 		if mc_load == 1 then
-			event.SetCharaPos(0, 1989.0, 0.0, -198.0)
-			event.SetCharaRot(0, 0.0, -1.21, 0.0)
-			event.SetMotion(0, "立ち", 4)
-			event.CharaNormalDrive(0)
-			event.CharaResetDa(0)
-			event.ResetCamera(1, 3.14, 20.0)
+			event.set_character_position(0, 1989.0, 0.0, -198.0)
+			event.set_character_rotation(0, 0.0, -1.21, 0.0)
+			event.set_character_motion(0, "立ち", 4)
+			event.update_character_motion(0)
+			event.reset_character_cloth_and_hair(0)
+			event.reset_follow_camera(1, 3.14, 20.0)
 		else
-			old_map_no = event.GetOldMapNo() or old_map_no
-			var2 = event.GetMapType(old_map_no) or var2
+			old_map_no = event.get_previous_map() or old_map_no
+			var2 = event.get_map_type(old_map_no) or var2
 			if var2 ~= -1 then
 				if var2 == 7 or var2 == 8 then
 					at = 1
 					helper_47df9e39()
 				elseif old_map_no == 26 then
-					event.SetCameraPos(-741.9, 50.0, -592.0)
-					event.SetCameraRef(-741.9, 30.0, -712.0)
-					event.SetCharaPos(0, -741.9, 0.0, -712.0)
-					event.SetCharaRot(0, 0.0, 0.0, 0.0)
-					event.SetFadeIn(30)
+					event.set_camera_position(-741.9, 50.0, -592.0)
+					event.set_camera_look_at(-741.9, 30.0, -712.0)
+					event.set_character_position(0, -741.9, 0.0, -712.0)
+					event.set_character_rotation(0, 0.0, 0.0, 0.0)
+					event.fade_in_screen(30)
 				else
-					flag = event.GetFlag(300) or flag
-					flag_2 = event.GetFlag(302) or flag_2
+					flag = event.get_save_flag(300) or flag
+					flag_2 = event.get_save_flag(302) or flag_2
 					if flag == 1 and flag_2 == 0 then
 						at = 2
 						helper_2e69f380()
@@ -154,7 +154,7 @@ function script.default_event()
 					end
 				end
 			else
-				old_sub_map_no = event.GetOldSubmapNo() or old_sub_map_no
+				old_sub_map_no = event.get_previous_submap() or old_sub_map_no
 				if old_sub_map_no == 100 then
 					event_210()
 				end
@@ -210,15 +210,15 @@ function script.event_200()
 	local now_party_chara_id: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.Initialize()
-		flag = event.GetFlag(300) or flag
-		flag_2 = event.GetFlag(304) or flag_2
-		flag_3 = event.GetFlag(306) or flag_3
-		flag_4 = event.GetFlag(324) or flag_4
-		flag_5 = event.GetFlag(328) or flag_5
-		flag_6 = event.GetFlag(330) or flag_6
+		event.initialize_event()
+		flag = event.get_save_flag(300) or flag
+		flag_2 = event.get_save_flag(304) or flag_2
+		flag_3 = event.get_save_flag(306) or flag_3
+		flag_4 = event.get_save_flag(324) or flag_4
+		flag_5 = event.get_save_flag(328) or flag_5
+		flag_6 = event.get_save_flag(330) or flag_6
 		if flag == 1 then
-			now_party_chara_id = event.GetNowPartyChara() or now_party_chara_id
+			now_party_chara_id = event.get_party_npc() or now_party_chara_id
 			if
 				flag_2 == 0
 				or flag_3 == 0 and now_party_chara_id == 6
@@ -226,16 +226,16 @@ function script.event_200()
 				or flag_4 == 1 and flag_6 == 0
 			then
 				if not (flag_4 == 1 and flag_5 == 0) then
-					event.BgmLoadCancel()
+					event.skip_next_music_load()
 				end
-				event.MapJump_3(-1, "g02i02", 100)
+				event.jump_to_map_3(-1, "g02i02", 100)
 				at = 1
 				vm.wait(1)
 				print("--- MAP_JUMP(g02i02) ---\n")
 				return
 			end
 		end
-		event.GotoInterior(-1, "g02i02", 100)
+		event.go_to_interior_map(-1, "g02i02", 100)
 		at = 2
 		vm.wait(2)
 		print("--- GOTO_INTERIOR(g02i02) ---\n")
@@ -258,7 +258,7 @@ script.event_210 = event_210
 --- Event 300, which map data, a script or the engine runs by number.
 function script.event_300()
 	helper_14414a8a(vm.f32(-743.2), 0.0, vm.f32(-708.9), vm.f32(-0.64))
-	event.MapJump_2(-1, "f02")
+	event.jump_to_map_2(-1, "f02")
 	vm.wait(2)
 end
 
@@ -273,7 +273,7 @@ script.event_400 = helper_f57795f8
 --- Event 500, which map data, a script or the engine runs by number.
 function script.event_500()
 	if helper_660198d9() ~= 0 then
-		event.MapJump_2(-1, "s04")
+		event.jump_to_map_2(-1, "s04")
 	end
 end
 
@@ -283,26 +283,26 @@ function script.event_501()
 	local var3: s32 = 0
 	local flag_2: s32 = 0
 	local flag_3: s32 = 0
-	flag = event.GetFlag(306) or flag
+	flag = event.get_save_flag(306) or flag
 	if flag == 0 then
 		helper_22884()
 	elseif helper_7581838c() ~= 0 then
-		event.DngSetStageId(2)
-		event.GotoMenu(3, 2)
+		event.set_dungeon_stage_id(2)
+		event.open_event_menu(3, 2)
 		vm.wait(3)
 		do
-			local _, _, out3, _ = event.GetMenuParam_4()
+			local _, _, out3, _ = event.get_menu_results_4()
 			var3 = out3 or var3
 		end
 		if var3 == 0 then
 			helper_47df9e39()
 		else
-			flag_2 = event.GetFlag(307) or flag_2
-			flag_3 = event.GetFlag(344) or flag_3
+			flag_2 = event.get_save_flag(307) or flag_2
+			flag_3 = event.get_save_flag(344) or flag_3
 			if var3 == 2 and flag_2 == 0 or var3 == 21 and flag_3 == 0 or var3 == 22 then
-				event.BgmLoadCancel()
+				event.skip_next_music_load()
 			end
-			event.GotoDng(2, var3, 1010)
+			event.go_to_dungeon(2, var3, 1010)
 		end
 	end
 end

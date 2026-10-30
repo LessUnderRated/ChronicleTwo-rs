@@ -5,7 +5,7 @@ local vm = require("@lib/vm")
 
 --- Helper function.
 local function helper_6033d0e7()
-	monster.Ext(142) -- retail: command 142 is not registered
+	monster.call_command(142) -- retail: command 142 is not registered
 	while true do
 		vm.wait()
 	end

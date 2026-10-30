@@ -9,7 +9,7 @@ local function helper_2b32f1e8()
 	if helper_c247398f() == 0 then
 		return 0
 	end
-	flag = event.GetFlag(748) or flag
+	flag = event.get_save_flag(748) or flag
 	if flag ~= 0 then
 		return 0
 	end

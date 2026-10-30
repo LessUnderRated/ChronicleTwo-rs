@@ -37,59 +37,59 @@ local function helper_3d16f076()
 	vm.section(function()
 		at = 1
 		vm.entry(1)
-		event.SetFlag(307, 1)
-		event.Initialize()
-		event.DngPause(1, 1)
-		event.SetMesWindowMode(0, 7)
-		event.StopBgm(0)
-		var0 = event.SndLoadSound_2(3800) or var0
-		event.AssignStack(5)
-		event.ClearStack(5)
+		event.set_save_flag(307, 1)
+		event.initialize_event()
+		event.set_dungeon_pause_flags(1, 1)
+		event.set_message_window_mode(0, 7)
+		event.stop_music(0)
+		var0 = event.load_sound_effect_file_2(3800) or var0
+		event.assign_memory_stack(5)
+		event.clear_memory_stack(5)
 		do
-			local out1, out2, out3, out4 = event.GetDunWorldCoord(2)
+			local out1, out2, out3, out4 = event.get_dungeon_event_point(2)
 			var1 = out1 or var1
 			var2 = out2 or var2
 			var3 = out3 or var3
 			var4 = out4 or var4
 		end
-		event.SetWorldCoord(var1, var2, var3, var4)
-		event.SetStatusbarShow(0, 1.0)
-		event.LoadMes(0, 5, "event/e300/e307/e307_1.txt")
-		active_chr_no = event.GetActiveChrNo() or active_chr_no
+		event.set_event_world_coordinate(var1, var2, var3, var4)
+		event.show_dungeon_status_bar(0, 1.0)
+		event.load_message_file(0, 5, "event/e300/e307/e307_1.txt")
+		active_chr_no = event.get_playable_character() or active_chr_no
 		active_chr_no = if 0 == 0 then 1 else 0
 		if active_chr_no ~= 0 then
-			event.DngSetupMainUnit(0)
-			event.SetActiveChrNo(0)
+			event.switch_dungeon_main_character(0)
+			event.set_playable_character(0)
 		end
-		event.LoadMotion(5, "event/dng_inout/c01d03gkey.gltf", "info", 0)
-		event.EohSyncChara(0, 0)
-		event.ObjsInit(0)
-		event.ObjsSyncObj(0, 0)
-		event.LoadChara(5, "event/d03/p00_26a.gltf", "info", 9)
-		event.CharaActive(9)
-		event.EohSyncChara(1, 9)
-		event.ObjsInit(1)
-		event.ObjsSyncObj(1, 1)
-		event.SetStatus(1, 9, 8, 1)
-		event.LoadItem(5, 341, "info", 10)
-		event.CharaActive(10)
-		event.SetReference(9, "niku", 10)
-		event.EohSetFootSoundId(0, 16)
-		event.ObjsSetPos(0, 0.0, 140.0, -200.0)
-		event.ObjsSetRot(0, 0.0, 0.0, 0.0)
-		event.ObjsSetMotion(0, "持ち上げ停止", 4, -1.0, 1)
-		event.ObjsSetPos(1, 0.0, 140.0, -200.0)
-		event.ObjsSetRot(1, 0.0, 0.0, 0.0)
-		event.ObjsSetMotion(1, "肉つかみ飛び", 4)
-		event.SetCharaShow(1, 0)
-		event.SetCharaShow(2, 0)
-		event.InitDramaScene()
-		event.SndSePlay(var0, 0)
-		event.CmrsInit()
-		event.CmrsSetPos(-53.68, 35.8, 200.46)
-		event.CmrsSetRef(12.57, 57.95, 3.94)
-		event.CmrsMove2(-53.68, 35.8, 200.46, 12.57, 10.0, 3.94, 30, 2, 1.0)
-		event.SetFadeIn(30)
+		event.load_character_motion_pack(5, "event/dng_inout/c01d03gkey.gltf", "info", 0)
+		event.attach_object_handle_to_character(0, 0)
+		event.clear_object_sequence(0)
+		event.set_object_sequence_object(0, 0)
+		event.load_character(5, "event/d03/p00_26a.gltf", "info", 9)
+		event.set_character_active(9)
+		event.attach_object_handle_to_character(1, 9)
+		event.clear_object_sequence(1)
+		event.set_object_sequence_object(1, 1)
+		event.set_scene_status_flags(1, 9, 8, 1)
+		event.load_item_model(5, 341, "info", 10)
+		event.set_character_active(10)
+		event.attach_character_to_frame(9, "niku", 10)
+		event.set_object_handle_footstep_sound(0, 16)
+		event.set_object_sequence_position(0, 0.0, 140.0, -200.0)
+		event.set_object_sequence_rotation(0, 0.0, 0.0, 0.0)
+		event.set_object_sequence_motion(0, "持ち上げ停止", 4, -1.0, 1)
+		event.set_object_sequence_position(1, 0.0, 140.0, -200.0)
+		event.set_object_sequence_rotation(1, 0.0, 0.0, 0.0)
+		event.set_object_sequence_motion(1, "肉つかみ飛び", 4)
+		event.set_character_visible(1, 0)
+		event.set_character_visible(2, 0)
+		event.enable_drama_skip()
+		event.play_sound_effect(var0, 0)
+		event.clear_camera_sequence()
+		event.set_camera_sequence_position(-53.68, 35.8, 200.46)
+		event.set_camera_sequence_look_at(12.57, 57.95, 3.94)
+		event.move_camera_sequence_eased(-53.68, 35.8, 200.46, 12.57, 10.0, 3.94, 30, 2, 1.0)
+		event.fade_in_screen(30)
 		var6 = 0.0
 		var7 = -10.0
 		var8 = 7.0
@@ -99,42 +99,42 @@ local function helper_3d16f076()
 		var13 = 0
 		var12 = 0
 		while var12 < 60 do
-			event.ObjsAddPos(1, var6, var7, var8)
+			event.add_object_sequence_position_offset(1, var6, var7, var8)
 			if var12 < 30 then
-				event.ObjsAddPos(0, var6, var7, var8)
+				event.add_object_sequence_position_offset(0, var6, var7, var8)
 			else
 				if var12 == 30 then
-					event.ObjsSetMotion(0, "d03着地", 2)
-					event.ObjsNextMotion(0, "立ち", 4)
+					event.set_object_sequence_motion(0, "d03着地", 2)
+					event.queue_object_sequence_next_motion(0, "立ち", 4)
 				end
 				do
-					local out1, out2, out3 = event.GetCharaPos(0)
+					local out1, out2, out3 = event.get_character_position(0)
 					var14 = out1 or var14
 					var15 = out2 or var15
 					var16 = out3 or var16
 				end
 				if var13 == 0 then
 					if vm.f32(var15 + var10) <= 0.0 then
-						event.SetCharaPos(0, var14, 0.0, var16)
+						event.set_character_position(0, var14, 0.0, var16)
 						var13 = 1
 					else
-						event.ObjsAddPos(0, var9, var10, var11)
+						event.add_object_sequence_position_offset(0, var9, var10, var11)
 						var10 = vm.f32(var10 * vm.f32(1.1))
 						var11 = vm.f32(var11 * vm.f32(0.8))
 					end
 				elseif var13 <= 1 then
 					do
 						local out1, out2, out3, out4 =
-							event.ChkIntersectionPoint_12(0, var14, 8.0, var16, var14, -8.0, var16, 0)
+							event.get_segment_collision_12(0, var14, 8.0, var16, var14, -8.0, var16, 0)
 						var17 = out1 or var17
 						var18 = out2 or var18
 						var19 = out3 or var19
 						var13 = out4 or var13
 					end
 					if var13 >= 0 then
-						event.SetCharaPos(0, var17, var18, var19)
+						event.set_character_position(0, var17, var18, var19)
 					else
-						event.SetCharaPos(0, var14, -0.7, var16)
+						event.set_character_position(0, var14, -0.7, var16)
 					end
 					var13 = 10
 				end
@@ -148,26 +148,26 @@ local function helper_3d16f076()
 		wait_objects(0)
 		at = 4
 		wait_frames(20)
-		event.CharaActive(0, 9)
-		event.CharaActive(0, 10)
-		event.CmrsSyncObj(0, 0.0, 22.0, 0.0, 0.37, 0.0, 33.0)
-		event.CmrsMoveAhd2(3.14, 0.0, 33.0, 180, 0, 1.0)
-		event.ObjsSetMotion(0, "歩き")
-		event.ObjsMotionDelay(0, 60)
-		event.ObjsSetMotion(0, "立ち")
-		event.ObjsMove(0, 0.0, -1.0, 100.0, 60)
+		event.set_character_active(0, 9)
+		event.set_character_active(0, 10)
+		event.set_camera_sequence_follow_object(0, 0.0, 22.0, 0.0, 0.37, 0.0, 33.0)
+		event.move_camera_sequence_angle_height_distance_eased(3.14, 0.0, 33.0, 180, 0, 1.0)
+		event.set_object_sequence_motion(0, "歩き")
+		event.delay_object_sequence_motion_track(0, 60)
+		event.set_object_sequence_motion(0, "立ち")
+		event.move_object_sequence(0, 0.0, -1.0, 100.0, 60)
 		at = 5
 		helper_f0a13ee2(3070010, -1, 10)
 		at = 6
 		helper_f0a13ee2(3070020, -1, 10)
 		at = 7
 		wait_camera()
-		event.CmrsReleaseObj()
-		event.CmrsMove2(0.06, 21.0, 67.0, 0.0, 52.06, 100.0, 60, 0, 1.0)
+		event.release_camera_sequence_follow_object()
+		event.move_camera_sequence_eased(0.06, 21.0, 67.0, 0.0, 52.06, 100.0, 60, 0, 1.0)
 		at = 8
 		wait_frames(90)
-		event.SetFadeOut(30)
-		event.FadeOutBgm(30)
+		event.fade_out_screen(30)
+		event.fade_out_music(30)
 		at = 9
 		wait_frames(30)
 	end, function(received: { any }): boolean
@@ -220,24 +220,24 @@ local function helper_3d16f076()
 	end)
 	at = 10
 	vm.entry(10)
-	event.CancelDramaScene()
-	event.LoadMes(0, -1)
-	event.StopBgm(0)
-	event.SndSeStop(var0, 0)
-	event.DeleteChara(9)
-	event.DeleteChara(10)
-	event.EohSetPos(0, 0.0, -1.0, 100.0)
-	event.EohSetRot(0, 0.0, 0.0, 0.0)
-	event.EohSetMotion(0, "立ち", 4)
-	event.EohNormalDrive(0)
-	event.EohResetDaPosition(0)
-	event.SetCameraRef(0.0, 29.0, 100.0)
-	event.SetCameraPos(0.0, 41.0, -20.0)
-	event.ResetCamera(0)
-	event.SetCharaShow(1, 1)
-	event.SetCharaShow(2, 1)
-	event.DngPause(1, 0)
-	event.Finish()
+	event.cancel_drama_scene_skip()
+	event.load_message_file(0, -1)
+	event.stop_music(0)
+	event.stop_sound_effect(var0, 0)
+	event.delete_character(9)
+	event.delete_character(10)
+	event.set_object_handle_position(0, 0.0, -1.0, 100.0)
+	event.set_object_handle_rotation(0, 0.0, 0.0, 0.0)
+	event.set_object_handle_motion(0, "立ち", 4)
+	event.step_object_handle_motion(0)
+	event.reset_object_handle_dynamic_animation(0)
+	event.set_camera_look_at(0.0, 29.0, 100.0)
+	event.set_camera_position(0.0, 41.0, -20.0)
+	event.reset_follow_camera(0)
+	event.set_character_visible(1, 1)
+	event.set_character_visible(2, 1)
+	event.set_dungeon_pause_flags(1, 0)
+	event.finish_event()
 end
 
 return helper_3d16f076

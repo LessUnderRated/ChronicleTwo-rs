@@ -7,26 +7,26 @@ local vm = require("@lib/vm")
 local function helper_ad8b424a()
 	local var0: f32 = 0
 	local var1: f32 = 0
-	event.LoadMonsterFile(501, 1)
-	event.LoadMonsterFile(502, 0)
-	event.LoadMonsterFile(503, 0)
-	event.LoadMonsterFile(504, 0)
-	event.LoadMonsterFile(505, 0)
-	event.LoadMonsterFile(506, 0)
-	event.LoadMonsterFile(507, 0)
-	event.LoadMonsterFile(508, 0)
-	event.LoadMonsterFile(509, 0)
-	event.AutoSetMonster(501, 0, 0, 0)
-	event.AutoSetMonster(502, 0, 0, 0)
-	event.AutoSetMonster(503, 0, 0, 0)
-	event.AutoSetMonster(504, 0, 0, 0)
-	event.AutoSetMonster(505, 0, 0, 0)
-	event.AutoSetMonster(506, 0, 0, 0)
-	event.AutoSetMonster(507, 0, 0, 0)
-	event.AutoSetMonster(508, 0, 0, 0)
+	event.load_dungeon_monster(501, 1)
+	event.load_dungeon_monster(502, 0)
+	event.load_dungeon_monster(503, 0)
+	event.load_dungeon_monster(504, 0)
+	event.load_dungeon_monster(505, 0)
+	event.load_dungeon_monster(506, 0)
+	event.load_dungeon_monster(507, 0)
+	event.load_dungeon_monster(508, 0)
+	event.load_dungeon_monster(509, 0)
+	event.place_dungeon_monster(501, 0, 0, 0)
+	event.place_dungeon_monster(502, 0, 0, 0)
+	event.place_dungeon_monster(503, 0, 0, 0)
+	event.place_dungeon_monster(504, 0, 0, 0)
+	event.place_dungeon_monster(505, 0, 0, 0)
+	event.place_dungeon_monster(506, 0, 0, 0)
+	event.place_dungeon_monster(507, 0, 0, 0)
+	event.place_dungeon_monster(508, 0, 0, 0)
 	var0 = 0.0
 	var1 = vm.f32(3.1415927)
-	event.AutoSetMonster(
+	event.place_dungeon_monster(
 		509,
 		vm.f32(268.802) + vm.f32(vm.sin(var0) * vm.f32(46.1983)),
 		772.7575,
@@ -37,7 +37,7 @@ local function helper_ad8b424a()
 	)
 	var0 = vm.f32(3.1415927)
 	var1 = 0.0
-	event.AutoSetMonster(
+	event.place_dungeon_monster(
 		509,
 		vm.f32(268.802) + vm.f32(vm.sin(var0) * vm.f32(46.1983)),
 		772.7575,
@@ -49,7 +49,7 @@ local function helper_ad8b424a()
 	var0 = vm.f32(1.0471976)
 	var1 = vm.f32(-6.2831855)
 	var1 = vm.f32(var1 / 3.0)
-	event.AutoSetMonster(
+	event.place_dungeon_monster(
 		509,
 		vm.f32(268.802) + vm.f32(vm.sin(var0) * vm.f32(46.1983)),
 		772.7575,
@@ -61,7 +61,7 @@ local function helper_ad8b424a()
 	var0 = vm.f32(-6.2831855)
 	var0 = vm.f32(var0 / 3.0)
 	var1 = vm.f32(1.0471976)
-	event.AutoSetMonster(
+	event.place_dungeon_monster(
 		509,
 		vm.f32(268.802) + vm.f32(vm.sin(var0) * vm.f32(46.1983)),
 		772.7575,
@@ -73,7 +73,7 @@ local function helper_ad8b424a()
 	var0 = vm.f32(-1.0471976)
 	var1 = vm.f32(6.2831855)
 	var1 = vm.f32(var1 / 3.0)
-	event.AutoSetMonster(
+	event.place_dungeon_monster(
 		509,
 		vm.f32(268.802) + vm.f32(vm.sin(var0) * vm.f32(46.1983)),
 		772.7575,
@@ -85,7 +85,7 @@ local function helper_ad8b424a()
 	var1 = vm.f32(-1.0471976)
 	var0 = vm.f32(6.2831855)
 	var0 = vm.f32(var0 / 3.0)
-	event.AutoSetMonster(
+	event.place_dungeon_monster(
 		509,
 		vm.f32(268.802) + vm.f32(vm.sin(var0) * vm.f32(46.1983)),
 		772.7575,

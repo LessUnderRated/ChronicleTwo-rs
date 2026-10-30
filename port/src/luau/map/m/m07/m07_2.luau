@@ -11,13 +11,13 @@ local function event_151()
 	return vm.guard(function()
 		at = 1
 		vm.entry(1)
-		event.SetFadeOut(0)
+		event.fade_out_screen(0)
 		at = 2
 		vm.wait(2)
-		event.SetFlag(4, 1)
+		event.set_save_flag(4, 1)
 		at = 3
 		helper_14420026()
-		event.MapJump_3(-1, "s42", 500)
+		event.jump_to_map_3(-1, "s42", 500)
 		return
 	end, function(received: { any })
 		if at <= 3 then
@@ -25,7 +25,7 @@ local function event_151()
 				at = 3
 				helper_14420026()
 				return vm.continue_with(function()
-					event.MapJump_3(-1, "s42", 500)
+					event.jump_to_map_3(-1, "s42", 500)
 					return
 				end)
 			end
@@ -53,8 +53,8 @@ script.event_151 = event_151
 function script.event_10010()
 	local at: number = 0
 	return vm.guard(function()
-		event.StopBgm(0)
-		event.StopEnvBgm()
+		event.stop_music(0)
+		event.stop_environment_music()
 		at = 1
 		wait_frames(6)
 		at = 2

@@ -5,8 +5,8 @@ local helper_70e4ac93 = require("@lib/event/helper_70e4ac93")
 
 --- Helper function.
 local function helper_2af6cedf(arg0: s32, arg1: any)
-	event.SetMesPreset(0, 0)
-	event.MesMake_2(
+	event.apply_message_window_preset(0, 0)
+	event.open_message_window_2(
 		0,
 		"...<page>[UNI00a1]Ah! [UNI00a1]Hola!\n[UNI00da]ltimamente no oigo muy bien.<page>No te entiendo si no\nme hablas m[UNI00e1]s despacio."
 	)

@@ -3,9 +3,9 @@
 
 --- Helper function.
 local function helper_186669aa(arg0: s32)
-	event.EohSyncObj_2(0, "p08_i04h03")
-	event.EohSetShow(0, arg0)
-	event.FuncPointShow("", "func0", arg0)
+	event.attach_object_handle_to_map_part_2(0, "p08_i04h03")
+	event.set_object_handle_visible(0, arg0)
+	event.set_function_point_enabled("", "func0", arg0)
 end
 
 return helper_186669aa

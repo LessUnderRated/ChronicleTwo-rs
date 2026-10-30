@@ -3,8 +3,8 @@
 
 --- Helper function.
 local function helper_6c7de8d8()
-	event.ResetSubjectCounter(-1)
-	event.SetFloorEpisode(1)
+	event.reset_dungeon_subject_counter(-1)
+	event.show_floor_episode_title(1)
 end
 
 return helper_6c7de8d8

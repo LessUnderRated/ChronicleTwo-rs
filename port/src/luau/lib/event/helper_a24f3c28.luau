@@ -11,15 +11,15 @@ local function helper_a24f3c28()
 	local var0: any = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.Initialize()
-		event.SetMotion(0, "立ち")
-		event.SetMesQuestionGyou(0, 0)
-		event.SetMesWindowMode(0, 5)
-		event.SetMesDrawspeed(0, 1)
+		event.initialize_event()
+		event.set_character_motion(0, "立ち")
+		event.set_message_selection_top_line(0, 0)
+		event.set_message_window_mode(0, 5)
+		event.set_message_draw_speed(0, 1)
 		at = 1
 		var0 = helper_ed4dc120(5, 4)
 		if var0 == 0 then
-			event.SetFadeOut(20)
+			event.fade_out_screen(20)
 			at = 2
 			helper_888ab2a3(20)
 			return 1

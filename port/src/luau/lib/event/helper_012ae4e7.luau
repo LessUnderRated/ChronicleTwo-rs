@@ -12,7 +12,7 @@ local function helper_012ae4e7(arg0: s32, arg1: f32, arg2: f32, arg3: any)
 	end
 	var4 = 0
 	while var4 < arg3 do
-		get_now_frame_wait = event.GetMotNowWait(arg0) or get_now_frame_wait
+		get_now_frame_wait = event.get_character_motion_wait(arg0) or get_now_frame_wait
 		if get_now_frame_wait < vm.f32(arg1 + arg2) and get_now_frame_wait > vm.f32(arg1 - arg2) then
 			return
 		end

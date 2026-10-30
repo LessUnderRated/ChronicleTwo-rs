@@ -9,12 +9,12 @@ local helper_fba6a7db = require("@lib/event/helper_fba6a7db")
 --- Helper function.
 local function helper_e697122e(arg0: s32, arg1: s32)
 	local var2: s32 = 0
-	var2 = event.GetQuestEtc(0, 0) or var2
+	var2 = event.get_quest_request_status(0, 0) or var2
 	if var2 ~= 2 then
 		helper_fba6a7db(arg0, arg1)
 		return
 	end
-	var2 = event.GetQuestEtc(0, 19) or var2
+	var2 = event.get_quest_request_status(0, 19) or var2
 	if var2 == 0 then
 		helper_c73a5f1f(arg0, arg1)
 		return

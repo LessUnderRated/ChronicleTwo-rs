@@ -31,27 +31,27 @@ function script.default_event()
 	local old_map_no: s32 = 0
 	local var1: s32 = 0
 	local mc_load: s32 = 0
-	event.Initialize()
+	event.initialize_event()
 	event_99()
-	mc_load = event.CheckMcLoad() or mc_load
+	mc_load = event.take_memory_card_load_state() or mc_load
 	if mc_load == 1 then
-		event.SetCharaPos(0, -1349.6, 0.0, -1351.7)
-		event.SetCharaRot(0, 0.0, 1.03, 0.0)
-		event.SetMotion(0, "立ち", 4)
-		event.CharaNormalDrive(0)
-		event.CharaResetDa(0)
-		event.ResetCamera(1, 0.0, 20.0)
+		event.set_character_position(0, -1349.6, 0.0, -1351.7)
+		event.set_character_rotation(0, 0.0, 1.03, 0.0)
+		event.set_character_motion(0, "立ち", 4)
+		event.update_character_motion(0)
+		event.reset_character_cloth_and_hair(0)
+		event.reset_follow_camera(1, 0.0, 20.0)
 	else
-		old_map_no = event.GetOldMapNo() or old_map_no
-		var1 = event.GetMapType(old_map_no) or var1
+		old_map_no = event.get_previous_map() or old_map_no
+		var1 = event.get_map_type(old_map_no) or var1
 		if var1 ~= -1 then
 			if old_map_no ~= 3 then
 				if var1 == 7 or var1 == 8 then
 					helper_43769d3d()
 				elseif old_map_no == 102 then
 					helper_9dafbc83(vm.f32(1773.7), 0.0, -418.0, vm.f32(-1.22))
-					event.ResetCamera(1, 0.0, 10.0)
-					event.SetFadeIn(15)
+					event.reset_follow_camera(1, 0.0, 10.0)
+					event.fade_in_screen(15)
 				else
 					helper_9c5b9382()
 				end
@@ -71,14 +71,14 @@ end
 function script.event_300()
 	helper_a80f4eb9(vm.f32(1773.7), 0.0, -418.0, vm.f32(-1.22))
 	if (if helper_d622cd71() == 0 and helper_10d6108d() == 0 then helper_981c86d9() else 0) ~= 0 then
-		event.BgmPlayCancel()
+		event.skip_next_music_play()
 	end
 	if helper_5a735084() ~= 0 then
-		event.MapJump_2(-1, "s39")
+		event.jump_to_map_2(-1, "s39")
 		vm.wait(2)
 		return
 	end
-	event.MapJump_2(-1, "f04")
+	event.jump_to_map_2(-1, "f04")
 	vm.wait(3)
 end
 
@@ -92,28 +92,28 @@ script.event_400 = helper_f57795f8
 
 --- Event 500, which map data, a script or the engine runs by number.
 function script.event_500()
-	event.Initialize()
+	event.initialize_event()
 	event_99()
 	helper_9dafbc83(1680.0, 0.0, -420.0, vm.f32(1.57))
-	event.ResetCamera(1, 3.14, 10.0)
-	event.SetFadeIn(30)
+	event.reset_follow_camera(1, 3.14, 10.0)
+	event.fade_in_screen(30)
 	vm.wait(1)
 	helper_9e1e3514(1)
 end
 
 --- Event 510, which map data, a script or the engine runs by number.
 function script.event_510()
-	event.Initialize()
+	event.initialize_event()
 	helper_9dafbc83(vm.f32(1982.08), 0.0, vm.f32(-201.51), vm.f32(-1.58))
-	event.ResetCamera(1, 3.14, 10.0)
-	event.SetFadeIn(30)
+	event.reset_follow_camera(1, 3.14, 10.0)
+	event.fade_in_screen(30)
 	vm.wait(1)
 end
 
 --- Event 551, which map data, a script or the engine runs by number.
 function script.event_551()
 	if helper_36d61aed() ~= 0 then
-		event.MapJump_2(-1, "s10")
+		event.jump_to_map_2(-1, "s10")
 		vm.wait(2)
 	end
 end
@@ -122,20 +122,20 @@ end
 function script.event_552()
 	local var2: s32 = 0
 	if helper_e6350d48() ~= 0 then
-		event.DngSetStageId(4)
-		event.GotoMenu(3, 4)
+		event.set_dungeon_stage_id(4)
+		event.open_event_menu(3, 4)
 		vm.wait(2)
 		do
-			local _, _, out3, _ = event.GetMenuParam_4()
+			local _, _, out3, _ = event.get_menu_results_4()
 			var2 = out3 or var2
 		end
 		if var2 == 0 then
 			helper_43769d3d()
 		else
 			if var2 == 21 then
-				event.BgmLoadCancel()
+				event.skip_next_music_load()
 			end
-			event.GotoDng(4, var2, 1010)
+			event.go_to_dungeon(4, var2, 1010)
 		end
 	end
 end

@@ -6,22 +6,22 @@ local vm = require("@lib/vm")
 --- Helper function.
 local function helper_e846995c()
 	local argc: s32 = 0
-	event.SetCharaMaxhp(0, 240)
-	event.SetCharaMaxhp(1, 240)
-	event.SetCharaDefence(0, 94)
-	event.SetCharaDefence(1, 94)
-	argc = event.GetItemNum(270) or argc
+	event.set_character_max_hp(0, 240)
+	event.set_character_max_hp(1, 240)
+	event.set_character_defence(0, 94)
+	event.set_character_defence(1, 94)
+	argc = event.get_item_count(270) or argc
 	if argc < 20 then
-		event.AddItem(270, vm.i32(20 - argc))
+		event.add_inventory_item(270, vm.i32(20 - argc))
 	end
-	event.AddItem(20)
-	event.SetCharaEquip(0, 20)
-	event.AddItem(33)
-	event.SetCharaEquip(0, 33)
-	event.AddItem(60)
-	event.SetCharaEquip(1, 60)
-	event.AddItem(96)
-	event.SetCharaEquip(1, 96)
+	event.add_inventory_item(20)
+	event.equip_character_item(0, 20)
+	event.add_inventory_item(33)
+	event.equip_character_item(0, 33)
+	event.add_inventory_item(60)
+	event.equip_character_item(1, 60)
+	event.add_inventory_item(96)
+	event.equip_character_item(1, 96)
 end
 
 return helper_e846995c

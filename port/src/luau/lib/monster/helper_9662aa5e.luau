@@ -17,35 +17,35 @@ local function helper_9662aa5e()
 	local height: f32 = 0
 	local vector_2: f32 = 0
 	local attack: s32 = 0
-	attack = monster.GetBaseAttack_1() or attack
-	monster.SetMos("攻撃１", -1, 2)
+	attack = monster.get_attack_power_1() or attack
+	monster.set_motion("攻撃１", -1, 2)
 	helper_72fec261(vm.f32(0.6), -1.0)
-	height = monster.GetHigh() or height
+	height = monster.get_height_above_ground() or height
 	do
-		local out1, out2, out3 = monster.GetPos_3()
+		local out1, out2, out3 = monster.get_position_3()
 		pos_x = out1 or pos_x
 		pos_y = out2 or pos_y
 		pos_z = out3 or pos_z
 	end
 	vector_2 = vm.f32(pos_y - height)
 	do
-		local out1, out2, out3 = monster.GetFramePos("dcol1")
+		local out1, out2, out3 = monster.get_frame_position("dcol1")
 		pos_x = out1 or pos_x
 		pos_y = out2 or pos_y
 		pos_z = out3 or pos_z
 	end
 	do
-		local out1, out2, out3 = monster.GetRot()
+		local out1, out2, out3 = monster.get_rotation()
 		var3 = out1 or var3
 		var4 = out2 or var4
 		var5 = out3 or var5
 	end
-	monster.EsmCreate_1("ＳウェーブＬ")
-	monster.EsmSetVect1(-1, pos_x, vector_2, pos_z)
-	monster.EsmSetVect2(-1, var3, var4, var5)
-	monster.EsmSetValue(-1, 0, attack)
+	monster.create_effect_1("ＳウェーブＬ")
+	monster.set_effect_first_vector(-1, pos_x, vector_2, pos_z)
+	monster.set_effect_second_vector(-1, var3, var4, var5)
+	monster.set_effect_value(-1, 0, attack)
 	helper_56d63eae()
-	monster.SetMos("歩き", -1, 0)
+	monster.set_motion("歩き", -1, 0)
 	helper_c3e8ae39(3)
 end
 

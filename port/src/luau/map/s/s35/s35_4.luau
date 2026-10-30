@@ -17,16 +17,16 @@ function script.key_open() end
 --- Event 500, which map data, a script or the engine runs by number.
 function script.event_500()
 	helper_2fb9721e()
-	event.LoadDungeonMapFile("d06e01")
-	event.LoadScript("d06e01/d06e01.stb", 506)
+	event.load_dungeon_map("d06e01")
+	event.load_event_script("d06e01/d06e01.stb", 506)
 	vm.wait(2)
 end
 
 --- Event 502, which map data, a script or the engine runs by number.
 function script.event_502()
 	helper_63218706()
-	event.LoadDungeonMapFile("d06e01")
-	event.LoadScript("d06e01/d06e01.stb", 508)
+	event.load_dungeon_map("d06e01")
+	event.load_event_script("d06e01/d06e01.stb", 508)
 	vm.wait(2)
 end
 

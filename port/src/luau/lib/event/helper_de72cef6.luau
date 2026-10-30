@@ -12,60 +12,60 @@ local function helper_de72cef6()
 	local flag_2: s32 = 0
 	local flag_3: s32 = 0
 	print("IN go_shop_up()\n")
-	var0 = event.GetEventData_2(14) or var0
-	var1 = event.GetEventData_2(13) or var1
+	var0 = event.get_triggered_event_data_2(14) or var0
+	var1 = event.get_triggered_event_data_2(13) or var1
 	print("talk_chara=", var0, "talk_chara_id=", var1, "\n")
-	event.SetMesShippo(0, 1)
-	event.SetMesPreset(0, 0)
-	event.MesMake_2(0, "Bienvenue.")
+	event.set_message_bubble_tail(0, 1)
+	event.apply_message_window_preset(0, 0)
+	event.open_message_window_2(0, "Bienvenue.")
 	if var0 == 18 then
-		event.MesMake_2(
+		event.open_message_window_2(
 			0,
 			"Aimerais-tu que les dieux te\npr[UNI00ea]tent leur puissance ? Alors,\nfais un don [UNI00e0] l'[UNI00e9]glise, je te prie."
 		)
 	end
 	if var0 == 4 then
-		event.MesMake_2(
+		event.open_message_window_2(
 			0,
 			"[UNI00c7]a travaille dur, je vois ?\nIl te faut quelque chose ?<page>Ah mais, rien n'est gratuit.\nPas m[UNI00ea]me pour toi, Max."
 		)
 	end
 	if var0 == 34 then
-		event.MesMake_2(
+		event.open_message_window_2(
 			0,
 			"Il te faut plus d'[UNI00e9]l[UNI00e9]ments de\nG[UNI00e9]orama ?<page>Si tu n'as pas le temps d'aller en\nchercher toi-m[UNI00ea]me, peut-[UNI00ea]tre que\nl'argent r[UNI00e9]soudra tes probl[UNI00e8]mes."
 		)
 	end
 	if var0 == 1012 then
-		flag = event.GetFlag(45) or flag
+		flag = event.get_save_flag(45) or flag
 		if flag == 0 then
-			event.MesMake_2(
+			event.open_message_window_2(
 				0,
 				"Bonjour, je suis apprentie boulang[UNI00e8]re\net je m'occupe de la boulangerie\npendant l'absence de Polly.<page>Je suis un peu nerveuse, mais [UNI00e7]a\npassera avec l'exp[UNI00e9]rience, je\nsuppose. Je ferai de mon mieux !"
 			)
-			event.SetFlag(45, 1)
+			event.set_save_flag(45, 1)
 		end
 	end
 	if var0 == 1015 then
-		flag_2 = event.GetFlag(46) or flag_2
+		flag_2 = event.get_save_flag(46) or flag_2
 		if flag_2 == 0 then
-			event.MesMake_2(
+			event.open_message_window_2(
 				0,
 				"On se ressemble peu mais...\nJe suis la petite s[UNI0153]ur de Milane.<page>Je tiens le magasin pendant son absence.\nEt je suis archi-nulle en armes !"
 			)
-			event.SetFlag(46, 1)
+			event.set_save_flag(46, 1)
 		end
 	end
 	if var0 == 1018 then
-		flag_3 = event.GetFlag(47) or flag_3
+		flag_3 = event.get_save_flag(47) or flag_3
 		if flag_3 == 0 then
-			event.MesMake_2(
+			event.open_message_window_2(
 				0,
 				"Tu ne t'y attendais pas ? N'importe\nqui serait surpris de voir ici un\nindividu habill[UNI00e9] de cette mani[UNI00e8]re.<page>Je suis bon ami avec le P[UNI00e8]re Bruno.\nJe le remplace pendant son voyage.\nAlors, que puis-je faire pour toi ?"
 			)
-			event.SetFlag(47, 1)
+			event.set_save_flag(47, 1)
 		else
-			event.MesMake_2(
+			event.open_message_window_2(
 				0,
 				"Aimerais-tu que les dieux te\npr[UNI00ea]tent leur puissance ? Alors,\nfais un don [UNI00e0] l'[UNI00e9]glise, je te prie."
 			)

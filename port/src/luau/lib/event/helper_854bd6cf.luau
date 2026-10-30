@@ -146,8 +146,8 @@ local function helper_854bd6cf(arg0: s32, arg1: s32, arg2: s32)
 		pos_z = 4400.0
 		rot_y = vm.f32(3.1415927)
 	end
-	event.SetCharaPos(0, pos_x, pos_y, pos_z)
-	event.SetCharaRot(0, 0.0, rot_y, 0.0)
+	event.set_character_position(0, pos_x, pos_y, pos_z)
+	event.set_character_rotation(0, 0.0, rot_y, 0.0)
 end
 
 return helper_854bd6cf

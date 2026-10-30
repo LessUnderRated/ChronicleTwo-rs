@@ -21,7 +21,7 @@ function script.event_151()
 		helper_e254bc23()
 		at = 2
 		helper_c0c9270e()
-		event.MapJump_3(-1, "m06", 153)
+		event.jump_to_map_3(-1, "m06", 153)
 		return
 	end, function(received: { any })
 		if at <= 2 then
@@ -29,7 +29,7 @@ function script.event_151()
 				at = 2
 				helper_c0c9270e()
 				return vm.continue_with(function()
-					event.MapJump_3(-1, "m06", 153)
+					event.jump_to_map_3(-1, "m06", 153)
 					return
 				end)
 			end

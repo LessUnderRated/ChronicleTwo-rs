@@ -7,12 +7,12 @@ local wait_frames = require("@lib/event/wait_frames")
 
 --- Helper function.
 local function helper_4f3ee3d1(arg0: s32, arg1: s32, param: s32)
-	event.SetFadeOut(25)
+	event.fade_out_screen(25)
 	wait_frames(30)
-	event.GotoMenu(6, param)
+	event.open_event_menu(6, param)
 	vm.wait(2)
 	helper_452267a4(arg0, arg1)
-	event.SetFadeIn(30)
+	event.fade_in_screen(30)
 end
 
 return helper_4f3ee3d1

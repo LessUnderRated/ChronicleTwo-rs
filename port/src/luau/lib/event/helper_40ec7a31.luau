@@ -14,18 +14,18 @@ local function helper_40ec7a31(arg0: s32, arg1: s32)
 	local var3: s32 = 0
 	local var4: f32 = 0
 	local var6: f32 = 0
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no == 1 then
 		helper_c7abbcc0(arg0, arg1)
 		return
 	end
-	var3 = event.GetQuestEtc(0, 0) or var3
+	var3 = event.get_quest_request_status(0, 0) or var3
 	if var3 ~= 2 then
 		helper_ae9443d8(arg0, arg1)
 		return
 	end
 	do
-		local out1, _, out3 = event.GetCharaPos(arg0)
+		local out1, _, out3 = event.get_character_position(arg0)
 		var4 = out1 or var4
 		var6 = out3 or var6
 	end
@@ -34,7 +34,7 @@ local function helper_40ec7a31(arg0: s32, arg1: s32)
 		helper_efebcda2(arg0, arg1)
 		return
 	end
-	var3 = event.GetQuestEtc(0, 9) or var3
+	var3 = event.get_quest_request_status(0, 9) or var3
 	if var3 == 0 then
 		helper_d2512598(arg0, arg1)
 		return

@@ -6,13 +6,13 @@ local wait_frames = require("@lib/event/wait_frames")
 
 --- Helper function.
 local function helper_f57795f8()
-	event.Initialize()
-	event.SetMotion(0, "立ち")
-	event.SetFadeOut(10)
+	event.initialize_event()
+	event.set_character_motion(0, "立ち")
+	event.fade_out_screen(10)
 	wait_frames(10)
-	event.GotoMenu(7)
+	event.open_event_menu(7)
 	vm.wait(2)
-	event.SetFadeIn(10)
+	event.fade_in_screen(10)
 	wait_frames(10)
 end
 

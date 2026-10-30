@@ -30,14 +30,14 @@ local function helper_ae40()
 	local var0: f32 = 0
 	local var1: f32 = 0
 	local var2: f32 = 0
-	monster.MonsSeLoop_3(var0, var1, var2) -- retail: argument 1 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 2 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 3 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed
-	monster.Ext(70, var0, var1, var2, 0.0, 0.0) -- retail: the handler rejects 5 arguments
-	monster.Ext(72) -- retail: the handler rejects 0 arguments
+	monster.keep_monster_loop_sound_3(var0, var1, var2) -- retail: argument 1 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 2 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 3 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed
+	monster.call_command(70, var0, var1, var2, 0.0, 0.0) -- retail: the handler rejects 5 arguments
+	monster.call_command(72) -- retail: the handler rejects 0 arguments
 end
 
 --- Helper function.
 local function helper_18c8()
-	monster.MonsSeLoop_3(global0, global1, global2) -- retail: argument 1 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 2 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 3 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed
+	monster.keep_monster_loop_sound_3(global0, global1, global2) -- retail: argument 1 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 2 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 3 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed
 	global1 = 0.0
 end
 
@@ -56,59 +56,59 @@ local function helper_12738(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: f3
 	local var21: f32 = 0
 	local var22: f32 = 0
 	local var23: s32 = 0
-	monster.MonsSeLoop_3(x, y, z) -- retail: argument 1 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 2 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 3 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed
+	monster.keep_monster_loop_sound_3(x, y, z) -- retail: argument 1 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 2 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 3 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed
 	do
-		local out1, out2, out3 = monster.CopyVector(arg0, arg1, arg2)
+		local out1, out2, out3 = monster.copy_vector(arg0, arg1, arg2)
 		var11 = out1 or var11
 		var12 = out2 or var12
 		var13 = out3 or var13
 	end
 	do
-		local out1, out2, out3 = monster.SubVector(var11, var12, var13, x, y, z)
+		local out1, out2, out3 = monster.subtract_vectors(var11, var12, var13, x, y, z)
 		var11 = out1 or var11
 		var12 = out2 or var12
 		var13 = out3 or var13
 	end
 	do
-		local out1, out2, out3 = monster.NormalVector(var11, var12, var13)
+		local out1, out2, out3 = monster.normalize_vector(var11, var12, var13)
 		var11 = out1 or var11
 		var12 = out2 or var12
 		var13 = out3 or var13
 	end
-	var21 = monster.GetDistVector2(arg0, arg1, arg2, x, y, z) or var21
+	var21 = monster.get_distance_between(arg0, arg1, arg2, x, y, z) or var21
 	var22 = helper_adcbef14(var21, scale, vm.f32(vm.fdiv(vm.f32(vm.f32(var21 + arg5) * arg6), arg3)), var22)
 	scale = arg3
 	var23 = 0
 	while var23 < arg7 do
-		monster.MonsSeLoop_3(x, y, z) -- retail: argument 1 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 2 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 3 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed
+		monster.keep_monster_loop_sound_3(x, y, z) -- retail: argument 1 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 2 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 3 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed
 		scale = vm.f32(scale + var22)
 		do
-			local out1, out2, out3 = monster.CopyVector(var11, var12, var13)
+			local out1, out2, out3 = monster.copy_vector(var11, var12, var13)
 			var14 = out1 or var14
 			var15 = out2 or var15
 			var16 = out3 or var16
 		end
 		do
-			local out1, out2, out3 = monster.ScaleVector(var14, var15, var16, scale)
+			local out1, out2, out3 = monster.scale_vector(var14, var15, var16, scale)
 			var14 = out1 or var14
 			var15 = out2 or var15
 			var16 = out3 or var16
 		end
 		do
-			local out1, out2, out3 = monster.AddVector(x, y, z, var14, var15, var16)
+			local out1, out2, out3 = monster.add_vectors(x, y, z, var14, var15, var16)
 			x = out1 or x
 			y = out2 or y
 			z = out3 or z
 		end
-		monster.MonsVolCtrl(x, y, z)
+		monster.set_positional_sound(x, y, z)
 		if scale < 0.0 then
 			return
 		end
-		var21 = monster.GetDistVector2(arg0, arg1, arg2, x, y, z) or var21
+		var21 = monster.get_distance_between(arg0, arg1, arg2, x, y, z) or var21
 		if var21 < arg4 then
 			return
 		end
-		monster.CopyVector(x, y, z)
+		monster.copy_vector(x, y, z)
 		vm.wait()
 		var23 = var23 + 1
 	end
@@ -124,9 +124,9 @@ local function helper_13184(arg0: f32, arg1: any, arg2: f32, arg3: f32, arg4: s3
 	local var10: f32 = 0
 	local var11: f32 = 0
 	helper_fd06d627(vm.f32(4.2))
-	monster.MonsSeLoop_3(var9, var10, var11) -- retail: argument 1 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 2 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 3 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed
-	monster.SetPlacePos(var5, var6, var7) -- retail: argument 1 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 2 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 3 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed
-	arrived = vm.bits_float(monster.ChkMoveEnd()) or arrived
+	monster.keep_monster_loop_sound_3(var9, var10, var11) -- retail: argument 1 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 2 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 3 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed
+	monster.set_place_position(var5, var6, var7) -- retail: argument 1 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 2 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 3 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed
+	arrived = vm.bits_float(monster.is_move_finished()) or arrived
 	arrived = vm.f32(var10 - arrived)
 	helper_12738(var5, vm.f32(arrived + arg2), var7, arg0, arg0, arg3, vm.f32(1.9), arg4)
 end
@@ -141,7 +141,7 @@ local function helper_43a0(arg0: f32, arg1: f32)
 	var3 = 0
 	while true do
 		vm.wait()
-		no_damage_cnt = vm.bits_float(monster.GetNoDamageCnt()) or no_damage_cnt
+		no_damage_cnt = vm.bits_float(monster.get_no_damage_hit_count()) or no_damage_cnt
 		if no_damage_cnt < vm.f32(arg0 + arg1) and no_damage_cnt > vm.f32(arg0 - arg1) then
 			break
 		else
@@ -155,8 +155,8 @@ local function helper_9a34(arg0: f32, arg1: s32)
 	local var2: f32 = 0
 	local _ = helper_787df986(arg0)
 	for var4 = 0, arg1 - 1 do
-		monster.Ext(75, var2) -- retail: the handler rejects 1 arguments
-		monster.Ext(69, var2, arg0) -- retail: command 69 is not registered
+		monster.call_command(75, var2) -- retail: the handler rejects 1 arguments
+		monster.call_command(69, var2, arg0) -- retail: command 69 is not registered
 		vm.wait()
 	end
 	helper_79d6eaca()
@@ -168,10 +168,10 @@ local function helper_9c40(arg0: f32)
 	local life: s32 = 0
 	arg0 = helper_787df986(arg0)
 	while true do
-		monster.Ext(75, var1) -- retail: the handler rejects 1 arguments
-		monster.Ext(69, var1, arg0) -- retail: command 69 is not registered
+		monster.call_command(75, var1) -- retail: the handler rejects 1 arguments
+		monster.call_command(69, var1, arg0) -- retail: command 69 is not registered
 		vm.wait()
-		life = monster.GetMonsterLifeInt() or life
+		life = monster.get_life_int() or life
 		if life ~= 0 then
 			helper_79d6eaca()
 			break
@@ -187,96 +187,96 @@ local function helper_1342c()
 	local x: f32 = 0
 	local y: f32 = 0
 	local z: f32 = 0
-	monster.SetMonsterLife("攻撃１in", -1, 2)
-	monster.SetMonsterLife("攻撃１", -1, 6)
+	monster.set_life("攻撃１in", -1, 2)
+	monster.set_life("攻撃１", -1, 6)
 	helper_43a0(vm.f32(0.262), -1.0)
 	for var16 = 0, 3 do
 		do
-			local out1, out2, out3 = monster.GetFramePos("dcol00")
+			local out1, out2, out3 = monster.get_frame_position("dcol00")
 			pos_x = out1 or pos_x
 			pos_y = out2 or pos_y
 			pos_z = out3 or pos_z
 		end
-		monster.SetPlacePos(x, y, z) -- retail: argument 1 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 2 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 3 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed
+		monster.set_place_position(x, y, z) -- retail: argument 1 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 2 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 3 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed
 		do
-			local out1, out2, out3 = monster.SubVector(x, y, z, pos_x, pos_y, pos_z)
+			local out1, out2, out3 = monster.subtract_vectors(x, y, z, pos_x, pos_y, pos_z)
 			x = out1 or x
 			y = out2 or y
 			z = out3 or z
 		end
 		do
-			local out1, out2, out3 = monster.NormalVector(x, y, z)
+			local out1, out2, out3 = monster.normalize_vector(x, y, z)
 			x = out1 or x
 			y = out2 or y
 			z = out3 or z
 		end
-		monster.Ext(171, "グリ羽根Ｌ１") -- retail: the handler rejects 1 arguments
-		monster.Ext(174, -1, pos_x, pos_y, pos_z) -- retail: the handler rejects 4 arguments
-		monster.SetIndexobjSize(-1, x, y, z)
-		monster.Ext(174, -1, pos_x, pos_y, pos_z) -- retail: the handler rejects 4 arguments
-		monster.SetIndexobjSize(-1, x, y, z)
+		monster.call_command(171, "グリ羽根Ｌ１") -- retail: the handler rejects 1 arguments
+		monster.call_command(174, -1, pos_x, pos_y, pos_z) -- retail: the handler rejects 4 arguments
+		monster.set_entry_object_size(-1, x, y, z)
+		monster.call_command(174, -1, pos_x, pos_y, pos_z) -- retail: the handler rejects 4 arguments
+		monster.set_entry_object_size(-1, x, y, z)
 		helper_9a34(vm.f32(4.2), 1)
 		do
-			local out1, out2, out3 = monster.GetFramePos("dcol00")
+			local out1, out2, out3 = monster.get_frame_position("dcol00")
 			pos_x = out1 or pos_x
 			pos_y = out2 or pos_y
 			pos_z = out3 or pos_z
 		end
-		monster.SetPlacePos(x, y, z) -- retail: argument 1 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 2 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 3 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed
+		monster.set_place_position(x, y, z) -- retail: argument 1 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 2 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 3 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed
 		do
-			local out1, out2, out3 = monster.SubVector(x, y, z, pos_x, pos_y, pos_z)
+			local out1, out2, out3 = monster.subtract_vectors(x, y, z, pos_x, pos_y, pos_z)
 			x = out1 or x
 			y = out2 or y
 			z = out3 or z
 		end
 		do
-			local out1, out2, out3 = monster.NormalVector(x, y, z)
+			local out1, out2, out3 = monster.normalize_vector(x, y, z)
 			x = out1 or x
 			y = out2 or y
 			z = out3 or z
 		end
-		monster.Ext(171, "グリ羽根Ｌ１") -- retail: the handler rejects 1 arguments
-		monster.Ext(
+		monster.call_command(171, "グリ羽根Ｌ１") -- retail: the handler rejects 1 arguments
+		monster.call_command(
 			174,
 			-1,
 			pos_x + vm.f32(vm.sin(vm.f32(1.5707964)) * 20.0),
 			pos_y,
 			pos_z + vm.f32(vm.cos(vm.f32(1.5707964)) * 20.0)
 		) -- retail: the handler rejects 4 arguments
-		monster.SetIndexobjSize(-1, x, y, z)
+		monster.set_entry_object_size(-1, x, y, z)
 		helper_9a34(vm.f32(4.2), 1)
 		do
-			local out1, out2, out3 = monster.GetFramePos("dcol00")
+			local out1, out2, out3 = monster.get_frame_position("dcol00")
 			pos_x = out1 or pos_x
 			pos_y = out2 or pos_y
 			pos_z = out3 or pos_z
 		end
-		monster.SetPlacePos(x, y, z) -- retail: argument 1 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 2 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 3 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed
+		monster.set_place_position(x, y, z) -- retail: argument 1 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 2 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed; argument 3 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed
 		do
-			local out1, out2, out3 = monster.SubVector(x, y, z, pos_x, pos_y, pos_z)
+			local out1, out2, out3 = monster.subtract_vectors(x, y, z, pos_x, pos_y, pos_z)
 			x = out1 or x
 			y = out2 or y
 			z = out3 or z
 		end
 		do
-			local out1, out2, out3 = monster.NormalVector(x, y, z)
+			local out1, out2, out3 = monster.normalize_vector(x, y, z)
 			x = out1 or x
 			y = out2 or y
 			z = out3 or z
 		end
-		monster.Ext(171, "グリ羽根Ｌ１") -- retail: the handler rejects 1 arguments
-		monster.Ext(
+		monster.call_command(171, "グリ羽根Ｌ１") -- retail: the handler rejects 1 arguments
+		monster.call_command(
 			174,
 			-1,
 			pos_x + vm.f32(vm.sin(vm.f32(-1.5707964)) * 20.0),
 			pos_y,
 			pos_z + vm.f32(vm.cos(vm.f32(-1.5707964)) * 20.0)
 		) -- retail: the handler rejects 4 arguments
-		monster.SetIndexobjSize(-1, x, y, z)
+		monster.set_entry_object_size(-1, x, y, z)
 		helper_9a34(vm.f32(4.2), 1)
 	end
 	helper_9c40(vm.f32(4.2))
-	monster.SetMonsterLife("攻撃１out", -1, 2)
+	monster.set_life("攻撃１out", -1, 2)
 	helper_7471d537()
 end
 
@@ -292,107 +292,107 @@ local function helper_1452c()
 	local var13: f32 = 0
 	local var14: f32 = 0
 	local argc: s32 = 0
-	monster.SetMonsterLife("攻撃１in", -1, 2)
+	monster.set_life("攻撃１in", -1, 2)
 	helper_7471d537()
-	monster.SetMonsterLife("攻撃１", -1, 2)
+	monster.set_life("攻撃１", -1, 2)
 	helper_43a0(vm.f32(0.262), -1.0)
 	for var16 = 0, 5 do
 		do
-			local out1, out2, out3 = monster.GetFramePos("dcol_l00")
+			local out1, out2, out3 = monster.get_frame_position("dcol_l00")
 			pos_x = out1 or pos_x
 			pos_y = out2 or pos_y
 			pos_z = out3 or pos_z
 		end
-		var12 = monster.GetRndf(10.0) or var12
-		var13 = monster.GetRndf(0.2) or var13
-		var14 = monster.GetRndf(180.0) or var14
-		argc = monster.GetRnd(2) or argc
+		var12 = monster.get_random_whole_number(10.0) or var12
+		var13 = monster.get_random_whole_number(0.2) or var13
+		var14 = monster.get_random_whole_number(180.0) or var14
+		argc = monster.get_random(2) or argc
 		var12 = 12.0
 		var12 = vm.f32(var12 + 6.0)
 		var13 = vm.f32(var13 + vm.f32(0.15))
 		var14 = vm.f32(var14 * -1.0)
 		var14 = vm.f32(var14 - 90.0)
-		monster.Ext(171, "グリ羽根Ｌ２") -- retail: the handler rejects 1 arguments
-		monster.Ext(174, -1, pos_x, pos_y, pos_z) -- retail: the handler rejects 4 arguments
-		monster.SetIndexobjSize(-1, var9, var10, var11)
-		monster.Ext(174, -1, pos_x, pos_y, pos_z) -- retail: the handler rejects 4 arguments
-		monster.SetIndexobjSize(-1, var12, var13, var14)
-		monster.SetMos("", 1, argc) -- retail: argument 1 is -1, an address that names nothing the handler finds
+		monster.call_command(171, "グリ羽根Ｌ２") -- retail: the handler rejects 1 arguments
+		monster.call_command(174, -1, pos_x, pos_y, pos_z) -- retail: the handler rejects 4 arguments
+		monster.set_entry_object_size(-1, var9, var10, var11)
+		monster.call_command(174, -1, pos_x, pos_y, pos_z) -- retail: the handler rejects 4 arguments
+		monster.set_entry_object_size(-1, var12, var13, var14)
+		monster.set_motion("", 1, argc) -- retail: argument 1 is -1, an address that names nothing the handler finds
 		do
-			local out1, out2, out3 = monster.GetFramePos("dcol_l01")
+			local out1, out2, out3 = monster.get_frame_position("dcol_l01")
 			pos_x = out1 or pos_x
 			pos_y = out2 or pos_y
 			pos_z = out3 or pos_z
 		end
-		var12 = monster.GetRndf(10.0) or var12
-		var13 = monster.GetRndf(0.2) or var13
-		var14 = monster.GetRndf(180.0) or var14
-		argc = monster.GetRnd(2) or argc
+		var12 = monster.get_random_whole_number(10.0) or var12
+		var13 = monster.get_random_whole_number(0.2) or var13
+		var14 = monster.get_random_whole_number(180.0) or var14
+		argc = monster.get_random(2) or argc
 		var12 = 12.0
 		var12 = vm.f32(var12 + 6.0)
 		var13 = vm.f32(var13 + vm.f32(0.15))
 		var14 = vm.f32(var14 * -1.0)
 		var14 = vm.f32(var14 - 90.0)
-		monster.Ext(171, "グリ羽根Ｌ２") -- retail: the handler rejects 1 arguments
-		monster.Ext(174, -1, pos_x, pos_y, pos_z) -- retail: the handler rejects 4 arguments
-		monster.SetIndexobjSize(-1, var9, var10, var11)
-		monster.Ext(174, -1, pos_x, pos_y, pos_z) -- retail: the handler rejects 4 arguments
-		monster.SetIndexobjSize(-1, var12, var13, var14)
-		monster.SetMos("", 1, argc) -- retail: argument 1 is -1, an address that names nothing the handler finds
+		monster.call_command(171, "グリ羽根Ｌ２") -- retail: the handler rejects 1 arguments
+		monster.call_command(174, -1, pos_x, pos_y, pos_z) -- retail: the handler rejects 4 arguments
+		monster.set_entry_object_size(-1, var9, var10, var11)
+		monster.call_command(174, -1, pos_x, pos_y, pos_z) -- retail: the handler rejects 4 arguments
+		monster.set_entry_object_size(-1, var12, var13, var14)
+		monster.set_motion("", 1, argc) -- retail: argument 1 is -1, an address that names nothing the handler finds
 		do
-			local out1, out2, out3 = monster.GetFramePos("dcol_r00")
+			local out1, out2, out3 = monster.get_frame_position("dcol_r00")
 			pos_x = out1 or pos_x
 			pos_y = out2 or pos_y
 			pos_z = out3 or pos_z
 		end
-		var12 = monster.GetRndf(10.0) or var12
-		var13 = monster.GetRndf(0.2) or var13
-		var14 = monster.GetRndf(180.0) or var14
-		argc = monster.GetRnd(2) or argc
+		var12 = monster.get_random_whole_number(10.0) or var12
+		var13 = monster.get_random_whole_number(0.2) or var13
+		var14 = monster.get_random_whole_number(180.0) or var14
+		argc = monster.get_random(2) or argc
 		var12 = 12.0
 		var12 = vm.f32(var12 + 6.0)
 		var13 = vm.f32(var13 + vm.f32(0.15))
 		var14 = vm.f32(var14 - 90.0)
-		monster.Ext(171, "グリ羽根Ｌ２") -- retail: the handler rejects 1 arguments
-		monster.Ext(174, -1, pos_x, pos_y, pos_z) -- retail: the handler rejects 4 arguments
-		monster.SetIndexobjSize(-1, var9, var10, var11)
-		monster.Ext(174, -1, pos_x, pos_y, pos_z) -- retail: the handler rejects 4 arguments
-		monster.SetIndexobjSize(-1, var12, var13, var14)
-		monster.SetMos("", 1, argc) -- retail: argument 1 is -1, an address that names nothing the handler finds
+		monster.call_command(171, "グリ羽根Ｌ２") -- retail: the handler rejects 1 arguments
+		monster.call_command(174, -1, pos_x, pos_y, pos_z) -- retail: the handler rejects 4 arguments
+		monster.set_entry_object_size(-1, var9, var10, var11)
+		monster.call_command(174, -1, pos_x, pos_y, pos_z) -- retail: the handler rejects 4 arguments
+		monster.set_entry_object_size(-1, var12, var13, var14)
+		monster.set_motion("", 1, argc) -- retail: argument 1 is -1, an address that names nothing the handler finds
 		do
-			local out1, out2, out3 = monster.GetFramePos("dcol_r01")
+			local out1, out2, out3 = monster.get_frame_position("dcol_r01")
 			pos_x = out1 or pos_x
 			pos_y = out2 or pos_y
 			pos_z = out3 or pos_z
 		end
-		var12 = monster.GetRndf(10.0) or var12
-		var13 = monster.GetRndf(0.2) or var13
-		var14 = monster.GetRndf(180.0) or var14
-		argc = monster.GetRnd(2) or argc
+		var12 = monster.get_random_whole_number(10.0) or var12
+		var13 = monster.get_random_whole_number(0.2) or var13
+		var14 = monster.get_random_whole_number(180.0) or var14
+		argc = monster.get_random(2) or argc
 		var12 = 12.0
 		var12 = vm.f32(var12 + 6.0)
 		var13 = vm.f32(var13 + vm.f32(0.15))
 		var14 = vm.f32(var14 - 90.0)
-		monster.Ext(171, "グリ羽根Ｌ２") -- retail: the handler rejects 1 arguments
-		monster.Ext(174, -1, pos_x, pos_y, pos_z) -- retail: the handler rejects 4 arguments
-		monster.SetIndexobjSize(-1, var9, var10, var11)
-		monster.Ext(174, -1, pos_x, pos_y, pos_z) -- retail: the handler rejects 4 arguments
-		monster.SetIndexobjSize(-1, var12, var13, var14)
-		monster.SetMos("", 1, argc) -- retail: argument 1 is -1, an address that names nothing the handler finds
+		monster.call_command(171, "グリ羽根Ｌ２") -- retail: the handler rejects 1 arguments
+		monster.call_command(174, -1, pos_x, pos_y, pos_z) -- retail: the handler rejects 4 arguments
+		monster.set_entry_object_size(-1, var9, var10, var11)
+		monster.call_command(174, -1, pos_x, pos_y, pos_z) -- retail: the handler rejects 4 arguments
+		monster.set_entry_object_size(-1, var12, var13, var14)
+		monster.set_motion("", 1, argc) -- retail: argument 1 is -1, an address that names nothing the handler finds
 		helper_9a34(vm.f32(4.2), 3)
 	end
 	helper_9c40(vm.f32(4.2))
-	monster.SetMonsterLife("攻撃１out", -1, 2)
+	monster.set_life("攻撃１out", -1, 2)
 	helper_7471d537()
 end
 
 --- Helper function.
 local function helper_15e8c()
-	monster.SetMonsterLife("エネルギー吸収in", -1, 2)
+	monster.set_life("エネルギー吸収in", -1, 2)
 	helper_7471d537()
-	monster.SetMonsterLife("エネルギー吸収", -1, 2)
+	monster.set_life("エネルギー吸収", -1, 2)
 	helper_7471d537()
-	monster.SetMonsterLife("エネルギー吸収out", 2)
+	monster.set_life("エネルギー吸収out", 2)
 	helper_7471d537()
 end
 
@@ -403,36 +403,36 @@ function script.setup() end
 
 --- Sets the monster up when it is placed.
 function script.init()
-	monster.Ext(119, 1, 1) -- retail: the handler rejects 2 arguments
-	monster.Ext(119, 2, 1) -- retail: the handler rejects 2 arguments
+	monster.call_command(119, 1, 1) -- retail: the handler rejects 2 arguments
+	monster.call_command(119, 2, 1) -- retail: the handler rejects 2 arguments
 	helper_ae40()
-	monster.SetScoop(4, 1)
-	monster.SetScoop(8, 1)
-	monster.ResetPalletAnim(9999.9)
-	monster.SetCameraMode(0)
-	monster.Ext(106, "グリ羽根Ｌ１") -- retail: the handler rejects 1 arguments
-	monster.Ext(106, "グリ羽根Ｌ２") -- retail: the handler rejects 1 arguments
-	monster.Ext(106, "グリ羽根Ｈ") -- retail: the handler rejects 1 arguments
+	monster.set_photo_opportunity(4, 1)
+	monster.set_photo_opportunity(8, 1)
+	monster.stop_palette_pulse(9999.9)
+	monster.set_camera_mode(0)
+	monster.call_command(106, "グリ羽根Ｌ１") -- retail: the handler rejects 1 arguments
+	monster.call_command(106, "グリ羽根Ｌ２") -- retail: the handler rejects 1 arguments
+	monster.call_command(106, "グリ羽根Ｈ") -- retail: the handler rejects 1 arguments
 	helper_18c8()
 end
 
 --- Runs the monster's normal behaviour.
 function script.loop()
-	monster.SetModelLightSwitch(0)
-	monster.SetMonsterLife("飛び", -1, 0)
+	monster.set_model_lighting(0)
+	monster.set_life("飛び", -1, 0)
 	helper_13184(4.0, vm.f32(4.2), 60.0, 35.0, 90)
 	while true do
 		vm.wait()
 		helper_fd06d627(vm.f32(4.2))
 		helper_1342c()
-		monster.SetMonsterLife("飛び", -1, 0)
+		monster.set_life("飛び", -1, 0)
 		helper_c3e8ae39(60)
 		helper_fd06d627(vm.f32(4.2))
 		helper_1452c()
-		monster.SetMonsterLife("飛び", -1, 0)
+		monster.set_life("飛び", -1, 0)
 		helper_c3e8ae39(60)
 		helper_15e8c()
-		monster.SetMonsterLife("飛び", -1, 0)
+		monster.set_life("飛び", -1, 0)
 		helper_c3e8ae39(20)
 	end
 end
@@ -440,43 +440,43 @@ end
 --- Reacts to a hit that staggers it.
 function script.on_damage()
 	helper_d7694a9b()
-	monster.SetMonsterLife("ダメージ", -1, 6)
-	monster.Ext(140, 4.0, 0.0, 3) -- retail: the handler rejects 3 arguments
+	monster.set_life("ダメージ", -1, 6)
+	monster.call_command(140, 4.0, 0.0, 3) -- retail: the handler rejects 3 arguments
 	helper_7471d537()
 	helper_c3e8ae39(12)
-	-- retail: monster.SetMonsterLife("立ち") does nothing, since its handler ignores a string as argument 1
+	-- retail: monster.set_life("立ち") does nothing, since its handler ignores a string as argument 1
 	helper_1ef0d4b2()
 end
 
 --- Reacts to a hit that knocks it over.
 function script.on_knockdown()
 	helper_bbb2220b()
-	monster.SetMonsterLife("吹っ飛び", -1, 6)
-	monster.Ext(140, 3.0, 0.05, 20) -- retail: the handler rejects 3 arguments
+	monster.set_life("吹っ飛び", -1, 6)
+	monster.call_command(140, 3.0, 0.05, 20) -- retail: the handler rejects 3 arguments
 	helper_7471d537()
-	monster.SetModelLightSwitch(1)
+	monster.set_model_lighting(1)
 	helper_c3e8ae39(30)
-	monster.SetModelLightSwitch(0)
-	monster.SetMonsterLife("起き上がり", -1, 6)
+	monster.set_model_lighting(0)
+	monster.set_life("起き上がり", -1, 6)
 	helper_7471d537()
-	-- retail: monster.SetMonsterLife("立ち") does nothing, since its handler ignores a string as argument 1
+	-- retail: monster.set_life("立ち") does nothing, since its handler ignores a string as argument 1
 	helper_522cc63a()
 end
 
 --- Guards against a hit.
 function script.on_guard()
 	helper_56845ba9()
-	monster.SetMonsterLife("歩き", -1, 0)
+	monster.set_life("歩き", -1, 0)
 	helper_fd06d627(21.0)
-	monster.GetBaseAttack_0()
-	monster.SetMonsterLife("ガードin", -1, 6)
+	monster.get_attack_power_0()
+	monster.set_life("ガードin", -1, 6)
 	helper_7471d537()
-	monster.SetMonsterLife("ガード", -1, 0)
-	monster.Ext(140, 3.0, 0.0, 2) -- retail: the handler rejects 3 arguments
+	monster.set_life("ガード", -1, 0)
+	monster.call_command(140, 3.0, 0.0, 2) -- retail: the handler rejects 3 arguments
 	helper_c3e8ae39(30)
-	monster.SetMonsterLife("ガードout", -1, 6)
+	monster.set_life("ガードout", -1, 6)
 	helper_7471d537()
-	monster.SetMonsterLife("立ち", 0)
+	monster.set_life("立ち", 0)
 	helper_1ef0d4b2()
 end
 
@@ -484,16 +484,16 @@ end
 function script.on_dodge_1()
 	local var0: f32 = 0
 	helper_af3c7344()
-	monster.Ext(75, var0) -- retail: the handler rejects 1 arguments
+	monster.call_command(75, var0) -- retail: the handler rejects 1 arguments
 	if var0 > vm.f32(3.1415927) then
 		var0 = vm.f32(var0 - vm.f32(6.2831855))
 	end
 	if var0 <= vm.f32(-3.1415927) then
 		var0 = vm.f32(var0 + vm.f32(6.2831855))
 	end
-	monster.Ext(68, 0.0, var0, 0.0) -- retail: command 68 is not registered
+	monster.call_command(68, 0.0, var0, 0.0) -- retail: command 68 is not registered
 	vm.wait()
-	monster.SetMonsterLife("立ち", -1, 0)
+	monster.set_life("立ち", -1, 0)
 	helper_522cc63a()
 end
 
@@ -501,25 +501,25 @@ end
 function script.on_dodge_2()
 	local var0: f32 = 0
 	helper_af3c7344()
-	monster.Ext(75, var0) -- retail: the handler rejects 1 arguments
+	monster.call_command(75, var0) -- retail: the handler rejects 1 arguments
 	if var0 > vm.f32(3.1415927) then
 		var0 = vm.f32(var0 - vm.f32(6.2831855))
 	end
 	if var0 <= vm.f32(-3.1415927) then
 		var0 = vm.f32(var0 + vm.f32(6.2831855))
 	end
-	monster.Ext(68, 0.0, var0, 0.0) -- retail: command 68 is not registered
+	monster.call_command(68, 0.0, var0, 0.0) -- retail: command 68 is not registered
 	vm.wait()
-	monster.SetMonsterLife("立ち", -1, 0)
+	monster.set_life("立ち", -1, 0)
 	helper_522cc63a()
 end
 
 --- Runs the monster's death.
 function script.on_death()
 	helper_c9f11562()
-	monster.SetMonsterLife("死に", -1, 2)
+	monster.set_life("死に", -1, 2)
 	helper_7471d537()
-	monster.Ext(142) -- retail: command 142 is not registered
+	monster.call_command(142) -- retail: command 142 is not registered
 	while true do
 		vm.wait()
 	end
@@ -528,7 +528,7 @@ end
 
 --- Reacts to being caught by a frame that lifts it.
 function script.on_caught()
-	monster.SetMonsterLife("じたばた", -1, 4)
+	monster.set_life("じたばた", -1, 4)
 	while true do
 		vm.wait()
 	end
@@ -537,11 +537,11 @@ end
 --- Lands the monster after it has been thrown.
 function script.on_land()
 	helper_3bd6d918()
-	monster.Ext(72) -- retail: the handler rejects 0 arguments
-	monster.Ext(143) -- retail: command 143 is not registered
+	monster.call_command(72) -- retail: the handler rejects 0 arguments
+	monster.call_command(143) -- retail: command 143 is not registered
 	helper_c3e8ae39(10)
-	monster.GetBaseAttack_0()
-	monster.SetMonsterLife("起き上がり", -1, 6)
+	monster.get_attack_power_0()
+	monster.set_life("起き上がり", -1, 6)
 	helper_7471d537()
 	helper_b44b0a55()
 	return 1
@@ -550,9 +550,9 @@ end
 --- Stuns the monster.
 function script.on_stun()
 	helper_63eb9d5b()
-	monster.SetMonsterLife("吹っ飛び", -1, 6)
+	monster.set_life("吹っ飛び", -1, 6)
 	helper_7471d537()
-	monster.SetMonsterLife("起き上がり", -1, 6)
+	monster.set_life("起き上がり", -1, 6)
 	helper_7471d537()
 	helper_c99f4fa5()
 end

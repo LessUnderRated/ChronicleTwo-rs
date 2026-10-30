@@ -4,19 +4,19 @@
 --- Helper function.
 local function helper_a15114f7()
 	local flag: s32 = 0
-	flag = event.GetFlag(209) or flag
+	flag = event.get_save_flag(209) or flag
 	if flag == 0 then
-		event.FuncPointShow("p01_g010701", "door", 0)
+		event.set_function_point_enabled("p01_g010701", "door", 0)
 	else
-		event.FuncPointShow("p01_g010701", "door", 1)
+		event.set_function_point_enabled("p01_g010701", "door", 1)
 	end
-	flag = event.GetFlag(250) or flag
+	flag = event.get_save_flag(250) or flag
 	if flag == 1 then
-		event.CharaActive(1, 120)
-		event.CharaActive(1, 121)
+		event.set_character_active(1, 120)
+		event.set_character_active(1, 121)
 	else
-		event.CharaActive(0, 120)
-		event.CharaActive(0, 121)
+		event.set_character_active(0, 120)
+		event.set_character_active(0, 121)
 	end
 end
 

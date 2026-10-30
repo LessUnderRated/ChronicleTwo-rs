@@ -8,17 +8,17 @@ local helper_86e93423 = require("@lib/event/helper_86e93423")
 local function helper_0999bd0f()
 	local flag: s32 = 0
 	helper_86e93423()
-	flag = event.GetFlag(18) or flag
+	flag = event.get_save_flag(18) or flag
 	if flag == 1 then
-		flag = event.GetFlag(17) or flag
+		flag = event.get_save_flag(17) or flag
 		if flag == 0 then
-			event.SetFlag(17, 1)
+			event.set_save_flag(17, 1)
 		end
 	end
-	event.SetFadeOut(1)
+	event.fade_out_screen(1)
 	vm.wait(1)
-	event.SetFadeIn(30)
-	event.GotoOutside(-1, "m01")
+	event.fade_in_screen(30)
+	event.go_to_outside_map(-1, "m01")
 end
 
 return helper_0999bd0f

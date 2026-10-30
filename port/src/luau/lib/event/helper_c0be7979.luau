@@ -12,14 +12,14 @@ local function helper_c0be7979()
 	local var0: any = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.Initialize()
-		event.SetMotion(0, "立ち")
+		event.initialize_event()
+		event.set_character_motion(0, "立ち")
 		at = 1
 		vm.wait(1)
 		at = 2
 		var0 = helper_58df4c7c(5, 10)
 		if var0 == 0 then
-			event.SetFadeOut(30)
+			event.fade_out_screen(30)
 			at = 3
 			wait_frames(30)
 			return 1

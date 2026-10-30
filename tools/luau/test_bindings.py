@@ -46,7 +46,7 @@ class GenerateTest(unittest.TestCase):
         first = bindings.generate(catalog, ["action"])
         second = bindings.generate(catalog, ["action"])
         self.assertEqual(first, second)
-        self.assertIn('{"ProgSet", 1,', first)
+        self.assertIn('{"set_program_value", 1,', first)
         self.assertIn("constexpr Kind kKinds[]", first)
         self.assertEqual(
             first.count("constexpr Signature "),

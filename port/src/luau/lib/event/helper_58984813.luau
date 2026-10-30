@@ -5,7 +5,7 @@ local helper_888ab2a3 = require("@lib/event/helper_888ab2a3")
 
 --- Helper function.
 local function helper_58984813()
-	event.ObjsSetMotion(2, "立ち", 4)
+	event.set_object_sequence_motion(2, "立ち", 4)
 	helper_888ab2a3(15)
 	helper_888ab2a3(30)
 end

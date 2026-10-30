@@ -7,8 +7,8 @@ local helper_fe018488 = require("@lib/monster/helper_fe018488")
 local function helper_f5b67d57()
 	local chara_id: s32 = 0
 	local monster_id: s32 = 0
-	monster_id = monster.GetMonsterIndex() or monster_id
-	chara_id = monster.GetUserMonsId() or chara_id
+	monster_id = monster.get_monster_kind() or monster_id
+	chara_id = monster.get_player_transform_id() or chara_id
 	if chara_id > -1 then
 		helper_fe018488(monster_id)
 	end

@@ -6,15 +6,15 @@ local helper_70e4ac93 = require("@lib/event/helper_70e4ac93")
 --- Helper function.
 local function helper_72dc8676(arg0: s32, arg1: any)
 	local var2: s32 = 0
-	event.SetMesPreset(0, 0)
-	var2 = event.GetChapter() or var2
+	event.apply_message_window_preset(0, 0)
+	var2 = event.get_chapter() or var2
 	if var2 ~= 8 then
-		event.MesMake_2(
+		event.open_message_window_2(
 			0,
 			"Sar[UNI00f2] l'unico a pensarla cos[UNI00ec], ma\nqualcosa in te mi ricorda Elena.<page>Sei speciale rispetto agli altri\nabitanti di questa citt[UNI00e0]."
 		)
 	else
-		event.MesMake_2(
+		event.open_message_window_2(
 			0,
 			"La Miniera di Zelmite [UNI00e8] un posto\nmolto pericoloso. Non si deve\nmai abbassare la guardia."
 		)

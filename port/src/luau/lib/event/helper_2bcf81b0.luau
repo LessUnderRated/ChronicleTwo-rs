@@ -3,7 +3,7 @@
 
 --- Helper function.
 local function helper_2bcf81b0()
-	event.SpriteSetDraw(0, 0)
+	event.set_event_sprite_draw_pass(0, 0)
 end
 
 return helper_2bcf81b0

@@ -13,17 +13,17 @@ local function helper_c45eb7de(arg0: s32, arg1: s32, arg2: s32)
 	local var7: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		stream_playing = event.GetMesVoice() or stream_playing
-		event.TrgPakuAnim(1)
-		event.TrgPakuMotion(0)
+		stream_playing = event.is_voice_stream_playing() or stream_playing
+		event.trigger_mouth_texture_animation(1)
+		event.trigger_mouth_motion(0)
 		var7 = 0
-		argc_2 = event.StreamGetStatus(1) or argc_2
+		argc_2 = event.get_voice_stream_state(1) or argc_2
 		while true do
 			if stream_playing ~= 0 then
-				argc = event.StreamGetStatus(1) or argc
+				argc = event.get_voice_stream_state(1) or argc
 				if argc_2 ~= 0 and argc == 0 then
-					event.TrgPakuAnim(0)
-					event.TrgPakuMotion(2)
+					event.trigger_mouth_texture_animation(0)
+					event.trigger_mouth_motion(2)
 				end
 				argc_2 = argc
 			end
@@ -42,12 +42,12 @@ local function helper_c45eb7de(arg0: s32, arg1: s32, arg2: s32)
 				var7 = vm.i32(var7 + 1)
 			end
 		end
-		event.ResetPakuMotion()
-		event.TrgPakuAnim(0)
-		event.ResetPakuAnim()
-		stream_playing = event.GetMesVoice() or stream_playing
+		event.reset_mouth_motions()
+		event.trigger_mouth_texture_animation(0)
+		event.reset_mouth_texture_animations()
+		stream_playing = event.is_voice_stream_playing() or stream_playing
 		if stream_playing ~= 0 then
-			event.StreamStop(1)
+			event.stop_voice_stream(1)
 		end
 		return var7, arg2
 	end, function(received: { any })

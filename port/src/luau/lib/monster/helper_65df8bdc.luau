@@ -15,7 +15,7 @@ local function helper_65df8bdc(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4:
 	local target_3: f32 = 0
 	local var18: s32 = 0
 	target, target_2, target_3 = helper_125e5305(arg2, arg3, target, target_2, target_3)
-	arg2 = monster.GetRefAngle(target, target_2, target_3) or arg2
+	arg2 = monster.get_angle_to_position(target, target_2, target_3) or arg2
 	if arg2 > vm.f32(3.1415927) then
 		arg2 = vm.f32(arg2 - vm.f32(6.2831855))
 	end

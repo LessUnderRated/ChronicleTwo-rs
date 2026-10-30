@@ -3,7 +3,7 @@
 
 --- Helper function.
 local function helper_89dcac54()
-	event.SetBitCtrl(1, 1)
+	event.set_save_control_bits(1, 1)
 end
 
 return helper_89dcac54

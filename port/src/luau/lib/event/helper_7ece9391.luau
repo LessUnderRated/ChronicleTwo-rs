@@ -4,7 +4,7 @@
 --- Helper function.
 local function helper_7ece9391()
 	local var0: s32 = 0
-	var0 = event.GetDioramaPercent(2) or var0
+	var0 = event.get_georama_analysis_percent(2) or var0
 	if var0 < 100 then
 		return 0
 	end

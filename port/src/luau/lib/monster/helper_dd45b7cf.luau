@@ -3,7 +3,7 @@
 
 --- Helper function.
 local function helper_dd45b7cf(value: f32)
-	monster.VPushFloat(15, value)
+	monster.set_variable_float(15, value)
 end
 
 return helper_dd45b7cf

@@ -23,19 +23,19 @@ local function helper_21f9f6c4(
 	local var12: f32 = 0
 	local var15: f32 = 0
 	local var16: f32 = 0
-	var15 = monster.GetRndf(range_2) or var15
-	var16 = monster.GetRndf(range) or var16
+	var15 = monster.get_random_whole_number(range_2) or var15
+	var16 = monster.get_random_whole_number(range) or var16
 	var15 = vm.f32(var15 + arg2)
 	helper_362382c7(var16, arg1)
 	helper_442b9962()
 	do
-		local out1, out2, out3 = monster.GetPos_3()
+		local out1, out2, out3 = monster.get_position_3()
 		pos_x = out1 or pos_x
 		pos_y = out2 or pos_y
 		pos_z = out3 or pos_z
 	end
 	do
-		local _, out2, _ = monster.GetRot()
+		local _, out2, _ = monster.get_rotation()
 		var12 = out2 or var12
 	end
 	pos_x = vm.f32(pos_x + vm.f32(vm.sin(var12) * var15))

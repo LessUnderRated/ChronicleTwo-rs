@@ -6,15 +6,15 @@ local function helper_c5ea1698()
 	local var0: s32 = 0
 	local flag: s32 = 0
 	local var2: s32 = 0
-	var0 = event.GetDioramaPercent(0) or var0
+	var0 = event.get_georama_analysis_percent(0) or var0
 	if var0 < 100 then
 		return 0
 	end
-	flag = event.GetFlag(285) or flag
+	flag = event.get_save_flag(285) or flag
 	if flag ~= 0 then
 		return 0
 	end
-	var2 = event.CheckEnableCharaChange(1) or var2
+	var2 = event.get_character_change_state(1) or var2
 	if var2 == 0 then
 		return 0
 	end

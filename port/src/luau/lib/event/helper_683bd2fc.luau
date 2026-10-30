@@ -6,7 +6,7 @@ local helper_6050d30e = require("@lib/event/helper_6050d30e")
 --- Helper function.
 local function helper_683bd2fc()
 	local var0: s32 = 0
-	var0 = event.GetCnt(3) or var0
+	var0 = event.get_save_counter(3) or var0
 	if var0 < 7 then
 		helper_6050d30e(1)
 	else

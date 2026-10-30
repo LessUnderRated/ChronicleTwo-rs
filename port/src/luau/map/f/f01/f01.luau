@@ -47,74 +47,74 @@ local global9: any = 0
 local function event_99()
 	local var0: s32 = 0
 	local var2: s32 = 0
-	event.FuncPointShow("", "e277", 0)
+	event.set_function_point_enabled("", "e277", 0)
 	var0 = 0
-	var2 = event.GetAnalyze(104) or var2
+	var2 = event.get_georama_analysis_flag(104) or var2
 	if var2 ~= 0 then
 		var0 = 1
 	end
-	var2 = event.GetAnalyze(105) or var2
+	var2 = event.get_georama_analysis_flag(105) or var2
 	if var2 ~= 0 then
 		var0 = 1
 	end
-	var2 = event.GetAnalyze(106) or var2
+	var2 = event.get_georama_analysis_flag(106) or var2
 	if var0 ~= 0 then
-		event.EohSyncObj_2(1, "p11_f0101")
-		event.EohSetShow(1, 0)
+		event.attach_object_handle_to_map_part_2(1, "p11_f0101")
+		event.set_object_handle_visible(1, 0)
 	end
 	helper_66ac1f76()
-	event.SetCharaPos(0, 205.1, -6.0, 894.1)
+	event.set_character_position(0, 205.1, -6.0, 894.1)
 end
 
 --- Helper function.
 local function helper_1c378()
 	local active_chr_no: s32 = 0
-	event.SetMesWindowMode(0, 7)
-	event.AssignStack(5)
-	event.ClearStack(5)
-	event.LoadMes(0, 5, "event/e200/e270/e270.txt")
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	event.set_message_window_mode(0, 7)
+	event.assign_memory_stack(5)
+	event.clear_memory_stack(5)
+	event.load_message_file(0, 5, "event/e200/e270/e270.txt")
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no == 0 then
 		global2 = 0
 		global3 = 33
-		event.LoadMotion(5, "event/basic_evmot/mints_set.gltf", "info", global2)
-		event.LoadMotion(5, "event/e200/e270/e270_mints.gltf", "info", global2)
-		event.EohSyncChara(0, global2)
-		event.ObjsInit(0)
-		event.ObjsSyncObj(0, 0)
-		event.CharaActive(0, global2)
-		event.LoadChara(5, "chara/c02_base.gltf", "info", global3)
-		event.LoadEquip(5, 1, 4, "info", global3)
-		event.LoadEquip(5, 1, 3, "info", global3)
-		event.LoadEquip(5, 1, 2, "info", global3, 37)
-		event.LoadMotion(5, "event/e200/e270/e270_monica.gltf", "info", global3)
-		event.LoadMotion(5, "event/basic_evmot/monica_set.gltf", "info", global3)
-		event.EohSyncChara(1, global3)
-		event.ObjsInit(1)
-		event.ObjsSyncObj(1, 1)
-		event.CharaActive(0, global3)
-		event.CharaActive(1, 37)
+		event.load_character_motion_pack(5, "event/basic_evmot/mints_set.gltf", "info", global2)
+		event.load_character_motion_pack(5, "event/e200/e270/e270_mints.gltf", "info", global2)
+		event.attach_object_handle_to_character(0, global2)
+		event.clear_object_sequence(0)
+		event.set_object_sequence_object(0, 0)
+		event.set_character_active(0, global2)
+		event.load_character(5, "chara/c02_base.gltf", "info", global3)
+		event.load_equipment_model(5, 1, 4, "info", global3)
+		event.load_equipment_model(5, 1, 3, "info", global3)
+		event.load_equipment_model(5, 1, 2, "info", global3, 37)
+		event.load_character_motion_pack(5, "event/e200/e270/e270_monica.gltf", "info", global3)
+		event.load_character_motion_pack(5, "event/basic_evmot/monica_set.gltf", "info", global3)
+		event.attach_object_handle_to_character(1, global3)
+		event.clear_object_sequence(1)
+		event.set_object_sequence_object(1, 1)
+		event.set_character_active(0, global3)
+		event.set_character_active(1, 37)
 	end
 	if active_chr_no == 1 then
 		global2 = 33
 		global3 = 0
-		event.LoadChara(5, "chara/c01_base.gltf", "info", global2)
-		event.LoadEquip(5, 0, 4, "info", global2)
-		event.LoadEquip(5, 0, 3, "info", global2)
-		event.LoadEquip(5, 0, 2, "info", global2, 37)
-		event.LoadMotion(5, "event/basic_evmot/mints_set.gltf", "info", global2)
-		event.LoadMotion(5, "event/e200/e270/e270_mints.gltf", "info", global2)
-		event.EohSyncChara(0, global2)
-		event.ObjsInit(0)
-		event.ObjsSyncObj(0, 0)
-		event.CharaActive(0, global2)
-		event.CharaActive(1, 37)
-		event.LoadMotion(5, "event/e200/e270/e270_monica.gltf", "info", global3)
-		event.EohSyncChara(1, global3)
-		event.ObjsInit(1)
-		event.ObjsSyncObj(1, 1)
-		event.LoadMotion(5, "event/basic_evmot/monica_set.gltf", "info", global3)
-		event.CharaActive(0, global3)
+		event.load_character(5, "chara/c01_base.gltf", "info", global2)
+		event.load_equipment_model(5, 0, 4, "info", global2)
+		event.load_equipment_model(5, 0, 3, "info", global2)
+		event.load_equipment_model(5, 0, 2, "info", global2, 37)
+		event.load_character_motion_pack(5, "event/basic_evmot/mints_set.gltf", "info", global2)
+		event.load_character_motion_pack(5, "event/e200/e270/e270_mints.gltf", "info", global2)
+		event.attach_object_handle_to_character(0, global2)
+		event.clear_object_sequence(0)
+		event.set_object_sequence_object(0, 0)
+		event.set_character_active(0, global2)
+		event.set_character_active(1, 37)
+		event.load_character_motion_pack(5, "event/e200/e270/e270_monica.gltf", "info", global3)
+		event.attach_object_handle_to_character(1, global3)
+		event.clear_object_sequence(1)
+		event.set_object_sequence_object(1, 1)
+		event.load_character_motion_pack(5, "event/basic_evmot/monica_set.gltf", "info", global3)
+		event.set_character_active(0, global3)
 	end
 end
 
@@ -129,22 +129,22 @@ end
 --- Helper function.
 local function helper_1c0a0()
 	local active_chr_no: s32 = 0
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no == 0 then
-		event.CharaActive(1, global2)
-		event.CharaActive(0, global3)
-		event.DelExtMotion(global2)
-		event.DelExtMotion(global3)
-		event.DeleteChara(global3)
-		event.DeleteChara(37)
+		event.set_character_active(1, global2)
+		event.set_character_active(0, global3)
+		event.delete_character_extension_packs(global2)
+		event.delete_character_extension_packs(global3)
+		event.delete_character(global3)
+		event.delete_character(37)
 	end
 	if active_chr_no == 1 then
-		event.CharaActive(1, global3)
-		event.CharaActive(0, global2)
-		event.DelExtMotion(global2)
-		event.DelExtMotion(global3)
-		event.DeleteChara(global2)
-		event.DeleteChara(37)
+		event.set_character_active(1, global3)
+		event.set_character_active(0, global2)
+		event.delete_character_extension_packs(global2)
+		event.delete_character_extension_packs(global3)
+		event.delete_character(global2)
+		event.delete_character(37)
 	end
 end
 
@@ -153,64 +153,64 @@ local function helper_1cfc4()
 	local var4: s32 = 0
 	local at: number = 0
 	vm.section(function()
-		event.SetFlag(270, 1)
-		event.Initialize()
-		event.SetMesWindowMode(0, 7)
-		event.StopBgm(0)
-		event.SetFadeOut(30)
+		event.set_save_flag(270, 1)
+		event.initialize_event()
+		event.set_message_window_mode(0, 7)
+		event.stop_music(0)
+		event.fade_out_screen(30)
 		at = 1
 		helper_888ab2a3(45)
-		event.LoadSound(2500)
-		var4 = event.SndLoadSound_2(2500) or var4
+		event.load_map_sounds(2500)
+		var4 = event.load_sound_effect_file_2(2500) or var4
 		helper_1c378()
-		event.InitDramaScene()
-		event.CharaActive(1, global2)
-		event.CharaActive(1, global3)
-		event.ObjsTexAnime(0, 0)
-		event.ObjsTexAnime(0, 1, "おこり顔")
-		event.ObjsTexAnime(0, 1, "通常目パチ")
-		event.ObjsTexAnime(1, 0)
-		event.ObjsTexAnime(1, 1, "おこり顔")
-		event.ObjsTexAnime(1, 1, "通常目パチ")
-		event.CmrsSetPos(174.76, 389.28, 1785.94)
-		event.CmrsSetRef(34.41, 90.8, 382.81)
-		event.SetCharaPos(0, -297.56, 0.0, -373.68)
-		event.SetCharaRot(0, 0.0, 2.57, 0.0)
-		event.EohSetFootSoundId(0, 1)
-		event.EohSetFootSoundId(1, 1)
-		event.ObjsSetPos(0, 68.8, 23.7, 1491.8)
-		event.ObjsSetRot(0, 0.0, 3.05, 0.0)
-		event.ObjsSetPos(1, 93.9, 23.7, 1438.4)
-		event.ObjsSetRot(1, 0.0, 3.05, 0.0)
-		event.SetFadeIn(30)
-		event.SndSePlay(var4, 2)
-		event.ObjsSetMotion(0, "歩き", 4, -1.0, 1)
-		event.ObjsSetMotion(1, "歩き", 4, -1.0, 1)
+		event.enable_drama_skip()
+		event.set_character_active(1, global2)
+		event.set_character_active(1, global3)
+		event.set_object_sequence_texture_animation(0, 0)
+		event.set_object_sequence_texture_animation(0, 1, "おこり顔")
+		event.set_object_sequence_texture_animation(0, 1, "通常目パチ")
+		event.set_object_sequence_texture_animation(1, 0)
+		event.set_object_sequence_texture_animation(1, 1, "おこり顔")
+		event.set_object_sequence_texture_animation(1, 1, "通常目パチ")
+		event.set_camera_sequence_position(174.76, 389.28, 1785.94)
+		event.set_camera_sequence_look_at(34.41, 90.8, 382.81)
+		event.set_character_position(0, -297.56, 0.0, -373.68)
+		event.set_character_rotation(0, 0.0, 2.57, 0.0)
+		event.set_object_handle_footstep_sound(0, 1)
+		event.set_object_handle_footstep_sound(1, 1)
+		event.set_object_sequence_position(0, 68.8, 23.7, 1491.8)
+		event.set_object_sequence_rotation(0, 0.0, 3.05, 0.0)
+		event.set_object_sequence_position(1, 93.9, 23.7, 1438.4)
+		event.set_object_sequence_rotation(1, 0.0, 3.05, 0.0)
+		event.fade_in_screen(30)
+		event.play_sound_effect(var4, 2)
+		event.set_object_sequence_motion(0, "歩き", 4, -1.0, 1)
+		event.set_object_sequence_motion(1, "歩き", 4, -1.0, 1)
 		at = 2
 		helper_888ab2a3(15)
-		event.ObjsMove(0, 37.43, 14.75, 561.52, 600, 1)
-		event.ObjsMove(1, 58.59, 15.55, 560.22, 600, 1)
-		event.CmrsInitPas()
-		event.CmrsSetPasFrm(660)
-		event.CmrsAddPas(174.76, 389.28, 1785.94, 34.41, 90.8, 382.81)
-		event.CmrsAddPas(171.97, 318.75, 1758.0, 34.41, 90.8, 382.81)
-		event.CmrsAddPas(161.43, 215.48, 1652.69, 34.41, 90.8, 382.81)
-		event.CmrsAddPas(142.06, 138.98, 1459.02, 34.41, 90.8, 382.81)
-		event.CmrsAddPas(64.19, 10.12, 750.23, 30.64, 90.8, 392.13)
-		event.CmrsStartPas()
+		event.move_object_sequence(0, 37.43, 14.75, 561.52, 600, 1)
+		event.move_object_sequence(1, 58.59, 15.55, 560.22, 600, 1)
+		event.clear_camera_sequence_path()
+		event.set_camera_sequence_path_frames(660)
+		event.add_camera_sequence_path_point(174.76, 389.28, 1785.94, 34.41, 90.8, 382.81)
+		event.add_camera_sequence_path_point(171.97, 318.75, 1758.0, 34.41, 90.8, 382.81)
+		event.add_camera_sequence_path_point(161.43, 215.48, 1652.69, 34.41, 90.8, 382.81)
+		event.add_camera_sequence_path_point(142.06, 138.98, 1459.02, 34.41, 90.8, 382.81)
+		event.add_camera_sequence_path_point(64.19, 10.12, 750.23, 30.64, 90.8, 392.13)
+		event.start_camera_sequence_path()
 		at = 3
 		wait_objects(1)
-		event.ObjsRotation(1, 0.0, -2.75, 0.0, 5)
+		event.rotate_object_sequence(1, 0.0, -2.75, 0.0, 5)
 		at = 4
 		helper_888ab2a3(5)
-		event.ObjsSetMotion(1, "立ち", 0)
+		event.set_object_sequence_motion(1, "立ち", 0)
 		at = 5
 		wait_objects(0)
-		event.ObjsRotation(0, 0.0, 3.05, 0.0, 5)
+		event.rotate_object_sequence(0, 0.0, 3.05, 0.0, 5)
 		at = 6
 		helper_888ab2a3(5)
-		event.ObjsSetMotion(0, "立ち", 0)
-		event.SndSeStop(var4, 2)
+		event.set_object_sequence_motion(0, "立ち", 0)
+		event.stop_sound_effect(var4, 2)
 		at = 7
 		helper_888ab2a3(60)
 		at = 8
@@ -219,163 +219,163 @@ local function helper_1cfc4()
 		helper_4116e6bb(2700020)
 		at = 10
 		helper_888ab2a3(30)
-		event.CmrsSetPos(25.23, 45.67, 520.07)
-		event.CmrsSetRef(56.48, 39.42, 567.84)
-		event.ObjsMove(1, 58.3, 15.55, 557.33, 10, 1)
-		event.ObjsSetMotion(1, "歩き", 2)
+		event.set_camera_sequence_position(25.23, 45.67, 520.07)
+		event.set_camera_sequence_look_at(56.48, 39.42, 567.84)
+		event.move_object_sequence(1, 58.3, 15.55, 557.33, 10, 1)
+		event.set_object_sequence_motion(1, "歩き", 2)
 		at = 11
 		wait_objects(1)
-		event.ObjsSetMotion(1, "立ち", 2)
-		event.ObjsNextMotion(1, "上向く", 6)
+		event.set_object_sequence_motion(1, "立ち", 2)
+		event.queue_object_sequence_next_motion(1, "上向く", 6)
 		at = 12
 		wait_objects(1)
-		event.ObjsNextMotion(1, "上向く会話", 2)
-		event.ObjsNextMotion(1, "上向くL", 4)
-		event.SetPakuAnim(1, "通常口パク")
-		event.ObjsSetMotion(0, "右向く", 6)
-		event.ObjsNextMotion(0, "右向くL", 0)
+		event.queue_object_sequence_next_motion(1, "上向く会話", 2)
+		event.queue_object_sequence_next_motion(1, "上向くL", 4)
+		event.set_mouth_texture_animations(1, "通常口パク")
+		event.set_object_sequence_motion(0, "右向く", 6)
+		event.queue_object_sequence_next_motion(0, "右向くL", 0)
 		at = 13
 		helper_4116e6bb(2700030)
-		event.ResetPakuAnim()
-		event.ObjsNextMotion(1, "上向くL", 4)
+		event.reset_mouth_texture_animations()
+		event.queue_object_sequence_next_motion(1, "上向くL", 4)
 		at = 14
 		helper_888ab2a3(30)
-		event.CmrsSetPos(64.19, 10.12, 750.23)
-		event.CmrsSetRef(30.64, 90.8, 392.13)
+		event.set_camera_sequence_position(64.19, 10.12, 750.23)
+		event.set_camera_sequence_look_at(30.64, 90.8, 392.13)
 		at = 15
 		helper_888ab2a3(15)
-		event.ObjsSetMotion(0, "右向く戻り")
-		event.ObjsNextMotion(0, "上向く", 6)
-		event.ObjsNextMotion(0, "上向くL", 4)
+		event.set_object_sequence_motion(0, "右向く戻り")
+		event.queue_object_sequence_next_motion(0, "上向く", 6)
+		event.queue_object_sequence_next_motion(0, "上向くL", 4)
 		at = 16
 		helper_4116e6bb(2700040)
-		event.ObjsSetMotion(1, "上向く会話", 6)
-		event.ObjsNextMotion(1, "上向くL", 4)
+		event.set_object_sequence_motion(1, "上向く会話", 6)
+		event.queue_object_sequence_next_motion(1, "上向くL", 4)
 		at = 17
 		helper_4116e6bb(2700050)
-		event.ObjsSetMotion(1, "上向く会話", 6)
-		event.ObjsNextMotion(1, "上向くL", 4)
+		event.set_object_sequence_motion(1, "上向く会話", 6)
+		event.queue_object_sequence_next_motion(1, "上向くL", 4)
 		at = 18
 		helper_4116e6bb(2700055)
-		event.ObjsNextMotion(1, "上向くL", 4)
+		event.queue_object_sequence_next_motion(1, "上向くL", 4)
 		at = 19
 		helper_888ab2a3(60)
-		event.ObjsSetMotion(0, "風", 6)
-		event.ObjsNextMotion(0, "風Ｌ", 4)
-		event.ObjsSetMotion(1, "風", 6)
-		event.ObjsNextMotion(1, "風Ｌ", 4)
-		event.SndSePlay(var4, 3)
-		event.SetWind(40.0, 34.48, 48.5, 396.61)
+		event.set_object_sequence_motion(0, "風", 6)
+		event.queue_object_sequence_next_motion(0, "風Ｌ", 4)
+		event.set_object_sequence_motion(1, "風", 6)
+		event.queue_object_sequence_next_motion(1, "風Ｌ", 4)
+		event.play_sound_effect(var4, 3)
+		event.set_wind(40.0, 34.48, 48.5, 396.61)
 		at = 20
 		helper_0382f327(2700060, -1)
-		event.SetWind(-1)
-		event.ObjsSetMotion(0, "風戻り", 6)
-		event.ObjsNextMotion(0, "上向くL", 4)
-		event.ObjsSetMotion(1, "風戻り", 6)
-		event.ObjsNextMotion(1, "上向くL", 4)
+		event.set_wind(-1)
+		event.set_object_sequence_motion(0, "風戻り", 6)
+		event.queue_object_sequence_next_motion(0, "上向くL", 4)
+		event.set_object_sequence_motion(1, "風戻り", 6)
+		event.queue_object_sequence_next_motion(1, "上向くL", 4)
 		at = 21
 		helper_888ab2a3(30)
-		event.CmrsSetPos(25.23, 45.67, 520.07)
-		event.CmrsSetRef(56.48, 39.42, 567.84)
+		event.set_camera_sequence_position(25.23, 45.67, 520.07)
+		event.set_camera_sequence_look_at(56.48, 39.42, 567.84)
 		at = 22
 		helper_888ab2a3(15)
-		event.ObjsSetMotion(1, "あいつは～専用", 6)
-		event.ObjsNextMotion(1, "あいつは～専用Ｌ", 4)
-		event.ObjsMotionDelay(1, 90)
-		event.ObjsSetMotion(1, "時の～専用上～見立ちに", 6)
-		event.ObjsTexAnime(0, 0)
-		event.ObjsTexAnime(0, 1, "デフォルト顔")
-		event.ObjsTexAnime(0, 1, "おこり目")
-		event.ObjsTexAnime(1, 0)
-		event.ObjsTexAnime(1, 1, "デフォルト顔")
-		event.ObjsTexAnime(1, 1, "おこり目とじ")
-		event.ObjsTexaDelay(1, 60)
-		event.ObjsTexAnime(1, 1, "おこり目とじ～目あき")
+		event.set_object_sequence_motion(1, "あいつは～専用", 6)
+		event.queue_object_sequence_next_motion(1, "あいつは～専用Ｌ", 4)
+		event.delay_object_sequence_motion_track(1, 90)
+		event.set_object_sequence_motion(1, "時の～専用上～見立ちに", 6)
+		event.set_object_sequence_texture_animation(0, 0)
+		event.set_object_sequence_texture_animation(0, 1, "デフォルト顔")
+		event.set_object_sequence_texture_animation(0, 1, "おこり目")
+		event.set_object_sequence_texture_animation(1, 0)
+		event.set_object_sequence_texture_animation(1, 1, "デフォルト顔")
+		event.set_object_sequence_texture_animation(1, 1, "おこり目とじ")
+		event.delay_object_sequence_texture_animation_track(1, 60)
+		event.set_object_sequence_texture_animation(1, 1, "おこり目とじ～目あき")
 		at = 23
 		vm.wait(23)
-		event.SetPakuAnim(1, "通常口パク")
+		event.set_mouth_texture_animations(1, "通常口パク")
 		at = 24
 		helper_4116e6bb(2700070)
 		at = 25
 		wait_objects(1)
-		event.ObjsMotionWait(1)
-		event.ResetPakuAnim()
-		event.ObjsSetMotion(1, "上向くL", 6)
-		event.ObjsNextMotion(1, "上向く会話", 6)
-		event.ObjsNextMotion(1, "上向くL", 4)
-		event.SetPakuAnim(1, "通常口パク")
+		event.wait_object_sequence_motion_end(1)
+		event.reset_mouth_texture_animations()
+		event.set_object_sequence_motion(1, "上向くL", 6)
+		event.queue_object_sequence_next_motion(1, "上向く会話", 6)
+		event.queue_object_sequence_next_motion(1, "上向くL", 4)
+		event.set_mouth_texture_animations(1, "通常口パク")
 		at = 26
 		helper_4116e6bb(2700080)
 		at = 27
 		wait_objects(1)
-		event.ObjsMotionWait(1)
-		event.ResetPakuAnim()
-		event.ObjsNextMotion(1, "上向くL", 4)
+		event.wait_object_sequence_motion_end(1)
+		event.reset_mouth_texture_animations()
+		event.queue_object_sequence_next_motion(1, "上向くL", 4)
 		at = 28
 		helper_888ab2a3(30)
-		event.CmrsInitPas()
-		event.CmrsSetPasFrm(930)
-		event.CmrsAddPas(132.27, 70.71, 488.53, 58.05, 36.97, 556.81)
-		event.CmrsAddPas(159.15, 70.71, 562.03, 58.05, 36.97, 556.81)
-		event.CmrsAddPas(132.93, 70.71, 625.44, 58.05, 36.97, 556.81)
-		event.CmrsAddPas(77.3, 70.71, 656.87, 58.05, 36.97, 556.81)
-		event.CmrsAddPas(28.82, 70.71, 654.67, 58.05, 36.97, 556.81)
-		event.CmrsAddPas(-9.49, 70.71, 633.72, 58.05, 36.97, 556.81)
-		event.CmrsAddPas(-37.15, 70.71, 595.03, 58.05, 36.97, 556.81)
-		event.CmrsAddPas(-44.53, 70.71, 550.01, 58.05, 36.97, 556.81)
-		event.CmrsAddPas(-32.67, 70.71, 507.99, 58.05, 36.97, 556.81)
-		event.CmrsAddPas(-6.04, 70.71, 475.89, 58.05, 36.97, 556.81)
-		event.CmrsStartPas()
+		event.clear_camera_sequence_path()
+		event.set_camera_sequence_path_frames(930)
+		event.add_camera_sequence_path_point(132.27, 70.71, 488.53, 58.05, 36.97, 556.81)
+		event.add_camera_sequence_path_point(159.15, 70.71, 562.03, 58.05, 36.97, 556.81)
+		event.add_camera_sequence_path_point(132.93, 70.71, 625.44, 58.05, 36.97, 556.81)
+		event.add_camera_sequence_path_point(77.3, 70.71, 656.87, 58.05, 36.97, 556.81)
+		event.add_camera_sequence_path_point(28.82, 70.71, 654.67, 58.05, 36.97, 556.81)
+		event.add_camera_sequence_path_point(-9.49, 70.71, 633.72, 58.05, 36.97, 556.81)
+		event.add_camera_sequence_path_point(-37.15, 70.71, 595.03, 58.05, 36.97, 556.81)
+		event.add_camera_sequence_path_point(-44.53, 70.71, 550.01, 58.05, 36.97, 556.81)
+		event.add_camera_sequence_path_point(-32.67, 70.71, 507.99, 58.05, 36.97, 556.81)
+		event.add_camera_sequence_path_point(-6.04, 70.71, 475.89, 58.05, 36.97, 556.81)
+		event.start_camera_sequence_path()
 		at = 29
 		helper_888ab2a3(15)
-		event.ObjsSetMotion(1, "上向く会話", 2)
-		event.ObjsNextMotion(1, "上向くL", 4)
-		event.SetPakuAnim(1, "通常口パク")
+		event.set_object_sequence_motion(1, "上向く会話", 2)
+		event.queue_object_sequence_next_motion(1, "上向くL", 4)
+		event.set_mouth_texture_animations(1, "通常口パク")
 		at = 30
 		helper_0382f327(2700090, -1)
-		event.ResetPakuAnim()
-		event.ObjsSetMotion(1, "上向く会話", 2)
-		event.ObjsNextMotion(1, "上向くL", 4)
-		event.SetPakuAnim(1, "通常口パク")
+		event.reset_mouth_texture_animations()
+		event.set_object_sequence_motion(1, "上向く会話", 2)
+		event.queue_object_sequence_next_motion(1, "上向くL", 4)
+		event.set_mouth_texture_animations(1, "通常口パク")
 		at = 31
 		helper_0382f327(2700095, -1)
-		event.ResetPakuAnim()
-		event.ObjsSetMotion(1, "上向く会話", 2)
-		event.ObjsNextMotion(1, "上向くL", 4)
-		event.SetPakuAnim(1, "通常口パク")
+		event.reset_mouth_texture_animations()
+		event.set_object_sequence_motion(1, "上向く会話", 2)
+		event.queue_object_sequence_next_motion(1, "上向くL", 4)
+		event.set_mouth_texture_animations(1, "通常口パク")
 		at = 32
 		helper_0382f327(2700100, -1)
-		event.ResetPakuAnim()
-		event.ObjsSetMotion(1, "上向く会話", 2)
-		event.ObjsNextMotion(1, "上向くL", 4)
-		event.SetPakuAnim(1, "通常口パク")
+		event.reset_mouth_texture_animations()
+		event.set_object_sequence_motion(1, "上向く会話", 2)
+		event.queue_object_sequence_next_motion(1, "上向くL", 4)
+		event.set_mouth_texture_animations(1, "通常口パク")
 		at = 33
 		helper_0382f327(2700110, -1)
-		event.ResetPakuAnim()
-		event.ObjsSetMotion(1, "上向く会話", 2)
-		event.ObjsNextMotion(1, "上向くL", 4)
-		event.SetPakuAnim(1, "通常口パク")
+		event.reset_mouth_texture_animations()
+		event.set_object_sequence_motion(1, "上向く会話", 2)
+		event.queue_object_sequence_next_motion(1, "上向くL", 4)
+		event.set_mouth_texture_animations(1, "通常口パク")
 		at = 34
 		helper_0382f327(2700120, -1)
-		event.ResetPakuAnim()
-		event.CmrsSetPos(40.68, 60.8, 523.12)
-		event.CmrsSetRef(50.29, 32.81, 569.09)
-		event.ObjsSetMotion(1, "上向くL", 4)
-		event.ObjsMotionDelay(1, 110)
-		event.ObjsSetMotion(1, "上向き会話2", 6)
-		event.ObjsNextMotion(1, "上向くL", 4)
-		event.SetPakuAnim(1, "通常口パク")
+		event.reset_mouth_texture_animations()
+		event.set_camera_sequence_position(40.68, 60.8, 523.12)
+		event.set_camera_sequence_look_at(50.29, 32.81, 569.09)
+		event.set_object_sequence_motion(1, "上向くL", 4)
+		event.delay_object_sequence_motion_track(1, 110)
+		event.set_object_sequence_motion(1, "上向き会話2", 6)
+		event.queue_object_sequence_next_motion(1, "上向くL", 4)
+		event.set_mouth_texture_animations(1, "通常口パク")
 		at = 35
 		helper_4116e6bb(2700130)
 		at = 36
 		wait_objects(1)
-		event.ObjsMotionWait(1)
-		event.ResetPakuAnim()
-		event.ObjsNextMotion(1, "上向くL", 4)
+		event.wait_object_sequence_motion_end(1)
+		event.reset_mouth_texture_animations()
+		event.queue_object_sequence_next_motion(1, "上向くL", 4)
 		at = 37
 		helper_888ab2a3(30)
-		event.CmrsSetPos(64.19, 10.12, 750.23)
-		event.CmrsSetRef(30.64, 90.8, 392.13)
+		event.set_camera_sequence_position(64.19, 10.12, 750.23)
+		event.set_camera_sequence_look_at(30.64, 90.8, 392.13)
 		at = 38
 		helper_888ab2a3(15)
 		at = 39
@@ -384,28 +384,28 @@ local function helper_1cfc4()
 		helper_4116e6bb(2700150)
 		at = 41
 		helper_888ab2a3(30)
-		event.CmrsSetPos(19.5, 49.85, 518.46)
-		event.CmrsSetRef(52.88, 36.97, 566.51)
+		event.set_camera_sequence_position(19.5, 49.85, 518.46)
+		event.set_camera_sequence_look_at(52.88, 36.97, 566.51)
 		at = 42
 		helper_888ab2a3(15)
-		event.ObjsTexAnime(0, 0)
-		event.ObjsTexAnime(0, 1, "おこり顔")
-		event.ObjsTexAnime(0, 1, "おこり目～がっかり目")
-		event.ObjsTexAnime(1, 0)
-		event.ObjsTexAnime(0, 1, "デフォルト顔")
-		event.ObjsTexAnime(1, 1, "力こめ目とじ")
-		event.ObjsTexAnime(1, 1, "口閉じ～口くいしばり")
-		event.SndSePlay(var4, 5)
-		event.ObjsSetMotion(1, "悔しがりラスト", 6)
-		event.ObjsNextMotion(1, "悔しがりラストＬ", 4)
-		event.ObjsSetMotion(0, "上向く戻り", 6)
-		event.ObjsNextMotion(0, "立ち", 4)
-		event.CmrsMove2(26.54, 49.85, 528.59, 52.88, 36.97, 566.51, 60, 2, 1.0)
+		event.set_object_sequence_texture_animation(0, 0)
+		event.set_object_sequence_texture_animation(0, 1, "おこり顔")
+		event.set_object_sequence_texture_animation(0, 1, "おこり目～がっかり目")
+		event.set_object_sequence_texture_animation(1, 0)
+		event.set_object_sequence_texture_animation(0, 1, "デフォルト顔")
+		event.set_object_sequence_texture_animation(1, 1, "力こめ目とじ")
+		event.set_object_sequence_texture_animation(1, 1, "口閉じ～口くいしばり")
+		event.play_sound_effect(var4, 5)
+		event.set_object_sequence_motion(1, "悔しがりラスト", 6)
+		event.queue_object_sequence_next_motion(1, "悔しがりラストＬ", 4)
+		event.set_object_sequence_motion(0, "上向く戻り", 6)
+		event.queue_object_sequence_next_motion(0, "立ち", 4)
+		event.move_camera_sequence_eased(26.54, 49.85, 528.59, 52.88, 36.97, 566.51, 60, 2, 1.0)
 		at = 43
 		helper_0382f327(2700155, -1)
 		at = 44
 		helper_888ab2a3(30)
-		event.SetFadeOut(30)
+		event.fade_out_screen(30)
 		at = 45
 		helper_888ab2a3(35)
 	end, function(received: { any }): boolean
@@ -541,83 +541,83 @@ local function helper_1cfc4()
 		end
 		return true
 	end)
-	event.CancelDramaScene()
-	event.SetWind(-1)
-	event.SndSeStop(var4, 2)
-	event.EohSetFootSoundId(0, 0)
-	event.EohSetFootSoundId(1, 0)
+	event.cancel_drama_scene_skip()
+	event.set_wind(-1)
+	event.stop_sound_effect(var4, 2)
+	event.set_object_handle_footstep_sound(0, 0)
+	event.set_object_handle_footstep_sound(1, 0)
 	helper_1c0a0()
-	event.ResetCamera(0)
-	event.SetFadeIn(30)
+	event.reset_follow_camera(0)
+	event.fade_in_screen(30)
 end
 
 --- Helper function.
 local function helper_20710()
 	local active_chr_no: s32 = 0
-	event.SetMesWindowMode(0, 7)
-	event.AssignStack(5)
-	event.ClearStack(5)
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	event.set_message_window_mode(0, 7)
+	event.assign_memory_stack(5)
+	event.clear_memory_stack(5)
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no == 0 then
 		global4 = 0
 		global5 = 32
-		event.LoadMotion(5, "event/basic_evmot/mints_set.gltf", "info", global4)
-		event.LoadMotion(5, "event/e200/e272/e272_mints.gltf", "info", global4)
-		event.EohSyncChara(0, global4)
-		event.ObjsInit(0)
-		event.ObjsSyncObj(0, 0)
-		event.CharaActive(0, global4)
-		event.LoadChara(5, "chara/c02_base.gltf", "info", global5)
-		event.LoadEquip(5, 1, 4, "info", global5)
-		event.LoadEquip(5, 1, 3, "info", global5)
-		event.LoadEquip(5, 1, 2, "info", global5, 37)
-		event.LoadMotion(5, "event/basic_evmot/monica_set.gltf", "info", global5)
-		event.LoadMotion(5, "event/e200/e272/e272_monica.gltf", "info", global5)
-		event.EohSyncChara(1, global5)
-		event.ObjsInit(1)
-		event.ObjsSyncObj(1, 1)
-		event.CharaActive(0, global5)
-		event.CharaActive(1, 37)
+		event.load_character_motion_pack(5, "event/basic_evmot/mints_set.gltf", "info", global4)
+		event.load_character_motion_pack(5, "event/e200/e272/e272_mints.gltf", "info", global4)
+		event.attach_object_handle_to_character(0, global4)
+		event.clear_object_sequence(0)
+		event.set_object_sequence_object(0, 0)
+		event.set_character_active(0, global4)
+		event.load_character(5, "chara/c02_base.gltf", "info", global5)
+		event.load_equipment_model(5, 1, 4, "info", global5)
+		event.load_equipment_model(5, 1, 3, "info", global5)
+		event.load_equipment_model(5, 1, 2, "info", global5, 37)
+		event.load_character_motion_pack(5, "event/basic_evmot/monica_set.gltf", "info", global5)
+		event.load_character_motion_pack(5, "event/e200/e272/e272_monica.gltf", "info", global5)
+		event.attach_object_handle_to_character(1, global5)
+		event.clear_object_sequence(1)
+		event.set_object_sequence_object(1, 1)
+		event.set_character_active(0, global5)
+		event.set_character_active(1, 37)
 	end
 	if active_chr_no == 1 then
 		global4 = 32
 		global5 = 0
-		event.LoadChara(5, "chara/c01_base.gltf", "info", global4)
-		event.LoadEquip(5, 0, 4, "info", global4)
-		event.LoadEquip(5, 0, 3, "info", global4)
-		event.LoadEquip(5, 0, 2, "info", global4, 37)
-		event.LoadMotion(5, "event/basic_evmot/mints_set.gltf", "info", global4)
-		event.LoadMotion(5, "event/e200/e272/e272_mints.gltf", "info", global4)
-		event.EohSyncChara(0, global4)
-		event.ObjsInit(0)
-		event.ObjsSyncObj(0, 0)
-		event.CharaActive(0, global4)
-		event.CharaActive(1, 37)
-		event.LoadMotion(5, "event/basic_evmot/monica_set.gltf", "info", global5)
-		event.LoadMotion(5, "event/e200/e272/e272_monica.gltf", "info", global5)
-		event.EohSyncChara(1, global5)
-		event.ObjsInit(1)
-		event.ObjsSyncObj(1, 1)
-		event.CharaActive(0, global5)
+		event.load_character(5, "chara/c01_base.gltf", "info", global4)
+		event.load_equipment_model(5, 0, 4, "info", global4)
+		event.load_equipment_model(5, 0, 3, "info", global4)
+		event.load_equipment_model(5, 0, 2, "info", global4, 37)
+		event.load_character_motion_pack(5, "event/basic_evmot/mints_set.gltf", "info", global4)
+		event.load_character_motion_pack(5, "event/e200/e272/e272_mints.gltf", "info", global4)
+		event.attach_object_handle_to_character(0, global4)
+		event.clear_object_sequence(0)
+		event.set_object_sequence_object(0, 0)
+		event.set_character_active(0, global4)
+		event.set_character_active(1, 37)
+		event.load_character_motion_pack(5, "event/basic_evmot/monica_set.gltf", "info", global5)
+		event.load_character_motion_pack(5, "event/e200/e272/e272_monica.gltf", "info", global5)
+		event.attach_object_handle_to_character(1, global5)
+		event.clear_object_sequence(1)
+		event.set_object_sequence_object(1, 1)
+		event.set_character_active(0, global5)
 	end
-	event.LoadChara(5, "event/e200/e255/e255_rafu_tane.gltf", "info", 35)
-	event.CharaActive(0, 35)
-	event.EohSyncChara(2, 35)
-	event.ObjsInit(3, 35)
-	event.ObjsSyncObj(3, 2)
-	event.LoadChara(5, "event/e200/e272/e272_hanabaku.gltf", "info", 38)
-	event.CharaActive(0, 38)
-	event.LoadChara(5, "event/e200/e272/e272_kirakira.gltf", "info", 39)
-	event.CharaActive(0, 39)
-	event.EohSyncChara(4, 39)
-	event.ObjsInit(5, 39)
-	event.ObjsSyncObj(5, 4)
-	event.LoadChara(5, "event/itemget_ev/itemget_ev.gltf", "info", 40)
-	event.EohSyncChara(5, 40)
-	event.ObjsInit(6)
-	event.ObjsSyncObj(6, 5)
-	event.CharaActive(0, 40)
-	event.LoadMes(0, 5, "event/e200/e272/e272.txt")
+	event.load_character(5, "event/e200/e255/e255_rafu_tane.gltf", "info", 35)
+	event.set_character_active(0, 35)
+	event.attach_object_handle_to_character(2, 35)
+	event.clear_object_sequence(3, 35)
+	event.set_object_sequence_object(3, 2)
+	event.load_character(5, "event/e200/e272/e272_hanabaku.gltf", "info", 38)
+	event.set_character_active(0, 38)
+	event.load_character(5, "event/e200/e272/e272_kirakira.gltf", "info", 39)
+	event.set_character_active(0, 39)
+	event.attach_object_handle_to_character(4, 39)
+	event.clear_object_sequence(5, 39)
+	event.set_object_sequence_object(5, 4)
+	event.load_character(5, "event/itemget_ev/itemget_ev.gltf", "info", 40)
+	event.attach_object_handle_to_character(5, 40)
+	event.clear_object_sequence(6)
+	event.set_object_sequence_object(6, 5)
+	event.set_character_active(0, 40)
+	event.load_message_file(0, 5, "event/e200/e272/e272.txt")
 end
 
 --- Helper function.
@@ -631,32 +631,32 @@ end
 --- Helper function.
 local function helper_202bc()
 	local active_chr_no: s32 = 0
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no == 0 then
-		event.CharaActive(1, global4)
-		event.CharaActive(0, global5)
-		event.DelExtMotion(global4)
-		event.DelExtMotion(global5)
-		event.DelExtMotion(36)
-		event.DeleteChara(global5)
-		event.DeleteChara(36)
-		event.DeleteChara(37)
+		event.set_character_active(1, global4)
+		event.set_character_active(0, global5)
+		event.delete_character_extension_packs(global4)
+		event.delete_character_extension_packs(global5)
+		event.delete_character_extension_packs(36)
+		event.delete_character(global5)
+		event.delete_character(36)
+		event.delete_character(37)
 	end
 	if active_chr_no == 1 then
-		event.CharaActive(1, global5)
-		event.CharaActive(0, global4)
-		event.DelExtMotion(global4)
-		event.DelExtMotion(global5)
-		event.DelExtMotion(36)
-		event.DeleteChara(global4)
-		event.DeleteChara(36)
-		event.DeleteChara(37)
+		event.set_character_active(1, global5)
+		event.set_character_active(0, global4)
+		event.delete_character_extension_packs(global4)
+		event.delete_character_extension_packs(global5)
+		event.delete_character_extension_packs(36)
+		event.delete_character(global4)
+		event.delete_character(36)
+		event.delete_character(37)
 	end
-	event.DeleteChara(35)
-	event.DeleteChara(38)
-	event.DeleteChara(39)
-	event.DeleteChara(40)
-	event.SetMpcharaMotion("jyuraku", "jyuraku", "瞬き")
+	event.delete_character(35)
+	event.delete_character(38)
+	event.delete_character(39)
+	event.delete_character(40)
+	event.set_map_piece_character_motion("jyuraku", "jyuraku", "瞬き")
 end
 
 --- Helper function.
@@ -665,75 +665,75 @@ local function helper_21790()
 	local var11: s32 = 0
 	local at: number = 0
 	vm.section(function()
-		event.Initialize()
-		event.SetMesWindowMode(0, 7)
-		event.SetFadeOut(30)
+		event.initialize_event()
+		event.set_message_window_mode(0, 7)
+		event.fade_out_screen(30)
 		at = 1
 		helper_888ab2a3(45)
-		event.SetFlag(272, 1)
-		event.LoadSound(2503)
-		var10 = event.SndLoadSound_2(2503) or var10
-		var11 = event.SndLoadSound_3(8, "snd2/sp/sp_006.sound.json") or var11
+		event.set_save_flag(272, 1)
+		event.load_map_sounds(2503)
+		var10 = event.load_sound_effect_file_2(2503) or var10
+		var11 = event.load_sound_effect_file_3(8, "snd2/sp/sp_006.sound.json") or var11
 		helper_20710()
-		event.InitDramaScene()
-		event.ObjsTexAnime(0, 0)
-		event.ObjsTexAnime(0, 1, "デフォルト顔")
-		event.ObjsTexAnime(0, 1, "通常目パチ")
-		event.ObjsTexAnime(1, 0)
-		event.ObjsTexAnime(1, 1, "デフォルト顔")
-		event.ObjsTexAnime(1, 1, "通常目パチ")
-		event.CharaActive(1, global4)
-		event.CharaActive(1, global5)
-		event.CharaActive(0, 35)
-		event.CmrsSetPos(104.47, 46.8, 1479.26)
-		event.CmrsSetRef(86.03, 73.72, 1247.28)
-		event.SetCharaPos(0, -297.56, 0.0, -373.68)
-		event.SetCharaRot(0, 0.0, 2.57, 0.0)
-		event.EohSetFootSoundId(0, 1)
-		event.EohSetFootSoundId(1, 1)
-		event.SetCharaPos(38, -96.86, 52.75, 388.46)
-		event.SetCharaRot(38, 0.0, 0.0, 0.0)
-		event.SetCharaPos(39, 37.43, 34.75, 561.52)
-		event.SetCharaRot(39, 0.0, 0.0, 0.0)
-		event.ObjsSetPos(0, 47.14, -8.67, 849.46)
-		event.ObjsSetRot(0, 0.0, 3.05, 0.0)
-		event.ObjsSetPos(1, 70.25, -10.75, 900.05)
-		event.ObjsSetRot(1, 0.0, 3.05, 0.0)
-		event.SetFadeIn(30)
-		event.SetMpcharaMotion("jyuraku", "jyuraku", "瞬き")
-		event.ObjsSetMotion(0, "歩き", 4, -1.0, 1)
-		event.ObjsSetMotion(1, "歩き", 4, -1.0, 1)
+		event.enable_drama_skip()
+		event.set_object_sequence_texture_animation(0, 0)
+		event.set_object_sequence_texture_animation(0, 1, "デフォルト顔")
+		event.set_object_sequence_texture_animation(0, 1, "通常目パチ")
+		event.set_object_sequence_texture_animation(1, 0)
+		event.set_object_sequence_texture_animation(1, 1, "デフォルト顔")
+		event.set_object_sequence_texture_animation(1, 1, "通常目パチ")
+		event.set_character_active(1, global4)
+		event.set_character_active(1, global5)
+		event.set_character_active(0, 35)
+		event.set_camera_sequence_position(104.47, 46.8, 1479.26)
+		event.set_camera_sequence_look_at(86.03, 73.72, 1247.28)
+		event.set_character_position(0, -297.56, 0.0, -373.68)
+		event.set_character_rotation(0, 0.0, 2.57, 0.0)
+		event.set_object_handle_footstep_sound(0, 1)
+		event.set_object_handle_footstep_sound(1, 1)
+		event.set_character_position(38, -96.86, 52.75, 388.46)
+		event.set_character_rotation(38, 0.0, 0.0, 0.0)
+		event.set_character_position(39, 37.43, 34.75, 561.52)
+		event.set_character_rotation(39, 0.0, 0.0, 0.0)
+		event.set_object_sequence_position(0, 47.14, -8.67, 849.46)
+		event.set_object_sequence_rotation(0, 0.0, 3.05, 0.0)
+		event.set_object_sequence_position(1, 70.25, -10.75, 900.05)
+		event.set_object_sequence_rotation(1, 0.0, 3.05, 0.0)
+		event.fade_in_screen(30)
+		event.set_map_piece_character_motion("jyuraku", "jyuraku", "瞬き")
+		event.set_object_sequence_motion(0, "歩き", 4, -1.0, 1)
+		event.set_object_sequence_motion(1, "歩き", 4, -1.0, 1)
 		at = 2
 		helper_888ab2a3(15)
-		event.ObjsMove(0, 37.43, 14.75, 561.52, 240, 1)
-		event.ObjsMove(1, 58.59, 15.55, 560.22, 270, 1)
-		event.CmrsInitPas()
-		event.CmrsSetPasFrm(200)
-		event.CmrsAddPas(104.47, 46.8, 1479.26, 86.03, 73.72, 1247.28)
-		event.CmrsAddPas(65.3, 46.8, 986.65, 46.86, 73.72, 754.67)
-		event.CmrsStartPas()
+		event.move_object_sequence(0, 37.43, 14.75, 561.52, 240, 1)
+		event.move_object_sequence(1, 58.59, 15.55, 560.22, 270, 1)
+		event.clear_camera_sequence_path()
+		event.set_camera_sequence_path_frames(200)
+		event.add_camera_sequence_path_point(104.47, 46.8, 1479.26, 86.03, 73.72, 1247.28)
+		event.add_camera_sequence_path_point(65.3, 46.8, 986.65, 46.86, 73.72, 754.67)
+		event.start_camera_sequence_path()
 		at = 3
 		wait_objects(0)
-		event.ObjsRotation(0, 0.0, -3.11, 0.0, 5)
+		event.rotate_object_sequence(0, 0.0, -3.11, 0.0, 5)
 		at = 4
 		helper_888ab2a3(5)
-		event.ObjsSetMotion(0, "立ち", 0)
+		event.set_object_sequence_motion(0, "立ち", 0)
 		at = 5
 		wait_objects(1)
-		event.ObjsRotation(1, 0.0, -2.87, 0.0, 5)
+		event.rotate_object_sequence(1, 0.0, -2.87, 0.0, 5)
 		at = 6
 		helper_888ab2a3(5)
-		event.ObjsSetMotion(1, "上向くL", 0)
+		event.set_object_sequence_motion(1, "上向くL", 0)
 		at = 7
 		helper_888ab2a3(60)
-		event.ObjsSetMotion(0, "上向く", 2)
-		event.ObjsNextMotion(0, "上向く会話", 2)
-		event.ObjsNextMotion(0, "上向くL", 4)
+		event.set_object_sequence_motion(0, "上向く", 2)
+		event.queue_object_sequence_next_motion(0, "上向く会話", 2)
+		event.queue_object_sequence_next_motion(0, "上向くL", 4)
 		at = 8
 		helper_4116e6bb(2720010)
 		at = 9
 		wait_objects(0)
-		event.ObjsNextMotion(0, "上向くL", 4)
+		event.queue_object_sequence_next_motion(0, "上向くL", 4)
 		at = 10
 		helper_4116e6bb(2720020)
 		at = 11
@@ -742,24 +742,24 @@ local function helper_21790()
 		helper_4116e6bb(2720035)
 		at = 13
 		helper_888ab2a3(30)
-		event.CmrsSetPos(62.05, 41.42, 524.15)
-		event.CmrsSetRef(28.43, 35.31, 613.0)
-		event.ObjsSetMotion(0, "上向く会話", 6)
-		event.ObjsNextMotion(0, "上向くL", 4)
-		event.SetPakuAnim(0, "通常口パク")
+		event.set_camera_sequence_position(62.05, 41.42, 524.15)
+		event.set_camera_sequence_look_at(28.43, 35.31, 613.0)
+		event.set_object_sequence_motion(0, "上向く会話", 6)
+		event.queue_object_sequence_next_motion(0, "上向くL", 4)
+		event.set_mouth_texture_animations(0, "通常口パク")
 		at = 14
 		helper_4116e6bb(2720040)
-		event.ResetPakuAnim()
-		event.ObjsMotionWait(0)
-		event.ObjsSetMotion(0, "上向くL", 4)
+		event.reset_mouth_texture_animations()
+		event.wait_object_sequence_motion_end(0)
+		event.set_object_sequence_motion(0, "上向くL", 4)
 		at = 15
 		helper_888ab2a3(30)
-		event.CmrsSetPos(65.3, 46.8, 986.65)
-		event.CmrsSetRef(46.86, 73.72, 754.67)
+		event.set_camera_sequence_position(65.3, 46.8, 986.65)
+		event.set_camera_sequence_look_at(46.86, 73.72, 754.67)
 		at = 16
 		helper_4116e6bb(2720050)
-		event.ObjsSetMotion(0, "上向く会話", 6)
-		event.ObjsNextMotion(0, "上向くL", 4)
+		event.set_object_sequence_motion(0, "上向く会話", 6)
+		event.queue_object_sequence_next_motion(0, "上向くL", 4)
 		at = 17
 		helper_4116e6bb(2720060)
 		at = 18
@@ -768,157 +768,157 @@ local function helper_21790()
 		helper_4116e6bb(2720070)
 		at = 20
 		helper_888ab2a3(30)
-		event.CmrsSetPos(35.55, 36.73, 529.53)
-		event.CmrsSetRef(46.86, 52.13, 754.67)
-		event.ObjsSetMotion(0, "考える", 4)
+		event.set_camera_sequence_position(35.55, 36.73, 529.53)
+		event.set_camera_sequence_look_at(46.86, 52.13, 754.67)
+		event.set_object_sequence_motion(0, "考える", 4)
 		at = 21
 		helper_888ab2a3(15)
-		event.CmrsMove2(35.81, 36.73, 534.67, 46.86, 52.13, 754.67, 30, 2, 1.0)
-		event.SetPakuAnim(0, "通常口パク")
+		event.move_camera_sequence_eased(35.81, 36.73, 534.67, 46.86, 52.13, 754.67, 30, 2, 1.0)
+		event.set_mouth_texture_animations(0, "通常口パク")
 		at = 22
 		helper_4116e6bb(2720080)
-		event.ResetPakuAnim()
+		event.reset_mouth_texture_animations()
 		at = 23
 		helper_888ab2a3(30)
-		event.CmrsSetPos(283.52, 88.96, 846.8)
-		event.CmrsSetRef(90.35, 78.53, 545.4)
+		event.set_camera_sequence_position(283.52, 88.96, 846.8)
+		event.set_camera_sequence_look_at(90.35, 78.53, 545.4)
 		at = 24
 		helper_888ab2a3(15)
 		at = 25
 		helper_4116e6bb(2720090)
-		event.SetMpcharaMotion("jyuraku", "jyuraku", "もごもご")
+		event.set_map_piece_character_motion("jyuraku", "jyuraku", "もごもご")
 		at = 26
 		helper_888ab2a3(30)
-		event.SetMpcharaMotion("jyuraku", "jyuraku", "ふんっ")
+		event.set_map_piece_character_motion("jyuraku", "jyuraku", "ふんっ")
 		at = 27
 		helper_888ab2a3(30)
-		event.CharaActive(1, 38)
-		event.SetMotion(38, "鼻爆発", 2, -1, 1)
-		event.SndSePlay(var10, 4)
-		event.SetWind(40.0, -96.86, 52.75, 388.46)
+		event.set_character_active(1, 38)
+		event.set_character_motion(38, "鼻爆発", 2, -1, 1)
+		event.play_sound_effect(var10, 4)
+		event.set_wind(40.0, -96.86, 52.75, 388.46)
 		at = 28
 		helper_888ab2a3(15)
-		event.SetWind(-1)
-		event.SetMpcharaMotion("jyuraku", "jyuraku", "瞬き")
-		event.ObjsSetMotion(0, "驚く", 6)
-		event.ObjsSetMotion(1, "おどろき", 6)
-		event.ObjsNextMotion(0, "驚くL", 4)
-		event.ObjsNextMotion(1, "おどろきL", 4)
+		event.set_wind(-1)
+		event.set_map_piece_character_motion("jyuraku", "jyuraku", "瞬き")
+		event.set_object_sequence_motion(0, "驚く", 6)
+		event.set_object_sequence_motion(1, "おどろき", 6)
+		event.queue_object_sequence_next_motion(0, "驚くL", 4)
+		event.queue_object_sequence_next_motion(1, "おどろきL", 4)
 		at = 29
 		helper_888ab2a3(90)
-		event.CharaActive(0, 38)
-		event.CmrsSetPos(64.11, 33.73, 495.58)
-		event.CmrsSetRef(35.93, 39.28, 614.27)
-		event.ObjsSetRot(1, 0.0, -2.03, 0.0)
-		event.CharaActive(1, 39)
-		event.SetMotion(39, "キラキラ（ループ）", 4, -1, 1)
-		event.ObjsInitPas(5)
-		event.ObjsSetPasFrm(5, 120)
-		event.ObjsAddPas(5, 39.0, 68.91, 553.15)
-		event.ObjsAddPas(5, 39.0, 42.39, 553.15)
-		event.ObjsStartPas(5)
-		event.SndSePlay(var10, 5)
-		event.ObjsSetMotion(0, "キラキラ見る", 2)
-		event.ObjsSetMotion(1, "おどろきＬから上向き立ち", 2)
-		event.ObjsNextMotion(0, "取る", 6)
-		event.ObjsNextMotion(1, "上向く戻り", 6, 0.025)
-		event.ObjsNextMotion(0, "取るL", 4)
-		event.ObjsNextMotion(1, "立ち", 4)
+		event.set_character_active(0, 38)
+		event.set_camera_sequence_position(64.11, 33.73, 495.58)
+		event.set_camera_sequence_look_at(35.93, 39.28, 614.27)
+		event.set_object_sequence_rotation(1, 0.0, -2.03, 0.0)
+		event.set_character_active(1, 39)
+		event.set_character_motion(39, "キラキラ（ループ）", 4, -1, 1)
+		event.clear_object_sequence_path(5)
+		event.set_object_sequence_path_frames(5, 120)
+		event.add_object_sequence_path_point(5, 39.0, 68.91, 553.15)
+		event.add_object_sequence_path_point(5, 39.0, 42.39, 553.15)
+		event.start_object_sequence_path(5)
+		event.play_sound_effect(var10, 5)
+		event.set_object_sequence_motion(0, "キラキラ見る", 2)
+		event.set_object_sequence_motion(1, "おどろきＬから上向き立ち", 2)
+		event.queue_object_sequence_next_motion(0, "取る", 6)
+		event.queue_object_sequence_next_motion(1, "上向く戻り", 6, 0.025)
+		event.queue_object_sequence_next_motion(0, "取るL", 4)
+		event.queue_object_sequence_next_motion(1, "立ち", 4)
 		at = 30
 		helper_888ab2a3(120)
-		event.SetMotion(39, "消える", 2, -1, 1)
+		event.set_character_motion(39, "消える", 2, -1, 1)
 		at = 31
 		helper_888ab2a3(30)
-		event.CharaActive(0, 39)
-		event.CmrsSetPos(32.21, 52.0, 529.74)
-		event.CmrsSetRef(38.35, 42.39, 562.99)
-		event.ObjsSetPos(6, 44.55, 45.78, 564.88)
-		event.ObjsSetRot(6, 0.0, -3.11, 0.0)
-		event.SndPauseBgm()
-		event.CharaActive(1, 40)
-		event.SndSePlay(var10, 6)
-		event.SndSePlay(var11, 0)
-		event.ObjsSetMotion(6, "発動", 6)
-		event.SetReference(global4, "item", 35)
-		event.CharaActive(1, 35)
-		event.ObjsSetMotion(0, "種ゲット", 4)
+		event.set_character_active(0, 39)
+		event.set_camera_sequence_position(32.21, 52.0, 529.74)
+		event.set_camera_sequence_look_at(38.35, 42.39, 562.99)
+		event.set_object_sequence_position(6, 44.55, 45.78, 564.88)
+		event.set_object_sequence_rotation(6, 0.0, -3.11, 0.0)
+		event.pause_music()
+		event.set_character_active(1, 40)
+		event.play_sound_effect(var10, 6)
+		event.play_sound_effect(var11, 0)
+		event.set_object_sequence_motion(6, "発動", 6)
+		event.attach_character_to_frame(global4, "item", 35)
+		event.set_character_active(1, 35)
+		event.set_object_sequence_motion(0, "種ゲット", 4)
 		at = 32
 		helper_f38eabca(361, 1)
-		event.PlayBgm(0)
-		event.DelReference(35)
-		event.CharaActive(0, 40)
-		event.CmrsSetPos(65.3, 46.8, 986.65)
-		event.CmrsSetRef(46.86, 73.72, 754.67)
-		event.ObjsSetRot(1, 0.0, -2.87, 0.0)
-		event.ObjsSetMotion(0, "上向くL", 0)
-		event.ObjsSetMotion(1, "上向くL", 0)
+		event.play_music(0)
+		event.detach_character_from_frame(35)
+		event.set_character_active(0, 40)
+		event.set_camera_sequence_position(65.3, 46.8, 986.65)
+		event.set_camera_sequence_look_at(46.86, 73.72, 754.67)
+		event.set_object_sequence_rotation(1, 0.0, -2.87, 0.0)
+		event.set_object_sequence_motion(0, "上向くL", 0)
+		event.set_object_sequence_motion(1, "上向くL", 0)
 		at = 33
 		helper_4116e6bb(2720100)
 		at = 34
 		helper_4116e6bb(2720110)
-		event.CmrsSetPos(40.41, 53.02, 519.29)
-		event.CmrsSetRef(64.94, -1.06, 669.16)
+		event.set_camera_sequence_position(40.41, 53.02, 519.29)
+		event.set_camera_sequence_look_at(64.94, -1.06, 669.16)
 		at = 35
 		helper_888ab2a3(15)
-		event.SetPakuAnim(0, "通常口パク")
+		event.set_mouth_texture_animations(0, "通常口パク")
 		at = 36
 		helper_4116e6bb(2720120)
-		event.ResetPakuAnim()
-		event.CmrsSetPos(65.3, 46.8, 986.65)
-		event.CmrsSetRef(46.86, 73.72, 754.67)
+		event.reset_mouth_texture_animations()
+		event.set_camera_sequence_position(65.3, 46.8, 986.65)
+		event.set_camera_sequence_look_at(46.86, 73.72, 754.67)
 		at = 37
 		helper_888ab2a3(15)
 		at = 38
 		helper_4116e6bb(2720130)
-		event.ObjsSetMotion(0, "上向く会話", 2)
-		event.ObjsNextMotion(0, "上向くL", 4)
+		event.set_object_sequence_motion(0, "上向く会話", 2)
+		event.queue_object_sequence_next_motion(0, "上向くL", 4)
 		at = 39
 		helper_4116e6bb(2720140)
-		event.ObjsNextMotion(0, "上向くL", 4)
+		event.queue_object_sequence_next_motion(0, "上向くL", 4)
 		at = 40
 		helper_4116e6bb(2720150)
 		at = 41
 		helper_888ab2a3(30)
-		event.CmrsSetPos(40.41, 53.02, 519.29)
-		event.CmrsSetRef(64.94, -1.06, 669.16)
-		event.ObjsSetMotion(0, "あせり会話", 6)
-		event.ObjsNextMotion(0, "上向くL", 4)
-		event.SetPakuAnim(0, "大口パク")
+		event.set_camera_sequence_position(40.41, 53.02, 519.29)
+		event.set_camera_sequence_look_at(64.94, -1.06, 669.16)
+		event.set_object_sequence_motion(0, "あせり会話", 6)
+		event.queue_object_sequence_next_motion(0, "上向くL", 4)
+		event.set_mouth_texture_animations(0, "大口パク")
 		at = 42
 		helper_4116e6bb(2720160)
-		event.ResetPakuAnim()
-		event.SetPakuAnim(0, "大口パク")
-		event.ObjsSetMotion(0, "あせり会話", 6)
-		event.ObjsNextMotion(0, "上向くL", 4)
+		event.reset_mouth_texture_animations()
+		event.set_mouth_texture_animations(0, "大口パク")
+		event.set_object_sequence_motion(0, "あせり会話", 6)
+		event.queue_object_sequence_next_motion(0, "上向くL", 4)
 		at = 43
 		helper_4116e6bb(2720165)
-		event.ResetPakuAnim()
-		event.CmrsSetPos(65.3, 46.8, 986.65)
-		event.CmrsSetRef(46.86, 73.72, 754.67)
-		event.ObjsSetMotion(0, "立ち", 4)
+		event.reset_mouth_texture_animations()
+		event.set_camera_sequence_position(65.3, 46.8, 986.65)
+		event.set_camera_sequence_look_at(46.86, 73.72, 754.67)
+		event.set_object_sequence_motion(0, "立ち", 4)
 		at = 44
 		helper_4116e6bb(2720170)
 		at = 45
 		helper_f38eabca(308, 1)
-		event.CmrsSetPos(40.41, 53.02, 519.29)
-		event.CmrsSetRef(64.94, -1.06, 669.16)
-		event.ObjsSetMotion(0, "右向く", 6)
-		event.ObjsNextMotion(0, "右向くL", 6)
-		event.ObjsSetMotion(1, "左向く", 6)
-		event.ObjsNextMotion(1, "左向く戻り", 6)
-		event.ObjsNextMotion(1, "だめだめ", 6)
-		event.ObjsNextMotion(1, "立ち", 6)
+		event.set_camera_sequence_position(40.41, 53.02, 519.29)
+		event.set_camera_sequence_look_at(64.94, -1.06, 669.16)
+		event.set_object_sequence_motion(0, "右向く", 6)
+		event.queue_object_sequence_next_motion(0, "右向くL", 6)
+		event.set_object_sequence_motion(1, "左向く", 6)
+		event.queue_object_sequence_next_motion(1, "左向く戻り", 6)
+		event.queue_object_sequence_next_motion(1, "だめだめ", 6)
+		event.queue_object_sequence_next_motion(1, "立ち", 6)
 		at = 46
 		helper_888ab2a3(120)
-		event.SetMesPreset(0, 4)
-		event.SetMesWindowMode(0, 4)
-		event.MesMake_2(
+		event.apply_message_window_preset(0, 4)
+		event.set_message_window_mode(0, 4)
+		event.open_message_window_2(
 			0,
 			"[(!)]『太陽のしずく』を手に入れるには、まず\n   『ヒマーラと話ができるようになるアイテム』が\n   必要です。<page>   そのアイテムの入手方法には、ジオラマの\n   進行が関係しています。ジオラマを発展させ、\n   ジュラクの未来世界を探索してみましょう。"
 		)
 		at = 47
 		show_message(0, -1, 8, 0, 0)
-		event.SetMesPreset(0, 0)
+		event.apply_message_window_preset(0, 0)
 	end, function(received: { any }): boolean
 		if at <= 1 then
 			helper_22800000()
@@ -1061,64 +1061,64 @@ local function helper_21790()
 		end
 		return true
 	end)
-	event.CancelDramaScene()
-	event.SetFadeOut(30)
+	event.cancel_drama_scene_skip()
+	event.fade_out_screen(30)
 	at = 48
 	helper_888ab2a3(30)
-	event.SetWind(-1)
-	event.EohSetFootSoundId(0, 0)
-	event.EohSetFootSoundId(1, 0)
+	event.set_wind(-1)
+	event.set_object_handle_footstep_sound(0, 0)
+	event.set_object_handle_footstep_sound(1, 0)
 	helper_202bc()
-	event.ResetCamera(0)
-	event.SetFadeIn(30)
+	event.reset_follow_camera(0)
+	event.fade_in_screen(30)
 end
 
 --- Helper function.
 local function helper_24bec()
 	local active_chr_no: s32 = 0
-	event.SetMesWindowMode(0, 7)
-	event.AssignStack(5)
-	event.ClearStack(5)
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	event.set_message_window_mode(0, 7)
+	event.assign_memory_stack(5)
+	event.clear_memory_stack(5)
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no == 0 then
 		global0 = 0
 		global1 = 32
-		event.LoadMotion(5, "event/basic_evmot/mints_set.gltf", "info", global0)
-		event.EohSyncChara(0, global0)
-		event.ObjsInit(0)
-		event.ObjsSyncObj(0, 0)
-		event.CharaActive(0, global0)
-		event.LoadChara(5, "chara/c02_base.gltf", "info", global1)
-		event.LoadEquip(5, 1, 4, "info", global1)
-		event.LoadEquip(5, 1, 3, "info", global1)
-		event.LoadEquip(5, 1, 2, "info", global1, 37)
-		event.LoadMotion(5, "event/basic_evmot/monica_set.gltf", "info", global1)
-		event.EohSyncChara(1, global1)
-		event.ObjsInit(1)
-		event.ObjsSyncObj(1, 1)
-		event.CharaActive(0, global1)
-		event.CharaActive(1, 37)
+		event.load_character_motion_pack(5, "event/basic_evmot/mints_set.gltf", "info", global0)
+		event.attach_object_handle_to_character(0, global0)
+		event.clear_object_sequence(0)
+		event.set_object_sequence_object(0, 0)
+		event.set_character_active(0, global0)
+		event.load_character(5, "chara/c02_base.gltf", "info", global1)
+		event.load_equipment_model(5, 1, 4, "info", global1)
+		event.load_equipment_model(5, 1, 3, "info", global1)
+		event.load_equipment_model(5, 1, 2, "info", global1, 37)
+		event.load_character_motion_pack(5, "event/basic_evmot/monica_set.gltf", "info", global1)
+		event.attach_object_handle_to_character(1, global1)
+		event.clear_object_sequence(1)
+		event.set_object_sequence_object(1, 1)
+		event.set_character_active(0, global1)
+		event.set_character_active(1, 37)
 	end
 	if active_chr_no == 1 then
 		global0 = 32
 		global1 = 0
-		event.LoadChara(5, "chara/c01_base.gltf", "info", global0)
-		event.LoadMotion(5, "event/basic_evmot/mints_set.gltf", "info", global0)
-		event.EohSyncChara(0, global0)
-		event.ObjsInit(0)
-		event.ObjsSyncObj(0, 0)
-		event.LoadEquip(5, 0, 4, "info", global0)
-		event.LoadEquip(5, 0, 3, "info", global0)
-		event.LoadEquip(5, 0, 2, "info", global0, 37)
-		event.CharaActive(0, global0)
-		event.CharaActive(1, 37)
-		event.LoadMotion(5, "event/basic_evmot/monica_set.gltf", "info", global1)
-		event.EohSyncChara(1, global1)
-		event.ObjsInit(1)
-		event.ObjsSyncObj(1, 1)
-		event.CharaActive(0, global1)
+		event.load_character(5, "chara/c01_base.gltf", "info", global0)
+		event.load_character_motion_pack(5, "event/basic_evmot/mints_set.gltf", "info", global0)
+		event.attach_object_handle_to_character(0, global0)
+		event.clear_object_sequence(0)
+		event.set_object_sequence_object(0, 0)
+		event.load_equipment_model(5, 0, 4, "info", global0)
+		event.load_equipment_model(5, 0, 3, "info", global0)
+		event.load_equipment_model(5, 0, 2, "info", global0, 37)
+		event.set_character_active(0, global0)
+		event.set_character_active(1, 37)
+		event.load_character_motion_pack(5, "event/basic_evmot/monica_set.gltf", "info", global1)
+		event.attach_object_handle_to_character(1, global1)
+		event.clear_object_sequence(1)
+		event.set_object_sequence_object(1, 1)
+		event.set_character_active(0, global1)
 	end
-	event.LoadMes(0, 5, "event/e200/e275/e275.txt")
+	event.load_message_file(0, 5, "event/e200/e275/e275.txt")
 end
 
 --- Helper function.
@@ -1132,22 +1132,22 @@ end
 --- Helper function.
 local function helper_24914()
 	local active_chr_no: s32 = 0
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no == 0 then
-		event.CharaActive(1, global0)
-		event.CharaActive(0, global1)
-		event.DelExtMotion(global0)
-		event.DelExtMotion(global1)
-		event.DeleteChara(global1)
-		event.DeleteChara(37)
+		event.set_character_active(1, global0)
+		event.set_character_active(0, global1)
+		event.delete_character_extension_packs(global0)
+		event.delete_character_extension_packs(global1)
+		event.delete_character(global1)
+		event.delete_character(37)
 	end
 	if active_chr_no == 1 then
-		event.CharaActive(1, global1)
-		event.CharaActive(0, global0)
-		event.DelExtMotion(global0)
-		event.DelExtMotion(global1)
-		event.DeleteChara(global0)
-		event.DeleteChara(37)
+		event.set_character_active(1, global1)
+		event.set_character_active(0, global0)
+		event.delete_character_extension_packs(global0)
+		event.delete_character_extension_packs(global1)
+		event.delete_character(global0)
+		event.delete_character(37)
 	end
 end
 
@@ -1157,56 +1157,56 @@ local function helper_25678()
 	local var5: s32 = 0
 	local at: number = 0
 	vm.section(function()
-		event.SetFlag(275, 1)
-		event.Initialize()
-		event.SetMesWindowMode(0, 7)
-		event.SetFadeOut(30)
+		event.set_save_flag(275, 1)
+		event.initialize_event()
+		event.set_message_window_mode(0, 7)
+		event.fade_out_screen(30)
 		at = 1
 		helper_888ab2a3(45)
 		helper_24bec()
-		event.LoadSound(2506)
-		event.InitDramaScene()
-		event.CharaActive(1, global0)
-		event.CharaActive(1, global1)
-		event.CmrsSetPos(-4.27, 55.7, 754.91)
-		event.CmrsSetRef(14.71, 53.79, 698.03)
-		event.SetCharaPos(0, -297.56, 0.0, -373.68)
-		event.SetCharaRot(0, 0.0, 2.57, 0.0)
-		var4 = event.GetAnalyze(106) or var4
-		var5 = event.GetAnalyze(105) or var5
+		event.load_map_sounds(2506)
+		event.enable_drama_skip()
+		event.set_character_active(1, global0)
+		event.set_character_active(1, global1)
+		event.set_camera_sequence_position(-4.27, 55.7, 754.91)
+		event.set_camera_sequence_look_at(14.71, 53.79, 698.03)
+		event.set_character_position(0, -297.56, 0.0, -373.68)
+		event.set_character_rotation(0, 0.0, 2.57, 0.0)
+		var4 = event.get_georama_analysis_flag(106) or var4
+		var5 = event.get_georama_analysis_flag(105) or var5
 		if var5 ~= 0 then
-			event.CmrsSetPos(13.7, 24.83, 757.8)
-			event.CmrsSetRef(14.71, 53.79, 698.03)
+			event.set_camera_sequence_position(13.7, 24.83, 757.8)
+			event.set_camera_sequence_look_at(14.71, 53.79, 698.03)
 		end
 		if var4 ~= 0 then
-			event.CmrsSetPos(49.24, 24.83, 746.5)
-			event.CmrsSetRef(14.71, 53.79, 698.03)
+			event.set_camera_sequence_position(49.24, 24.83, 746.5)
+			event.set_camera_sequence_look_at(14.71, 53.79, 698.03)
 		end
-		event.ObjsSetPos(0, 13.4, 6.52, 613.7)
-		event.ObjsSetRot(0, 0.0, -2.92, 0.0)
-		event.ObjsSetPos(1, 47.24, 7.54, 600.38)
-		event.ObjsSetRot(1, 0.0, -2.92, 0.0)
-		event.SetFadeIn(30)
-		event.ObjsSetMotion(0, "上向くL", 4, -1.0, 1)
-		event.ObjsSetMotion(1, "上向くL", 4, -1.0, 1)
+		event.set_object_sequence_position(0, 13.4, 6.52, 613.7)
+		event.set_object_sequence_rotation(0, 0.0, -2.92, 0.0)
+		event.set_object_sequence_position(1, 47.24, 7.54, 600.38)
+		event.set_object_sequence_rotation(1, 0.0, -2.92, 0.0)
+		event.fade_in_screen(30)
+		event.set_object_sequence_motion(0, "上向くL", 4, -1.0, 1)
+		event.set_object_sequence_motion(1, "上向くL", 4, -1.0, 1)
 		at = 2
 		helper_888ab2a3(15)
 		if (if var4 ~= 0 then 1 else var5) ~= 0 then
-			event.CmrsInitPas()
+			event.clear_camera_sequence_path()
 			if (if var4 ~= 0 then var5 else 0) ~= 0 then
-				event.CmrsSetPasFrm(480)
+				event.set_camera_sequence_path_frames(480)
 			end
 			if (if var4 ~= 0 then 1 else var5) ~= 0 then
-				event.CmrsSetPasFrm(240)
+				event.set_camera_sequence_path_frames(240)
 			end
 			if var4 ~= 0 then
-				event.CmrsAddPas(49.24, 24.83, 746.5, 14.71, 53.79, 698.03)
+				event.add_camera_sequence_path_point(49.24, 24.83, 746.5, 14.71, 53.79, 698.03)
 			end
 			if var5 ~= 0 then
-				event.CmrsAddPas(13.7, 24.83, 757.8, 14.71, 53.79, 698.03)
+				event.add_camera_sequence_path_point(13.7, 24.83, 757.8, 14.71, 53.79, 698.03)
 			end
-			event.CmrsAddPas(-4.27, 55.7, 754.91, 14.71, 53.79, 698.03)
-			event.CmrsStartPas()
+			event.add_camera_sequence_path_point(-4.27, 55.7, 754.91, 14.71, 53.79, 698.03)
+			event.start_camera_sequence_path()
 		else
 			at = 3
 			helper_888ab2a3(60)
@@ -1217,8 +1217,8 @@ local function helper_25678()
 		wait_camera()
 		at = 6
 		helper_888ab2a3(30)
-		event.CmrsSetPos(17.1, 20.28, 879.05)
-		event.CmrsSetRef(14.71, 53.79, 698.03)
+		event.set_camera_sequence_position(17.1, 20.28, 879.05)
+		event.set_camera_sequence_look_at(14.71, 53.79, 698.03)
 		at = 7
 		helper_888ab2a3(15)
 		at = 8
@@ -1227,7 +1227,7 @@ local function helper_25678()
 		helper_4116e6bb(2750030)
 		at = 10
 		helper_888ab2a3(60)
-		event.SetFadeOut(30)
+		event.fade_out_screen(30)
 		at = 11
 		helper_888ab2a3(35)
 	end, function(received: { any }): boolean
@@ -1264,62 +1264,62 @@ local function helper_25678()
 		end
 		return true
 	end)
-	event.CancelDramaScene()
+	event.cancel_drama_scene_skip()
 	helper_24914()
-	event.ResetCamera(0)
-	event.SetFadeIn(30)
+	event.reset_follow_camera(0)
+	event.fade_in_screen(30)
 end
 
 --- Helper function.
 local function helper_28de4()
 	local active_chr_no: s32 = 0
-	event.SetMesWindowMode(0, 7)
-	event.AssignStack(5)
-	event.ClearStack(5)
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	event.set_message_window_mode(0, 7)
+	event.assign_memory_stack(5)
+	event.clear_memory_stack(5)
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no == 0 then
 		global6 = 0
 		global7 = 32
-		event.LoadMotion(5, "event/basic_evmot/mints_set.gltf", "info", global6)
-		event.LoadMotion(5, "event/e200/e280/e280_mints.gltf", "info", global6)
-		event.EohSyncChara(0, global6)
-		event.ObjsInit(0)
-		event.ObjsSyncObj(0, 0)
-		event.CharaActive(0, global6)
-		event.LoadChara(5, "chara/c02_base.gltf", "info", global7)
-		event.LoadEquip(5, 1, 4, "info", global7)
-		event.LoadEquip(5, 1, 3, "info", global7)
-		event.LoadEquip(5, 1, 2, "info", global7, 37)
-		event.LoadMotion(5, "event/basic_evmot/monica_set.gltf", "info", global7)
-		event.LoadMotion(5, "event/e200/e280/e280_monica.gltf", "info", global7)
-		event.EohSyncChara(1, global7)
-		event.ObjsInit(1)
-		event.ObjsSyncObj(1, 1)
-		event.CharaActive(0, global7)
-		event.CharaActive(1, 37)
+		event.load_character_motion_pack(5, "event/basic_evmot/mints_set.gltf", "info", global6)
+		event.load_character_motion_pack(5, "event/e200/e280/e280_mints.gltf", "info", global6)
+		event.attach_object_handle_to_character(0, global6)
+		event.clear_object_sequence(0)
+		event.set_object_sequence_object(0, 0)
+		event.set_character_active(0, global6)
+		event.load_character(5, "chara/c02_base.gltf", "info", global7)
+		event.load_equipment_model(5, 1, 4, "info", global7)
+		event.load_equipment_model(5, 1, 3, "info", global7)
+		event.load_equipment_model(5, 1, 2, "info", global7, 37)
+		event.load_character_motion_pack(5, "event/basic_evmot/monica_set.gltf", "info", global7)
+		event.load_character_motion_pack(5, "event/e200/e280/e280_monica.gltf", "info", global7)
+		event.attach_object_handle_to_character(1, global7)
+		event.clear_object_sequence(1)
+		event.set_object_sequence_object(1, 1)
+		event.set_character_active(0, global7)
+		event.set_character_active(1, 37)
 	end
 	if active_chr_no == 1 then
 		global6 = 32
 		global7 = 0
-		event.LoadChara(5, "chara/c01_base.gltf", "info", global6)
-		event.LoadEquip(5, 0, 4, "info", global6)
-		event.LoadEquip(5, 0, 3, "info", global6)
-		event.LoadEquip(5, 0, 2, "info", global6, 37)
-		event.LoadMotion(5, "event/basic_evmot/mints_set.gltf", "info", global6)
-		event.LoadMotion(5, "event/e200/e280/e280_mints.gltf", "info", global6)
-		event.EohSyncChara(0, global6)
-		event.ObjsInit(0)
-		event.ObjsSyncObj(0, 0)
-		event.CharaActive(0, global6)
-		event.CharaActive(1, 37)
-		event.LoadMotion(5, "event/basic_evmot/monica_set.gltf", "info", global7)
-		event.LoadMotion(5, "event/e200/e280/e280_monica.gltf", "info", global7)
-		event.EohSyncChara(1, global7)
-		event.ObjsInit(1)
-		event.ObjsSyncObj(1, 1)
-		event.CharaActive(0, global7)
+		event.load_character(5, "chara/c01_base.gltf", "info", global6)
+		event.load_equipment_model(5, 0, 4, "info", global6)
+		event.load_equipment_model(5, 0, 3, "info", global6)
+		event.load_equipment_model(5, 0, 2, "info", global6, 37)
+		event.load_character_motion_pack(5, "event/basic_evmot/mints_set.gltf", "info", global6)
+		event.load_character_motion_pack(5, "event/e200/e280/e280_mints.gltf", "info", global6)
+		event.attach_object_handle_to_character(0, global6)
+		event.clear_object_sequence(0)
+		event.set_object_sequence_object(0, 0)
+		event.set_character_active(0, global6)
+		event.set_character_active(1, 37)
+		event.load_character_motion_pack(5, "event/basic_evmot/monica_set.gltf", "info", global7)
+		event.load_character_motion_pack(5, "event/e200/e280/e280_monica.gltf", "info", global7)
+		event.attach_object_handle_to_character(1, global7)
+		event.clear_object_sequence(1)
+		event.set_object_sequence_object(1, 1)
+		event.set_character_active(0, global7)
 	end
-	event.LoadMes(0, 5, "event/e200/e280/e280a.txt")
+	event.load_message_file(0, 5, "event/e200/e280/e280a.txt")
 end
 
 --- Helper function.
@@ -1333,24 +1333,24 @@ end
 --- Helper function.
 local function helper_28ab4()
 	local active_chr_no: s32 = 0
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no == 0 then
-		event.CharaActive(1, global6)
-		event.CharaActive(0, global7)
-		event.DelExtMotion(global6)
-		event.DelExtMotion(global7)
-		event.DeleteChara(global7)
-		event.DeleteChara(37)
+		event.set_character_active(1, global6)
+		event.set_character_active(0, global7)
+		event.delete_character_extension_packs(global6)
+		event.delete_character_extension_packs(global7)
+		event.delete_character(global7)
+		event.delete_character(37)
 	end
 	if active_chr_no == 1 then
-		event.CharaActive(1, global7)
-		event.CharaActive(0, global6)
-		event.DelExtMotion(global6)
-		event.DelExtMotion(global7)
-		event.DeleteChara(global6)
-		event.DeleteChara(37)
+		event.set_character_active(1, global7)
+		event.set_character_active(0, global6)
+		event.delete_character_extension_packs(global6)
+		event.delete_character_extension_packs(global7)
+		event.delete_character(global6)
+		event.delete_character(37)
 	end
-	event.MapJump_3(-1, "s26", 700)
+	event.jump_to_map_3(-1, "s26", 700)
 end
 
 --- Helper function.
@@ -1358,64 +1358,64 @@ local function helper_29a30()
 	local var6: s32 = 0
 	local at: number = 0
 	vm.section(function()
-		event.SetFlag(280, 1)
-		event.Initialize()
-		event.SetMesWindowMode(0, 7)
-		event.SetFadeOut(30)
-		event.StopBgm(0)
+		event.set_save_flag(280, 1)
+		event.initialize_event()
+		event.set_message_window_mode(0, 7)
+		event.fade_out_screen(30)
+		event.stop_music(0)
 		at = 1
 		helper_888ab2a3(45)
-		event.LoadBgm(59)
-		event.LoadSound(2511)
-		event.PlayBgm(0, 36)
-		var6 = event.SndLoadSound_2(2511) or var6
+		event.load_music(59)
+		event.load_map_sounds(2511)
+		event.play_music(0, 36)
+		var6 = event.load_sound_effect_file_2(2511) or var6
 		helper_28de4()
-		event.InitDramaScene()
-		event.EohSetFootSoundId(0, 1)
-		event.EohSetFootSoundId(1, 1)
-		event.ObjsTexAnime(0, 0)
-		event.ObjsTexAnime(0, 1, "デフォルト顔")
-		event.ObjsTexAnime(0, 1, "通常目パチ")
-		event.ObjsTexAnime(1, 0)
-		event.ObjsTexAnime(1, 1, "デフォルト顔")
-		event.ObjsTexAnime(1, 1, "通常目パチ")
-		event.CharaActive(1, global6)
-		event.CharaActive(1, global7)
-		event.CmrsSetPos(34.43, 5.8, 741.1)
-		event.CmrsSetRef(26.93, 51.37, 586.27)
-		event.ObjsSetPos(1, 38.74, 7.54, 600.65)
-		event.ObjsSetRot(1, 0.0, -2.68, 0.0)
-		event.ObjsSetPos(0, 20.1, 6.52, 613.49)
-		event.ObjsSetRot(0, 0.0, 3.12, 0.0)
-		event.SetFadeIn(30)
-		event.ObjsSetMotion(0, "上向くL", 4, -1.0, 1)
-		event.ObjsSetMotion(1, "上向くL", 4, -1.0, 1)
+		event.enable_drama_skip()
+		event.set_object_handle_footstep_sound(0, 1)
+		event.set_object_handle_footstep_sound(1, 1)
+		event.set_object_sequence_texture_animation(0, 0)
+		event.set_object_sequence_texture_animation(0, 1, "デフォルト顔")
+		event.set_object_sequence_texture_animation(0, 1, "通常目パチ")
+		event.set_object_sequence_texture_animation(1, 0)
+		event.set_object_sequence_texture_animation(1, 1, "デフォルト顔")
+		event.set_object_sequence_texture_animation(1, 1, "通常目パチ")
+		event.set_character_active(1, global6)
+		event.set_character_active(1, global7)
+		event.set_camera_sequence_position(34.43, 5.8, 741.1)
+		event.set_camera_sequence_look_at(26.93, 51.37, 586.27)
+		event.set_object_sequence_position(1, 38.74, 7.54, 600.65)
+		event.set_object_sequence_rotation(1, 0.0, -2.68, 0.0)
+		event.set_object_sequence_position(0, 20.1, 6.52, 613.49)
+		event.set_object_sequence_rotation(0, 0.0, 3.12, 0.0)
+		event.fade_in_screen(30)
+		event.set_object_sequence_motion(0, "上向くL", 4, -1.0, 1)
+		event.set_object_sequence_motion(1, "上向くL", 4, -1.0, 1)
 		at = 2
 		helper_4116e6bb(2800010)
 		at = 3
 		helper_4116e6bb(2800015)
-		event.ObjsTexAnime(0, 0)
-		event.ObjsTexAnime(0, 1, "デフォルト顔")
-		event.ObjsTexAnime(0, 1, "通常目パチ")
-		event.ObjsTexAnime(0, 1, "わらい口ひらき")
-		event.ObjsTexAnime(1, 0)
-		event.ObjsTexAnime(1, 1, "デフォルト顔")
-		event.ObjsTexAnime(1, 1, "通常目パチ")
-		event.CmrsSetPos(-1.53, 38.93, 576.75)
-		event.CmrsSetRef(47.63, 28.44, 622.59)
-		event.ObjsSetMotion(1, "上向く会話", 2)
-		event.ObjsNextMotion(1, "上向くL", 4)
-		event.SetPakuAnim(1, "わらい口パク")
+		event.set_object_sequence_texture_animation(0, 0)
+		event.set_object_sequence_texture_animation(0, 1, "デフォルト顔")
+		event.set_object_sequence_texture_animation(0, 1, "通常目パチ")
+		event.set_object_sequence_texture_animation(0, 1, "わらい口ひらき")
+		event.set_object_sequence_texture_animation(1, 0)
+		event.set_object_sequence_texture_animation(1, 1, "デフォルト顔")
+		event.set_object_sequence_texture_animation(1, 1, "通常目パチ")
+		event.set_camera_sequence_position(-1.53, 38.93, 576.75)
+		event.set_camera_sequence_look_at(47.63, 28.44, 622.59)
+		event.set_object_sequence_motion(1, "上向く会話", 2)
+		event.queue_object_sequence_next_motion(1, "上向くL", 4)
+		event.set_mouth_texture_animations(1, "わらい口パク")
 		at = 4
 		helper_4116e6bb(2800020)
-		event.ResetPakuAnim()
+		event.reset_mouth_texture_animations()
 		at = 5
 		wait_objects(1)
-		event.ObjsSetMotion(1, "上向くL", 4)
+		event.set_object_sequence_motion(1, "上向くL", 4)
 		at = 6
 		helper_888ab2a3(30)
-		event.CmrsSetPos(38.84, 15.89, 762.06)
-		event.CmrsSetRef(30.81, 47.05, 622.71)
+		event.set_camera_sequence_position(38.84, 15.89, 762.06)
+		event.set_camera_sequence_look_at(30.81, 47.05, 622.71)
 		at = 7
 		helper_888ab2a3(15)
 		at = 8
@@ -1424,317 +1424,317 @@ local function helper_29a30()
 		helper_4116e6bb(2800040)
 		at = 10
 		helper_888ab2a3(30)
-		event.ObjsTexAnime(0, 0)
-		event.ObjsTexAnime(0, 1, "デフォルト顔")
-		event.ObjsTexAnime(0, 1, "通常目パチ")
-		event.ObjsTexAnime(0, 1, "半口")
-		event.ObjsTexAnime(1, 0)
-		event.ObjsTexAnime(1, 1, "デフォルト顔")
-		event.ObjsTexAnime(1, 1, "不満目パチ")
-		event.CmrsSetPos(17.72, 36.99, 568.83)
-		event.CmrsSetRef(35.34, 28.44, 619.23)
+		event.set_object_sequence_texture_animation(0, 0)
+		event.set_object_sequence_texture_animation(0, 1, "デフォルト顔")
+		event.set_object_sequence_texture_animation(0, 1, "通常目パチ")
+		event.set_object_sequence_texture_animation(0, 1, "半口")
+		event.set_object_sequence_texture_animation(1, 0)
+		event.set_object_sequence_texture_animation(1, 1, "デフォルト顔")
+		event.set_object_sequence_texture_animation(1, 1, "不満目パチ")
+		event.set_camera_sequence_position(17.72, 36.99, 568.83)
+		event.set_camera_sequence_look_at(35.34, 28.44, 619.23)
 		at = 11
 		helper_888ab2a3(15)
-		event.ObjsSetMotion(1, "はぁ？", 6)
-		event.ObjsNextMotion(1, "上向くL", 4)
-		event.SetPakuAnim(1, "あきれ口パク")
+		event.set_object_sequence_motion(1, "はぁ？", 6)
+		event.queue_object_sequence_next_motion(1, "上向くL", 4)
+		event.set_mouth_texture_animations(1, "あきれ口パク")
 		at = 12
 		helper_4116e6bb(2800050)
-		event.ResetPakuAnim()
+		event.reset_mouth_texture_animations()
 		at = 13
 		wait_objects(1)
 		at = 14
 		helper_888ab2a3(30)
-		event.CmrsSetPos(38.84, 15.89, 762.06)
-		event.CmrsSetRef(30.81, 47.05, 622.71)
+		event.set_camera_sequence_position(38.84, 15.89, 762.06)
+		event.set_camera_sequence_look_at(30.81, 47.05, 622.71)
 		at = 15
 		helper_888ab2a3(15)
 		at = 16
 		helper_4116e6bb(2800060)
-		event.CmrsSetPos(54.46, 37.12, 558.59)
-		event.CmrsSetRef(20.97, 30.6, 620.45)
+		event.set_camera_sequence_position(54.46, 37.12, 558.59)
+		event.set_camera_sequence_look_at(20.97, 30.6, 620.45)
 		at = 17
 		helper_4116e6bb(2800065)
-		event.CmrsSetPos(38.84, 15.89, 762.06)
-		event.CmrsSetRef(30.81, 47.05, 622.71)
+		event.set_camera_sequence_position(38.84, 15.89, 762.06)
+		event.set_camera_sequence_look_at(30.81, 47.05, 622.71)
 		at = 18
 		helper_4116e6bb(2800070)
 		at = 19
 		helper_888ab2a3(30)
-		event.ObjsTexAnime(0, 0)
-		event.ObjsTexAnime(0, 1, "おこり顔")
-		event.ObjsTexAnime(0, 1, "おこり目パチ")
-		event.ObjsTexAnime(1, 0)
-		event.ObjsTexAnime(1, 1, "不満顔")
-		event.ObjsTexAnime(1, 1, "不満目パチ")
-		event.CmrsSetPos(42.96, 39.99, 563.11)
-		event.CmrsSetRef(28.37, 28.44, 607.63)
-		event.ObjsSetRot(0, 0.0, -2.56, 0.0)
+		event.set_object_sequence_texture_animation(0, 0)
+		event.set_object_sequence_texture_animation(0, 1, "おこり顔")
+		event.set_object_sequence_texture_animation(0, 1, "おこり目パチ")
+		event.set_object_sequence_texture_animation(1, 0)
+		event.set_object_sequence_texture_animation(1, 1, "不満顔")
+		event.set_object_sequence_texture_animation(1, 1, "不満目パチ")
+		event.set_camera_sequence_position(42.96, 39.99, 563.11)
+		event.set_camera_sequence_look_at(28.37, 28.44, 607.63)
+		event.set_object_sequence_rotation(0, 0.0, -2.56, 0.0)
 		at = 20
 		helper_888ab2a3(15)
-		event.SetPakuAnim(0, "通常口パク")
+		event.set_mouth_texture_animations(0, "通常口パク")
 		at = 21
 		helper_4116e6bb(2800080)
-		event.ResetPakuAnim()
-		event.ObjsSetMotion(0, "上見から右見", 6)
-		event.ObjsNextMotion(0, "右向く会話", 6)
-		event.ObjsNextMotion(0, "右向くL", 4)
-		event.SetPakuAnim(0, "通常口パク")
+		event.reset_mouth_texture_animations()
+		event.set_object_sequence_motion(0, "上見から右見", 6)
+		event.queue_object_sequence_next_motion(0, "右向く会話", 6)
+		event.queue_object_sequence_next_motion(0, "右向くL", 4)
+		event.set_mouth_texture_animations(0, "通常口パク")
 		at = 22
 		helper_4116e6bb(2800085)
-		event.ResetPakuAnim()
+		event.reset_mouth_texture_animations()
 		at = 23
 		wait_objects(0)
 		at = 24
 		helper_888ab2a3(30)
-		event.ObjsTexAnime(1, 0)
-		event.ObjsTexAnime(1, 1, "おこり顔")
-		event.ObjsTexAnime(1, 1, "おこり目パチ")
-		event.ObjsSetRot(0, 0.0, 3.12, 0.0)
-		event.CmrsSetPos(-23.31, 28.11, 596.86)
-		event.CmrsSetRef(26.9, 28.44, 606.75)
+		event.set_object_sequence_texture_animation(1, 0)
+		event.set_object_sequence_texture_animation(1, 1, "おこり顔")
+		event.set_object_sequence_texture_animation(1, 1, "おこり目パチ")
+		event.set_object_sequence_rotation(0, 0.0, 3.12, 0.0)
+		event.set_camera_sequence_position(-23.31, 28.11, 596.86)
+		event.set_camera_sequence_look_at(26.9, 28.44, 606.75)
 		at = 25
 		helper_888ab2a3(15)
-		event.ObjsSetMotion(1, "上向きから左向き", 6)
-		event.ObjsNextMotion(1, "左向くL", 4)
-		event.ObjsMotionDelay(1, 60)
-		event.ObjsSetMotion(1, "左向きから上向き", 6)
-		event.ObjsNextMotion(1, "上向く会話", 2)
-		event.ObjsNextMotion(1, "上向くL", 4)
-		event.ObjsMotionDelay(0, 60)
-		event.ObjsSetMotion(0, "右見から上見", 6)
-		event.ObjsNextMotion(0, "上向くL", 4)
-		event.SetPakuAnim(1, "通常口パク")
+		event.set_object_sequence_motion(1, "上向きから左向き", 6)
+		event.queue_object_sequence_next_motion(1, "左向くL", 4)
+		event.delay_object_sequence_motion_track(1, 60)
+		event.set_object_sequence_motion(1, "左向きから上向き", 6)
+		event.queue_object_sequence_next_motion(1, "上向く会話", 2)
+		event.queue_object_sequence_next_motion(1, "上向くL", 4)
+		event.delay_object_sequence_motion_track(0, 60)
+		event.set_object_sequence_motion(0, "右見から上見", 6)
+		event.queue_object_sequence_next_motion(0, "上向くL", 4)
+		event.set_mouth_texture_animations(1, "通常口パク")
 		at = 26
 		helper_4116e6bb(2800090)
-		event.ResetPakuAnim()
+		event.reset_mouth_texture_animations()
 		at = 27
 		wait_objects(1)
 		at = 28
 		helper_888ab2a3(30)
-		event.CmrsSetPos(60.85, 50.28, 994.5)
-		event.CmrsSetRef(37.15, 90.96, 620.83)
+		event.set_camera_sequence_position(60.85, 50.28, 994.5)
+		event.set_camera_sequence_look_at(37.15, 90.96, 620.83)
 		at = 29
 		helper_888ab2a3(15)
-		event.CmrsInitPas()
-		event.CmrsSetPasFrm(200)
-		event.CmrsAddPas(60.85, 50.28, 994.5, 37.15, 90.96, 620.83)
-		event.CmrsAddPas(53.55, 50.28, 879.42, 29.85, 90.96, 505.75)
-		event.CmrsStartPas()
+		event.clear_camera_sequence_path()
+		event.set_camera_sequence_path_frames(200)
+		event.add_camera_sequence_path_point(60.85, 50.28, 994.5, 37.15, 90.96, 620.83)
+		event.add_camera_sequence_path_point(53.55, 50.28, 879.42, 29.85, 90.96, 505.75)
+		event.start_camera_sequence_path()
 		at = 30
 		helper_0382f327(2800100, -1)
-		event.SndSePlay(var6, 8)
+		event.play_sound_effect(var6, 8)
 		at = 31
 		wait_camera()
-		event.ObjsTexAnime(0, 0)
-		event.ObjsTexAnime(0, 1, "デフォルト顔")
-		event.ObjsTexAnime(0, 1, "うれし目パチ")
-		event.CmrsSetPos(15.67, 33.06, 545.55)
-		event.CmrsSetRef(37.65, 31.67, 641.15)
-		event.CmrsInitPas()
-		event.CmrsSetPasFrm(200)
-		event.CmrsAddPas(15.67, 33.06, 545.55, 37.65, 31.67, 641.15)
-		event.CmrsAddPas(21.77, 33.06, 572.11, 37.65, 31.67, 641.15)
-		event.CmrsStartPas()
+		event.set_object_sequence_texture_animation(0, 0)
+		event.set_object_sequence_texture_animation(0, 1, "デフォルト顔")
+		event.set_object_sequence_texture_animation(0, 1, "うれし目パチ")
+		event.set_camera_sequence_position(15.67, 33.06, 545.55)
+		event.set_camera_sequence_look_at(37.65, 31.67, 641.15)
+		event.clear_camera_sequence_path()
+		event.set_camera_sequence_path_frames(200)
+		event.add_camera_sequence_path_point(15.67, 33.06, 545.55, 37.65, 31.67, 641.15)
+		event.add_camera_sequence_path_point(21.77, 33.06, 572.11, 37.65, 31.67, 641.15)
+		event.start_camera_sequence_path()
 		at = 32
 		wait_camera()
-		event.CmrsSetPos(38.84, 15.89, 762.06)
-		event.CmrsSetRef(30.81, 47.05, 622.71)
-		event.SndSeStop(var6, 8)
+		event.set_camera_sequence_position(38.84, 15.89, 762.06)
+		event.set_camera_sequence_look_at(30.81, 47.05, 622.71)
+		event.stop_sound_effect(var6, 8)
 		at = 33
 		helper_0382f327(2800110, 120)
-		event.SndSePlay(var6, 9)
-		event.ObjsSetMotion(1, "がっかり肩落とし", 6)
-		event.ObjsNextMotion(1, "がっかり肩落としＬ", 4)
-		event.ObjsSetMotion(0, "がっかり", 6)
-		event.ObjsNextMotion(0, "がっかりＬ", 4)
+		event.play_sound_effect(var6, 9)
+		event.set_object_sequence_motion(1, "がっかり肩落とし", 6)
+		event.queue_object_sequence_next_motion(1, "がっかり肩落としＬ", 4)
+		event.set_object_sequence_motion(0, "がっかり", 6)
+		event.queue_object_sequence_next_motion(0, "がっかりＬ", 4)
 		at = 34
 		helper_888ab2a3(60)
-		event.ObjsSetMotion(1, "頭抱えるＬ", 4, -1.0, 1)
-		event.ObjsTexAnime(0, 0)
-		event.ObjsTexAnime(0, 1, "こまり顔")
-		event.ObjsTexAnime(0, 1, "こまり目パチ")
-		event.ObjsTexAnime(1, 0)
-		event.ObjsTexAnime(1, 1, "おこり顔")
-		event.ObjsTexAnime(1, 1, "おこり目とじ")
-		event.CmrsSetPos(-23.31, 28.11, 596.86)
-		event.CmrsSetRef(26.9, 28.44, 606.75)
+		event.set_object_sequence_motion(1, "頭抱えるＬ", 4, -1.0, 1)
+		event.set_object_sequence_texture_animation(0, 0)
+		event.set_object_sequence_texture_animation(0, 1, "こまり顔")
+		event.set_object_sequence_texture_animation(0, 1, "こまり目パチ")
+		event.set_object_sequence_texture_animation(1, 0)
+		event.set_object_sequence_texture_animation(1, 1, "おこり顔")
+		event.set_object_sequence_texture_animation(1, 1, "おこり目とじ")
+		event.set_camera_sequence_position(-23.31, 28.11, 596.86)
+		event.set_camera_sequence_look_at(26.9, 28.44, 606.75)
 		at = 35
 		helper_888ab2a3(15)
 		at = 36
 		helper_4116e6bb(2800120)
-		event.ObjsTexAnime(0, 0)
-		event.ObjsTexAnime(0, 1, "こまり顔")
-		event.ObjsTexAnime(0, 1, "こまり目～通常目")
-		event.ObjsTexAnime(1, 0)
-		event.ObjsTexAnime(1, 1, "おこり顔")
-		event.ObjsTexAnime(1, 1, "おこり目とじ～おこり目あき")
-		event.ObjsTexaDelay(1, 30)
-		event.ObjsTexAnime(1, 1, "おこり目パチ")
-		event.SndSePlay(var6, 10)
-		event.ObjsSetMotion(0, "がっかり→上", 6)
-		event.ObjsNextMotion(0, "上向くL", 4)
-		event.SetPakuAnim(0, "通常口パク")
+		event.set_object_sequence_texture_animation(0, 0)
+		event.set_object_sequence_texture_animation(0, 1, "こまり顔")
+		event.set_object_sequence_texture_animation(0, 1, "こまり目～通常目")
+		event.set_object_sequence_texture_animation(1, 0)
+		event.set_object_sequence_texture_animation(1, 1, "おこり顔")
+		event.set_object_sequence_texture_animation(1, 1, "おこり目とじ～おこり目あき")
+		event.delay_object_sequence_texture_animation_track(1, 30)
+		event.set_object_sequence_texture_animation(1, 1, "おこり目パチ")
+		event.play_sound_effect(var6, 10)
+		event.set_object_sequence_motion(0, "がっかり→上", 6)
+		event.queue_object_sequence_next_motion(0, "上向くL", 4)
+		event.set_mouth_texture_animations(0, "通常口パク")
 		at = 37
 		helper_4116e6bb(2800130)
-		event.ResetPakuAnim()
+		event.reset_mouth_texture_animations()
 		at = 38
 		wait_objects(0)
-		event.ObjsSetMotion(0, "上見から右見", 6)
-		event.ObjsNextMotion(0, "右向くL", 4)
-		event.ObjsSetMotion(1, "手をおろす", 6)
-		event.ObjsNextMotion(1, "下向き立ちＬ", 4)
-		event.SetPakuAnim(1, "通常口パク")
+		event.set_object_sequence_motion(0, "上見から右見", 6)
+		event.queue_object_sequence_next_motion(0, "右向くL", 4)
+		event.set_object_sequence_motion(1, "手をおろす", 6)
+		event.queue_object_sequence_next_motion(1, "下向き立ちＬ", 4)
+		event.set_mouth_texture_animations(1, "通常口パク")
 		at = 39
 		helper_4116e6bb(2800140)
-		event.ResetPakuAnim()
+		event.reset_mouth_texture_animations()
 		at = 40
 		wait_objects(1)
-		event.SetPakuAnim(1, "通常口パク")
+		event.set_mouth_texture_animations(1, "通常口パク")
 		at = 41
 		helper_4116e6bb(2800145)
-		event.ResetPakuAnim()
-		event.ObjsSetMotion(0, "右向く会話", 6)
-		event.ObjsNextMotion(0, "右向くL", 4)
+		event.reset_mouth_texture_animations()
+		event.set_object_sequence_motion(0, "右向く会話", 6)
+		event.queue_object_sequence_next_motion(0, "右向くL", 4)
 		at = 42
 		helper_4116e6bb(2800150)
 		at = 43
 		wait_objects(0)
-		event.ObjsTexAnime(1, 0)
-		event.ObjsTexAnime(1, 1, "おこり顔")
-		event.ObjsTexaDelay(1, 30)
-		event.ObjsTexAnime(1, 1, "さみし顔")
-		event.ObjsTexAnime(1, 1, "おこり目パチ")
-		event.ObjsTexaDelay(1, 30)
-		event.ObjsTexAnime(1, 1, "おこり目～さみし目")
-		event.ObjsSetMotion(1, "下向き立ちＬ", 4)
-		event.ObjsMotionDelay(1, 30)
-		event.ObjsSetMotion(1, "下向きから左向き", 6)
-		event.ObjsNextMotion(1, "左向く会話", 6)
-		event.ObjsNextMotion(1, "左向くL", 4)
-		event.SetPakuAnim(1, "さみし口パク")
+		event.set_object_sequence_texture_animation(1, 0)
+		event.set_object_sequence_texture_animation(1, 1, "おこり顔")
+		event.delay_object_sequence_texture_animation_track(1, 30)
+		event.set_object_sequence_texture_animation(1, 1, "さみし顔")
+		event.set_object_sequence_texture_animation(1, 1, "おこり目パチ")
+		event.delay_object_sequence_texture_animation_track(1, 30)
+		event.set_object_sequence_texture_animation(1, 1, "おこり目～さみし目")
+		event.set_object_sequence_motion(1, "下向き立ちＬ", 4)
+		event.delay_object_sequence_motion_track(1, 30)
+		event.set_object_sequence_motion(1, "下向きから左向き", 6)
+		event.queue_object_sequence_next_motion(1, "左向く会話", 6)
+		event.queue_object_sequence_next_motion(1, "左向くL", 4)
+		event.set_mouth_texture_animations(1, "さみし口パク")
 		at = 44
 		helper_4116e6bb(2800160)
-		event.ResetPakuAnim()
+		event.reset_mouth_texture_animations()
 		at = 45
 		wait_objects(1)
 		at = 46
 		helper_888ab2a3(30)
-		event.ObjsTexAnime(0, 0)
-		event.ObjsTexAnime(0, 1, "デフォルト顔")
-		event.ObjsTexAnime(0, 1, "通常目パチ")
-		event.ObjsTexAnime(1, 0)
-		event.ObjsTexAnime(1, 1, "さみし顔")
-		event.ObjsTexAnime(1, 1, "さみし目パチ")
-		event.CmrsSetPos(42.73, 39.99, 562.51)
-		event.CmrsSetRef(25.56, 28.44, 606.38)
-		event.ObjsSetRot(0, 0.0, -2.56, 0.0)
+		event.set_object_sequence_texture_animation(0, 0)
+		event.set_object_sequence_texture_animation(0, 1, "デフォルト顔")
+		event.set_object_sequence_texture_animation(0, 1, "通常目パチ")
+		event.set_object_sequence_texture_animation(1, 0)
+		event.set_object_sequence_texture_animation(1, 1, "さみし顔")
+		event.set_object_sequence_texture_animation(1, 1, "さみし目パチ")
+		event.set_camera_sequence_position(42.73, 39.99, 562.51)
+		event.set_camera_sequence_look_at(25.56, 28.44, 606.38)
+		event.set_object_sequence_rotation(0, 0.0, -2.56, 0.0)
 		at = 47
 		helper_888ab2a3(15)
-		event.SetPakuAnim(0, "通常口パク")
+		event.set_mouth_texture_animations(0, "通常口パク")
 		at = 48
 		helper_4116e6bb(2800170)
-		event.ResetPakuAnim()
-		event.ObjsSetMotion(1, "左向きから下向き", 6)
-		event.ObjsNextMotion(1, "下向き立ちＬ", 4)
-		event.SetPakuAnim(1, "さみし口パク")
+		event.reset_mouth_texture_animations()
+		event.set_object_sequence_motion(1, "左向きから下向き", 6)
+		event.queue_object_sequence_next_motion(1, "下向き立ちＬ", 4)
+		event.set_mouth_texture_animations(1, "さみし口パク")
 		at = 49
 		helper_4116e6bb(2800180)
-		event.ResetPakuAnim()
+		event.reset_mouth_texture_animations()
 		at = 50
 		helper_888ab2a3(30)
-		event.ObjsTexAnime(1, 0)
-		event.ObjsTexAnime(1, 1, "デフォルト顔")
-		event.ObjsTexAnime(1, 1, "さみし目～通常目")
-		event.ObjsTexaDelay(1, 60)
-		event.ObjsTexAnime(1, 1, "通常目パチ")
-		event.CmrsSetPos(28.25, 31.54, 674.64)
-		event.CmrsSetRef(28.22, 28.44, 600.45)
-		event.ObjsSetMotion(0, "右回転90度（ＰＧ）", 6)
-		event.ObjsNextMotion(0, "モニカ見立ち")
-		event.ObjsRotation(0, 0.0, 2.4, 0.0, 20)
+		event.set_object_sequence_texture_animation(1, 0)
+		event.set_object_sequence_texture_animation(1, 1, "デフォルト顔")
+		event.set_object_sequence_texture_animation(1, 1, "さみし目～通常目")
+		event.delay_object_sequence_texture_animation_track(1, 60)
+		event.set_object_sequence_texture_animation(1, 1, "通常目パチ")
+		event.set_camera_sequence_position(28.25, 31.54, 674.64)
+		event.set_camera_sequence_look_at(28.22, 28.44, 600.45)
+		event.set_object_sequence_motion(0, "右回転90度（ＰＧ）", 6)
+		event.queue_object_sequence_next_motion(0, "モニカ見立ち")
+		event.rotate_object_sequence(0, 0.0, 2.4, 0.0, 20)
 		at = 51
 		wait_objects(0)
 		at = 52
 		wait_objects(0)
-		event.SndSePlay(var6, 11)
-		event.ObjsSetMotion(0, "がっつ", 2)
-		event.ObjsNextMotion(0, "モニカ見立ち", 4)
-		event.SetPakuAnim(0, "わらい口パク")
+		event.play_sound_effect(var6, 11)
+		event.set_object_sequence_motion(0, "がっつ", 2)
+		event.queue_object_sequence_next_motion(0, "モニカ見立ち", 4)
+		event.set_mouth_texture_animations(0, "わらい口パク")
 		at = 53
 		helper_4116e6bb(2800190)
-		event.ResetPakuAnim()
+		event.reset_mouth_texture_animations()
 		at = 54
 		wait_objects(0)
-		event.ObjsSetMotion(0, "会話", 2)
-		event.ObjsNextMotion(0, "モニカ見立ち", 4)
+		event.set_object_sequence_motion(0, "会話", 2)
+		event.queue_object_sequence_next_motion(0, "モニカ見立ち", 4)
 		at = 55
 		helper_4116e6bb(2800195)
 		at = 56
 		wait_objects(0)
-		event.SndSePlay(var6, 12)
-		event.ObjsRotation(1, 0.0, -1.0, 0.0, 30)
-		event.ObjsSetMotion(1, "左回転90度（ＰＧ）", 6)
+		event.play_sound_effect(var6, 12)
+		event.rotate_object_sequence(1, 0.0, -1.0, 0.0, 30)
+		event.set_object_sequence_motion(1, "左回転90度（ＰＧ）", 6)
 		at = 57
 		wait_objects(1)
-		event.ObjsSetMotion(1, "会話", 6)
-		event.ObjsNextMotion(1, "立ち", 4)
-		event.SetPakuAnim(1, "通常口パク")
+		event.set_object_sequence_motion(1, "会話", 6)
+		event.queue_object_sequence_next_motion(1, "立ち", 4)
+		event.set_mouth_texture_animations(1, "通常口パク")
 		at = 58
 		helper_4116e6bb(2800200)
-		event.ResetPakuAnim()
+		event.reset_mouth_texture_animations()
 		at = 59
 		wait_objects(1)
-		event.ObjsSetMotion(1, "会話", 2)
-		event.ObjsNextMotion(1, "立ち", 4)
-		event.SetPakuAnim(1, "通常口パク")
+		event.set_object_sequence_motion(1, "会話", 2)
+		event.queue_object_sequence_next_motion(1, "立ち", 4)
+		event.set_mouth_texture_animations(1, "通常口パク")
 		at = 60
 		helper_4116e6bb(2800205)
-		event.ResetPakuAnim()
+		event.reset_mouth_texture_animations()
 		at = 61
 		wait_objects(1)
-		event.SndSePlay(var6, 13)
-		event.ObjsSetMotion(0, "がっつ", 6)
-		event.ObjsNextMotion(0, "モニカ見立ち", 4)
-		event.SetPakuAnim(0, "わらい口パク")
+		event.play_sound_effect(var6, 13)
+		event.set_object_sequence_motion(0, "がっつ", 6)
+		event.queue_object_sequence_next_motion(0, "モニカ見立ち", 4)
+		event.set_mouth_texture_animations(0, "わらい口パク")
 		at = 62
 		helper_4116e6bb(2800210)
-		event.ResetPakuAnim()
+		event.reset_mouth_texture_animations()
 		at = 63
 		wait_objects(0)
-		event.SndSePlay(var6, 14)
-		event.SndSePlay(var6, 15)
-		event.ObjsSetMotion(0, "モニカ見立うなづき", 6)
-		event.ObjsNextMotion(0, "モニカ見立ち", 4)
-		event.ObjsSetMotion(1, "うなづく", 6)
-		event.ObjsNextMotion(1, "立ち", 4)
+		event.play_sound_effect(var6, 14)
+		event.play_sound_effect(var6, 15)
+		event.set_object_sequence_motion(0, "モニカ見立うなづき", 6)
+		event.queue_object_sequence_next_motion(0, "モニカ見立ち", 4)
+		event.set_object_sequence_motion(1, "うなづく", 6)
+		event.queue_object_sequence_next_motion(1, "立ち", 4)
 		at = 64
 		wait_objects(0)
 		at = 65
 		wait_objects(1)
-		event.ObjsSetMotion(1, "歩き")
-		event.ObjsSetMotion(0, "歩き")
-		event.ObjsRotation(0, 0.0, 0.0, 0.0, 20)
-		event.ObjsRotation(1, 0.0, 0.0, 0.0, 20)
+		event.set_object_sequence_motion(1, "歩き")
+		event.set_object_sequence_motion(0, "歩き")
+		event.rotate_object_sequence(0, 0.0, 0.0, 0.0, 20)
+		event.rotate_object_sequence(1, 0.0, 0.0, 0.0, 20)
 		at = 66
 		wait_objects(0)
 		at = 67
 		wait_objects(1)
-		event.ObjsSetMotion(1, "走り")
-		event.ObjsSetMotion(0, "走り")
-		event.ObjsMove(0, 20.44, 6.52, 1490.12, 390, 1)
-		event.ObjsMove(1, 39.08, 7.54, 1478.94, 390, 1)
-		event.CmrsInitPas()
-		event.CmrsSetPasFrm(240)
-		event.CmrsAddPas(28.25, 31.54, 674.64, 28.22, 28.44, 600.45)
-		event.CmrsAddPas(28.59, 31.54, 1526.51, 28.22, 28.44, 600.45)
-		event.CmrsStartPas()
+		event.set_object_sequence_motion(1, "走り")
+		event.set_object_sequence_motion(0, "走り")
+		event.move_object_sequence(0, 20.44, 6.52, 1490.12, 390, 1)
+		event.move_object_sequence(1, 39.08, 7.54, 1478.94, 390, 1)
+		event.clear_camera_sequence_path()
+		event.set_camera_sequence_path_frames(240)
+		event.add_camera_sequence_path_point(28.25, 31.54, 674.64, 28.22, 28.44, 600.45)
+		event.add_camera_sequence_path_point(28.59, 31.54, 1526.51, 28.22, 28.44, 600.45)
+		event.start_camera_sequence_path()
 		at = 68
 		helper_888ab2a3(15)
 		at = 69
 		helper_888ab2a3(200)
-		event.FadeOutBgm(30)
-		event.SetFadeOut(30)
+		event.fade_out_music(30)
+		event.fade_out_screen(30)
 		at = 70
 		helper_888ab2a3(35)
 	end, function(received: { any }): boolean
@@ -1948,321 +1948,321 @@ local function helper_29a30()
 		end
 		return true
 	end)
-	event.CancelDramaScene()
-	event.StopBgm(0)
-	event.SndSeStop(var6, 8)
-	event.EohSetFootSoundId(0, 0)
-	event.EohSetFootSoundId(1, 0)
+	event.cancel_drama_scene_skip()
+	event.stop_music(0)
+	event.stop_sound_effect(var6, 8)
+	event.set_object_handle_footstep_sound(0, 0)
+	event.set_object_handle_footstep_sound(1, 0)
 	helper_28ab4()
-	event.ResetCamera(0)
+	event.reset_follow_camera(0)
 end
 
 --- Helper function.
 local function helper_2fb48()
 	local active_chr_no: s32 = 0
-	event.SetMesWindowMode(0, 7)
-	event.AssignStack(5)
-	event.ClearStack(5)
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	event.set_message_window_mode(0, 7)
+	event.assign_memory_stack(5)
+	event.clear_memory_stack(5)
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no == 0 then
 		global0 = 0
 		global1 = 32
-		event.LoadMotion(5, "event/basic_evmot/mints_set.gltf", "info", global0)
-		event.LoadMotion(5, "event/e200/e285/e285_mints.gltf", "info", global0)
-		event.EohSyncChara(0, global0)
-		event.ObjsInit(0)
-		event.ObjsSyncObj(0, 0)
-		event.CharaActive(0, global0)
-		event.LoadChara(5, "chara/c02_base.gltf", "info", global1)
-		event.LoadEquip(5, 1, 4, "info", global1)
-		event.LoadEquip(5, 1, 3, "info", global1)
-		event.LoadEquip(5, 1, 2, "info", global1, 37)
-		event.LoadMotion(5, "event/basic_evmot/monica_set.gltf", "info", global1)
-		event.LoadMotion(5, "event/e200/e285/e285_monica.gltf", "info", global1)
-		event.EohSyncChara(1, global1)
-		event.ObjsInit(1)
-		event.ObjsSyncObj(1, 1)
-		event.CharaActive(0, global1)
-		event.CharaActive(1, 37)
+		event.load_character_motion_pack(5, "event/basic_evmot/mints_set.gltf", "info", global0)
+		event.load_character_motion_pack(5, "event/e200/e285/e285_mints.gltf", "info", global0)
+		event.attach_object_handle_to_character(0, global0)
+		event.clear_object_sequence(0)
+		event.set_object_sequence_object(0, 0)
+		event.set_character_active(0, global0)
+		event.load_character(5, "chara/c02_base.gltf", "info", global1)
+		event.load_equipment_model(5, 1, 4, "info", global1)
+		event.load_equipment_model(5, 1, 3, "info", global1)
+		event.load_equipment_model(5, 1, 2, "info", global1, 37)
+		event.load_character_motion_pack(5, "event/basic_evmot/monica_set.gltf", "info", global1)
+		event.load_character_motion_pack(5, "event/e200/e285/e285_monica.gltf", "info", global1)
+		event.attach_object_handle_to_character(1, global1)
+		event.clear_object_sequence(1)
+		event.set_object_sequence_object(1, 1)
+		event.set_character_active(0, global1)
+		event.set_character_active(1, 37)
 	end
 	if active_chr_no == 1 then
 		global0 = 32
 		global1 = 0
-		event.LoadChara(5, "chara/c01_base.gltf", "info", global0)
-		event.LoadEquip(5, 0, 4, "info", global0)
-		event.LoadEquip(5, 0, 3, "info", global0)
-		event.LoadEquip(5, 0, 2, "info", global0, 37)
-		event.LoadMotion(5, "event/basic_evmot/mints_set.gltf", "info", global0)
-		event.LoadMotion(5, "event/e200/e285/e285_mints.gltf", "info", global0)
-		event.EohSyncChara(0, global0)
-		event.ObjsInit(0)
-		event.ObjsSyncObj(0, 0)
-		event.CharaActive(0, global0)
-		event.CharaActive(1, 37)
-		event.LoadMotion(5, "event/basic_evmot/monica_set.gltf", "info", global1)
-		event.LoadMotion(5, "event/e200/e285/e285_monica.gltf", "info", global1)
-		event.EohSyncChara(1, global1)
-		event.ObjsInit(1)
-		event.ObjsSyncObj(1, 1)
-		event.CharaActive(0, global1)
+		event.load_character(5, "chara/c01_base.gltf", "info", global0)
+		event.load_equipment_model(5, 0, 4, "info", global0)
+		event.load_equipment_model(5, 0, 3, "info", global0)
+		event.load_equipment_model(5, 0, 2, "info", global0, 37)
+		event.load_character_motion_pack(5, "event/basic_evmot/mints_set.gltf", "info", global0)
+		event.load_character_motion_pack(5, "event/e200/e285/e285_mints.gltf", "info", global0)
+		event.attach_object_handle_to_character(0, global0)
+		event.clear_object_sequence(0)
+		event.set_object_sequence_object(0, 0)
+		event.set_character_active(0, global0)
+		event.set_character_active(1, 37)
+		event.load_character_motion_pack(5, "event/basic_evmot/monica_set.gltf", "info", global1)
+		event.load_character_motion_pack(5, "event/e200/e285/e285_monica.gltf", "info", global1)
+		event.attach_object_handle_to_character(1, global1)
+		event.clear_object_sequence(1)
+		event.set_object_sequence_object(1, 1)
+		event.set_character_active(0, global1)
 	end
-	event.LoadItem(5, 31, "info", 36)
-	event.CharaActive(0, 36)
-	event.LoadChara(5, "event/e200/e272/e272_hanabaku.gltf", "info", 38)
-	event.CharaActive(0, 38)
-	event.LoadChara(5, "event/e200/e272/e272_kirakira.gltf", "info", 39)
-	event.CharaActive(0, 39)
-	event.EohSyncChara(4, 39)
-	event.ObjsInit(5, 39)
-	event.ObjsSyncObj(5, 4)
-	event.LoadChara(5, "event/itemget_ev/itemget_ev.gltf", "info", 40)
-	event.EohSyncChara(5, 40)
-	event.ObjsInit(6)
-	event.ObjsSyncObj(6, 5)
-	event.CharaActive(0, 40)
-	event.LoadMes(0, 5, "event/e200/e285/e285.txt")
+	event.load_item_model(5, 31, "info", 36)
+	event.set_character_active(0, 36)
+	event.load_character(5, "event/e200/e272/e272_hanabaku.gltf", "info", 38)
+	event.set_character_active(0, 38)
+	event.load_character(5, "event/e200/e272/e272_kirakira.gltf", "info", 39)
+	event.set_character_active(0, 39)
+	event.attach_object_handle_to_character(4, 39)
+	event.clear_object_sequence(5, 39)
+	event.set_object_sequence_object(5, 4)
+	event.load_character(5, "event/itemget_ev/itemget_ev.gltf", "info", 40)
+	event.attach_object_handle_to_character(5, 40)
+	event.clear_object_sequence(6)
+	event.set_object_sequence_object(6, 5)
+	event.set_character_active(0, 40)
+	event.load_message_file(0, 5, "event/e200/e285/e285.txt")
 end
 
 --- Helper function.
 local function helper_2dfec()
-	event.SetFadeIn(30)
-	event.SndSePlay(global8, 0)
-	event.CmrsMove(111.21, 97.1, 1515.22, 354.23, 94.23, 1247.17, 540)
+	event.fade_in_screen(30)
+	event.play_sound_effect(global8, 0)
+	event.move_camera_sequence(111.21, 97.1, 1515.22, 354.23, 94.23, 1247.17, 540)
 	helper_888ab2a3(50)
 	helper_0382f327(2850010, -1)
 	wait_camera()
 	helper_888ab2a3(30)
-	event.SndSeStop(global8, 0)
+	event.stop_sound_effect(global8, 0)
 end
 
 --- Helper function.
 local function helper_2e1d4()
-	event.ObjsSetMotion(0, "立ち", 0)
-	event.ObjsSetMotion(1, "立ち", 0)
+	event.set_object_sequence_motion(0, "立ち", 0)
+	event.set_object_sequence_motion(1, "立ち", 0)
 	helper_888ab2a3(15)
 	helper_4116e6bb(2850020)
-	event.SetMpcharaMotion("jyuraku", "jyuraku", "もごもご")
+	event.set_map_piece_character_motion("jyuraku", "jyuraku", "もごもご")
 	helper_888ab2a3(30)
-	event.SetMpcharaMotion("jyuraku", "jyuraku", "ふんっ")
+	event.set_map_piece_character_motion("jyuraku", "jyuraku", "ふんっ")
 	helper_888ab2a3(30)
-	event.CharaActive(1, 38)
-	event.SetWind(40.0, -96.86, 52.75, 388.46)
-	event.SetMotion(38, "鼻爆発", 2, -1, 1)
-	event.SndSePlay(global8, 1)
+	event.set_character_active(1, 38)
+	event.set_wind(40.0, -96.86, 52.75, 388.46)
+	event.set_character_motion(38, "鼻爆発", 2, -1, 1)
+	event.play_sound_effect(global8, 1)
 	helper_888ab2a3(15)
-	event.SetWind(-1)
-	event.SetMpcharaMotion("jyuraku", "jyuraku", "瞬き")
-	event.ObjsSetMotion(0, "驚く", 6)
-	event.ObjsSetMotion(1, "おどろき", 6)
-	event.ObjsNextMotion(0, "驚くL", 4)
-	event.ObjsNextMotion(1, "おどろきL", 4)
+	event.set_wind(-1)
+	event.set_map_piece_character_motion("jyuraku", "jyuraku", "瞬き")
+	event.set_object_sequence_motion(0, "驚く", 6)
+	event.set_object_sequence_motion(1, "おどろき", 6)
+	event.queue_object_sequence_next_motion(0, "驚くL", 4)
+	event.queue_object_sequence_next_motion(1, "おどろきL", 4)
 	helper_888ab2a3(90)
-	event.CharaActive(1, 39)
-	event.SetMotion(39, "キラキラ（ループ）", 4, -1, 1)
-	event.SndSePlay(global8, 2)
-	event.ObjsInitPas(5)
-	event.ObjsSetPasFrm(5, 150)
-	event.ObjsAddPas(5, 12.99, 142.28, 609.6)
-	event.ObjsAddPas(5, 12.99, 35.2, 609.6)
-	event.ObjsStartPas(5)
-	event.ObjsSetMotion(0, "キラキラ見る", 2)
-	event.ObjsSetMotion(1, "おどろきＬから上向き立ち", 2)
+	event.set_character_active(1, 39)
+	event.set_character_motion(39, "キラキラ（ループ）", 4, -1, 1)
+	event.play_sound_effect(global8, 2)
+	event.clear_object_sequence_path(5)
+	event.set_object_sequence_path_frames(5, 150)
+	event.add_object_sequence_path_point(5, 12.99, 142.28, 609.6)
+	event.add_object_sequence_path_point(5, 12.99, 35.2, 609.6)
+	event.start_object_sequence_path(5)
+	event.set_object_sequence_motion(0, "キラキラ見る", 2)
+	event.set_object_sequence_motion(1, "おどろきＬから上向き立ち", 2)
 	helper_888ab2a3(150)
-	event.ObjsNextMotion(0, "取る", 6)
-	event.ObjsNextMotion(1, "上向く戻り", 6, 0.025)
-	event.ObjsNextMotion(0, "取るL", 4)
-	event.ObjsNextMotion(1, "立ち", 4)
+	event.queue_object_sequence_next_motion(0, "取る", 6)
+	event.queue_object_sequence_next_motion(1, "上向く戻り", 6, 0.025)
+	event.queue_object_sequence_next_motion(0, "取るL", 4)
+	event.queue_object_sequence_next_motion(1, "立ち", 4)
 	helper_888ab2a3(20)
-	event.SetMotion(39, "消える", 2, -1, 1)
+	event.set_character_motion(39, "消える", 2, -1, 1)
 	helper_888ab2a3(30)
 	wait_objects(0)
-	event.CharaActive(0, 39)
+	event.set_character_active(0, 39)
 end
 
 --- Helper function.
 local function helper_2ebf4()
-	event.ObjsSetPos(6, 5.99, 36.82, 613.24)
-	event.ObjsSetRot(6, 0.0, -2.92, 0.0)
-	event.CharaActive(1, 36)
-	event.CharaActive(1, 40)
-	event.SndSePlay(global8, 3)
-	event.SndSePlay(global8, 4)
-	event.SndPauseBgm()
-	event.SndSePlay(global9, 0)
-	event.ObjsSetMotion(6, "発動", 6)
-	event.SetReference(global0, "gun_hand", 36)
-	event.ObjsSetMotion(0, "銃ゲット", 4)
+	event.set_object_sequence_position(6, 5.99, 36.82, 613.24)
+	event.set_object_sequence_rotation(6, 0.0, -2.92, 0.0)
+	event.set_character_active(1, 36)
+	event.set_character_active(1, 40)
+	event.play_sound_effect(global8, 3)
+	event.play_sound_effect(global8, 4)
+	event.pause_music()
+	event.play_sound_effect(global9, 0)
+	event.set_object_sequence_motion(6, "発動", 6)
+	event.attach_character_to_frame(global0, "gun_hand", 36)
+	event.set_object_sequence_motion(0, "銃ゲット", 4)
 	helper_888ab2a3(15)
 	helper_f38eabca(31, 1)
-	event.DelReference(36)
-	event.CharaActive(0, 40)
-	event.SndSeStop(global9, 0)
-	event.PlayBgm(0)
+	event.detach_character_from_frame(36)
+	event.set_character_active(0, 40)
+	event.stop_sound_effect(global9, 0)
+	event.play_music(0)
 end
 
 --- Helper function.
 local function helper_2efdc()
-	event.ObjsSetMotion(0, "上向く会話", 2)
-	event.ObjsNextMotion(0, "上向くL", 4)
+	event.set_object_sequence_motion(0, "上向く会話", 2)
+	event.queue_object_sequence_next_motion(0, "上向くL", 4)
 	helper_4116e6bb(2850030)
-	event.ObjsSetMotion(0, "歩き", 4)
-	event.ObjsSetMotion(1, "歩き", 4)
-	event.ObjsRotation(0, 0.0, 0.2, 0.0, 15)
-	event.ObjsRotation(1, 0.0, 0.0, 0.0, 15)
+	event.set_object_sequence_motion(0, "歩き", 4)
+	event.set_object_sequence_motion(1, "歩き", 4)
+	event.rotate_object_sequence(0, 0.0, 0.2, 0.0, 15)
+	event.rotate_object_sequence(1, 0.0, 0.0, 0.0, 15)
 	helper_888ab2a3(15)
-	event.CmrsFadeInit()
-	event.CmrsFadeDelay(30)
-	event.CmrsFadeOut(30, 0.0, 0.0, 0.0)
-	event.ObjsInitPas(0)
-	event.ObjsSetPasFrm(0, 120)
-	event.ObjsAddPas(0, 13.4, 6.52, 613.7)
-	event.ObjsAddPas(0, 16.54, 2.3, 632.93)
-	event.ObjsAddPas(0, 19.85, -3.85, 662.84)
-	event.ObjsAddPas(0, 22.02, -8.04, 684.68)
-	event.ObjsAddPas(0, 24.22, -12.54, 709.74)
-	event.ObjsAddPas(0, 26.96, -12.32, 737.33)
-	event.ObjsStartPas(0)
-	event.ObjsInitPas(1)
-	event.ObjsSetPasFrm(1, 120)
-	event.ObjsAddPas(1, 47.24, 7.54, 600.38)
-	event.ObjsAddPas(1, 49.86, 2.84, 624.2)
-	event.ObjsAddPas(1, 51.55, -2.15, 651.95)
-	event.ObjsAddPas(1, 52.91, -6.17, 674.31)
-	event.ObjsAddPas(1, 55.85, -12.79, 722.8)
-	event.ObjsStartPas(1)
+	event.mark_camera_sequence_fade_track()
+	event.delay_camera_sequence_fade_track(30)
+	event.fade_out_camera_sequence(30, 0.0, 0.0, 0.0)
+	event.clear_object_sequence_path(0)
+	event.set_object_sequence_path_frames(0, 120)
+	event.add_object_sequence_path_point(0, 13.4, 6.52, 613.7)
+	event.add_object_sequence_path_point(0, 16.54, 2.3, 632.93)
+	event.add_object_sequence_path_point(0, 19.85, -3.85, 662.84)
+	event.add_object_sequence_path_point(0, 22.02, -8.04, 684.68)
+	event.add_object_sequence_path_point(0, 24.22, -12.54, 709.74)
+	event.add_object_sequence_path_point(0, 26.96, -12.32, 737.33)
+	event.start_object_sequence_path(0)
+	event.clear_object_sequence_path(1)
+	event.set_object_sequence_path_frames(1, 120)
+	event.add_object_sequence_path_point(1, 47.24, 7.54, 600.38)
+	event.add_object_sequence_path_point(1, 49.86, 2.84, 624.2)
+	event.add_object_sequence_path_point(1, 51.55, -2.15, 651.95)
+	event.add_object_sequence_path_point(1, 52.91, -6.17, 674.31)
+	event.add_object_sequence_path_point(1, 55.85, -12.79, 722.8)
+	event.start_object_sequence_path(1)
 	helper_888ab2a3(60)
 end
 
 --- Helper function.
 local function helper_2f73c()
 	local active_chr_no: s32 = 0
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no == 0 then
-		event.CharaActive(1, global0)
-		event.CharaActive(0, global1)
-		event.DelExtMotion(global0)
-		event.DelExtMotion(global1)
-		event.DeleteChara(global1)
-		event.DeleteChara(36)
-		event.DeleteChara(37)
+		event.set_character_active(1, global0)
+		event.set_character_active(0, global1)
+		event.delete_character_extension_packs(global0)
+		event.delete_character_extension_packs(global1)
+		event.delete_character(global1)
+		event.delete_character(36)
+		event.delete_character(37)
 	end
 	if active_chr_no == 1 then
-		event.CharaActive(1, global1)
-		event.CharaActive(0, global0)
-		event.DelExtMotion(global0)
-		event.DelExtMotion(global1)
-		event.DeleteChara(global0)
-		event.DeleteChara(36)
-		event.DeleteChara(37)
+		event.set_character_active(1, global1)
+		event.set_character_active(0, global0)
+		event.delete_character_extension_packs(global0)
+		event.delete_character_extension_packs(global1)
+		event.delete_character(global0)
+		event.delete_character(36)
+		event.delete_character(37)
 	end
-	event.SetMpcharaMotion("jyuraku", "jyuraku", "瞬き")
-	event.DeleteChara(36)
-	event.DeleteChara(38)
-	event.DeleteChara(39)
-	event.DeleteChara(40)
+	event.set_map_piece_character_motion("jyuraku", "jyuraku", "瞬き")
+	event.delete_character(36)
+	event.delete_character(38)
+	event.delete_character(39)
+	event.delete_character(40)
 end
 
 --- Helper function.
 local function helper_30b18()
 	vm.section(function()
-		event.SetFlag(285, 1)
-		event.Initialize()
-		event.SetMesWindowMode(0, 7)
-		event.LoadSound(2517)
-		global8 = event.SndLoadSound_2(2517) or global8
-		global9 = event.SndLoadSound_3(8, "snd2/sp/sp_006.sound.json") or global9
+		event.set_save_flag(285, 1)
+		event.initialize_event()
+		event.set_message_window_mode(0, 7)
+		event.load_map_sounds(2517)
+		global8 = event.load_sound_effect_file_2(2517) or global8
+		global9 = event.load_sound_effect_file_3(8, "snd2/sp/sp_006.sound.json") or global9
 		helper_2fb48()
-		event.InitDramaScene()
-		event.EohSetFootSoundId(0, 1)
-		event.EohSetFootSoundId(1, 1)
-		event.CharaActive(1, global0)
-		event.CharaActive(1, global1)
-		event.SetCharaPos(38, -96.86, 52.75, 388.46)
-		event.SetCharaRot(38, 0.0, 0.0, 0.0)
-		event.SetCharaPos(39, 37.43, 34.75, 561.52)
-		event.SetCharaRot(39, 0.0, 0.0, 0.0)
-		event.CmrsSetPos(111.21, 97.1, 1515.22)
-		event.CmrsSetRef(-186.27, 94.23, 1323.31)
-		event.ObjsSetPos(0, 13.4, 6.52, 613.7)
-		event.ObjsSetRot(0, 0.0, -2.92, 0.0)
-		event.ObjsSetPos(1, 47.24, 7.54, 600.38)
-		event.ObjsSetRot(1, 0.0, -2.2, 0.0)
+		event.enable_drama_skip()
+		event.set_object_handle_footstep_sound(0, 1)
+		event.set_object_handle_footstep_sound(1, 1)
+		event.set_character_active(1, global0)
+		event.set_character_active(1, global1)
+		event.set_character_position(38, -96.86, 52.75, 388.46)
+		event.set_character_rotation(38, 0.0, 0.0, 0.0)
+		event.set_character_position(39, 37.43, 34.75, 561.52)
+		event.set_character_rotation(39, 0.0, 0.0, 0.0)
+		event.set_camera_sequence_position(111.21, 97.1, 1515.22)
+		event.set_camera_sequence_look_at(-186.27, 94.23, 1323.31)
+		event.set_object_sequence_position(0, 13.4, 6.52, 613.7)
+		event.set_object_sequence_rotation(0, 0.0, -2.92, 0.0)
+		event.set_object_sequence_position(1, 47.24, 7.54, 600.38)
+		event.set_object_sequence_rotation(1, 0.0, -2.2, 0.0)
 		helper_2dfec()
-		event.CmrsSetPos(46.15, 36.68, 848.41)
-		event.CmrsSetRef(38.64, 44.8, 724.85)
+		event.set_camera_sequence_position(46.15, 36.68, 848.41)
+		event.set_camera_sequence_look_at(38.64, 44.8, 724.85)
 		helper_2e1d4()
-		event.CmrsSetPos(3.9, 53.24, 586.95)
-		event.CmrsSetRef(8.68, 32.62, 613.94)
+		event.set_camera_sequence_position(3.9, 53.24, 586.95)
+		event.set_camera_sequence_look_at(8.68, 32.62, 613.94)
 		helper_2ebf4()
-		event.CmrsSetPos(46.15, 36.68, 848.41)
-		event.CmrsSetRef(38.64, 44.8, 724.85)
+		event.set_camera_sequence_position(46.15, 36.68, 848.41)
+		event.set_camera_sequence_look_at(38.64, 44.8, 724.85)
 		helper_2efdc()
 	end)
-	event.CancelDramaScene()
-	event.SndSeStop(global8, 0)
-	event.SetWind(-1)
-	event.EohSetFootSoundId(0, 0)
-	event.EohSetFootSoundId(1, 0)
+	event.cancel_drama_scene_skip()
+	event.stop_sound_effect(global8, 0)
+	event.set_wind(-1)
+	event.set_object_handle_footstep_sound(0, 0)
+	event.set_object_handle_footstep_sound(1, 0)
 	helper_2f73c()
-	event.ResetCamera(0)
-	event.SetFadeIn(30)
+	event.reset_follow_camera(0)
+	event.fade_in_screen(30)
 end
 
 --- Helper function.
 local function helper_2658c()
 	local active_chr_no: s32 = 0
-	event.SetMesWindowMode(0, 7)
-	event.AssignStack(5)
-	event.ClearStack(5)
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	event.set_message_window_mode(0, 7)
+	event.assign_memory_stack(5)
+	event.clear_memory_stack(5)
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no == 0 then
 		global0 = 0
 		global1 = 32
-		event.LoadMotion(5, "event/basic_evmot/mints_set.gltf", "info", global0)
-		event.LoadMotion(5, "event/e200/e277/e277_mints.gltf", "info", global0)
-		event.EohSyncChara(0, global0)
-		event.ObjsInit(0)
-		event.ObjsSyncObj(0, 0)
-		event.CharaActive(0, global0)
-		event.LoadChara(5, "chara/c02_base.gltf", "info", global1)
-		event.LoadEquip(5, 1, 4, "info", global1)
-		event.LoadEquip(5, 1, 3, "info", global1)
-		event.LoadEquip(5, 1, 2, "info", global1, 37)
-		event.LoadMotion(5, "event/basic_evmot/monica_set.gltf", "info", global1)
-		event.LoadMotion(5, "event/e200/e277/e277_monica.gltf", "info", global1)
-		event.EohSyncChara(1, global1)
-		event.ObjsInit(1)
-		event.ObjsSyncObj(1, 1)
-		event.CharaActive(0, global1)
-		event.CharaActive(1, 37)
+		event.load_character_motion_pack(5, "event/basic_evmot/mints_set.gltf", "info", global0)
+		event.load_character_motion_pack(5, "event/e200/e277/e277_mints.gltf", "info", global0)
+		event.attach_object_handle_to_character(0, global0)
+		event.clear_object_sequence(0)
+		event.set_object_sequence_object(0, 0)
+		event.set_character_active(0, global0)
+		event.load_character(5, "chara/c02_base.gltf", "info", global1)
+		event.load_equipment_model(5, 1, 4, "info", global1)
+		event.load_equipment_model(5, 1, 3, "info", global1)
+		event.load_equipment_model(5, 1, 2, "info", global1, 37)
+		event.load_character_motion_pack(5, "event/basic_evmot/monica_set.gltf", "info", global1)
+		event.load_character_motion_pack(5, "event/e200/e277/e277_monica.gltf", "info", global1)
+		event.attach_object_handle_to_character(1, global1)
+		event.clear_object_sequence(1)
+		event.set_object_sequence_object(1, 1)
+		event.set_character_active(0, global1)
+		event.set_character_active(1, 37)
 	end
 	if active_chr_no == 1 then
 		global0 = 32
 		global1 = 0
-		event.LoadChara(5, "chara/c01_base.gltf", "info", global0)
-		event.LoadEquip(5, 0, 4, "info", global0)
-		event.LoadEquip(5, 0, 3, "info", global0)
-		event.LoadEquip(5, 0, 2, "info", global0, 37)
-		event.LoadMotion(5, "event/basic_evmot/mints_set.gltf", "info", global0)
-		event.LoadMotion(5, "event/e200/e277/e277_mints.gltf", "info", global0)
-		event.EohSyncChara(0, global0)
-		event.ObjsInit(0)
-		event.ObjsSyncObj(0, 0)
-		event.CharaActive(0, global0)
-		event.CharaActive(1, 37)
-		event.LoadMotion(5, "event/basic_evmot/monica_set.gltf", "info", global1)
-		event.LoadMotion(5, "event/e200/e277/e277_monica.gltf", "info", global1)
-		event.EohSyncChara(1, global1)
-		event.ObjsInit(1)
-		event.ObjsSyncObj(1, 1)
-		event.CharaActive(0, global1)
+		event.load_character(5, "chara/c01_base.gltf", "info", global0)
+		event.load_equipment_model(5, 0, 4, "info", global0)
+		event.load_equipment_model(5, 0, 3, "info", global0)
+		event.load_equipment_model(5, 0, 2, "info", global0, 37)
+		event.load_character_motion_pack(5, "event/basic_evmot/mints_set.gltf", "info", global0)
+		event.load_character_motion_pack(5, "event/e200/e277/e277_mints.gltf", "info", global0)
+		event.attach_object_handle_to_character(0, global0)
+		event.clear_object_sequence(0)
+		event.set_object_sequence_object(0, 0)
+		event.set_character_active(0, global0)
+		event.set_character_active(1, 37)
+		event.load_character_motion_pack(5, "event/basic_evmot/monica_set.gltf", "info", global1)
+		event.load_character_motion_pack(5, "event/e200/e277/e277_monica.gltf", "info", global1)
+		event.attach_object_handle_to_character(1, global1)
+		event.clear_object_sequence(1)
+		event.set_object_sequence_object(1, 1)
+		event.set_character_active(0, global1)
 	end
-	event.LoadChara(5, "event/e200/e277/e277_hima_b.gltf", "info", 35)
-	event.CharaActive(0, 35)
-	event.EohSyncChara(2, 35)
-	event.ObjsInit(2, 35)
-	event.ObjsSyncObj(2, 2)
-	event.LoadMes(0, 5, "event/e200/e277/e277.txt")
+	event.load_character(5, "event/e200/e277/e277_hima_b.gltf", "info", 35)
+	event.set_character_active(0, 35)
+	event.attach_object_handle_to_character(2, 35)
+	event.clear_object_sequence(2, 35)
+	event.set_object_sequence_object(2, 2)
+	event.load_message_file(0, 5, "event/e200/e277/e277.txt")
 end
 
 --- Helper function.
@@ -2276,24 +2276,24 @@ end
 --- Helper function.
 local function helper_26290()
 	local active_chr_no: s32 = 0
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no == 0 then
-		event.CharaActive(1, global0)
-		event.CharaActive(0, global1)
-		event.DelExtMotion(global0)
-		event.DelExtMotion(global1)
-		event.DeleteChara(global1)
-		event.DeleteChara(37)
+		event.set_character_active(1, global0)
+		event.set_character_active(0, global1)
+		event.delete_character_extension_packs(global0)
+		event.delete_character_extension_packs(global1)
+		event.delete_character(global1)
+		event.delete_character(37)
 	end
 	if active_chr_no == 1 then
-		event.CharaActive(1, global1)
-		event.CharaActive(0, global0)
-		event.DelExtMotion(global0)
-		event.DelExtMotion(global1)
-		event.DeleteChara(global0)
-		event.DeleteChara(37)
+		event.set_character_active(1, global1)
+		event.set_character_active(0, global0)
+		event.delete_character_extension_packs(global0)
+		event.delete_character_extension_packs(global1)
+		event.delete_character(global0)
+		event.delete_character(37)
 	end
-	event.DeleteChara(35)
+	event.delete_character(35)
 end
 
 --- Helper function.
@@ -2301,124 +2301,124 @@ local function helper_27310()
 	local var4: s32 = 0
 	local at: number = 0
 	vm.section(function()
-		event.SetFlag(277, 1)
-		event.Initialize()
-		event.SetMesWindowMode(0, 7)
-		event.SetFadeOut(30)
+		event.set_save_flag(277, 1)
+		event.initialize_event()
+		event.set_message_window_mode(0, 7)
+		event.fade_out_screen(30)
 		at = 1
 		helper_888ab2a3(45)
-		event.LoadSound(2509)
-		var4 = event.SndLoadSound_2(2509) or var4
+		event.load_map_sounds(2509)
+		var4 = event.load_sound_effect_file_2(2509) or var4
 		helper_2658c()
-		event.InitDramaScene()
-		event.EohSetFootSoundId(0, 1)
-		event.EohSetFootSoundId(1, 1)
-		event.ObjsTexAnime(0, 0)
-		event.ObjsTexAnime(0, 1, "デフォルト顔")
-		event.ObjsTexAnime(0, 1, "通常目パチ")
-		event.ObjsTexAnime(1, 0)
-		event.ObjsTexAnime(1, 1, "デフォルト顔")
-		event.ObjsTexAnime(1, 1, "通常目パチ")
-		event.CharaActive(1, global0)
-		event.CharaActive(1, global1)
-		event.CmrsSetPos(-117.43, 40.09, 1220.9)
-		event.CmrsSetRef(-24.54, 60.52, 1410.11)
-		event.SetCharaPos(0, -297.56, 0.0, -373.68)
-		event.SetCharaRot(0, 0.0, 2.57, 0.0)
-		event.ObjsSetPos(0, -130.99, 21.7, 1253.92)
-		event.ObjsSetRot(0, 0.0, 0.77, 0.0)
-		event.ObjsSetPos(1, -113.36, 16.04, 1218.2)
-		event.ObjsSetRot(1, 0.0, 0.17, 0.0)
-		event.SetFadeIn(30)
-		event.ObjsSetMotion(0, "歩き")
-		event.ObjsSetMotion(1, "歩き")
+		event.enable_drama_skip()
+		event.set_object_handle_footstep_sound(0, 1)
+		event.set_object_handle_footstep_sound(1, 1)
+		event.set_object_sequence_texture_animation(0, 0)
+		event.set_object_sequence_texture_animation(0, 1, "デフォルト顔")
+		event.set_object_sequence_texture_animation(0, 1, "通常目パチ")
+		event.set_object_sequence_texture_animation(1, 0)
+		event.set_object_sequence_texture_animation(1, 1, "デフォルト顔")
+		event.set_object_sequence_texture_animation(1, 1, "通常目パチ")
+		event.set_character_active(1, global0)
+		event.set_character_active(1, global1)
+		event.set_camera_sequence_position(-117.43, 40.09, 1220.9)
+		event.set_camera_sequence_look_at(-24.54, 60.52, 1410.11)
+		event.set_character_position(0, -297.56, 0.0, -373.68)
+		event.set_character_rotation(0, 0.0, 2.57, 0.0)
+		event.set_object_sequence_position(0, -130.99, 21.7, 1253.92)
+		event.set_object_sequence_rotation(0, 0.0, 0.77, 0.0)
+		event.set_object_sequence_position(1, -113.36, 16.04, 1218.2)
+		event.set_object_sequence_rotation(1, 0.0, 0.17, 0.0)
+		event.fade_in_screen(30)
+		event.set_object_sequence_motion(0, "歩き")
+		event.set_object_sequence_motion(1, "歩き")
 		at = 2
 		helper_888ab2a3(15)
-		event.ObjsMove(0, -76.57, 22.37, 1326.65, 90, 1)
-		event.ObjsMove(1, -99.28, 16.04, 1239.49, 30, 1)
+		event.move_object_sequence(0, -76.57, 22.37, 1326.65, 90, 1)
+		event.move_object_sequence(1, -99.28, 16.04, 1239.49, 30, 1)
 		at = 3
 		wait_objects(1)
-		event.ObjsSetMotion(1, "立ち")
+		event.set_object_sequence_motion(1, "立ち")
 		at = 4
 		helper_0382f327(2770010, -1)
-		event.ObjsInit(0)
-		event.ObjsSyncObj(0, 0)
-		event.ObjsRotation(0, 0.0, -2.87, 0.0, 20)
+		event.clear_object_sequence(0)
+		event.set_object_sequence_object(0, 0)
+		event.rotate_object_sequence(0, 0.0, -2.87, 0.0, 20)
 		at = 5
 		wait_objects(0)
-		event.ObjsSetMotion(0, "立ち")
+		event.set_object_sequence_motion(0, "立ち")
 		at = 6
 		helper_0382f327(2770020, 60)
-		event.CmrsSetPos(-88.03, 39.16, 1280.67)
-		event.CmrsSetRef(-98.45, 39.74, 1240.52)
-		event.SetReference(global1, "item", 35)
-		event.CharaActive(1, 35)
-		event.SndSePlay(var4, 0)
-		event.ObjsSetMotion(1, "バッチ持ち立ち", 4)
+		event.set_camera_sequence_position(-88.03, 39.16, 1280.67)
+		event.set_camera_sequence_look_at(-98.45, 39.74, 1240.52)
+		event.attach_character_to_frame(global1, "item", 35)
+		event.set_character_active(1, 35)
+		event.play_sound_effect(var4, 0)
+		event.set_object_sequence_motion(1, "バッチ持ち立ち", 4)
 		at = 7
 		helper_888ab2a3(15)
-		event.ObjsSetMotion(1, "バッチ持ち会話", 2)
-		event.ObjsNextMotion(1, "バッチ持ち立ち", 4)
-		event.SetPakuAnim(1, "通常口パク")
+		event.set_object_sequence_motion(1, "バッチ持ち会話", 2)
+		event.queue_object_sequence_next_motion(1, "バッチ持ち立ち", 4)
+		event.set_mouth_texture_animations(1, "通常口パク")
 		at = 8
 		helper_4116e6bb(2770030)
-		event.ResetPakuAnim()
+		event.reset_mouth_texture_animations()
 		at = 9
 		wait_objects(1)
-		event.ObjsSetMotion(1, "バッチ持ち会話", 2)
-		event.ObjsNextMotion(1, "バッチ持ち立ち", 4)
-		event.SetPakuAnim(1, "通常口パク")
+		event.set_object_sequence_motion(1, "バッチ持ち会話", 2)
+		event.queue_object_sequence_next_motion(1, "バッチ持ち立ち", 4)
+		event.set_mouth_texture_animations(1, "通常口パク")
 		at = 10
 		helper_4116e6bb(2770040)
-		event.ResetPakuAnim()
+		event.reset_mouth_texture_animations()
 		at = 11
 		wait_objects(1)
-		event.ObjsSetMotion(1, "バッチ持ち会話", 2)
-		event.ObjsNextMotion(1, "バッチ持ち立ち", 4)
-		event.SetPakuAnim(1, "通常口パク")
+		event.set_object_sequence_motion(1, "バッチ持ち会話", 2)
+		event.queue_object_sequence_next_motion(1, "バッチ持ち立ち", 4)
+		event.set_mouth_texture_animations(1, "通常口パク")
 		at = 12
 		helper_4116e6bb(2770050)
-		event.ResetPakuAnim()
+		event.reset_mouth_texture_animations()
 		at = 13
 		wait_objects(1)
-		event.ObjsSetMotion(1, "バッチ持ち立ち")
+		event.set_object_sequence_motion(1, "バッチ持ち立ち")
 		at = 14
 		helper_888ab2a3(30)
-		event.CharaActive(0, 35)
-		event.DelReference(35)
-		event.CmrsSetPos(-117.43, 40.09, 1220.9)
-		event.CmrsSetRef(-24.54, 60.52, 1410.11)
-		event.ObjsSetMotion(0, "やったね", 6)
-		event.ObjsNextMotion(0, "立ち", 4)
-		event.SetPakuAnim(0, "わらい口パク")
+		event.set_character_active(0, 35)
+		event.detach_character_from_frame(35)
+		event.set_camera_sequence_position(-117.43, 40.09, 1220.9)
+		event.set_camera_sequence_look_at(-24.54, 60.52, 1410.11)
+		event.set_object_sequence_motion(0, "やったね", 6)
+		event.queue_object_sequence_next_motion(0, "立ち", 4)
+		event.set_mouth_texture_animations(0, "わらい口パク")
 		at = 15
 		helper_4116e6bb(2770060)
-		event.ResetPakuAnim()
+		event.reset_mouth_texture_animations()
 		at = 16
 		wait_objects(0)
-		event.ObjsSetMotion(0, "会話", 2)
-		event.ObjsNextMotion(0, "立ち", 4)
-		event.SetPakuAnim(0, "わらい口パク")
+		event.set_object_sequence_motion(0, "会話", 2)
+		event.queue_object_sequence_next_motion(0, "立ち", 4)
+		event.set_mouth_texture_animations(0, "わらい口パク")
 		at = 17
 		helper_4116e6bb(2770065)
-		event.ResetPakuAnim()
+		event.reset_mouth_texture_animations()
 		at = 18
 		wait_objects(0)
 		at = 19
 		helper_0382f327(2770070, -1)
-		event.ObjsSetMotion(1, "歩き")
-		event.ObjsMove(1, -60.53, 20.6, 1300.47, 60, 1)
-		event.CmrsMove(-133.69, 30.07, 1231.38, -2.07, 60.52, 1392.67, 150)
-		event.ObjsSetMotion(0, "モニカ見立うなづき", 6)
-		event.ObjsNextMotion(0, "立ち", 4)
+		event.set_object_sequence_motion(1, "歩き")
+		event.move_object_sequence(1, -60.53, 20.6, 1300.47, 60, 1)
+		event.move_camera_sequence(-133.69, 30.07, 1231.38, -2.07, 60.52, 1392.67, 150)
+		event.set_object_sequence_motion(0, "モニカ見立うなづき", 6)
+		event.queue_object_sequence_next_motion(0, "立ち", 4)
 		at = 20
 		helper_0382f327(2770080, -1)
-		event.ObjsSetMotion(0, "歩き")
-		event.ObjsRotation(0, 0.0, 0.89, 0.0, 30)
+		event.set_object_sequence_motion(0, "歩き")
+		event.rotate_object_sequence(0, 0.0, 0.89, 0.0, 30)
 		at = 21
 		wait_objects(0)
-		event.ObjsMove(0, -42.89, 22.37, 1361.14, 60, 1)
-		event.ObjsMove(1, -28.2, 20.64, 1346.17, 60, 1)
+		event.move_object_sequence(0, -42.89, 22.37, 1361.14, 60, 1)
+		event.move_object_sequence(1, -28.2, 20.64, 1346.17, 60, 1)
 		at = 22
 		helper_888ab2a3(30)
 	end, function(received: { any }): boolean
@@ -2488,15 +2488,15 @@ local function helper_27310()
 		end
 		return true
 	end)
-	event.CancelDramaScene()
-	event.SetFadeOut(30)
+	event.cancel_drama_scene_skip()
+	event.fade_out_screen(30)
 	at = 23
 	helper_888ab2a3(30)
-	event.EohSetFootSoundId(0, 0)
-	event.EohSetFootSoundId(1, 0)
+	event.set_object_handle_footstep_sound(0, 0)
+	event.set_object_handle_footstep_sound(1, 0)
 	helper_26290()
-	event.ResetCamera(0)
-	event.SetFadeIn(30)
+	event.reset_follow_camera(0)
+	event.fade_in_screen(30)
 end
 
 --- Helper function.
@@ -2520,32 +2520,32 @@ local function helper_107e0()
 	local var17: f32 = 0
 	local var19: f32 = 0
 	local var20: f32 = 0
-	player_chara = event.GetControlChrid() or player_chara
-	var1 = event.GetEventData_2(13) or var1
-	var2 = event.GetEventData_2(14) or var2
+	player_chara = event.get_player_character_slot() or player_chara
+	var1 = event.get_triggered_event_data_2(13) or var1
+	var2 = event.get_triggered_event_data_2(14) or var2
 	print("talk_chara_id=", var1, "talk_chara=", var2, "\n")
-	event.CtrlcStay()
-	event.SetAi(0, var1)
-	event.SetMesShippo(0, 1)
-	event.SetMesPreset(0, 0)
-	event.MesMake_2(0, "こんにちは。\nいい天気だね。")
+	event.stop_camera_control_movement()
+	event.set_villager_ai_enabled(0, var1)
+	event.set_message_bubble_tail(0, 1)
+	event.apply_message_window_preset(0, 0)
+	event.open_message_window_2(0, "こんにちは。\nいい天気だね。")
 	var3 = 0
 	if var2 == 100 then
-		var4 = event.GetAnalyze(103) or var4
+		var4 = event.get_georama_analysis_flag(103) or var4
 		if var4 == 0 then
-			event.MesMake_2(
+			event.open_message_window_2(
 				0,
 				"なんだかさぁ、最近さびしいんだよね。\nなんか、大きなものが足りないような\n気がするんだ。なんだろ・・・"
 			)
 		else
-			flag = event.GetFlag(280) or flag
+			flag = event.get_save_flag(280) or flag
 			if flag == 0 then
-				event.MesMake_2(
+				event.open_message_window_2(
 					0,
 					"ジュラクさまが復活したよ！\nそれにしても、今まで、ジュラクさまのことを\n忘れてしまってたなんて、どうしてなんだろう。"
 				)
 			else
-				event.MesMake_2(
+				event.open_message_window_2(
 					0,
 					"この森も元どおりになってよかった。\nジュラクさまの機嫌もいいし、言うことなしだ。"
 				)
@@ -2553,93 +2553,93 @@ local function helper_107e0()
 		end
 	end
 	if var2 == 101 then
-		flag_2 = event.GetFlag(280) or flag_2
+		flag_2 = event.get_save_flag(280) or flag_2
 		if flag_2 == 0 then
-			event.MesMake_2(
+			event.open_message_window_2(
 				0,
 				"やあ、なかなかいいのが揃ってるよ。\nジュラクさまの復活記念で特別にサービス\nしとくから、買っていってくれ。"
 			)
 		else
-			event.MesMake_2(
+			event.open_message_window_2(
 				0,
 				"おかげさまで、すっかりジュラクさまやこの森も\n元どおりだ。ありがとな。\nまた、武器が必要になったらいつでも来てくれよ。"
 			)
 		end
 	end
 	if var2 == 104 then
-		flag_3 = event.GetFlag(280) or flag_3
+		flag_3 = event.get_save_flag(280) or flag_3
 		if flag_3 == 0 then
-			event.MesMake_2(
+			event.open_message_window_2(
 				0,
 				"うむむ・・・グリフォンのやつにしてやられた。\nまさか、消されてしまっていたとは・・・"
 			)
 		else
-			event.MesMake_2(
+			event.open_message_window_2(
 				0,
 				"ジュラクさまも、復活されたことだし、いよいよ\nグリフォン大帝に反撃するときだ。\nみんなが力を合わせれば、きっと勝てるはずさ。"
 			)
 		end
 	end
 	if var2 == 102 then
-		flag_4 = event.GetFlag(280) or flag_4
+		flag_4 = event.get_save_flag(280) or flag_4
 		if flag_4 == 0 then
-			var9 = event.GetSavedataEtc(1, 52) or var9
+			var9 = event.get_save_data_value(1, 52) or var9
 			if var9 == 0 then
-				event.MesMake_2(
+				event.open_message_window_2(
 					0,
 					"モンスターへんげバッジ入荷しましたよ～。\nめったに手に入らないものだから、\n売り切れないうちに買っておいてね。"
 				)
 			else
-				event.MesMake_2(
+				event.open_message_window_2(
 					0,
 					"あぶなかったね。そのモンスターへんげバッジ\n最後の一個だったの。一度売り切れたら、今度\nいつ入荷できるかわからないのよね～。"
 				)
 			end
 		else
-			event.MesMake_2(
+			event.open_message_window_2(
 				0,
 				"モンスターへんげバッジは使ってる？\nあれね、他にも違う種類がたくさんあるんだよ。"
 			)
 			helper_31bbf01d(player_chara, var1, 0)
 			helper_0ffc2526(0, -1, var1, player_chara, 0)
 			var3 = 1
-			event.MesMake_2(
+			event.open_message_window_2(
 				0,
 				"モンスターが欲しがってるものを３個セットで\nプレゼントすると上機嫌になって、倒したとき、\nバッジを落とす場合があるの。やってみて！<page>それには、もちろんウチで売ってる\nギフトカプセルが必要だったりするんだけどね。\nうふ！ささ、買った買った！"
 			)
 		end
 	end
 	if var2 == 103 then
-		flag_5 = event.GetFlag(280) or flag_5
+		flag_5 = event.get_save_flag(280) or flag_5
 		if flag_5 == 0 then
-			event.MesMake_2(
+			event.open_message_window_2(
 				0,
 				"ハーイ！ちゃんと食べてる？\n食べないと大きくなれないんだから。\nいい、ちゃんと食べるのよ。"
 			)
 		else
-			event.MesMake_2(
+			event.open_message_window_2(
 				0,
 				"ジュラクさまの機嫌もいいし、お店も\n繁盛してるし、最近いいことばっかだわ。"
 			)
 		end
 	end
 	if var2 == 105 then
-		flag_6 = event.GetFlag(640) or flag_6
+		flag_6 = event.get_save_flag(640) or flag_6
 		if flag_6 == 0 then
-			flag_7 = event.GetFlag(280) or flag_7
+			flag_7 = event.get_save_flag(280) or flag_7
 			if flag_7 == 0 then
-				event.MesMake_2(
+				event.open_message_window_2(
 					0,
 					"私、今までどうしてたのかなぁ？\nう～ん、よく思い出せないの。<page>あれ？よく見ると、めずらしい\nかっこうしてるね。"
 				)
 			else
-				event.MesMake_2(
+				event.open_message_window_2(
 					0,
 					"いよいよ新たなる地に旅立たれるのですね。\nがんばってください。"
 				)
 			end
 		else
-			event.MesMake_2(
+			event.open_message_window_2(
 				0,
 				"きっと、グリフォン大帝を倒して\nこの闇の歴史を元に戻してください。\nお願いします！！"
 			)
@@ -2650,31 +2650,31 @@ local function helper_107e0()
 	end
 	if var3 == 1 then
 		helper_0ffc2526(0, -1, var1, player_chara, 0)
-		event.SetMotion(var1, "立ち")
-		event.Finish()
+		event.set_character_motion(var1, "立ち")
+		event.finish_event()
 	end
 	if var3 == 2 then
-		event.SetCameraPos(1.39, 51.09, 278.55)
-		event.SetCameraRef(-54.8, 23.29, 223.57)
-		player_chara_2 = event.GetControlChrid() or player_chara_2
+		event.set_camera_position(1.39, 51.09, 278.55)
+		event.set_camera_look_at(-54.8, 23.29, 223.57)
+		player_chara_2 = event.get_player_character_slot() or player_chara_2
 		do
-			local out1, _, out3 = event.GetCharaPos(player_chara_2)
+			local out1, _, out3 = event.get_character_position(player_chara_2)
 			var14 = out1 or var14
 			var16 = out3 or var16
 		end
 		do
-			local out1, _, out3 = event.GetCharaPos(var1)
+			local out1, _, out3 = event.get_character_position(var1)
 			var17 = out1 or var17
 			var19 = out3 or var19
 		end
-		var20 = event.GetRotLookPos(var17 - var14, var19 - var16) or var20
+		var20 = event.get_look_angle(var17 - var14, var19 - var16) or var20
 		helper_76f23193(player_chara_2, var20)
-		event.SetCharaRot(player_chara_2, 0.0, var20, 0.0)
-		event.SetMotion(player_chara_2, "立ち")
+		event.set_character_rotation(player_chara_2, 0.0, var20, 0.0)
+		event.set_character_motion(player_chara_2, "立ち")
 		helper_0ffc2526(0, -1, var1, player_chara_2, 0)
-		event.ResetCamera(1, 3.1415927)
+		event.reset_follow_camera(1, 3.1415927)
 	end
-	event.SetAi(1, var1)
+	event.set_villager_ai_enabled(1, var1)
 	if var2 == 101 then
 		helper_eac5726b(25)
 	end
@@ -2700,80 +2700,80 @@ function script.default_event()
 	local argc: s32 = 0
 	local argc_2: s32 = 0
 	event_99()
-	old_map_no = event.GetOldMapNo() or old_map_no
+	old_map_no = event.get_previous_map() or old_map_no
 	if old_map_no == 0 then
-		event.SetCameraPos(39.03, 111.84, 77.64)
-		event.SetCameraRef(36.78, 22.33, 74.62)
-		event.SetFadeOut(0, 255, 255, 255)
+		event.set_camera_position(39.03, 111.84, 77.64)
+		event.set_camera_look_at(36.78, 22.33, 74.62)
+		event.fade_out_screen(0, 255, 255, 255)
 		vm.wait(1)
-		event.SetCameraPos(102.4, 73.47, 1368.2)
-		event.SetCameraRef(102.4, 53.47, 1488.2)
-		event.SetCharaPos(0, 110.0, 23.7, 1533.0)
-		event.SetCharaRot(0, 0.0, -3.1415927, 0.0)
-		event.ResetCamera(1, 3.14, 2.0)
+		event.set_camera_position(102.4, 73.47, 1368.2)
+		event.set_camera_look_at(102.4, 53.47, 1488.2)
+		event.set_character_position(0, 110.0, 23.7, 1533.0)
+		event.set_character_rotation(0, 0.0, -3.1415927, 0.0)
+		event.reset_follow_camera(1, 3.14, 2.0)
 	end
-	event.SetFadeIn(30)
-	event.GetFlag(250)
-	event.GetFlag(260)
-	event.GetFlag(270)
-	event.GetFlag(272)
-	event.GetFlag(275)
-	event.GetFlag(280)
-	event.GetFlag(285)
-	var8 = event.GetAnalyze(103) or var8
-	event.GetAnalyze(104)
-	event.GetDioramaPercent(0)
+	event.fade_in_screen(30)
+	event.get_save_flag(250)
+	event.get_save_flag(260)
+	event.get_save_flag(270)
+	event.get_save_flag(272)
+	event.get_save_flag(275)
+	event.get_save_flag(280)
+	event.get_save_flag(285)
+	var8 = event.get_georama_analysis_flag(103) or var8
+	event.get_georama_analysis_flag(104)
+	event.get_georama_analysis_percent(0)
 	if var8 == 0 then
 		return
 	end
 	if helper_e538a72d() ~= 0 then
-		event.SetFadeOut(30)
-		event.SetFlag(270, 1)
+		event.fade_out_screen(30)
+		event.set_save_flag(270, 1)
 		helper_1cfc4()
-		event.SetCharaPos(0, 169.8, 23.7, 1378.8)
+		event.set_character_position(0, 169.8, 23.7, 1378.8)
 		return
 	end
 	if helper_342a37b0() ~= 0 then
-		event.SetFadeOut(30)
-		event.SetFlag(272, 1)
+		event.fade_out_screen(30)
+		event.set_save_flag(272, 1)
 		helper_21790()
-		event.AddItem(361)
-		event.AddItem(308)
-		argc = event.CheckGetItemLimit() or argc
-		argc_2 = event.CheckItemOver() or argc_2
+		event.add_inventory_item(361)
+		event.add_inventory_item(308)
+		argc = event.get_item_limit_status() or argc
+		argc_2 = event.get_overflow_item_count() or argc_2
 		if argc >= 1 or argc_2 >= 1 then
-			event.SetFadeOut(10)
+			event.fade_out_screen(10)
 			helper_888ab2a3(10)
-			event.GotoMenu(16)
+			event.open_event_menu(16)
 			vm.wait(5)
-			event.SetFadeIn(10)
+			event.fade_in_screen(10)
 		end
 		return
 	end
 	if helper_ee09935e() ~= 0 then
-		event.SetFadeOut(30)
-		event.SetFlag(275, 1)
+		event.fade_out_screen(30)
+		event.set_save_flag(275, 1)
 		helper_66ac1f76()
 		helper_25678()
 		return
 	end
 	if helper_b84429a4() ~= 0 then
-		event.SetFadeOut(30)
-		event.SetFlag(280, 1)
+		event.fade_out_screen(30)
+		event.set_save_flag(280, 1)
 		helper_29a30()
 		return
 	end
 	if helper_c5ea1698() ~= 0 then
-		event.SetFadeOut(30)
-		event.SetFlag(285, 1)
+		event.fade_out_screen(30)
+		event.set_save_flag(285, 1)
 		helper_30b18()
-		event.AddItem(31)
+		event.add_inventory_item(31)
 		helper_d61bc810(1)
 		return
 	end
-	event.SetCharaPos(0, 110.0, 23.7, 1533.0)
-	event.SetCharaRot(0, 0.0, -3.1415927, 0.0)
-	event.ResetCamera(1)
+	event.set_character_position(0, 110.0, 23.7, 1533.0)
+	event.set_character_rotation(0, 0.0, -3.1415927, 0.0)
+	event.reset_follow_camera(1)
 end
 
 --- The event the town walk runs when the square button is pressed, after reloading the map script.
@@ -2782,13 +2782,13 @@ script.key_open = helper_21790
 --- Event 300, which map data, a script or the engine runs by number.
 function script.event_300()
 	helper_6ac55e60(100.0, vm.f32(23.67), 1500.0, 0.0)
-	event.MapJump_2(-1, "g01")
+	event.jump_to_map_2(-1, "g01")
 end
 
 --- Event 400, which map data, a script or the engine runs by number.
 function script.event_400()
-	event.FuncPointShow("", "e277", 0)
-	event.SetFlag(277, 1)
+	event.set_function_point_enabled("", "e277", 0)
+	event.set_save_flag(277, 1)
 	helper_27310()
 end
 
@@ -2808,101 +2808,101 @@ function script.event_401()
 	local flag_5: s32 = 0
 	local argc: s32 = 0
 	do
-		local out1, out2, out3 = event.GetCameraPos()
+		local out1, out2, out3 = event.get_camera_position()
 		pos_x = out1 or pos_x
 		pos_y = out2 or pos_y
 		pos_z = out3 or pos_z
 	end
 	do
-		local out1, out2, out3 = event.GetCameraRef()
+		local out1, out2, out3 = event.get_camera_look_at()
 		pos_x_2 = out1 or pos_x_2
 		pos_y_2 = out2 or pos_y_2
 		pos_z_2 = out3 or pos_z_2
 	end
-	event.SetCameraNextPos(-140.41, 35.58, 1026.08)
-	event.SetCameraNextRef(23.01, 135.7, 535.77)
-	player_chara = event.GetControlChrid() or player_chara
+	event.set_active_camera_next_position(-140.41, 35.58, 1026.08)
+	event.set_active_camera_next_look_at(23.01, 135.7, 535.77)
+	player_chara = event.get_player_character_slot() or player_chara
 	helper_81af0537(player_chara, 0.0, 300.0)
-	event.SetMotion(0, "立ち")
-	event.SetMesPreset(0, 0)
-	flag = event.GetFlag(640) or flag
+	event.set_character_motion(0, "立ち")
+	event.apply_message_window_preset(0, 0)
+	flag = event.get_save_flag(640) or flag
 	if flag == 0 then
-		flag_2 = event.GetFlag(372) or flag_2
+		flag_2 = event.get_save_flag(372) or flag_2
 		if flag_2 == 0 then
-			flag_3 = event.GetFlag(280) or flag_3
+			flag_3 = event.get_save_flag(280) or flag_3
 			if flag_3 == 0 then
-				flag_4 = event.GetFlag(275) or flag_4
+				flag_4 = event.get_save_flag(275) or flag_4
 				if flag_4 == 0 then
-					flag_5 = event.GetFlag(272) or flag_5
+					flag_5 = event.get_save_flag(272) or flag_5
 					if flag_5 == 0 then
-						event.MesMake_2(
+						event.open_message_window_2(
 							0,
 							"モーン、モーン。\n記憶がいまひとつ戻らないのね～\nもう少し時間が必要なのね～"
 						)
 					else
-						event.MesMake_2(
+						event.open_message_window_2(
 							0,
 							"モーン、モーン。\n種はちゃんと植えたのね～？\n芽は出たのね～？<page>せっかくあげたから無駄にしては\nダメなのね～"
 						)
 					end
 				else
-					argc = event.GetItemNum(356) or argc
+					argc = event.get_item_count(356) or argc
 					if argc <= 0 then
-						event.MesMake_2(
+						event.open_message_window_2(
 							0,
 							"太陽のしずくは、森のヒマーラという\nモンスターと話せば手に入るのね～\nバッジを使って、話をするのね～"
 						)
 						show_message(0, -1, 3, 0, 416)
-						event.MesMake_2(
+						event.open_message_window_2(
 							0,
 							"ヒマーラになるためには、ヒマーラバッジを\n手に入れる必要があるのね～<page>ヒマーラバッジは、洋服屋さんで\n売ってることもあるのね～<page>そう言えば、洋服屋さんは、\nワチの鼻の中にもあったのね～"
 						)
 						show_message(0, -1, 3, 0, 416)
-						event.MesMake_2(0, "右の鼻はまだ空いてるのね～\nテナント募集中なのね～")
+						event.open_message_window_2(0, "右の鼻はまだ空いてるのね～\nテナント募集中なのね～")
 					else
-						event.MesMake_2(
+						event.open_message_window_2(
 							0,
 							"太陽のしずく、見つけたみたいなのね～\nあとは、ラフレシアの種を植えたところに\n太陽のしずくをかけるのね～<page>七色蝶に会えるといいのね～\n健闘をいのるのね～"
 						)
 					end
 				end
 			else
-				event.MesMake_2(
+				event.open_message_window_2(
 					0,
 					"くわしいことはてんびん谷の寺院にいる\n大賢者クレストに聞くのね～\nなんでも占ってくれるのね～、心強いのね～"
 				)
 			end
 		else
-			event.MesMake_2(
+			event.open_message_window_2(
 				0,
 				"どうやら、クレストに会えたみたいなのね～\nとりあえず、よかったのね～<page>でも、まだまだ先は長そうなのね～\nがんばるのね～"
 			)
 		end
 	else
-		event.MesMake_2(
+		event.open_message_window_2(
 			0,
 			"ユーたち、いよいよグリフォンと戦うのね～\nでも、ひとつ気になることがあるのね～<page>グリフォンから感じる「気」の中に、優しい気が\n混じってるのね～不思議なのね～"
 		)
 	end
 	show_message(0, -1, 3, 0, 416)
-	event.SetCameraPos(pos_x, pos_y, pos_z)
-	event.SetCameraRef(pos_x_2, pos_y_2, pos_z_2)
-	event.SetCrossfade(10)
+	event.set_camera_position(pos_x, pos_y, pos_z)
+	event.set_camera_look_at(pos_x_2, pos_y_2, pos_z_2)
+	event.start_crossfade(10)
 end
 
 --- Event 402, which map data, a script or the engine runs by number.
 function script.event_402()
 	local flag: s32 = 0
-	event.SetMotion(0, "立ち")
-	flag = event.GetFlag(36) or flag
+	event.set_character_motion(0, "立ち")
+	flag = event.get_save_flag(36) or flag
 	if flag == 0 then
-		event.SetFlag(36, 1)
-		event.AddItem(376)
+		event.set_save_flag(36, 1)
+		event.add_inventory_item(376)
 		helper_f38eabca(376, 1)
 		helper_d61bc810(1)
 	else
 		set_window_mode(0, 1)
-		event.MesMake_2(0, "この卵から、何が\n産まれるのかな？")
+		event.open_message_window_2(0, "この卵から、何が\n産まれるのかな？")
 		show_message(0, -1, 5, 256, 208)
 	end
 end
@@ -2910,7 +2910,7 @@ end
 --- Event 501, which map data, a script or the engine runs by number.
 function script.event_501()
 	helper_30b18()
-	event.SetFadeIn(30)
+	event.fade_in_screen(30)
 end
 
 --- Event 1000, which map data, a script or the engine runs by number.
@@ -2918,129 +2918,129 @@ script.event_1000 = helper_107e0
 
 --- Event 12700, which map data, a script or the engine runs by number.
 function script.event_12700()
-	event.DbgSetAnalyzeFlag(0, 4, 0)
-	event.DbgSetAnalyzeFlag(0, 5, 0)
-	event.DbgSetAnalyzeFlag(0, 6, 0)
-	event.DbgSetAnalyzeFlag(0, 7, 0)
-	event.DbgSetAnalyzeFlag(0, 8, 0)
-	event.DbgSetAnalyzeFlag(0, 9, 0)
-	event.DbgSetAnalyzeFlag(0, 0, 1)
-	event.DbgSetAnalyzeFlag(0, 2, 1)
-	event.DbgSetAnalyzeFlag(0, 3, 1)
-	event.SetFlag(270, 0)
-	event.SetFlag(272, 1)
-	event.SetFlag(275, 1)
-	event.SetFlag(277, 1)
-	event.SetFlag(280, 1)
-	event.SetFlag(285, 1)
-	event.MapJump_3(-1, 25, 100)
+	event.set_georama_analyze_flag(0, 4, 0)
+	event.set_georama_analyze_flag(0, 5, 0)
+	event.set_georama_analyze_flag(0, 6, 0)
+	event.set_georama_analyze_flag(0, 7, 0)
+	event.set_georama_analyze_flag(0, 8, 0)
+	event.set_georama_analyze_flag(0, 9, 0)
+	event.set_georama_analyze_flag(0, 0, 1)
+	event.set_georama_analyze_flag(0, 2, 1)
+	event.set_georama_analyze_flag(0, 3, 1)
+	event.set_save_flag(270, 0)
+	event.set_save_flag(272, 1)
+	event.set_save_flag(275, 1)
+	event.set_save_flag(277, 1)
+	event.set_save_flag(280, 1)
+	event.set_save_flag(285, 1)
+	event.jump_to_map_3(-1, 25, 100)
 	vm.wait(1)
 end
 
 --- Event 12720, which map data, a script or the engine runs by number.
 function script.event_12720()
-	event.DbgSetAnalyzeFlag(0, 4, 0)
-	event.DbgSetAnalyzeFlag(0, 5, 0)
-	event.DbgSetAnalyzeFlag(0, 6, 0)
-	event.DbgSetAnalyzeFlag(0, 7, 0)
-	event.DbgSetAnalyzeFlag(0, 8, 0)
-	event.DbgSetAnalyzeFlag(0, 9, 0)
-	event.DbgSetAnalyzeFlag(0, 0, 1)
-	event.DbgSetAnalyzeFlag(0, 2, 1)
-	event.DbgSetAnalyzeFlag(0, 3, 1)
-	event.SetFlag(270, 1)
-	event.SetFlag(272, 0)
-	event.SetFlag(275, 1)
-	event.SetFlag(277, 1)
-	event.SetFlag(280, 1)
-	event.SetFlag(285, 1)
-	event.MapJump_3(-1, 25, 100)
+	event.set_georama_analyze_flag(0, 4, 0)
+	event.set_georama_analyze_flag(0, 5, 0)
+	event.set_georama_analyze_flag(0, 6, 0)
+	event.set_georama_analyze_flag(0, 7, 0)
+	event.set_georama_analyze_flag(0, 8, 0)
+	event.set_georama_analyze_flag(0, 9, 0)
+	event.set_georama_analyze_flag(0, 0, 1)
+	event.set_georama_analyze_flag(0, 2, 1)
+	event.set_georama_analyze_flag(0, 3, 1)
+	event.set_save_flag(270, 1)
+	event.set_save_flag(272, 0)
+	event.set_save_flag(275, 1)
+	event.set_save_flag(277, 1)
+	event.set_save_flag(280, 1)
+	event.set_save_flag(285, 1)
+	event.jump_to_map_3(-1, 25, 100)
 	vm.wait(1)
 end
 
 --- Event 12750, which map data, a script or the engine runs by number.
 function script.event_12750()
-	event.DbgSetAnalyzeFlag(0, 5, 0)
-	event.DbgSetAnalyzeFlag(0, 6, 0)
-	event.DbgSetAnalyzeFlag(0, 7, 0)
-	event.DbgSetAnalyzeFlag(0, 8, 0)
-	event.DbgSetAnalyzeFlag(0, 9, 0)
-	event.DbgSetAnalyzeFlag(0, 0, 1)
-	event.DbgSetAnalyzeFlag(0, 2, 1)
-	event.DbgSetAnalyzeFlag(0, 3, 1)
-	event.DbgSetAnalyzeFlag(0, 4, 1)
-	event.SetFlag(270, 1)
-	event.SetFlag(272, 1)
-	event.SetFlag(275, 0)
-	event.SetFlag(277, 1)
-	event.SetFlag(280, 1)
-	event.SetFlag(285, 1)
-	event.MapJump_3(-1, 25, 100)
+	event.set_georama_analyze_flag(0, 5, 0)
+	event.set_georama_analyze_flag(0, 6, 0)
+	event.set_georama_analyze_flag(0, 7, 0)
+	event.set_georama_analyze_flag(0, 8, 0)
+	event.set_georama_analyze_flag(0, 9, 0)
+	event.set_georama_analyze_flag(0, 0, 1)
+	event.set_georama_analyze_flag(0, 2, 1)
+	event.set_georama_analyze_flag(0, 3, 1)
+	event.set_georama_analyze_flag(0, 4, 1)
+	event.set_save_flag(270, 1)
+	event.set_save_flag(272, 1)
+	event.set_save_flag(275, 0)
+	event.set_save_flag(277, 1)
+	event.set_save_flag(280, 1)
+	event.set_save_flag(285, 1)
+	event.jump_to_map_3(-1, 25, 100)
 	vm.wait(1)
 end
 
 --- Event 12770, which map data, a script or the engine runs by number.
 function script.event_12770()
-	event.DbgSetAnalyzeFlag(0, 5, 0)
-	event.DbgSetAnalyzeFlag(0, 6, 0)
-	event.DbgSetAnalyzeFlag(0, 7, 0)
-	event.DbgSetAnalyzeFlag(0, 8, 0)
-	event.DbgSetAnalyzeFlag(0, 9, 0)
-	event.DbgSetAnalyzeFlag(0, 0, 1)
-	event.DbgSetAnalyzeFlag(0, 2, 1)
-	event.DbgSetAnalyzeFlag(0, 3, 1)
-	event.DbgSetAnalyzeFlag(0, 4, 1)
-	event.SetFlag(270, 1)
-	event.SetFlag(272, 1)
-	event.SetFlag(275, 1)
-	event.SetFlag(277, 0)
-	event.SetFlag(280, 1)
-	event.SetFlag(285, 1)
-	event.SetSavedataEtc(1, 52, 1)
-	event.MapJump_3(-1, 25, 400)
+	event.set_georama_analyze_flag(0, 5, 0)
+	event.set_georama_analyze_flag(0, 6, 0)
+	event.set_georama_analyze_flag(0, 7, 0)
+	event.set_georama_analyze_flag(0, 8, 0)
+	event.set_georama_analyze_flag(0, 9, 0)
+	event.set_georama_analyze_flag(0, 0, 1)
+	event.set_georama_analyze_flag(0, 2, 1)
+	event.set_georama_analyze_flag(0, 3, 1)
+	event.set_georama_analyze_flag(0, 4, 1)
+	event.set_save_flag(270, 1)
+	event.set_save_flag(272, 1)
+	event.set_save_flag(275, 1)
+	event.set_save_flag(277, 0)
+	event.set_save_flag(280, 1)
+	event.set_save_flag(285, 1)
+	event.set_save_data_value(1, 52, 1)
+	event.jump_to_map_3(-1, 25, 400)
 	vm.wait(1)
 end
 
 --- Event 12800, which map data, a script or the engine runs by number.
 function script.event_12800()
-	event.DbgSetAnalyzeFlag(0, 5, 0)
-	event.DbgSetAnalyzeFlag(0, 6, 0)
-	event.DbgSetAnalyzeFlag(0, 7, 0)
-	event.DbgSetAnalyzeFlag(0, 8, 0)
-	event.DbgSetAnalyzeFlag(0, 9, 0)
-	event.DbgSetAnalyzeFlag(0, 0, 1)
-	event.DbgSetAnalyzeFlag(0, 2, 1)
-	event.DbgSetAnalyzeFlag(0, 3, 1)
-	event.DbgSetAnalyzeFlag(0, 4, 1)
-	event.SetFlag(270, 1)
-	event.SetFlag(272, 1)
-	event.SetFlag(275, 1)
-	event.SetFlag(277, 1)
-	event.SetFlag(280, 0)
-	event.SetFlag(285, 1)
-	event.SetFlag(260, 1)
-	event.MapJump_3(-1, 25, 100)
+	event.set_georama_analyze_flag(0, 5, 0)
+	event.set_georama_analyze_flag(0, 6, 0)
+	event.set_georama_analyze_flag(0, 7, 0)
+	event.set_georama_analyze_flag(0, 8, 0)
+	event.set_georama_analyze_flag(0, 9, 0)
+	event.set_georama_analyze_flag(0, 0, 1)
+	event.set_georama_analyze_flag(0, 2, 1)
+	event.set_georama_analyze_flag(0, 3, 1)
+	event.set_georama_analyze_flag(0, 4, 1)
+	event.set_save_flag(270, 1)
+	event.set_save_flag(272, 1)
+	event.set_save_flag(275, 1)
+	event.set_save_flag(277, 1)
+	event.set_save_flag(280, 0)
+	event.set_save_flag(285, 1)
+	event.set_save_flag(260, 1)
+	event.jump_to_map_3(-1, 25, 100)
 	vm.wait(1)
 end
 
 --- Event 12850, which map data, a script or the engine runs by number.
 function script.event_12850()
-	event.DbgSetAnalyzeFlag(0, 0, 1)
-	event.DbgSetAnalyzeFlag(0, 2, 1)
-	event.DbgSetAnalyzeFlag(0, 3, 1)
-	event.DbgSetAnalyzeFlag(0, 4, 1)
-	event.DbgSetAnalyzeFlag(0, 5, 1)
-	event.DbgSetAnalyzeFlag(0, 6, 1)
-	event.DbgSetAnalyzeFlag(0, 7, 1)
-	event.DbgSetAnalyzeFlag(0, 8, 1)
-	event.DbgSetAnalyzeFlag(0, 9, 1)
-	event.SetFlag(270, 1)
-	event.SetFlag(272, 1)
-	event.SetFlag(275, 1)
-	event.SetFlag(277, 1)
-	event.SetFlag(280, 1)
-	event.SetFlag(285, 0)
-	event.MapJump_3(-1, 25, 100)
+	event.set_georama_analyze_flag(0, 0, 1)
+	event.set_georama_analyze_flag(0, 2, 1)
+	event.set_georama_analyze_flag(0, 3, 1)
+	event.set_georama_analyze_flag(0, 4, 1)
+	event.set_georama_analyze_flag(0, 5, 1)
+	event.set_georama_analyze_flag(0, 6, 1)
+	event.set_georama_analyze_flag(0, 7, 1)
+	event.set_georama_analyze_flag(0, 8, 1)
+	event.set_georama_analyze_flag(0, 9, 1)
+	event.set_save_flag(270, 1)
+	event.set_save_flag(272, 1)
+	event.set_save_flag(275, 1)
+	event.set_save_flag(277, 1)
+	event.set_save_flag(280, 1)
+	event.set_save_flag(285, 0)
+	event.jump_to_map_3(-1, 25, 100)
 	vm.wait(1)
 end
 

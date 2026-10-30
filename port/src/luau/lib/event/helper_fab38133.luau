@@ -11,7 +11,7 @@ local helper_fe3af31d = require("@lib/event/helper_fe3af31d")
 --- Helper function.
 local function helper_fab38133()
 	local var0: s32 = 0
-	var0 = event.GetChapter() or var0
+	var0 = event.get_chapter() or var0
 	if var0 ~= 6 and var0 ~= 7 then
 		helper_ad3cd17a()
 	else

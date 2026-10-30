@@ -22,13 +22,13 @@ local function helper_db9b1437(arg0: s32)
 	local var7: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		var1 = event.GetEventData_2(13) or var1
-		player_chara = event.GetControlChrid() or player_chara
-		now_map_no = event.GetNowMapNo() or now_map_no
-		argc = event.GetItemHaveNum(355) or argc
+		var1 = event.get_triggered_event_data_2(13) or var1
+		player_chara = event.get_player_character_slot() or player_chara
+		now_map_no = event.get_current_map() or now_map_no
+		argc = event.get_owned_item_count(355) or argc
 		if argc <= 0 then
 			set_window_mode(arg0, 1)
-			event.MesMake_2(arg0, "Va me chercher un\nM[UNI00e9]mo de scoops, tu veux bien ?")
+			event.open_message_window_2(arg0, "Va me chercher un\nM[UNI00e9]mo de scoops, tu veux bien ?")
 			if now_map_no == 22 then
 				at = 1
 				helper_0ffc2526(arg0, -1, var1, player_chara, 0)
@@ -39,13 +39,13 @@ local function helper_db9b1437(arg0: s32)
 			return 0
 		end
 		do
-			local out1, out2 = event.GetMenuEtc_3(5)
+			local out1, out2 = event.get_menu_value_3(5)
 			var5 = out1 or var5
 			var6 = out2 or var6
 		end
 		if var5 == var6 then
 			set_window_mode(arg0, 1)
-			event.MesMake_2(arg0, "On dirait qu'il n'y\na plus de scoops.")
+			event.open_message_window_2(arg0, "On dirait qu'il n'y\na plus de scoops.")
 			if now_map_no == 22 then
 				at = 3
 				helper_0ffc2526(arg0, -1, var1, player_chara, 0)
@@ -56,22 +56,22 @@ local function helper_db9b1437(arg0: s32)
 			at = 5
 			return helper_a021aad4(arg0)
 		end
-		var7 = event.GetMenuEtc_2(3) or var7
+		var7 = event.get_menu_value_2(3) or var7
 		if 0 < var7 then
 			set_window_mode(arg0, 8)
-			event.SetMesValue(arg0, 1, var7)
-			event.MesMake_2(arg0, "J'ai trouv[UNI00e9] [Number1] nouveau(x) scoop(s).")
-			event.SetMesDrawspeed(arg0, 0)
+			event.set_message_number(arg0, 1, var7)
+			event.open_message_window_2(arg0, "J'ai trouv[UNI00e9] [Number1] nouveau(x) scoop(s).")
+			event.set_message_draw_speed(arg0, 0)
 			at = 6
 			show_message(arg0, -1, 8, 0, 0)
 		end
 		set_window_mode(arg0, 1)
-		var7 = event.GetMenuEtc_2(4) or var7
+		var7 = event.get_menu_value_2(4) or var7
 		if var7 <= 0 then
-			event.MesMake_2(arg0, "Allez ! Arr[UNI00ea]te de lambiner !\nIls sont o[UNI00f9] tes super scoops ?")
+			event.open_message_window_2(arg0, "Allez ! Arr[UNI00ea]te de lambiner !\nIls sont o[UNI00f9] tes super scoops ?")
 		else
-			event.SetMesValue(arg0, 1, var7)
-			event.MesMake_2(arg0, "Ouah ! Tu as [Number1] nouveau(x)\nscoop(s) ! Je savais que tu y\narriverais.")
+			event.set_message_number(arg0, 1, var7)
+			event.open_message_window_2(arg0, "Ouah ! Tu as [Number1] nouveau(x)\nscoop(s) ! Je savais que tu y\narriverais.")
 		end
 		if now_map_no == 22 then
 			at = 7

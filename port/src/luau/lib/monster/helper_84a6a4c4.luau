@@ -3,7 +3,7 @@
 
 --- Helper function.
 local function helper_84a6a4c4(value: s32)
-	monster.VPush(20, value)
+	monster.set_variable(20, value)
 end
 
 return helper_84a6a4c4

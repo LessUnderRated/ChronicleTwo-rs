@@ -11,12 +11,12 @@ local function helper_f8f4d75e(arg0: s32)
 	local var1: any = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.Initialize()
-		event.SetMotion(0, "立ち")
+		event.initialize_event()
+		event.set_character_motion(0, "立ち")
 		at = 1
 		var1 = helper_ed4dc120(5, arg0)
 		if var1 == 0 then
-			event.SetFadeOut(20)
+			event.fade_out_screen(20)
 			at = 2
 			wait_frames(20)
 			return 1

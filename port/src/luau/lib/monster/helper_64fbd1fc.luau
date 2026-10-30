@@ -24,7 +24,7 @@ local function helper_64fbd1fc(arg0: f32, arg1: f32, arg2: f32)
 	var8 = arg2
 	var7 = 0.0
 	while var7 < var8 do
-		monster.Ext(67, var3, var4, var5) -- retail: command 67 is not registered
+		monster.call_command(67, var3, var4, var5) -- retail: command 67 is not registered
 		if var4 > vm.f32(arg0 - arg1) and var4 < vm.f32(arg0 + arg1) then
 			helper_79d6eaca()
 			break

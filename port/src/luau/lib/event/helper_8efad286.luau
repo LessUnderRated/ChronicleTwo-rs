@@ -10,7 +10,7 @@ local helper_f97100db = require("@lib/event/helper_f97100db")
 local function helper_8efad286()
 	local flag: s32 = 0
 	print("map_init-------------------------\n")
-	flag = event.GetFlag(280) or flag
+	flag = event.get_save_flag(280) or flag
 	if flag ~= 0 then
 		helper_f97100db()
 	end

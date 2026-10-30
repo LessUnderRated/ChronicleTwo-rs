@@ -26,7 +26,7 @@ local function helper_80832373(
 	local var19: f32 = 0
 	local var20: f32 = 0
 	var19 = vm.f32(arg6 * vm.f32(0.017453292))
-	var20 = monster.GetRefAngle(target, target_2, target_3) or var20
+	var20 = monster.get_angle_to_position(target, target_2, target_3) or var20
 	var20 = vm.f32(var20 - vm.f32(3.1415927))
 	var20 = vm.f32(var20 + var19)
 	if var20 > vm.f32(3.1415927) then
@@ -39,15 +39,15 @@ local function helper_80832373(
 	target_2_2 = target_2
 	target_3_2 = vm.f32(target_3 + vm.f32(arg5 * vm.cos(var20)))
 	do
-		local _, out2, _ = monster.GetPos_3()
+		local _, out2, _ = monster.get_position_3()
 		pos_y = out2 or pos_y
 	end
-	arg6 = monster.GetRefAngle(target_4, target_2_2, target_3_2) or arg6
+	arg6 = monster.get_angle_to_position(target_4, target_2_2, target_3_2) or arg6
 	helper_595cbf61(helper_28452e16(arg6), arg4)
 	helper_442b9962()
-	monster.SetNextPos(target_4, pos_y - 20.0, target_3_2, arg3, arg3)
+	monster.move_toward_position(target_4, pos_y - 20.0, target_3_2, arg3, arg3)
 	local _ = helper_7863d8b6(arg7, arg8)
-	monster.ResetMove()
+	monster.stop_moving()
 end
 
 return helper_80832373

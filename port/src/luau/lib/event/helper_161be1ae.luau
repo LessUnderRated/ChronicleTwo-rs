@@ -5,13 +5,13 @@
 local function helper_161be1ae()
 	local flag: s32 = 0
 	local flag_2: s32 = 0
-	flag = event.GetFlag(348) or flag
+	flag = event.get_save_flag(348) or flag
 	if flag == 1 then
-		event.FuncPointShow("", "e348", 0)
+		event.set_function_point_enabled("", "e348", 0)
 	end
-	flag_2 = event.GetFlag(352) or flag_2
+	flag_2 = event.get_save_flag(352) or flag_2
 	if flag_2 == 1 then
-		event.FuncPointShow("", "event", 0)
+		event.set_function_point_enabled("", "event", 0)
 	end
 end
 

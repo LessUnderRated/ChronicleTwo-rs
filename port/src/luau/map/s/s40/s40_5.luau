@@ -27,8 +27,8 @@ end
 --- Event 500, which map data, a script or the engine runs by number.
 function script.event_500()
 	helper_d83f2336()
-	event.BgmLoadCancel()
-	event.MapJump_3(-1, "g03", 510)
+	event.skip_next_music_load()
+	event.jump_to_map_3(-1, "g03", 510)
 end
 
 return script

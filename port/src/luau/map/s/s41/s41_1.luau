@@ -24,14 +24,14 @@ function script.key_open() end
 --- Event 501, which map data, a script or the engine runs by number.
 function script.event_501()
 	helper_c4f6430f()
-	event.MapJump_3(-1, "g04", 510)
+	event.jump_to_map_3(-1, "g04", 510)
 	vm.wait(2)
 end
 
 --- Event 15040, which map data, a script or the engine runs by number.
 function script.event_15040()
 	helper_c4f6430f()
-	event.MapJump_3(-1, "g04", 510)
+	event.jump_to_map_3(-1, "g04", 510)
 	vm.wait(2)
 end
 

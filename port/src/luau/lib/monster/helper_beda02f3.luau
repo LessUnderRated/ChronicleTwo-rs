@@ -18,7 +18,7 @@ local function helper_beda02f3(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4:
 		arg1 = vm.f32(arg1 + vm.f32(6.2831855))
 	end
 	do
-		local out1, out2, out3 = monster.GetPos_3()
+		local out1, out2, out3 = monster.get_position_3()
 		pos_x = out1 or pos_x
 		pos_y = out2 or pos_y
 		pos_z = out3 or pos_z

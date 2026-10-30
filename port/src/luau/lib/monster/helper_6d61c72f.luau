@@ -15,31 +15,31 @@ local function helper_6d61c72f(move_speed: f32)
 	local var5: f32 = 0
 	local var7: f32 = 0
 	local pos_y_2: f32 = 0
-	monster.SetMos("歩き", -1, 0)
+	monster.set_motion("歩き", -1, 0)
 	helper_890ee63a(6.0)
-	monster.SetAttrib(32, 1)
-	var5 = monster.GetTargetDist() or var5
+	monster.set_monster_attributes(32, 1)
+	var5 = monster.get_target_distance() or var5
 	do
-		local out1, _, out3 = monster.GetTargetRot()
+		local out1, _, out3 = monster.get_target_rotation()
 		pos_x = out1 or pos_x
 		pos_z = out3 or pos_z
 	end
-	var7 = monster.GetRndf(10.0) or var7
+	var7 = monster.get_random_whole_number(10.0) or var7
 	var5 = vm.f32(var5 + vm.f32(100.0 + var7))
 	pos_x, var3, pos_z = helper_125e5305(0.0, var5, pos_x, var3, pos_z)
-	monster.SetMos("歩き後", -1, 6)
+	monster.set_motion("歩き後", -1, 6)
 	helper_c3e8ae39(17)
 	do
-		local _, out2, _ = monster.GetPos_3()
+		local _, out2, _ = monster.get_position_3()
 		pos_y_2 = out2 or pos_y_2
 	end
-	monster.SetNextPos(pos_x, pos_y_2, pos_z, move_speed, move_speed + 1.0)
+	monster.move_toward_position(pos_x, pos_y_2, pos_z, move_speed, move_speed + 1.0)
 	helper_c3e8ae39(7)
-	monster.SetAttrib(32, 0)
-	monster.ResetMove()
+	monster.set_monster_attributes(32, 0)
+	monster.stop_moving()
 	helper_56d63eae()
-	monster.ResetMove()
-	monster.SetMos("立ち", -1)
+	monster.stop_moving()
+	monster.set_motion("立ち", -1)
 end
 
 return helper_6d61c72f

@@ -18,11 +18,11 @@ local function helper_a021aad4(arg0: s32)
 	local var5: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		var1 = event.GetEventData_2(13) or var1
-		player_chara = event.GetControlChrid() or player_chara
-		now_map_no = event.GetNowMapNo() or now_map_no
+		var1 = event.get_triggered_event_data_2(13) or var1
+		player_chara = event.get_player_character_slot() or player_chara
+		now_map_no = event.get_current_map() or now_map_no
 		do
-			local out1, out2 = event.GetMenuEtc_3(6)
+			local out1, out2 = event.get_menu_value_3(6)
 			var4 = out1 or var4
 			var5 = out2 or var5
 		end
@@ -31,7 +31,7 @@ local function helper_a021aad4(arg0: s32)
 		end
 		if var5 == 1 then
 			set_window_mode(arg0, 1)
-			event.MesMake_2(arg0, "Ram[UNI00e8]ne-moi plus de scoops ou je ne\npourrai rien te donner !")
+			event.open_message_window_2(arg0, "Ram[UNI00e8]ne-moi plus de scoops ou je ne\npourrai rien te donner !")
 			if now_map_no == 22 then
 				at = 1
 				helper_0ffc2526(arg0, -1, var1, player_chara, 0)
@@ -42,7 +42,7 @@ local function helper_a021aad4(arg0: s32)
 		end
 		if var5 == 2 then
 			set_window_mode(arg0, 1)
-			event.MesMake_2(
+			event.open_message_window_2(
 				arg0,
 				"Ton niveau de photographie est\nd[UNI00e9]termin[UNI00e9] par le nombre d'id[UNI00e9]es et\nde scoops que tu as.<page>[UNI00c0] mesure que ton niveau s'am[UNI00e9]liore,\ntu gagnes des trucs supers."
 			)

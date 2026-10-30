@@ -13,61 +13,61 @@ local function helper_52d29060()
 	local flag_2: s32 = 0
 	local flag_3: s32 = 0
 	print("IN go_shop_up()\n")
-	var0 = event.GetEventData_2(14) or var0
-	var1 = event.GetEventData_2(13) or var1
+	var0 = event.get_triggered_event_data_2(14) or var0
+	var1 = event.get_triggered_event_data_2(13) or var1
 	print("talk_chara=", var0, "talk_chara_id=", var1, "\n")
-	event.SetMesShippo(0, 1)
-	event.SetMesPreset(0, 0)
-	language_code = event.GetLanguage() or language_code
+	event.set_message_bubble_tail(0, 1)
+	event.apply_message_window_preset(0, 0)
+	language_code = event.get_language() or language_code
 	if language_code ~= 0 then
-		event.MesMake_2(0, "Welcome.")
+		event.open_message_window_2(0, "Welcome.")
 	else
-		event.MesMake_2(0, "いらっしゃい。")
+		event.open_message_window_2(0, "いらっしゃい。")
 		if var0 == 18 then
-			event.MesMake_2(0, "神の力を借りますか？なら、\n教会への寄付をお願いします。")
+			event.open_message_window_2(0, "神の力を借りますか？なら、\n教会への寄付をお願いします。")
 		end
 		if var0 == 4 then
-			event.MesMake_2(
+			event.open_message_window_2(
 				0,
 				"がんばってんな。\n何かいるか？<page>ただし、ユリスからでも\n金はもらうぜ。"
 			)
 		end
 		if var0 == 34 then
-			event.MesMake_2(
+			event.open_message_window_2(
 				0,
 				"ジオラマの材料が足りないのかな？\n自分で集めるのが面倒なら、\nお金で解決するのもアリじゃよ。"
 			)
 		end
 		if var0 == 1012 then
-			flag = event.GetFlag(45) or flag
+			flag = event.get_save_flag(45) or flag
 			if flag == 0 then
-				event.MesMake_2(
+				event.open_message_window_2(
 					0,
 					"こんにちは。私、パン職人見習いで、\nポリーおばさんの留守中、\nお店を切り盛りしてるんだ。<page>ちょっと不安だけど、\nこれも修行の１つと思って\n頑張るわ。"
 				)
-				event.SetFlag(45, 1)
+				event.set_save_flag(45, 1)
 			end
 		end
 		if var0 == 1015 then
-			flag_2 = event.GetFlag(46) or flag_2
+			flag_2 = event.get_save_flag(46) or flag_2
 			if flag_2 == 0 then
-				event.MesMake_2(
+				event.open_message_window_2(
 					0,
 					"姉みたいにセクシーじゃないけど・・・\n一応、これでもミレーネの妹なんです。<page>姉がいない間、仕方なく\nここの店番をしてるの。\n武器のことなんて、全くの素人なんだけど・・・"
 				)
-				event.SetFlag(46, 1)
+				event.set_save_flag(46, 1)
 			end
 		end
 		if var0 == 1018 then
-			flag_3 = event.GetFlag(47) or flag_3
+			flag_3 = event.get_save_flag(47) or flag_3
 			if flag_3 == 0 then
-				event.MesMake_2(
+				event.open_message_window_2(
 					0,
 					"びっくりしたかな？\n教会にこんな服装で突っ立っていたら、\n誰だって驚くよな。<page>オレはブルーノ神父の親友で\n旅に出ている間の留守を頼まれたんだ。\nさて、何かお困りかな？"
 				)
-				event.SetFlag(47, 1)
+				event.set_save_flag(47, 1)
 			else
-				event.MesMake_2(
+				event.open_message_window_2(
 					0,
 					"神の力を借りますか？なら、\n教会への寄付をお願いします。"
 				)

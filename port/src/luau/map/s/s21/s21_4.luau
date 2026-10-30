@@ -15,22 +15,22 @@ local wait_frames = require("@lib/event/wait_frames")
 local function event_99()
 	local argc: s32 = 0
 	local flag: s32 = 0
-	event.StopBgm(0)
-	event.LoadSound(7689)
-	argc = event.GetItemHaveNum(374) or argc
-	flag = event.GetFlag(708) or flag
+	event.stop_music(0)
+	event.load_map_sounds(7689)
+	argc = event.get_owned_item_count(374) or argc
+	flag = event.get_save_flag(708) or flag
 	if argc >= 1 or flag == 1 then
-		event.FuncPointShow("", "item", 0)
+		event.set_function_point_enabled("", "item", 0)
 	else
-		event.EohSyncObj_2(0, "p06s21")
-		event.EohSetShow(0, 1)
+		event.attach_object_handle_to_map_part_2(0, "p06s21")
+		event.set_object_handle_visible(0, 1)
 	end
-	event.DngPause(8192, 1)
-	event.SetCharaChangeMask(2, 0)
-	event.SetCharaChangeMask(3, 0)
-	event.SetBitCtrl(1, 1)
-	event.SetCharaShow(1, 0)
-	event.SetCharaShow(2, 0)
+	event.set_dungeon_pause_flags(8192, 1)
+	event.set_character_change_unmasked(2, 0)
+	event.set_character_change_unmasked(3, 0)
+	event.set_save_control_bits(1, 1)
+	event.set_character_visible(1, 0)
+	event.set_character_visible(2, 0)
 end
 
 local script: { [any]: (...any) -> ...any } = {}
@@ -44,22 +44,22 @@ script.event_99 = event_99
 function script.default_event()
 	local flag: s32 = 0
 	event_99()
-	flag = event.GetFlag(704) or flag
+	flag = event.get_save_flag(704) or flag
 	if flag == 0 then
 		helper_7c4fb470()
 		helper_9dafbc83(0.0, vm.f32(0.8), -200.0, vm.f32(3.14))
-		event.SetCameraRef(0.0, 30.8, -200.0)
-		event.SetCameraPos(0.0, 40.8, -80.0)
-		event.ResetCamera(0)
-		event.SetFadeIn(30)
-		event.Finish()
+		event.set_camera_look_at(0.0, 30.8, -200.0)
+		event.set_camera_position(0.0, 40.8, -80.0)
+		event.reset_follow_camera(0)
+		event.fade_in_screen(30)
+		event.finish_event()
 	else
 		helper_9dafbc83(0.0, vm.f32(8.4), 685.0, vm.f32(3.14))
-		event.SetCameraRef(0.0, 38.4, 685.0)
-		event.SetCameraPos(0.0, 48.4, 565.0)
-		event.ResetCamera(0)
-		event.SetFadeIn(30)
-		event.Finish()
+		event.set_camera_look_at(0.0, 38.4, 685.0)
+		event.set_camera_position(0.0, 48.4, 565.0)
+		event.reset_follow_camera(0)
+		event.fade_in_screen(30)
+		event.finish_event()
 	end
 end
 
@@ -70,14 +70,14 @@ function script.key_open() end
 --- Event 200, which map data, a script or the engine runs by number.
 function script.event_200()
 	if helper_cd710052() ~= 0 then
-		event.SetCharaShow(1, 1)
-		event.SetCharaShow(2, 1)
-		event.DngPause(8192, 0)
-		event.ActchrSetDefMotion(0)
-		event.SetCharaChangeMask(2, 1)
-		event.SetCharaChangeMask(3, 1)
-		event.SetBitCtrl(1, 0)
-		event.LoadScript("d06/d06.stb", 1000)
+		event.set_character_visible(1, 1)
+		event.set_character_visible(2, 1)
+		event.set_dungeon_pause_flags(8192, 0)
+		event.reset_action_character_motion(0)
+		event.set_character_change_unmasked(2, 1)
+		event.set_character_change_unmasked(3, 1)
+		event.set_save_control_bits(1, 0)
+		event.load_event_script("d06/d06.stb", 1000)
 	end
 end
 
@@ -90,47 +90,47 @@ function script.event_500()
 	local var4: f32 = 0
 	local var5: f32 = 0
 	local var6: f32 = 0
-	event.Initialize()
-	event.SetMotion(0, "立ち")
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	event.initialize_event()
+	event.set_character_motion(0, "立ち")
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no == 2 or active_chr_no == 3 then
-		event.SetMesWindowMode(0, 1)
-		event.SetMesDrawspeed(0, 1)
+		event.set_message_window_mode(0, 1)
+		event.set_message_draw_speed(0, 1)
 		if active_chr_no == 2 then
 			helper_75684dd8(0, 22, 5, 256, 208)
 		else
 			helper_75684dd8(0, 23, 5, 256, 208)
 		end
-		event.Finish()
+		event.finish_event()
 		return
 	end
-	stage_id = event.DngGetStageId() or stage_id
-	var2 = event.DngGetFloorId() or var2
-	argc = event.GetNextFloor(var2, 0) or argc
-	event.DngSetFloorId(argc)
-	event.SetFloorInfo(stage_id, var2, 5, 2)
-	event.SetFloorInfo(stage_id, argc, 5, 1)
+	stage_id = event.get_dungeon_stage_id() or stage_id
+	var2 = event.get_dungeon_floor() or var2
+	argc = event.get_dungeon_next_floor(var2, 0) or argc
+	event.set_dungeon_floor(argc)
+	event.set_dungeon_floor_info(stage_id, var2, 5, 2)
+	event.set_dungeon_floor_info(stage_id, argc, 5, 1)
 	wait_frames(6)
 	do
-		local out1, out2, out3 = event.GetEventData_4(10)
+		local out1, out2, out3 = event.get_triggered_event_data_4(10)
 		var4 = out1 or var4
 		var5 = out2 or var5
 		var6 = out3 or var6
 	end
-	event.EohSyncChara(0, 0)
-	event.ObjsInit(0)
-	event.ObjsSyncObj(0, 0)
-	event.ObjsSetMotion(0, "歩き")
-	event.ObjsMotionDelay(0, 10)
-	event.ObjsSetMotion(0, "立ち")
-	event.ObjsReference(0, var4, var5, var6, 10)
+	event.attach_object_handle_to_character(0, 0)
+	event.clear_object_sequence(0)
+	event.set_object_sequence_object(0, 0)
+	event.set_object_sequence_motion(0, "歩き")
+	event.delay_object_sequence_motion_track(0, 10)
+	event.set_object_sequence_motion(0, "立ち")
+	event.turn_object_sequence_toward(0, var4, var5, var6, 10)
 	wait_frames(16)
-	event.EohSyncObj_2(1, "p06s21")
-	event.EohSetShow(1, 0)
-	event.AddItem(374)
+	event.attach_object_handle_to_map_part_2(1, "p06s21")
+	event.set_object_handle_visible(1, 0)
+	event.add_inventory_item(374)
 	helper_e787350a(374, 1)
-	event.SetFloorInfo(6, 11, 5, 2)
-	event.FuncPointShow("", "item", 0)
+	event.set_dungeon_floor_info(6, 11, 5, 2)
+	event.set_function_point_enabled("", "item", 0)
 	helper_a87eb945(1)
 end
 

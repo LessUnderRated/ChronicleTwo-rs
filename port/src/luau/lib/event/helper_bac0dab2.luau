@@ -10,49 +10,49 @@ local function helper_bac0dab2(arg0: s32, arg1: s32)
 	end
 	var2 = arg0 * 7 + arg1
 	if var2 == 0 then
-		event.EohSyncObj_3(0, "p08_i01h07", "i01h07_13-m7")
+		event.attach_object_handle_to_map_part_3(0, "p08_i01h07", "i01h07_13-m7")
 	end
 	if var2 == 7 then
-		event.EohSyncObj_3(0, "p08_i01h07", "i01h07_13-m21")
+		event.attach_object_handle_to_map_part_3(0, "p08_i01h07", "i01h07_13-m21")
 	end
 	if var2 == 1 then
-		event.EohSyncObj_3(0, "p08_i01h07", "i01h07_13-m8")
+		event.attach_object_handle_to_map_part_3(0, "p08_i01h07", "i01h07_13-m8")
 	end
 	if var2 == 8 then
-		event.EohSyncObj_3(0, "p08_i01h07", "i01h07_13-m20")
+		event.attach_object_handle_to_map_part_3(0, "p08_i01h07", "i01h07_13-m20")
 	end
 	if var2 == 2 then
-		event.EohSyncObj_3(0, "p08_i01h07", "i01h07_13-m9")
+		event.attach_object_handle_to_map_part_3(0, "p08_i01h07", "i01h07_13-m9")
 	end
 	if var2 == 9 then
-		event.EohSyncObj_3(0, "p08_i01h07", "i01h07_13-m19")
+		event.attach_object_handle_to_map_part_3(0, "p08_i01h07", "i01h07_13-m19")
 	end
 	if var2 == 3 then
-		event.EohSyncObj_3(0, "p08_i01h07", "i01h07_13-m10")
+		event.attach_object_handle_to_map_part_3(0, "p08_i01h07", "i01h07_13-m10")
 	end
 	if var2 == 10 then
-		event.EohSyncObj_3(0, "p08_i01h07", "i01h07_13-m18")
+		event.attach_object_handle_to_map_part_3(0, "p08_i01h07", "i01h07_13-m18")
 	end
 	if var2 == 4 then
-		event.EohSyncObj_3(0, "p08_i01h07", "i01h07_13-m11")
+		event.attach_object_handle_to_map_part_3(0, "p08_i01h07", "i01h07_13-m11")
 	end
 	if var2 == 11 then
-		event.EohSyncObj_3(0, "p08_i01h07", "i01h07_13-m17")
+		event.attach_object_handle_to_map_part_3(0, "p08_i01h07", "i01h07_13-m17")
 	end
 	if var2 == 5 then
-		event.EohSyncObj_3(0, "p08_i01h07", "i01h07_13-m12")
+		event.attach_object_handle_to_map_part_3(0, "p08_i01h07", "i01h07_13-m12")
 	end
 	if var2 == 12 then
-		event.EohSyncObj_3(0, "p08_i01h07", "i01h07_13-m16")
+		event.attach_object_handle_to_map_part_3(0, "p08_i01h07", "i01h07_13-m16")
 	end
 	if var2 == 6 then
-		event.EohSyncObj_3(0, "p08_i01h07", "i01h07_13-m14")
+		event.attach_object_handle_to_map_part_3(0, "p08_i01h07", "i01h07_13-m14")
 	end
 	if var2 == 13 then
-		event.EohSyncObj_3(0, "p08_i01h07", "i01h07_13-m15")
+		event.attach_object_handle_to_map_part_3(0, "p08_i01h07", "i01h07_13-m15")
 	end
-	var3 = event.EohGetShow(0) or var3
-	event.EohSetShow(0, if var3 == 0 then 1 else 0)
+	var3 = event.is_object_handle_visible(0) or var3
+	event.set_object_handle_visible(0, if var3 == 0 then 1 else 0)
 end
 
 return helper_bac0dab2

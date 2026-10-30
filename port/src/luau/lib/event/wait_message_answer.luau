@@ -10,8 +10,8 @@ local function wait_message_answer(window: any, answers: s32, chosen: s32)
 	local var4: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.TrgPakuAnim(1)
-		event.TrgPakuMotion(0)
+		event.trigger_mouth_texture_animation(1)
+		event.trigger_mouth_motion(0)
 		var4 = 0
 		while true do
 			var3 = message_step(window, answers)
@@ -31,9 +31,9 @@ local function wait_message_answer(window: any, answers: s32, chosen: s32)
 				var4 = vm.i32(var4 + 1)
 			end
 		end
-		event.ResetPakuMotion()
-		event.TrgPakuAnim(0)
-		event.ResetPakuAnim()
+		event.reset_mouth_motions()
+		event.trigger_mouth_texture_animation(0)
+		event.reset_mouth_texture_animations()
 		return var4, chosen
 	end, function(received: { any })
 		if at <= 1 then

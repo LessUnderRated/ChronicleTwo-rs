@@ -9,12 +9,12 @@ local helper_6ca976aa = require("@lib/event/helper_6ca976aa")
 --- Helper function.
 local function helper_17325562(arg0: s32, arg1: s32)
 	local var2: s32 = 0
-	var2 = event.GetQuestEtc(0, 0) or var2
+	var2 = event.get_quest_request_status(0, 0) or var2
 	if var2 ~= 2 then
 		helper_26293a44(arg0, arg1)
 		return
 	end
-	var2 = event.GetQuestEtc(0, 12) or var2
+	var2 = event.get_quest_request_status(0, 12) or var2
 	if var2 == 0 then
 		helper_628ef5bd(arg0, arg1)
 		return

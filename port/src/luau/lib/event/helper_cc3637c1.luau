@@ -6,10 +6,10 @@ local wait_frames = require("@lib/event/wait_frames")
 
 --- Helper function.
 local function helper_cc3637c1()
-	event.Initialize()
-	event.SetFadeOut(30)
+	event.initialize_event()
+	event.fade_out_screen(30)
 	wait_frames(30)
-	event.MapJump_3(-1, "s66", 600)
+	event.jump_to_map_3(-1, "s66", 600)
 	vm.wait(2)
 end
 

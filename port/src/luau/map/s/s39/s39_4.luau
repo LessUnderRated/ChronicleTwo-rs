@@ -27,31 +27,31 @@ function script.default_event()
 	local at: number = 0
 	return vm.guard(function()
 		var1 = 0
-		flag = event.GetFlag(524) or flag
+		flag = event.get_save_flag(524) or flag
 		if flag == 0 then
 			var1 = 1
-			event.AddItem(354, 1)
+			event.add_inventory_item(354, 1)
 			at = 1
 			helper_b450afc0()
 		end
 		if helper_5a735084() ~= 0 then
 			var1 = 1
-			event.AddItem(82, 1)
+			event.add_inventory_item(82, 1)
 			at = 2
 			helper_f58be482()
 		end
 		if var1 == 1 then
 			return
 		end
-		flag_2 = event.GetFlag(536) or flag_2
+		flag_2 = event.get_save_flag(536) or flag_2
 		if flag_2 ~= 0 then
-			chara_id = event.GetCharaId(400) or chara_id
-			event.CharaActive(0, chara_id)
+			chara_id = event.get_character_slot_by_number(400) or chara_id
+			event.set_character_active(0, chara_id)
 		end
-		event.SetCharaPos(0, 0.0, 30.0, -180.0)
-		event.SetCharaRot(0, 0.0, 0.0, 0.0)
-		event.ResetCamera(1, 0.0, 10.0)
-		event.SetFadeIn(15)
+		event.set_character_position(0, 0.0, 30.0, -180.0)
+		event.set_character_rotation(0, 0.0, 0.0, 0.0)
+		event.reset_follow_camera(1, 0.0, 10.0)
+		event.fade_in_screen(15)
 		return
 	end, function(received: { any })
 		if at <= 2 then
@@ -64,15 +64,15 @@ function script.default_event()
 					if var1 == 1 then
 						return
 					end
-					flag_2 = event.GetFlag(536) or flag_2
+					flag_2 = event.get_save_flag(536) or flag_2
 					if flag_2 ~= 0 then
-						chara_id = event.GetCharaId(400) or chara_id
-						event.CharaActive(0, chara_id)
+						chara_id = event.get_character_slot_by_number(400) or chara_id
+						event.set_character_active(0, chara_id)
 					end
-					event.SetCharaPos(0, 0.0, 30.0, -180.0)
-					event.SetCharaRot(0, 0.0, 0.0, 0.0)
-					event.ResetCamera(1, 0.0, 10.0)
-					event.SetFadeIn(15)
+					event.set_character_position(0, 0.0, 30.0, -180.0)
+					event.set_character_rotation(0, 0.0, 0.0, 0.0)
+					event.reset_follow_camera(1, 0.0, 10.0)
+					event.fade_in_screen(15)
 					return
 				end)
 			end
@@ -88,9 +88,9 @@ function script.key_open() end
 
 --- Event 551, which map data, a script or the engine runs by number.
 function script.event_551()
-	event.SetFadeOut(15)
+	event.fade_out_screen(15)
 	wait_frames(15)
-	event.MapJump_2(-1, "f04")
+	event.jump_to_map_2(-1, "f04")
 	vm.wait(2)
 end
 

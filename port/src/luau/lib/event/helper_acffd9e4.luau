@@ -9,11 +9,11 @@ local function helper_acffd9e4()
 	local flag: s32 = 0
 	local var1: s32 = 0
 	local var2: s32 = 0
-	flag = event.GetFlag(38) or flag
+	flag = event.get_save_flag(38) or flag
 	helper_6c0ef236(if flag == 0 then 1 else 0)
-	var1 = event.GetQuestEtc(0, 18) or var1
+	var1 = event.get_quest_request_status(0, 18) or var1
 	if var1 == 1 then
-		var2 = event.GetCnt(11) or var2
+		var2 = event.get_save_counter(11) or var2
 		if var2 == 1 then
 			helper_364319f4()
 		end

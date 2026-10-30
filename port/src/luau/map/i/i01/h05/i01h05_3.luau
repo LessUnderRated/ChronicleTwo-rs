@@ -8,9 +8,9 @@ local helper_fe0f3321 = require("@lib/event/helper_fe0f3321")
 --- The event the engine runs on entering a town or interior, jumping to a map and leaving it, and the one an omitted event number means.
 local function default_event()
 	helper_1ef0d4b2()
-	event.Initialize()
-	event.SetCharaPos(0, 43.5, 0.0, 135.0)
-	event.SetCharaRot(0, 0, 3.14, 0)
+	event.initialize_event()
+	event.set_character_position(0, 43.5, 0.0, 135.0)
+	event.set_character_rotation(0, 0, 3.14, 0)
 end
 
 local script: { [any]: (...any) -> ...any } = {}

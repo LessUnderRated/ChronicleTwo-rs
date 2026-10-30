@@ -9,13 +9,13 @@ local helper_ee5b84d4 = require("@lib/monster/helper_ee5b84d4")
 
 --- Helper function.
 local function helper_3403c83a()
-	monster.SetMos("歩き", -1, 0)
+	monster.set_motion("歩き", -1, 0)
 	helper_83e135e0(vm.f32(7.2000003))
-	monster.SetMos("攻撃１", -1, 2)
+	monster.set_motion("攻撃１", -1, 2)
 	helper_4a39d2ab(vm.f32(0.595), -1.0)
-	monster.SetMos("攻撃２", -1, 2)
+	monster.set_motion("攻撃２", -1, 2)
 	helper_cbe4d8e2()
-	monster.SetMos("立ち", -1, 0)
+	monster.set_motion("立ち", -1, 0)
 	helper_ee5b84d4(9)
 end
 

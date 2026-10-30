@@ -6,11 +6,11 @@ local helper_9cbdc640 = require("@lib/event/helper_9cbdc640")
 
 --- Helper function.
 local function helper_a6838a9a(arg0: s32, arg1: s32)
-	event.StreamOpen3(1, arg0)
+	event.open_voice_stream_wave(1, arg0)
 	helper_9cbdc640(1)
-	event.StreamPlay(1)
+	event.play_voice_stream(1)
 	helper_61e5dba6(0, arg1)
-	event.StreamClose(1)
+	event.close_voice_stream(1)
 end
 
 return helper_a6838a9a

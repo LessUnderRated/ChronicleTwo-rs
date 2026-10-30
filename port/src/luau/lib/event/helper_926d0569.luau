@@ -3,9 +3,9 @@
 
 --- Helper function.
 local function helper_926d0569()
-	event.FuncPointShow("", "rapis", 0)
-	event.EohSyncObj_3(30, "p01_s1301-m-m", "s1301_3-m0")
-	event.EohSetShow(30, 0)
+	event.set_function_point_enabled("", "rapis", 0)
+	event.attach_object_handle_to_map_part_3(30, "p01_s1301-m-m", "s1301_3-m0")
+	event.set_object_handle_visible(30, 0)
 end
 
 return helper_926d0569

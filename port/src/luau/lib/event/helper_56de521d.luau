@@ -3,8 +3,8 @@
 
 --- Helper function.
 local function helper_56de521d(arg0: s32)
-	event.EohSyncObj_2(0, "p10_s48")
-	event.EohSetShow(0, arg0)
+	event.attach_object_handle_to_map_part_2(0, "p10_s48")
+	event.set_object_handle_visible(0, arg0)
 end
 
 return helper_56de521d

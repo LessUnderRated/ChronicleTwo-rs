@@ -3,11 +3,11 @@
 
 --- Helper function.
 local function helper_ccbab5a2()
-	event.DeleteChara(42)
-	event.DeleteChara(43)
-	event.DeleteChara(44)
-	event.DeleteChara(46)
-	event.DeleteChara(45)
+	event.delete_character(42)
+	event.delete_character(43)
+	event.delete_character(44)
+	event.delete_character(46)
+	event.delete_character(45)
 end
 
 return helper_ccbab5a2

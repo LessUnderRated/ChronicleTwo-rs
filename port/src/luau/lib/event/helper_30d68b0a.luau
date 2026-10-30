@@ -11,17 +11,17 @@ local helper_b79e9704 = require("@lib/event/helper_b79e9704")
 local function helper_30d68b0a(arg0: s32, arg1: s32)
 	local active_chr_no: s32 = 0
 	local var3: s32 = 0
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no == 1 then
 		helper_a8a89d7c(arg0, arg1)
 		return
 	end
-	var3 = event.GetQuestEtc(0, 0) or var3
+	var3 = event.get_quest_request_status(0, 0) or var3
 	if var3 ~= 2 then
 		helper_903447e1(arg0, arg1)
 		return
 	end
-	var3 = event.GetQuestEtc(0, 8) or var3
+	var3 = event.get_quest_request_status(0, 8) or var3
 	if var3 == 0 then
 		helper_2d185e02(arg0, arg1)
 		return

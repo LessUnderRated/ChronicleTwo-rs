@@ -11,13 +11,13 @@ local function helper_c8484b43(chara_no: s32, arg1: s32, arg2: s32)
 	local at: number = 0
 	return vm.guard(function()
 		if arg2 ~= 0 then
-			event.EohSyncChara(0, chara_no)
+			event.attach_object_handle_to_character(0, chara_no)
 			do
-				local _, out2, _ = event.EohGetRot(0)
+				local _, out2, _ = event.get_object_handle_rotation(0)
 				rot_y = out2 or rot_y
 			end
 		end
-		player_chara = event.GetControlChrid() or player_chara
+		player_chara = event.get_player_character_slot() or player_chara
 		at = 1
 		helper_20426bd1(player_chara, chara_no, arg1)
 		return rot_y

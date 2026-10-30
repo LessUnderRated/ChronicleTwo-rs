@@ -17,21 +17,21 @@ local function helper_28c0718c()
 	local var9: f32 = 0
 	local argc: s32 = 0
 	do
-		local out1, out2, out3 = monster.GetPos_3()
+		local out1, out2, out3 = monster.get_position_3()
 		pos_x = out1 or pos_x
 		pos_y = out2 or pos_y
 		pos_z = out3 or pos_z
 	end
 	do
-		local _, out2, _ = monster.GetRot()
+		local _, out2, _ = monster.get_rotation()
 		var4 = out2 or var4
 	end
-	argc = monster.GetRnd(100) or argc
+	argc = monster.get_random(100) or argc
 	if argc < 50 then
-		monster.SetMos("ステップ左", -1, 2)
+		monster.set_motion("ステップ左", -1, 2)
 		var4 = vm.f32(var4 + vm.f32(1.5707964))
 	else
-		monster.SetMos("ステップ右", -1, 2)
+		monster.set_motion("ステップ右", -1, 2)
 		var4 = vm.f32(var4 - vm.f32(1.5707964))
 	end
 	var9 = 100.0
@@ -39,13 +39,13 @@ local function helper_28c0718c()
 	target_2 = vm.f32(pos_y - 20.0)
 	target_3 = vm.f32(pos_z + vm.f32(vm.cos(var4) * var9))
 	helper_72fec261(vm.f32(0.27), -1.0)
-	monster.SetAttrib(32, 1)
-	monster.SetNextPos(target, target_2, target_3, 2.25, 2.25)
+	monster.set_monster_attributes(32, 1)
+	monster.move_toward_position(target, target_2, target_3, 2.25, 2.25)
 	helper_72fec261(vm.f32(0.63), -1.0)
-	monster.SetAttrib(32, 0)
-	monster.ResetMove()
+	monster.set_monster_attributes(32, 0)
+	monster.stop_moving()
 	helper_56d63eae()
-	monster.SetMos("立ち", -1, 0)
+	monster.set_motion("立ち", -1, 0)
 end
 
 return helper_28c0718c

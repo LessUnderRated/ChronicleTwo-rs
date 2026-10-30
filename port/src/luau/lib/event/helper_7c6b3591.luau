@@ -32,49 +32,49 @@ local function helper_7c6b3591(arg0: s32)
 	local world_coord_pos_3_2: f32 = 0
 	local world_coord_rot_2: f32 = 0
 	local active_chr_no_2: s32 = 0
-	event.Initialize()
+	event.initialize_event()
 	if arg0 == 0 then
 		world_coord_pos, world_coord_pos_2, world_coord_pos_3, world_coord_rot =
 			helper_d355d559(world_coord_pos, world_coord_pos_2, world_coord_pos_3, world_coord_rot)
-		event.SetWorldCoord(world_coord_pos, world_coord_pos_2, world_coord_pos_3, world_coord_rot)
-		var5 = event.GetSndId(2) or var5
-		event.SetCharaShow(1, 0)
-		event.SetCharaShow(2, 0)
-		event.CmrsInit()
-		event.CmrsSetPos(-74.77, 120.66, 51.54)
-		event.CmrsSetRef(7.05, 109.71, -89.51)
-		event.AssignStack(5)
-		event.ClearStack(5)
-		event.EsmInitialize(5, 1)
-		event.EsmLoadBasePack("足水パシャ", "dungeon/sphida/mizu_eff.gltf")
-		event.EsmInitFix(5, 2000)
-		active_chr_no = event.GetActiveChrNo() or active_chr_no
+		event.set_event_world_coordinate(world_coord_pos, world_coord_pos_2, world_coord_pos_3, world_coord_rot)
+		var5 = event.get_sound_id(2) or var5
+		event.set_character_visible(1, 0)
+		event.set_character_visible(2, 0)
+		event.clear_camera_sequence()
+		event.set_camera_sequence_position(-74.77, 120.66, 51.54)
+		event.set_camera_sequence_look_at(7.05, 109.71, -89.51)
+		event.assign_memory_stack(5)
+		event.clear_memory_stack(5)
+		event.initialize_effect_manager(5, 1)
+		event.load_effect_base_pack("足水パシャ", "dungeon/sphida/mizu_eff.gltf")
+		event.create_effect_work_buffer(5, 2000)
+		active_chr_no = event.get_playable_character() or active_chr_no
 		if active_chr_no == 0 then
-			event.LoadMotion(5, "event/dng_inout/c01d04gkey.gltf", "info", 0)
+			event.load_character_motion_pack(5, "event/dng_inout/c01d04gkey.gltf", "info", 0)
 		else
-			event.LoadMotion(5, "event/dng_inout/c02d04gkey.gltf", "info", 0)
+			event.load_character_motion_pack(5, "event/dng_inout/c02d04gkey.gltf", "info", 0)
 		end
-		event.EohSyncChara(0, 0)
-		event.EohSetMotion(0, "持ち上げ停止", 4)
-		event.EohNormalDrive(0)
-		event.ObjsInit(0)
-		event.ObjsSyncObj(0, 0)
-		event.ObjsSetPos(0, 0.0, 80.0, -33.0)
-		event.ObjsSetRot(0, 0.0, 3.14, 0.0)
-		event.ObjsResetMotion(0)
-		event.ObjsSetMotion(0, "持ち上げ停止", 4, -1.0, 1)
-		event.ObjsNextMotion(0, "投げ", 2)
-		event.ObjsNextMotion(0, "立ち")
-		var7 = event.GetEventData_2(9) or var7
-		event.EohSyncObj_3(1, var7, "d05w10_1-m0")
-		event.EohSetPos(1, 0.0, 70.0, 0.0)
-		event.ObjsInit(1)
-		event.ObjsSyncObj(1, 1)
-		event.LoadChara(5, "event/dng_inout/magumarock.gltf", "info", 12)
-		event.CharaActive(1, 12)
-		event.EohSyncChara(2, 12)
-		event.ObjsInit(2)
-		event.ObjsSyncObj(2, 2)
+		event.attach_object_handle_to_character(0, 0)
+		event.set_object_handle_motion(0, "持ち上げ停止", 4)
+		event.step_object_handle_motion(0)
+		event.clear_object_sequence(0)
+		event.set_object_sequence_object(0, 0)
+		event.set_object_sequence_position(0, 0.0, 80.0, -33.0)
+		event.set_object_sequence_rotation(0, 0.0, 3.14, 0.0)
+		event.reset_object_sequence_motion(0)
+		event.set_object_sequence_motion(0, "持ち上げ停止", 4, -1.0, 1)
+		event.queue_object_sequence_next_motion(0, "投げ", 2)
+		event.queue_object_sequence_next_motion(0, "立ち")
+		var7 = event.get_triggered_event_data_2(9) or var7
+		event.attach_object_handle_to_map_part_3(1, var7, "d05w10_1-m0")
+		event.set_object_handle_position(1, 0.0, 70.0, 0.0)
+		event.clear_object_sequence(1)
+		event.set_object_sequence_object(1, 1)
+		event.load_character(5, "event/dng_inout/magumarock.gltf", "info", 12)
+		event.set_character_active(1, 12)
+		event.attach_object_handle_to_character(2, 12)
+		event.clear_object_sequence(2)
+		event.set_object_sequence_object(2, 2)
 		var8 = 0
 		if active_chr_no == 0 then
 			var9 = 47
@@ -83,13 +83,13 @@ local function helper_7c6b3591(arg0: s32)
 		end
 		while var8 < var9 do
 			do
-				local out1, out2, out3 = event.EohGetFramePos(0, "item")
+				local out1, out2, out3 = event.get_object_handle_frame_position(0, "item")
 				pos_x = out1 or pos_x
 				pos_y = out2 or pos_y
 				pos_z = out3 or pos_z
 			end
 			do
-				local _, out2, _ = event.EohGetRot(0)
+				local _, out2, _ = event.get_object_handle_rotation(0)
 				var14 = out2 or var14
 			end
 			if active_chr_no == 0 then
@@ -97,90 +97,90 @@ local function helper_7c6b3591(arg0: s32)
 			else
 				var14 = vm.f32(var14 - vm.f32(1.57))
 			end
-			var14 = event.AngleLimit(var14) or var14
+			var14 = event.wrap_angle(var14) or var14
 			pos_x = vm.f32(vm.f32(vm.sin(var14) * 6.0) + pos_x)
 			pos_z = vm.f32(vm.f32(vm.cos(var14) * 6.0) + pos_z)
-			event.EohSetPos(2, pos_x, pos_y, pos_z)
+			event.set_object_handle_position(2, pos_x, pos_y, pos_z)
 			var8 = var8 + 1
 			vm.wait(1)
 		end
-		event.ObjsJump(2, 0.0, 94.0, -80.0, -0.3, 16)
+		event.jump_object_sequence(2, 0.0, 94.0, -80.0, -0.3, 16)
 		wait_frames(12)
 		vector_x = vm.f32(vm.f32(vm.sin(world_coord_rot) * -70.0) + world_coord_pos)
 		vector_y = vm.f32(world_coord_pos_2 + 94.0)
 		vector_z = vm.f32(vm.f32(vm.cos(world_coord_rot) * -70.0) + world_coord_pos_3)
-		event.EsmCreate("足水パシャ")
-		event.EsmSetVect1(vector_x, vector_y, vector_z)
+		event.create_effect("足水パシャ")
+		event.set_effect_first_vector(vector_x, vector_y, vector_z)
 		wait_frames(2)
-		event.SndSePlay(var5, 58)
+		event.play_sound_effect(var5, 58)
 		wait_frames(2)
 		wait_objects(0)
-		event.ObjsSetMotion(0, "04ジャンプ", 6)
-		event.ObjsNextMotion(0, "04着地", 6)
-		event.ObjsNextMotion(0, "04着地L", 4)
+		event.set_object_sequence_motion(0, "04ジャンプ", 6)
+		event.queue_object_sequence_next_motion(0, "04着地", 6)
+		event.queue_object_sequence_next_motion(0, "04着地L", 4)
 		if active_chr_no == 0 then
-			event.ObjsPosDelay(0, 12)
-			event.ObjsSeDelay(0, 26)
-			event.ObjsSePlay(0, var5, 4)
-			event.ObjsSeDelay(0, 2)
-			event.ObjsSePlay(0, var5, 5)
+			event.delay_object_sequence_position_track(0, 12)
+			event.delay_object_sequence_sound_track(0, 26)
+			event.play_object_sequence_sound(0, var5, 4)
+			event.delay_object_sequence_sound_track(0, 2)
+			event.play_object_sequence_sound(0, var5, 5)
 		else
-			event.ObjsPosDelay(0, 6)
-			event.ObjsSeDelay(0, 20)
-			event.ObjsSePlay(0, var5, 4)
-			event.ObjsSeDelay(0, 2)
-			event.ObjsSePlay(0, var5, 5)
+			event.delay_object_sequence_position_track(0, 6)
+			event.delay_object_sequence_sound_track(0, 20)
+			event.play_object_sequence_sound(0, var5, 4)
+			event.delay_object_sequence_sound_track(0, 2)
+			event.play_object_sequence_sound(0, var5, 5)
 		end
-		event.ObjsJump(0, 0.0, 101.0, -78.0, -0.3, 16)
+		event.jump_object_sequence(0, 0.0, 101.0, -78.0, -0.3, 16)
 		wait_objects(0)
-		event.SetLoadbgFile_1("snd2/sp/sp_035.sound.json")
+		event.start_background_file_loads_1("snd2/sp/sp_035.sound.json")
 		vm.wait(7)
 		helper_479dc9e9()
-		var19 = event.SndLoadSound_3(8, "snd2/sp/sp_035.sound.json") or var19
-		event.SndSePlay(var19, 2)
+		var19 = event.load_sound_effect_file_3(8, "snd2/sp/sp_035.sound.json") or var19
+		event.play_sound_effect(var19, 2)
 		wait_frames(30)
-		event.ObjsJump(0, 0.0, 201.0, -78.0, -0.4, 30)
-		event.ObjsJump(1, 0.0, 160.0, 0.0, -0.4, 30)
-		event.ObjsJump(2, 0.0, 194.0, -80.0, -0.4, 30)
-		event.SetFadeOut(30)
+		event.jump_object_sequence(0, 0.0, 201.0, -78.0, -0.4, 30)
+		event.jump_object_sequence(1, 0.0, 160.0, 0.0, -0.4, 30)
+		event.jump_object_sequence(2, 0.0, 194.0, -80.0, -0.4, 30)
+		event.fade_out_screen(30)
 		wait_frames(30)
-		event.DeleteChara(12)
-		event.DelExtMotion(0)
-		event.EsmClear()
-		event.SetCharaShow(1, 1)
-		event.SetCharaShow(2, 1)
+		event.delete_character(12)
+		event.delete_character_extension_packs(0)
+		event.clear_effect_manager()
+		event.set_character_visible(1, 1)
+		event.set_character_visible(2, 1)
 	else
-		event.SetFadeOut(10)
+		event.fade_out_screen(10)
 		wait_frames(10)
-		var20 = event.SndLoadSound_3(8, "snd2/sp/sp_036.sound.json") or var20
+		var20 = event.load_sound_effect_file_3(8, "snd2/sp/sp_036.sound.json") or var20
 		world_coord_pos_4, world_coord_pos_2_2, world_coord_pos_3_2, world_coord_rot_2 =
 			helper_d355d559(world_coord_pos_4, world_coord_pos_2_2, world_coord_pos_3_2, world_coord_rot_2)
-		event.SetWorldCoord(world_coord_pos_4, world_coord_pos_2_2, world_coord_pos_3_2, world_coord_rot_2)
-		event.AssignStack(5)
-		event.ClearStack(5)
-		active_chr_no_2 = event.GetActiveChrNo() or active_chr_no_2
+		event.set_event_world_coordinate(world_coord_pos_4, world_coord_pos_2_2, world_coord_pos_3_2, world_coord_rot_2)
+		event.assign_memory_stack(5)
+		event.clear_memory_stack(5)
+		active_chr_no_2 = event.get_playable_character() or active_chr_no_2
 		if active_chr_no_2 == 0 then
-			event.LoadMotion(5, "event/dng_inout/c01d05gkey.gltf", "info", 0)
+			event.load_character_motion_pack(5, "event/dng_inout/c01d05gkey.gltf", "info", 0)
 		else
-			event.LoadMotion(5, "event/dng_inout/c02d05gkey.gltf", "info", 0)
+			event.load_character_motion_pack(5, "event/dng_inout/c02d05gkey.gltf", "info", 0)
 		end
-		event.EohSyncChara(0, 0)
-		event.ObjsInit(0)
-		event.ObjsSyncObj(0, 0)
-		event.ObjsSetPos(0, 0.0, 20.0, -40.0)
-		event.ObjsSetRot(0, 0.0, 3.14, 0.0)
-		event.ObjsSetMotion(0, "ロープぶら下がり", 4, -1.0, 1)
-		event.CmrsSetPos(-121.5, 37.81, 67.72)
-		event.CmrsSetRef(-4.03, 39.46, -45.06)
-		event.SndSePlay(var20, 1)
-		event.SetFadeIn(20)
-		event.ObjsMove2(0, 0.0, -80.0, -40.0, 40, 1, 1.0)
+		event.attach_object_handle_to_character(0, 0)
+		event.clear_object_sequence(0)
+		event.set_object_sequence_object(0, 0)
+		event.set_object_sequence_position(0, 0.0, 20.0, -40.0)
+		event.set_object_sequence_rotation(0, 0.0, 3.14, 0.0)
+		event.set_object_sequence_motion(0, "ロープぶら下がり", 4, -1.0, 1)
+		event.set_camera_sequence_position(-121.5, 37.81, 67.72)
+		event.set_camera_sequence_look_at(-4.03, 39.46, -45.06)
+		event.play_sound_effect(var20, 1)
+		event.fade_in_screen(20)
+		event.move_object_sequence_eased(0, 0.0, -80.0, -40.0, 40, 1, 1.0)
 		wait_frames(40)
-		event.SetFadeOut(30)
+		event.fade_out_screen(30)
 		wait_frames(30)
-		event.DelExtMotion(0)
+		event.delete_character_extension_packs(0)
 	end
-	event.Finish()
+	event.finish_event()
 end
 
 return helper_7c6b3591

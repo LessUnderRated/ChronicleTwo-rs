@@ -18,27 +18,27 @@ local function helper_6a5c03b2(move_speed: f32, arg1: f32, arg2: f32, arg3: s32)
 	local var21: f32 = 0
 	helper_f5727415(arg1)
 	helper_442b9962()
-	monster.GetTargetPos()
+	monster.get_target_position()
 	do
-		local out1, out2, out3 = monster.GetPos_3()
+		local out1, out2, out3 = monster.get_position_3()
 		pos_x = out1 or pos_x
 		pos_y = out2 or pos_y
 		pos_z = out3 or pos_z
 	end
-	var20 = monster.GetTargetDist() or var20
-	var21 = monster.SearchArea(move_speed + arg2, 0.0) or var21
+	var20 = monster.get_target_distance() or var20
+	var21 = monster.get_clear_distance(move_speed + arg2, 0.0) or var21
 	if var21 < vm.f32(move_speed + arg2) then
 		return
 	end
 	do
-		local _, out2, _ = monster.GetRot()
+		local _, out2, _ = monster.get_rotation()
 		var11 = out2 or var11
 	end
 	target = vm.f32(pos_x + vm.f32(vm.sin(var11) * var20))
 	target_3 = vm.f32(pos_z + vm.f32(vm.cos(var11) * var20))
-	monster.SetNextPos(target, pos_y - 20.0, target_3, move_speed, arg2 + move_speed)
+	monster.move_toward_position(target, pos_y - 20.0, target_3, move_speed, arg2 + move_speed)
 	local _ = helper_a8458c0a(arg2, arg3)
-	monster.ResetMove()
+	monster.stop_moving()
 end
 
 return helper_6a5c03b2

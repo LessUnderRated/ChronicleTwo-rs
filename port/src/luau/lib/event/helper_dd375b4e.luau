@@ -8,37 +8,37 @@ local helper_9cc4383b = require("@lib/event/helper_9cc4383b")
 --- Helper function.
 local function helper_dd375b4e(arg0: s32, arg1: s32)
 	local var2: s32 = 0
-	event.SetMesPreset(0, 0)
+	event.apply_message_window_preset(0, 0)
 	helper_4e93f9fc(arg0, 0, 0)
-	var2 = event.GetCnt(12) or var2
+	var2 = event.get_save_counter(12) or var2
 	if var2 < 3 then
-		event.MesMake_2(
+		event.open_message_window_2(
 			0,
 			"まだ、支度が\n出来てないんだよ。<page>もうちょっと\n待っておくれ。"
 		)
 		helper_0ffc2526(0, -1, arg0, arg1, 0)
-		event.MesMake_2(0, "ところで、\nモートンのところへは\n行ってくれたのかい？")
+		event.open_message_window_2(0, "ところで、\nモートンのところへは\n行ってくれたのかい？")
 		helper_0ffc2526(0, -1, arg0, arg1, 0)
-		event.SetMotion(arg0, "立ち")
-		event.Finish()
+		event.set_character_motion(arg0, "立ち")
+		event.finish_event()
 		return
 	end
-	event.MesMake_2(
+	event.open_message_window_2(
 		0,
 		"なんだって！モートンの奴、\n勝手なことばっかり言って。<page>もう、いいわ、\nそのパンは全部あげる。"
 	)
 	helper_0ffc2526(0, -1, arg0, arg1, 0)
-	event.MesMake_2(
+	event.open_message_window_2(
 		0,
 		"そんなことより、ユリス、\n出発しましょう。<page>さぁ、どこへだって\nついて行きますよ。"
 	)
 	helper_0ffc2526(0, -1, arg0, arg1, 0)
-	event.SetMotion(arg0, "立ち")
-	event.SubItem(300, 20)
-	event.AddItem(299, 20)
+	event.set_character_motion(arg0, "立ち")
+	event.remove_item(300, 20)
+	event.add_inventory_item(299, 20)
 	helper_9cc4383b()
-	event.Finish()
-	event.SetQuestEtc(1, 8, 1)
+	event.finish_event()
+	event.set_quest_request(1, 8, 1)
 end
 
 return helper_dd375b4e

@@ -4,14 +4,14 @@
 --- Helper function.
 local function helper_21e37ba4()
 	local flag: s32 = 0
-	event.Initialize()
-	flag = event.GetFlag(202) or flag
+	event.initialize_event()
+	flag = event.get_save_flag(202) or flag
 	if flag == 0 then
-		event.FuncPointShow("", "fc_event_202", 1)
+		event.set_function_point_enabled("", "fc_event_202", 1)
 	else
-		event.FuncPointShow("", "fc_event_202", 0)
-		event.EohSyncObj_2(0, "p01_train01")
-		event.EohSetShow(0, 0)
+		event.set_function_point_enabled("", "fc_event_202", 0)
+		event.attach_object_handle_to_map_part_2(0, "p01_train01")
+		event.set_object_handle_visible(0, 0)
 	end
 end
 

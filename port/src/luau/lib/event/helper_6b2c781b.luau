@@ -8,12 +8,12 @@ local show_message = require("@lib/event/show_message")
 local function helper_6b2c781b(arg0: any, arg1: s32)
 	local var5: s32 = 0
 	local var6: s32 = 0
-	var5 = event.GetChapter() or var5
+	var5 = event.get_chapter() or var5
 	if var5 >= 8 then
 		return
 	end
-	event.SetMesWindowMode(1, 8)
-	event.SetMotion(0, "立ち")
+	event.set_message_window_mode(1, 8)
+	event.set_character_motion(0, "立ち")
 	var6 = 1050
 	if helper_56a7b9b7() ~= 0 then
 		var6 = 1051
@@ -23,7 +23,7 @@ local function helper_6b2c781b(arg0: any, arg1: s32)
 	if arg1 ~= 0 then
 		var6 = var6 + 10
 	end
-	event.MesMake_2(1, var6)
+	event.open_message_window_2(1, var6)
 	show_message(1, -1, 8, 0, 0)
 end
 

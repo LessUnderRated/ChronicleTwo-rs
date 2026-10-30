@@ -3,7 +3,7 @@
 
 --- Helper function.
 local function helper_fab3eef4()
-	event.LoadSound(1684)
+	event.load_map_sounds(1684)
 end
 
 return helper_fab3eef4

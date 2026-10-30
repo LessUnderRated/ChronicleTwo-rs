@@ -6,12 +6,12 @@ local helper_70e4ac93 = require("@lib/event/helper_70e4ac93")
 --- Helper function.
 local function helper_b7bf035f(arg0: s32, arg1: any)
 	local var2: s32 = 0
-	event.SetMesPreset(0, 0)
-	var2 = event.GetChapter() or var2
+	event.apply_message_window_preset(0, 0)
+	var2 = event.get_chapter() or var2
 	if var2 ~= 8 then
-		event.MesMake_2(0, "Nascondino [UNI00e8] un\ngioco da bambini.")
+		event.open_message_window_2(0, "Nascondino [UNI00e8] un\ngioco da bambini.")
 	else
-		event.MesMake_2(
+		event.open_message_window_2(
 			0,
 			"Non mi freghi! Lo so che sei\nstato in giro a divertirti. Quando\nhai tempo, raccontami tutto!"
 		)

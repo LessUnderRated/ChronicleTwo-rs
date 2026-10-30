@@ -26,17 +26,17 @@ local function helper_baabee9d()
 	vm.section(function()
 		at = 1
 		vm.entry(1)
-		event.SetFlag(540, 1)
-		event.Initialize()
-		event.SetMesWindowMode(0, 7)
-		event.SetProjection(300.0)
-		event.AssignStack(5)
-		event.ClearStack(5)
-		event.CharaActive(0, 0)
-		event.ChangeDir("event/e500/e540/")
-		event.EohSyncObj_2(0, "p03_s55")
-		event.ObjsInit(0)
-		event.ObjsSyncObj(0, 0)
+		event.set_save_flag(540, 1)
+		event.initialize_event()
+		event.set_message_window_mode(0, 7)
+		event.set_event_projection(300.0)
+		event.assign_memory_stack(5)
+		event.clear_memory_stack(5)
+		event.set_character_active(0, 0)
+		event.change_directory("event/e500/e540/")
+		event.attach_object_handle_to_map_part_2(0, "p03_s55")
+		event.clear_object_sequence(0)
+		event.set_object_sequence_object(0, 0)
 		var5 = 0
 		var6 = -4
 		var7 = 0
@@ -44,24 +44,24 @@ local function helper_baabee9d()
 		var9 = 0
 		while var5 < 100 do
 			if var5 == 0 then
-				event.LoadChara(5, "e540_golem.gltf", "e33a", 8)
+				event.load_character(5, "e540_golem.gltf", "e33a", 8)
 			else
-				event.CopyChara(5, 8, 8 + var5)
+				event.copy_character(5, 8, 8 + var5)
 			end
-			event.CharaActive(8 + var5)
-			event.EohSyncChara(1 + var5, 8 + var5)
-			event.EohSetShadow(1 + var5, 0)
-			event.ObjsInit(1 + var5)
-			event.ObjsSyncObj(1 + var5, 1 + var5)
+			event.set_character_active(8 + var5)
+			event.attach_object_handle_to_character(1 + var5, 8 + var5)
+			event.set_object_handle_shadow_enabled(1 + var5, 0)
+			event.clear_object_sequence(1 + var5)
+			event.set_object_sequence_object(1 + var5, 1 + var5)
 			if vm.imod(var7, 2) == 0 then
-				event.SetCharaPos(
+				event.set_character_position(
 					8 + var5,
 					vm.i32(vm.i32(vm.i32(80 * var6) - 80) + vm.i32(80 * var6)),
 					150.0,
 					vm.i32(vm.i32(vm.i32(vm.i32(-var7) * 100) + var8) + 6500)
 				)
 			else
-				event.SetCharaPos(
+				event.set_character_position(
 					8 + var5,
 					vm.i32(vm.i32(80 * var6) + vm.i32(80 * var6)),
 					150.0,
@@ -88,47 +88,47 @@ local function helper_baabee9d()
 				var9 = 1
 			end
 			do
-				local out1, out2, out3 = event.GetCharaPos(8 + var5)
+				local out1, out2, out3 = event.get_character_position(8 + var5)
 				var0 = out1 or var0
 				var1 = out2 or var1
 				var2 = out3 or var2
 			end
-			var3 = event.GetRand(40.0) or var3
+			var3 = event.get_random_number(40.0) or var3
 			var3 = vm.f32(var3 - 20.0)
 			var0 = vm.f32(var0 + var3)
-			var3 = event.GetRand(100.0) or var3
+			var3 = event.get_random_number(100.0) or var3
 			var3 = vm.f32(var3 - 50.0)
 			var2 = vm.f32(var2 + var3)
-			event.SetCharaPos(8 + var5, var0, var1, var2)
-			var4 = vm.float_bits(event.GetRand(100)) or var4
+			event.set_character_position(8 + var5, var0, var1, var2)
+			var4 = vm.float_bits(event.get_random_number(100)) or var4
 			if vm.imod(var4, 2) == 0 then
-				event.EohSetMotion(1 + var5, "走り", 4)
+				event.set_object_handle_motion(1 + var5, "走り", 4)
 			else
-				event.EohSetMotion(1 + var5, "走り2", 4)
+				event.set_object_handle_motion(1 + var5, "走り2", 4)
 			end
-			event.EohNormalDrive(1 + var5)
-			var3 = event.GetRand(10.0) or var3
-			event.ObjsSetMotionNowTime(1 + var5, var3)
+			event.step_object_handle_motion(1 + var5)
+			var3 = event.get_random_number(10.0) or var3
+			event.set_object_sequence_motion_time(1 + var5, var3)
 			var5 = var5 + 1
 		end
 		at = 2
 		vm.wait(2)
 		var5 = 0
 		while var5 < 100 do
-			event.CharaActive(0, 8 + var5)
+			event.set_character_active(0, 8 + var5)
 			var5 = var5 + 1
 		end
-		event.ChangeDir("")
-		event.EohSetShow(0, 1)
-		time = event.GetTime() or time
-		event.SetTime(24.0)
-		event.SetTimeStepEnable(0)
-		event.SetMapDraw(0)
-		event.InitDramaScene()
-		event.SetFadeIn(0)
-		event.CmrsSetPos(619.04, 258.8, 6128.66)
-		event.CmrsSetRef(477.83, 335.0, 6237.76)
-		event.CmrsMove2(619.04, 258.8, 6128.66, 516.77, 361.08, 6275.05, 60, 2, 1.0)
+		event.change_directory("")
+		event.set_object_handle_visible(0, 1)
+		time = event.get_scene_time_of_day() or time
+		event.set_time_of_day(24.0)
+		event.set_time_of_day_advancing(0)
+		event.set_event_map_visible(0)
+		event.enable_drama_skip()
+		event.fade_in_screen(0)
+		event.set_camera_sequence_position(619.04, 258.8, 6128.66)
+		event.set_camera_sequence_look_at(477.83, 335.0, 6237.76)
+		event.move_camera_sequence_eased(619.04, 258.8, 6128.66, 516.77, 361.08, 6275.05, 60, 2, 1.0)
 		var5 = 0
 		while var5 < 100 do
 			if
@@ -140,7 +140,7 @@ local function helper_baabee9d()
 				or vm.imod(var5, 10) == 8
 				or vm.imod(var5, 10) == 9
 			then
-				event.CharaActive(0, 8 + var5)
+				event.set_character_active(0, 8 + var5)
 				var5 = var5 + 1
 				continue
 			end
@@ -148,33 +148,33 @@ local function helper_baabee9d()
 				var5 = var5 + 1
 				continue
 			end
-			event.CharaActive(8 + var5)
-			event.EohResetDaPosition(1 + var5)
+			event.set_character_active(8 + var5)
+			event.reset_object_handle_dynamic_animation(1 + var5)
 			do
-				local out1, out2, out3 = event.EohGetPos(1 + var5)
+				local out1, out2, out3 = event.get_object_handle_position(1 + var5)
 				pos_x = out1 or pos_x
 				pos_y = out2 or pos_y
 				pos_z = out3 or pos_z
 			end
-			var14 = vm.float_bits(event.GetRand(100)) or var14
+			var14 = vm.float_bits(event.get_random_number(100)) or var14
 			if vm.imod(var14, 2) == 0 then
-				event.EohSetMotion(1 + var5, "走り（坂）", 4)
+				event.set_object_handle_motion(1 + var5, "走り（坂）", 4)
 			else
-				event.EohSetMotion(1 + var5, "走り2（坂）", 4)
+				event.set_object_handle_motion(1 + var5, "走り2（坂）", 4)
 			end
-			event.EohNormalDrive(1 + var5)
-			var3 = event.GetRand(10.0) or var3
-			event.ObjsSetMotionNowTime(1 + var5, var3)
-			event.ObjsMove(1 + var5, pos_x, pos_y + 300, pos_z + 600.0, 120, 1)
+			event.step_object_handle_motion(1 + var5)
+			var3 = event.get_random_number(10.0) or var3
+			event.set_object_sequence_motion_time(1 + var5, var3)
+			event.move_object_sequence(1 + var5, pos_x, pos_y + 300, pos_z + 600.0, 120, 1)
 			var5 = var5 + 1
 		end
-		event.ObjsSetPos(1, -770.0, 249.39, 6317.22)
-		event.ObjsMove(1, -770.0, 270.4, 6373.33, 20)
-		event.ObjsSetMotion(1, "走り（坂）", 4)
-		event.ObjsMotionDelay(1, 10)
-		event.ObjsSetMotion(1, "振り返り", 2)
-		event.ObjsNextMotion(1, "手をあげる", 6)
-		event.ObjsNextMotion(1, "振り返りループ", 4)
+		event.set_object_sequence_position(1, -770.0, 249.39, 6317.22)
+		event.move_object_sequence(1, -770.0, 270.4, 6373.33, 20)
+		event.set_object_sequence_motion(1, "走り（坂）", 4)
+		event.delay_object_sequence_motion_track(1, 10)
+		event.set_object_sequence_motion(1, "振り返り", 2)
+		event.queue_object_sequence_next_motion(1, "手をあげる", 6)
+		event.queue_object_sequence_next_motion(1, "振り返りループ", 4)
 		at = 3
 		wait_frames(90)
 		at = 4
@@ -235,16 +235,16 @@ local function helper_baabee9d()
 	end)
 	at = 5
 	vm.entry(5)
-	event.CancelDramaScene()
-	event.SetMapDraw(1)
-	event.SetProjection(524.9)
-	event.EohSetShow(0, 1)
-	event.SetTime(time)
-	event.SetTimeStepEnable(1)
-	event.CharaActive(0)
+	event.cancel_drama_scene_skip()
+	event.set_event_map_visible(1)
+	event.set_event_projection(524.9)
+	event.set_object_handle_visible(0, 1)
+	event.set_time_of_day(time)
+	event.set_time_of_day_advancing(1)
+	event.set_character_active(0)
 	var5 = 0
 	while var5 < 100 do
-		event.DeleteChara(8 + var5)
+		event.delete_character(8 + var5)
 		var5 = var5 + 1
 	end
 end

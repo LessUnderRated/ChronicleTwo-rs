@@ -8,7 +8,7 @@ local function helper_7471d537()
 	local life: s32 = 0
 	while true do
 		vm.wait()
-		life = monster.GetMonsterLifeInt() or life
+		life = monster.get_life_int() or life
 		if life ~= 0 then
 			return
 		end

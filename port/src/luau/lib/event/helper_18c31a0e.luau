@@ -3,11 +3,11 @@
 
 --- Helper function.
 local function helper_18c31a0e()
-	event.CharaActive(1, 0)
-	event.CharaActive(0, 9)
-	event.DelExtMotion(0)
-	event.DeleteChara(9)
-	event.DeleteChara(10)
+	event.set_character_active(1, 0)
+	event.set_character_active(0, 9)
+	event.delete_character_extension_packs(0)
+	event.delete_character(9)
+	event.delete_character(10)
 end
 
 return helper_18c31a0e

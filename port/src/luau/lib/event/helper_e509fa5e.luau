@@ -15,37 +15,37 @@ local function helper_e509fa5e(arg0: s32)
 	local var6: f32 = 0
 	local var7: f32 = 0
 	local var8: any = 0
-	event.Initialize()
+	event.initialize_event()
 	do
-		local out1, out2, out3 = event.GetCharaPos(0)
+		local out1, out2, out3 = event.get_character_position(0)
 		var1 = out1 or var1
 		var2 = out2 or var2
 		var3 = out3 or var3
 	end
 	do
-		local out1, out2, out3 = event.GetCharaPos(arg0)
+		local out1, out2, out3 = event.get_character_position(arg0)
 		var4 = out1 or var4
 		var5 = out2 or var5
 		var6 = out3 or var6
 	end
 	do
-		local out1, out2, out3 = event.SubVector(var4, var5, var6, var1, var2, var3)
+		local out1, out2, out3 = event.subtract_vectors(var4, var5, var6, var1, var2, var3)
 		var4 = out1 or var4
 		var5 = out2 or var5
 		var6 = out3 or var6
 	end
-	var7 = event.Atan2f(var4, var6) or var7
-	event.EohSyncChara(0, 0)
-	event.ObjsInit(0)
-	event.ObjsSyncObj(0, 0)
-	event.ObjsSetMotion(0, "歩き", 4, -1.0, 1)
+	var7 = event.get_arc_tangent(var4, var6) or var7
+	event.attach_object_handle_to_character(0, 0)
+	event.clear_object_sequence(0)
+	event.set_object_sequence_object(0, 0)
+	event.set_object_sequence_motion(0, "歩き", 4, -1.0, 1)
 	print("angle=", vm.float(var7), "----------\n")
 	var8 = vm.ftoi(vm.f32(var7 / vm.f32(0.19634955)))
 	var8 = helper_2c717f26(var8)
 	print("frame=", var8, "-------------\n")
-	event.ObjsRotation(0, 0.0, var7, 0.0, var8)
+	event.rotate_object_sequence(0, 0.0, var7, 0.0, var8)
 	wait_frames(var8)
-	event.ObjsSetMotion(0, "立ち", 4, -1.0, 1)
+	event.set_object_sequence_motion(0, "立ち", 4, -1.0, 1)
 end
 
 return helper_e509fa5e

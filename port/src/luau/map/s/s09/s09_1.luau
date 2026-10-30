@@ -38,200 +38,200 @@ local global1: s32 = 0
 --- Helper function.
 local function helper_2f088()
 	local active_chr_no: s32 = 0
-	event.SetMesWindowMode(0, 7)
-	event.AssignStack(5)
-	event.ClearStack(5)
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	event.set_message_window_mode(0, 7)
+	event.assign_memory_stack(5)
+	event.clear_memory_stack(5)
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no == 0 then
 		global0 = 0
 		global1 = 32
-		event.LoadMotion(5, "event/basic_evmot/mints_set.gltf", "info", global0)
-		event.LoadMotion(5, "event/e400/e448/e448_mints.gltf", "info", global0)
-		event.EohSyncChara(0, global0)
-		event.ObjsInit(0)
-		event.ObjsSyncObj(0, 0)
-		event.CharaActive(0, global0)
-		event.LoadChara(5, "chara/c02_base.gltf", "info", global1)
-		event.LoadEquip(5, 1, 4, "info", global1)
-		event.LoadEquip(5, 1, 3, "info", global1)
-		event.LoadEquip(5, 1, 2, "info", global1, 37)
-		event.LoadMotion(5, "event/basic_evmot/monica_set.gltf", "info", global1)
-		event.LoadMotion(5, "event/e400/e448/e448_monica.gltf", "info", global1)
-		event.EohSyncChara(1, global1)
-		event.ObjsInit(1)
-		event.ObjsSyncObj(1, 1)
-		event.CharaActive(0, global1)
-		event.CharaActive(1, 37)
+		event.load_character_motion_pack(5, "event/basic_evmot/mints_set.gltf", "info", global0)
+		event.load_character_motion_pack(5, "event/e400/e448/e448_mints.gltf", "info", global0)
+		event.attach_object_handle_to_character(0, global0)
+		event.clear_object_sequence(0)
+		event.set_object_sequence_object(0, 0)
+		event.set_character_active(0, global0)
+		event.load_character(5, "chara/c02_base.gltf", "info", global1)
+		event.load_equipment_model(5, 1, 4, "info", global1)
+		event.load_equipment_model(5, 1, 3, "info", global1)
+		event.load_equipment_model(5, 1, 2, "info", global1, 37)
+		event.load_character_motion_pack(5, "event/basic_evmot/monica_set.gltf", "info", global1)
+		event.load_character_motion_pack(5, "event/e400/e448/e448_monica.gltf", "info", global1)
+		event.attach_object_handle_to_character(1, global1)
+		event.clear_object_sequence(1)
+		event.set_object_sequence_object(1, 1)
+		event.set_character_active(0, global1)
+		event.set_character_active(1, 37)
 	end
 	if active_chr_no == 1 then
 		global0 = 32
 		global1 = 0
-		event.LoadChara(5, "chara/c01_base.gltf", "info", global0)
-		event.LoadEquip(5, 0, 4, "info", global0)
-		event.LoadEquip(5, 0, 3, "info", global0)
-		event.LoadEquip(5, 0, 2, "info", global0, 37)
-		event.LoadMotion(5, "event/basic_evmot/mints_set.gltf", "info", global0)
-		event.LoadMotion(5, "event/e400/e448/e448_mints.gltf", "info", global0)
-		event.EohSyncChara(0, global0)
-		event.ObjsInit(0)
-		event.ObjsSyncObj(0, 0)
-		event.CharaActive(0, global0)
-		event.CharaActive(1, 37)
-		event.LoadMotion(5, "event/basic_evmot/monica_set.gltf", "info", global1)
-		event.LoadMotion(5, "event/e400/e448/e448_monica.gltf", "info", global1)
-		event.EohSyncChara(1, global1)
-		event.ObjsInit(1)
-		event.ObjsSyncObj(1, 1)
-		event.CharaActive(0, global1)
+		event.load_character(5, "chara/c01_base.gltf", "info", global0)
+		event.load_equipment_model(5, 0, 4, "info", global0)
+		event.load_equipment_model(5, 0, 3, "info", global0)
+		event.load_equipment_model(5, 0, 2, "info", global0, 37)
+		event.load_character_motion_pack(5, "event/basic_evmot/mints_set.gltf", "info", global0)
+		event.load_character_motion_pack(5, "event/e400/e448/e448_mints.gltf", "info", global0)
+		event.attach_object_handle_to_character(0, global0)
+		event.clear_object_sequence(0)
+		event.set_object_sequence_object(0, 0)
+		event.set_character_active(0, global0)
+		event.set_character_active(1, 37)
+		event.load_character_motion_pack(5, "event/basic_evmot/monica_set.gltf", "info", global1)
+		event.load_character_motion_pack(5, "event/e400/e448/e448_monica.gltf", "info", global1)
+		event.attach_object_handle_to_character(1, global1)
+		event.clear_object_sequence(1)
+		event.set_object_sequence_object(1, 1)
+		event.set_character_active(0, global1)
 	end
-	event.LoadChara(5, "chara/p01_03a.gltf", "info", 38)
-	event.CharaActive(0, 38)
-	event.EohSyncChara(2, 38)
-	event.ObjsInit(2, 38)
-	event.ObjsSyncObj(2, 2)
-	event.LoadChara(5, "chara/p01_06a.gltf", "info", 39)
-	event.CharaActive(0, 39)
-	event.EohSyncChara(3, 39)
-	event.ObjsInit(3, 39)
-	event.ObjsSyncObj(3, 3)
-	event.EohSyncObj_2(4, "p01_train01")
-	event.ObjsInit(4)
-	event.ObjsSyncObj(4, 4)
-	event.LoadMes(0, 5, "event/e400/e448/e448_1.txt")
+	event.load_character(5, "chara/p01_03a.gltf", "info", 38)
+	event.set_character_active(0, 38)
+	event.attach_object_handle_to_character(2, 38)
+	event.clear_object_sequence(2, 38)
+	event.set_object_sequence_object(2, 2)
+	event.load_character(5, "chara/p01_06a.gltf", "info", 39)
+	event.set_character_active(0, 39)
+	event.attach_object_handle_to_character(3, 39)
+	event.clear_object_sequence(3, 39)
+	event.set_object_sequence_object(3, 3)
+	event.attach_object_handle_to_map_part_2(4, "p01_train01")
+	event.clear_object_sequence(4)
+	event.set_object_sequence_object(4, 4)
+	event.load_message_file(0, 5, "event/e400/e448/e448_1.txt")
 end
 
 --- Helper function.
 local function helper_2ecc0()
 	local active_chr_no: s32 = 0
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no == 0 then
-		event.CharaActive(1, global0)
-		event.CharaActive(0, global1)
-		event.DelExtMotion(global0)
-		event.DelExtMotion(global1)
-		event.DeleteChara(global1)
-		event.DeleteChara(37)
+		event.set_character_active(1, global0)
+		event.set_character_active(0, global1)
+		event.delete_character_extension_packs(global0)
+		event.delete_character_extension_packs(global1)
+		event.delete_character(global1)
+		event.delete_character(37)
 	end
 	if active_chr_no == 1 then
-		event.CharaActive(1, global1)
-		event.CharaActive(0, global0)
-		event.DelExtMotion(global0)
-		event.DelExtMotion(global1)
-		event.DeleteChara(global0)
-		event.DeleteChara(37)
+		event.set_character_active(1, global1)
+		event.set_character_active(0, global0)
+		event.delete_character_extension_packs(global0)
+		event.delete_character_extension_packs(global1)
+		event.delete_character(global0)
+		event.delete_character(37)
 	end
-	event.DeleteChara(38)
-	event.DeleteChara(39)
-	event.SetCharaPos(0, -1952.44, 29.22, -304.96)
-	event.SetCharaRot(0, 0.0, 1.62, 0.0)
+	event.delete_character(38)
+	event.delete_character(39)
+	event.set_character_position(0, -1952.44, 29.22, -304.96)
+	event.set_character_rotation(0, 0.0, 1.62, 0.0)
 end
 
 --- Helper function.
 local function helper_2ffb8()
 	local var6: s32 = 0
 	vm.section(function()
-		event.Initialize()
-		event.SetMesWindowMode(0, 7)
-		event.LoadSound(4220)
-		var6 = event.SndLoadSound_2(4220) or var6
+		event.initialize_event()
+		event.set_message_window_mode(0, 7)
+		event.load_map_sounds(4220)
+		var6 = event.load_sound_effect_file_2(4220) or var6
 		helper_2f088()
-		event.EohSetFootSoundId(0, 2)
-		event.EohSetFootSoundId(1, 2)
-		event.ObjsTexAnime(0, 0)
-		event.ObjsTexAnime(0, 1, "デフォルト顔")
-		event.ObjsTexAnime(0, 1, "通常目パチ")
-		event.ObjsTexAnime(1, 0)
-		event.ObjsTexAnime(1, 1, "デフォルト顔")
-		event.ObjsTexAnime(1, 1, "通常目パチ")
-		event.CharaActive(1, global0)
-		event.CharaActive(1, global1)
-		event.CharaActive(1, 38)
-		event.CharaActive(1, 39)
-		event.CmrsSetPos(-1979.65, 91.43, -121.02)
-		event.CmrsSetRef(-1941.55, 74.53, -339.62)
-		event.ObjsSetMotion(0, "走り", 4, -1.0, 1)
-		event.ObjsSetMotion(1, "走り", 4, -1.0, 1)
-		event.ObjsSetPos(1, -1838.01, 8.0, -560.01)
-		event.ObjsSetRot(1, 0.0, -0.64, 0.0)
-		event.ObjsSetPos(0, -1904.92, 17.42, -503.6)
-		event.ObjsSetRot(0, 0.0, -0.64, 0.0)
-		event.ObjsSetPos(2, -2186.89, 29.22, -198.9)
-		event.ObjsSetRot(2, 0.0, 3.13, 0.0)
-		event.ObjsSetPos(3, -2223.98, 29.22, -196.3)
-		event.ObjsSetRot(3, 0.0, 3.13, 0.0)
-		event.ObjsSetPos(4, -912.1, 0.0, 0.0)
-		event.ObjsSetRot(4, 0.0, 1.57, 0.0)
-		event.SetFadeIn(30)
-		event.ObjsInitPas(0)
-		event.ObjsSetPasFrm(0, 60)
-		event.ObjsAddPas(0, -1904.92, 17.42, -503.6)
-		event.ObjsAddPas(0, -1985.4, 29.22, -393.12)
-		event.ObjsStartPas(0, 1)
-		event.ObjsInitPas(1)
-		event.ObjsSetPasFrm(1, 60)
-		event.ObjsAddPas(1, -1838.01, 8.0, -560.01)
-		event.ObjsAddPas(1, -1922.88, 29.4, -436.71)
-		event.ObjsStartPas(1, 1)
+		event.set_object_handle_footstep_sound(0, 2)
+		event.set_object_handle_footstep_sound(1, 2)
+		event.set_object_sequence_texture_animation(0, 0)
+		event.set_object_sequence_texture_animation(0, 1, "デフォルト顔")
+		event.set_object_sequence_texture_animation(0, 1, "通常目パチ")
+		event.set_object_sequence_texture_animation(1, 0)
+		event.set_object_sequence_texture_animation(1, 1, "デフォルト顔")
+		event.set_object_sequence_texture_animation(1, 1, "通常目パチ")
+		event.set_character_active(1, global0)
+		event.set_character_active(1, global1)
+		event.set_character_active(1, 38)
+		event.set_character_active(1, 39)
+		event.set_camera_sequence_position(-1979.65, 91.43, -121.02)
+		event.set_camera_sequence_look_at(-1941.55, 74.53, -339.62)
+		event.set_object_sequence_motion(0, "走り", 4, -1.0, 1)
+		event.set_object_sequence_motion(1, "走り", 4, -1.0, 1)
+		event.set_object_sequence_position(1, -1838.01, 8.0, -560.01)
+		event.set_object_sequence_rotation(1, 0.0, -0.64, 0.0)
+		event.set_object_sequence_position(0, -1904.92, 17.42, -503.6)
+		event.set_object_sequence_rotation(0, 0.0, -0.64, 0.0)
+		event.set_object_sequence_position(2, -2186.89, 29.22, -198.9)
+		event.set_object_sequence_rotation(2, 0.0, 3.13, 0.0)
+		event.set_object_sequence_position(3, -2223.98, 29.22, -196.3)
+		event.set_object_sequence_rotation(3, 0.0, 3.13, 0.0)
+		event.set_object_sequence_position(4, -912.1, 0.0, 0.0)
+		event.set_object_sequence_rotation(4, 0.0, 1.57, 0.0)
+		event.fade_in_screen(30)
+		event.clear_object_sequence_path(0)
+		event.set_object_sequence_path_frames(0, 60)
+		event.add_object_sequence_path_point(0, -1904.92, 17.42, -503.6)
+		event.add_object_sequence_path_point(0, -1985.4, 29.22, -393.12)
+		event.start_object_sequence_path(0, 1)
+		event.clear_object_sequence_path(1)
+		event.set_object_sequence_path_frames(1, 60)
+		event.add_object_sequence_path_point(1, -1838.01, 8.0, -560.01)
+		event.add_object_sequence_path_point(1, -1922.88, 29.4, -436.71)
+		event.start_object_sequence_path(1, 1)
 		wait_objects(0)
 		wait_objects(1)
-		event.InitDramaScene()
-		event.ObjsSetMotion(0, "歩き", 4, -1.0, 1)
-		event.ObjsSetMotion(1, "歩き", 4, -1.0, 1)
-		event.CmrsSetPos(-2052.02, 160.14, -365.82)
-		event.CmrsSetRef(-2179.63, 74.53, -268.32)
-		event.ObjsInitPas(1)
-		event.ObjsSetPasFrm(1, 120)
-		event.ObjsAddPas(1, -2199.24, 29.22, -360.0)
-		event.ObjsAddPas(1, -2199.24, 29.22, -253.55)
-		event.ObjsStartPas(1)
-		event.ObjsInitPas(0)
-		event.ObjsSetPasFrm(0, 120)
-		event.ObjsAddPas(0, -2216.55, 29.22, -360.0)
-		event.ObjsAddPas(0, -2216.55, 29.22, -253.55)
-		event.ObjsStartPas(0)
+		event.enable_drama_skip()
+		event.set_object_sequence_motion(0, "歩き", 4, -1.0, 1)
+		event.set_object_sequence_motion(1, "歩き", 4, -1.0, 1)
+		event.set_camera_sequence_position(-2052.02, 160.14, -365.82)
+		event.set_camera_sequence_look_at(-2179.63, 74.53, -268.32)
+		event.clear_object_sequence_path(1)
+		event.set_object_sequence_path_frames(1, 120)
+		event.add_object_sequence_path_point(1, -2199.24, 29.22, -360.0)
+		event.add_object_sequence_path_point(1, -2199.24, 29.22, -253.55)
+		event.start_object_sequence_path(1)
+		event.clear_object_sequence_path(0)
+		event.set_object_sequence_path_frames(0, 120)
+		event.add_object_sequence_path_point(0, -2216.55, 29.22, -360.0)
+		event.add_object_sequence_path_point(0, -2216.55, 29.22, -253.55)
+		event.start_object_sequence_path(0)
 		wait_objects(0)
 		wait_objects(1)
-		event.ObjsSetMotion(0, "立ち")
-		event.ObjsSetMotion(1, "立ち")
-		event.ObjsSetMotion(2, "会話", 2)
-		event.ObjsNextMotion(2, "立ち", 4)
+		event.set_object_sequence_motion(0, "立ち")
+		event.set_object_sequence_motion(1, "立ち")
+		event.set_object_sequence_motion(2, "会話", 2)
+		event.queue_object_sequence_next_motion(2, "立ち", 4)
 		helper_4116e6bb(4481130)
-		event.ObjsSetMotion(2, "立ち")
-		event.ObjsSetMotion(0, "会話", 6)
-		event.ObjsNextMotion(0, "立ち", 4)
+		event.set_object_sequence_motion(2, "立ち")
+		event.set_object_sequence_motion(0, "会話", 6)
+		event.queue_object_sequence_next_motion(0, "立ち", 4)
 		helper_4116e6bb(4481140)
-		event.ObjsSetMotion(3, "会話", 2)
-		event.ObjsNextMotion(3, "立ち", 4)
+		event.set_object_sequence_motion(3, "会話", 2)
+		event.queue_object_sequence_next_motion(3, "立ち", 4)
 		helper_4116e6bb(4481150)
-		event.ObjsSetMotion(3, "立ち")
+		event.set_object_sequence_motion(3, "立ち")
 		wait_frames(30)
-		event.ObjsSetPos(1, -1935.53, 29.22, -301.43)
-		event.ObjsSetRot(1, 0.0, 0.0, 0.0)
-		event.ObjsSetPos(0, -1952.44, 29.22, -304.96)
-		event.ObjsSetRot(0, 0.0, 1.08, 0.0)
-		event.CmrsSetPos(-1949.04, 34.26, -256.22)
-		event.CmrsSetRef(-1934.01, 87.78, -397.48)
-		event.ObjsSetMotion(1, "右向く会話", 6)
-		event.ObjsNextMotion(1, "右向くL", 4)
-		event.SetPakuAnim(1, "わらい口パク")
+		event.set_object_sequence_position(1, -1935.53, 29.22, -301.43)
+		event.set_object_sequence_rotation(1, 0.0, 0.0, 0.0)
+		event.set_object_sequence_position(0, -1952.44, 29.22, -304.96)
+		event.set_object_sequence_rotation(0, 0.0, 1.08, 0.0)
+		event.set_camera_sequence_position(-1949.04, 34.26, -256.22)
+		event.set_camera_sequence_look_at(-1934.01, 87.78, -397.48)
+		event.set_object_sequence_motion(1, "右向く会話", 6)
+		event.queue_object_sequence_next_motion(1, "右向くL", 4)
+		event.set_mouth_texture_animations(1, "わらい口パク")
 		helper_4116e6bb(4481160)
-		event.ResetPakuAnim()
-		event.SndSePlay(var6, 25)
-		event.ObjsSetMotion(0, "うなづく", 6)
-		event.ObjsNextMotion(0, "立ち", 4)
-		event.SetPakuAnim(0, "わらい口パク")
+		event.reset_mouth_texture_animations()
+		event.play_sound_effect(var6, 25)
+		event.set_object_sequence_motion(0, "うなづく", 6)
+		event.queue_object_sequence_next_motion(0, "立ち", 4)
+		event.set_mouth_texture_animations(0, "わらい口パク")
 		helper_4116e6bb(4481170)
-		event.ResetPakuAnim()
+		event.reset_mouth_texture_animations()
 		wait_frames(30)
 	end)
-	event.CancelDramaScene()
-	event.SetFadeOut(30)
+	event.cancel_drama_scene_skip()
+	event.fade_out_screen(30)
 	wait_frames(35)
-	event.EohSetFootSoundId(0, 0)
-	event.EohSetFootSoundId(1, 0)
+	event.set_object_handle_footstep_sound(0, 0)
+	event.set_object_handle_footstep_sound(1, 0)
 	helper_2ecc0()
-	event.ResetCamera(0)
-	event.SetFadeIn(30)
+	event.reset_follow_camera(0)
+	event.fade_in_screen(30)
 end
 
 --- Helper function.
@@ -239,7 +239,7 @@ local function helper_33e1c()
 	local var0: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		var0 = event.GetEventData_2(14) or var0
+		var0 = event.get_triggered_event_data_2(14) or var0
 		if var0 == 1 then
 			at = 1
 			return helper_b5c03e80()
@@ -296,39 +296,39 @@ function script.default_event()
 	return vm.guard(function()
 		print("START_EVENT----------------------------")
 		helper_13965fb3()
-		mc_load = event.CheckMcLoad() or mc_load
+		mc_load = event.take_memory_card_load_state() or mc_load
 		if mc_load == 1 then
-			event.SetCharaPos(0, -1820.0, 29.2, -335.0)
-			event.SetCharaRot(0, 0.0, 1.57, 0.0)
-			event.SetMotion(0, "立ち", 4)
-			event.CharaNormalDrive(0)
-			event.CharaResetDa(0)
-			event.ResetCamera(1, 0.0, 20.0)
+			event.set_character_position(0, -1820.0, 29.2, -335.0)
+			event.set_character_rotation(0, 0.0, 1.57, 0.0)
+			event.set_character_motion(0, "立ち", 4)
+			event.update_character_motion(0)
+			event.reset_character_cloth_and_hair(0)
+			event.reset_follow_camera(1, 0.0, 20.0)
 		else
-			old_map_no = event.GetOldMapNo() or old_map_no
-			var2 = event.GetMapType() or var2
+			old_map_no = event.get_previous_map() or old_map_no
+			var2 = event.get_map_type() or var2
 			if var2 ~= -1 then
 				if old_map_no == 2 or old_map_no == 75 then
 					at = 1
 					helper_07039683()
 				else
-					var3 = event.GetCnt(1) or var3
+					var3 = event.get_save_counter(1) or var3
 					if
 						(old_map_no == 18 or old_map_no == 23 or old_map_no == 120 or old_map_no == 108)
 						and var3 == 4
 					then
 						helper_946c0402()
-						event.SetFadeIn(15)
-						event.ResetCamera(1, 0.0)
+						event.fade_in_screen(15)
+						event.reset_follow_camera(1, 0.0)
 					else
-						flag = event.GetFlag(360) or flag
-						flag_2 = event.GetFlag(400) or flag_2
+						flag = event.get_save_flag(360) or flag
+						flag_2 = event.get_save_flag(400) or flag_2
 						if flag == 1 and flag_2 == 0 then
 							at = 2
 							helper_c21b6dfd()
 						else
-							event.CharaActive(0, 9)
-							var6 = event.GetChapter() or var6
+							event.set_character_active(0, 9)
+							var6 = event.get_chapter() or var6
 							if var6 ~= 6 and var6 ~= 7 then
 								at = 3
 								helper_a8de6f45()
@@ -336,7 +336,7 @@ function script.default_event()
 								at = 4
 								helper_f10d721b()
 							end
-							event.CharaActive(1, 9)
+							event.set_character_active(1, 9)
 						end
 					end
 				end
@@ -359,7 +359,7 @@ function script.default_event()
 				at = 3
 				helper_a8de6f45()
 				return vm.continue_with(function()
-					event.CharaActive(1, 9)
+					event.set_character_active(1, 9)
 					return
 				end)
 			end
@@ -379,7 +379,7 @@ script.key_open = helper_f10d721b
 --- Event 201, which map data, a script or the engine runs by number.
 function script.event_201()
 	if helper_d4129194() ~= 0 then
-		event.MapJump_2(-1, "g03")
+		event.jump_to_map_2(-1, "g03")
 	end
 end
 
@@ -395,37 +395,37 @@ function script.event_250()
 		if var0 ~= 1 then
 			return
 		end
-		event.SetCnt(1, 4)
-		var1 = event.GetChapter() or var1
-		var2 = event.GetEventData_2(3) or var2
+		event.set_save_counter(1, 4)
+		var1 = event.get_chapter() or var1
+		var2 = event.get_triggered_event_data_2(3) or var2
 		if var2 <= 1 then
 			if var1 ~= 6 and var1 ~= 7 then
 				at = 2
 				helper_f4ec8310()
-				event.StopBgm(0)
+				event.stop_music(0)
 				at = 3
 				vm.wait(3)
-				event.MapJump_2(-1, "s08")
+				event.jump_to_map_2(-1, "s08")
 			else
 				at = 4
 				helper_f4ec8310()
-				event.StopBgm(0)
+				event.stop_music(0)
 				at = 5
 				vm.wait(5)
-				event.MapJump_2(-1, "s37")
+				event.jump_to_map_2(-1, "s37")
 			end
 			at = 6
 			vm.wait(6)
 		elseif var1 ~= 6 and var1 ~= 7 then
 			at = 7
 			helper_826a3ea7(0)
-			event.StopBgm(0)
-			event.MapJump_2(100, "s07")
+			event.stop_music(0)
+			event.jump_to_map_2(100, "s07")
 		else
 			at = 8
 			helper_fdad3d3b()
-			event.StopBgm(0)
-			event.MapJump_2(100, "s38")
+			event.stop_music(0)
+			event.jump_to_map_2(100, "s38")
 		end
 		return
 	end, function(received: { any })
@@ -472,11 +472,11 @@ function script.event_1000()
 			helper_b580d4fc()
 			at = 3
 			helper_050c9cee(1)
-			event.GotoMenu(13, 9)
+			event.open_event_menu(13, 9)
 			at = 4
 			vm.wait(4)
-			event.BgmLoadCancel()
-			event.MapJump_2(-1, "s10")
+			event.skip_next_music_load()
+			event.jump_to_map_2(-1, "s10")
 		end
 		return
 	end, function(received: { any })
@@ -490,11 +490,11 @@ function script.event_1000()
 				return vm.continue_with(function()
 					at = 3
 					helper_050c9cee(1)
-					event.GotoMenu(13, 9)
+					event.open_event_menu(13, 9)
 					at = 4
 					vm.wait(4)
-					event.BgmLoadCancel()
-					event.MapJump_2(-1, "s10")
+					event.skip_next_music_load()
+					event.jump_to_map_2(-1, "s10")
 					return
 				end)
 			end
@@ -502,11 +502,11 @@ function script.event_1000()
 				at = 3
 				helper_050c9cee(1)
 				return vm.continue_with(function()
-					event.GotoMenu(13, 9)
+					event.open_event_menu(13, 9)
 					at = 4
 					vm.wait(4)
-					event.BgmLoadCancel()
-					event.MapJump_2(-1, "s10")
+					event.skip_next_music_load()
+					event.jump_to_map_2(-1, "s10")
 					return
 				end)
 			end
@@ -531,11 +531,11 @@ function script.event_14520()
 		helper_b580d4fc()
 		at = 2
 		helper_050c9cee(1)
-		event.GotoMenu(13, 9)
+		event.open_event_menu(13, 9)
 		at = 3
 		vm.wait(3)
-		event.BgmLoadCancel()
-		event.MapJump_2(-1, "s10")
+		event.skip_next_music_load()
+		event.jump_to_map_2(-1, "s10")
 		return
 	end, function(received: { any })
 		if at <= 3 then
@@ -543,11 +543,11 @@ function script.event_14520()
 				at = 2
 				helper_050c9cee(1)
 				return vm.continue_with(function()
-					event.GotoMenu(13, 9)
+					event.open_event_menu(13, 9)
 					at = 3
 					vm.wait(3)
-					event.BgmLoadCancel()
-					event.MapJump_2(-1, "s10")
+					event.skip_next_music_load()
+					event.jump_to_map_2(-1, "s10")
 					return
 				end)
 			end

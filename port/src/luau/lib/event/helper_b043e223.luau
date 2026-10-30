@@ -5,7 +5,7 @@ local show_message = require("@lib/event/show_message")
 
 --- Helper function.
 local function helper_b043e223()
-	event.MesMake_2(0, "あいてむまちがい")
+	event.open_message_window_2(0, "あいてむまちがい")
 	show_message(0, -1, 8, 0, 0)
 end
 

@@ -3,7 +3,7 @@
 
 --- Helper function.
 local function helper_f432ac2a()
-	event.LoadSound(1683)
+	event.load_map_sounds(1683)
 end
 
 return helper_f432ac2a

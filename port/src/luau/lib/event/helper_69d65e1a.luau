@@ -8,35 +8,35 @@ local function helper_69d65e1a()
 	local stage_id: s32 = 0
 	local var1: s32 = 0
 	local argc: s32 = 0
-	stage_id = event.DngGetStageId() or stage_id
-	var1 = event.DngGetFloorId() or var1
-	argc = event.GetNextFloor(var1, 0) or argc
-	event.DngSetFloorId(argc)
-	event.SetFloorInfo(stage_id, var1, 5, 2)
-	event.SetFloorInfo(stage_id, argc, 5, 1)
-	event.DeleteChara(8)
-	event.DeleteChara(9)
-	event.DeleteChara(10)
-	event.DeleteChara(11)
-	event.DeleteChara(13)
-	event.DeleteChara(14)
-	event.DeleteChara(15)
-	event.SphidaInit()
-	event.DngPause(8192, 0)
-	event.ActchrSetDefMotion(0)
-	event.SetBitCtrl(1, 0)
-	event.SetCharaChangeMask(0, 1)
-	event.SetCharaChangeMask(2, 1)
-	event.SetCharaChangeMask(1, 1)
-	event.SetCharaChangeMask(3, 1)
-	event.StopBgm(0)
-	event.StopEnvBgm()
-	event.SndStopSrc()
+	stage_id = event.get_dungeon_stage_id() or stage_id
+	var1 = event.get_dungeon_floor() or var1
+	argc = event.get_dungeon_next_floor(var1, 0) or argc
+	event.set_dungeon_floor(argc)
+	event.set_dungeon_floor_info(stage_id, var1, 5, 2)
+	event.set_dungeon_floor_info(stage_id, argc, 5, 1)
+	event.delete_character(8)
+	event.delete_character(9)
+	event.delete_character(10)
+	event.delete_character(11)
+	event.delete_character(13)
+	event.delete_character(14)
+	event.delete_character(15)
+	event.initialize_sphida()
+	event.set_dungeon_pause_flags(8192, 0)
+	event.reset_action_character_motion(0)
+	event.set_save_control_bits(1, 0)
+	event.set_character_change_unmasked(0, 1)
+	event.set_character_change_unmasked(2, 1)
+	event.set_character_change_unmasked(1, 1)
+	event.set_character_change_unmasked(3, 1)
+	event.stop_music(0)
+	event.stop_environment_music()
+	event.stop_map_object_sounds()
 	wait_frames(6)
-	event.LoadBgm(17)
-	event.LoadSound(3601)
-	event.PlayBgm(0)
-	event.LoadScript("d03/d03.stb", 1000)
+	event.load_music(17)
+	event.load_map_sounds(3601)
+	event.play_music(0)
+	event.load_event_script("d03/d03.stb", 1000)
 end
 
 return helper_69d65e1a

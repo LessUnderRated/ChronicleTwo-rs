@@ -22,80 +22,80 @@ local function helper_e74dc41f()
 	local world_coord_pos_3: f32 = 0
 	local world_coord_rot: f32 = 0
 	local var10: s32 = 0
-	event.Initialize()
+	event.initialize_event()
 	helper_ce85b54c()
-	event.DngPause(1, 1)
-	flag = event.GetFlag(616) or flag
+	event.set_dungeon_pause_flags(1, 1)
+	flag = event.get_save_flag(616) or flag
 	if flag == 0 then
-		event.SetMesWindowMode(0, 4)
-		event.SetMesShippo(0, 0)
+		event.set_message_window_mode(0, 4)
+		event.set_message_bubble_tail(0, 0)
 		helper_75684dd8(0, 9, 8, 0, 0)
-		event.DngPause(1, 0)
-		event.Finish()
+		event.set_dungeon_pause_flags(1, 0)
+		event.finish_event()
 		return
 	end
-	argc = event.GetLocalFlag(4) or argc
+	argc = event.get_local_event_flag(4) or argc
 	if argc == 0 then
-		var2 = event.GetEventData_2(6) or var2
+		var2 = event.get_triggered_event_data_2(6) or var2
 		if var2 == 1 then
-			event.SetMesWindowMode(0, 1)
-			event.SetMesShippo(0, 0)
+			event.set_message_window_mode(0, 1)
+			event.set_message_bubble_tail(0, 0)
 			var3 = helper_c292fa16(0, 8, 5, 256, 208, var3)
-			event.SetMesWindowMode(0, 1)
-			event.SetMesShippo(0, 1)
+			event.set_message_window_mode(0, 1)
+			event.set_message_bubble_tail(0, 1)
 			if var3 == 1 then
 				var2 = 2
 			end
 		end
 		if var2 == 2 then
-			event.SetStatusbarShow(0, 0.16666667)
+			event.show_dungeon_status_bar(0, 0.16666667)
 			wait_frames(6)
-			event.GotoUseItem2(0, 362)
+			event.open_item_select_menu(0, 362)
 			vm.wait(4)
 			item = vmhost.used_item() or item
 			if item == 362 then
-				event.SetLocalFlag(4, 1)
-				var5 = event.GetEventData_2(9) or var5
-				event.EohSyncObj_3(0, var5, "star-m0")
-				event.EohSetShow(0, 0)
-				event.EohSyncObj_3(0, var5, "d03wa13-a")
-				event.EohSetShow(0, 0)
-				event.FuncPointShow(var5, "star", 0)
+				event.set_local_event_flag(4, 1)
+				var5 = event.get_triggered_event_data_2(9) or var5
+				event.attach_object_handle_to_map_part_3(0, var5, "star-m0")
+				event.set_object_handle_visible(0, 0)
+				event.attach_object_handle_to_map_part_3(0, var5, "d03wa13-a")
+				event.set_object_handle_visible(0, 0)
+				event.set_function_point_enabled(var5, "star", 0)
 				world_coord_pos, world_coord_pos_2, world_coord_pos_3, world_coord_rot =
 					helper_d355d559(world_coord_pos, world_coord_pos_2, world_coord_pos_3, world_coord_rot)
-				event.SetWorldCoord(world_coord_pos, world_coord_pos_2, world_coord_pos_3, world_coord_rot)
-				event.AssignStack(5)
-				event.ClearStack(5)
-				event.EohSyncChara(0, 0)
-				event.ObjsInit(0)
-				event.ObjsSyncObj(0, 0)
-				event.ObjsReference(0, 0.0, 0.0, 0.0, 0)
-				event.LoadChara(5, "event/dng/key_star.gltf", "star", 12)
-				event.CharaActive(12)
-				event.EohSyncChara(1, 12)
-				event.ObjsSyncObj(1, 1)
-				event.EohSetPos(1, 0.0, 0.0, 160.0)
-				event.EohSetRot(1, 0.0, 0.0, 0.0)
-				event.EohSetScale(1, 20.0, 20.0, 20.0)
-				var10 = event.SndLoadSound_3(8, "snd2/sp/sp_014.sound.json") or var10
-				event.SndSePlay(var10, 0)
-				event.ObjsSetScale(1, 20.0, 0.0, 20.0, 60)
-				event.CmrsSetPos(-31.46, 57.29, 350.67)
-				event.CmrsSetRef(4.66, 31.72, 192.41)
-				event.SetCharaShow(12, 0, 1, 0.02)
+				event.set_event_world_coordinate(world_coord_pos, world_coord_pos_2, world_coord_pos_3, world_coord_rot)
+				event.assign_memory_stack(5)
+				event.clear_memory_stack(5)
+				event.attach_object_handle_to_character(0, 0)
+				event.clear_object_sequence(0)
+				event.set_object_sequence_object(0, 0)
+				event.turn_object_sequence_toward(0, 0.0, 0.0, 0.0, 0)
+				event.load_character(5, "event/dng/key_star.gltf", "star", 12)
+				event.set_character_active(12)
+				event.attach_object_handle_to_character(1, 12)
+				event.set_object_sequence_object(1, 1)
+				event.set_object_handle_position(1, 0.0, 0.0, 160.0)
+				event.set_object_handle_rotation(1, 0.0, 0.0, 0.0)
+				event.set_object_handle_scale(1, 20.0, 20.0, 20.0)
+				var10 = event.load_sound_effect_file_3(8, "snd2/sp/sp_014.sound.json") or var10
+				event.play_sound_effect(var10, 0)
+				event.set_object_sequence_scale(1, 20.0, 0.0, 20.0, 60)
+				event.set_camera_sequence_position(-31.46, 57.29, 350.67)
+				event.set_camera_sequence_look_at(4.66, 31.72, 192.41)
+				event.set_character_visible(12, 0, 1, 0.02)
 				wait_frames(60)
-				event.DeleteChara(12)
+				event.delete_character(12)
 			elseif item <= 0 then
-				event.Finish()
+				event.finish_event()
 			else
 				helper_5fb66cb1()
 			end
 		end
-		event.SetStatusbarShow(1, 0.16666667)
+		event.show_dungeon_status_bar(1, 0.16666667)
 		wait_frames(6)
 	end
-	event.DngPause(1, 0)
-	event.Finish()
+	event.set_dungeon_pause_flags(1, 0)
+	event.finish_event()
 end
 
 return helper_e74dc41f

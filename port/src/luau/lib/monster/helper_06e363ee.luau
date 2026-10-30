@@ -5,7 +5,7 @@ local helper_56d63eae = require("@lib/monster/helper_56d63eae")
 
 --- Helper function.
 local function helper_06e363ee()
-	monster.SetMos("攻撃２", -1, 2)
+	monster.set_motion("攻撃２", -1, 2)
 	helper_56d63eae()
 end
 

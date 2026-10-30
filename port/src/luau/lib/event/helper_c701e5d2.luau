@@ -5,8 +5,8 @@ local helper_70e4ac93 = require("@lib/event/helper_70e4ac93")
 
 --- Helper function.
 local function helper_c701e5d2(arg0: s32, arg1: any)
-	event.SetMesPreset(0, 0)
-	event.MesMake_2(0, "If you have any kind of problem,\nmake sure you come to me first.")
+	event.apply_message_window_preset(0, 0)
+	event.open_message_window_2(0, "If you have any kind of problem,\nmake sure you come to me first.")
 	helper_70e4ac93(arg0, -1, 0, 0)
 end
 

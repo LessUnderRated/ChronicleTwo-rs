@@ -26,16 +26,16 @@ local function event_99()
 	local flag: s32 = 0
 	local flag_2: s32 = 0
 	local var2: s32 = 0
-	event.LoadSound(4684)
-	flag = event.GetFlag(408) or flag
-	flag_2 = event.GetFlag(420) or flag_2
-	var2 = event.GetSavedataEtc(2) or var2
+	event.load_map_sounds(4684)
+	flag = event.get_save_flag(408) or flag
+	flag_2 = event.get_save_flag(420) or flag_2
+	var2 = event.get_save_data_value(2) or var2
 	if flag == 1 and flag_2 == 0 and var2 == 1 then
 	else
-		event.StopBgm(0)
+		event.stop_music(0)
 		wait_frames(4)
-		event.LoadBgm(167)
-		event.PlayBgm(0)
+		event.load_music(167)
+		event.play_music(0)
 	end
 end
 
@@ -56,35 +56,35 @@ function script.default_event()
 	return vm.guard(function()
 		at = 1
 		event_99()
-		flag = event.GetFlag(400) or flag
-		flag_2 = event.GetFlag(408) or flag_2
-		flag_3 = event.GetFlag(420) or flag_3
+		flag = event.get_save_flag(400) or flag
+		flag_2 = event.get_save_flag(408) or flag_2
+		flag_3 = event.get_save_flag(420) or flag_3
 		if flag == 1 then
 			if flag_2 == 0 then
 				at = 2
 				helper_0f67d486()
-				event.GotoEdit(75, 500)
+				event.go_to_georama_edit(75, 500)
 				return
 			end
 			if flag_3 == 0 then
-				var3 = event.GetSavedataEtc(2) or var3
+				var3 = event.get_save_data_value(2) or var3
 				if var3 ~= 0 then
 					at = 3
 					helper_3d13e6aa(1)
 					at = 4
 					helper_80432060()
-					event.SetBitCtrl(1, 1)
+					event.set_save_control_bits(1, 1)
 					return
 				else
 					at = 5
 					helper_013b7e59()
-					event.SoundAllStop()
+					event.stop_all_sounds()
 					at = 6
 					wait_frames(6)
-					event.LoadBgm(18)
-					event.LoadSound(4601)
-					event.PlayBgm(0)
-					event.LoadScript("d04/d04.stb", 1000)
+					event.load_music(18)
+					event.load_map_sounds(4601)
+					event.play_music(0)
+					event.load_event_script("d04/d04.stb", 1000)
 					return
 				end
 			else
@@ -102,7 +102,7 @@ function script.default_event()
 				at = 2
 				helper_0f67d486()
 				return vm.continue_with(function()
-					event.GotoEdit(75, 500)
+					event.go_to_georama_edit(75, 500)
 					return
 				end)
 			end
@@ -113,7 +113,7 @@ function script.default_event()
 				at = 4
 				helper_80432060()
 				return vm.continue_with(function()
-					event.SetBitCtrl(1, 1)
+					event.set_save_control_bits(1, 1)
 					return
 				end)
 			end
@@ -144,16 +144,16 @@ script.key_open = helper_0f67d486
 
 --- Event 151, which map data, a script or the engine runs by number.
 function script.event_151()
-	event.SetFadeIn(30)
-	event.Initialize()
+	event.fade_in_screen(30)
+	event.initialize_event()
 	vm.wait(1)
-	event.SetCharaPos(0, -29.1, 1.4, 787.9)
-	event.DngPause(17, 0)
-	event.LoadMonsterFile(516, 1)
-	event.LoadMonsterFile(1001, 0)
-	event.AutoSetMonster(516, -50.0, -46.69, 202.57, 0.0, 0.0, 0.0)
-	event.GetCharaPos(0)
-	event.Finish()
+	event.set_character_position(0, -29.1, 1.4, 787.9)
+	event.set_dungeon_pause_flags(17, 0)
+	event.load_dungeon_monster(516, 1)
+	event.load_dungeon_monster(1001, 0)
+	event.place_dungeon_monster(516, -50.0, -46.69, 202.57, 0.0, 0.0, 0.0)
+	event.get_character_position(0)
+	event.finish_event()
 end
 
 --- Event 152, which map data, a script or the engine runs by number.
@@ -166,13 +166,13 @@ end
 function script.event_153()
 	local at: number = 0
 	return vm.guard(function()
-		event.DngPause(1, 1)
-		event.SetFadeOut(0)
-		event.DngPause(16, 1)
+		event.set_dungeon_pause_flags(1, 1)
+		event.fade_out_screen(0)
+		event.set_dungeon_pause_flags(16, 1)
 		at = 1
 		wait_frames(30)
-		event.SetFadeIn(30)
-		event.DelMonster(-1)
+		event.fade_in_screen(30)
+		event.clear_event_battle_monsters(-1)
 		at = 2
 		helper_7d6d40d6()
 		return
@@ -193,7 +193,7 @@ end
 
 --- Event 154, which map data, a script or the engine runs by number.
 function script.event_154()
-	event.SetCameraRef(-33.22, 3.88, 763.5)
+	event.set_camera_look_at(-33.22, 3.88, 763.5)
 	vm.wait(1)
 	helper_c956b4a2(64)
 end
@@ -211,33 +211,33 @@ end
 function script.event_200()
 	local var0: s32 = 0
 	local active_chr_no: s32 = 0
-	event.Initialize()
-	var0 = event.GetBitCtrl(1) or var0
+	event.initialize_event()
+	var0 = event.has_save_control_bits(1) or var0
 	if var0 == 1 then
-		event.DngPause(9, 1)
-		event.ActchrSetDefMotion(0)
-		event.SetMesWindowMode(0, 1)
-		event.SetMesShippo(0, 0)
-		event.MesMake_2(0, "[UNI00a1]Ser[UNI00e1] mejor que le des el pez a\nShingala para que se lo coma, y rapidito!")
+		event.set_dungeon_pause_flags(9, 1)
+		event.reset_action_character_motion(0)
+		event.set_message_window_mode(0, 1)
+		event.set_message_bubble_tail(0, 0)
+		event.open_message_window_2(0, "[UNI00a1]Ser[UNI00e1] mejor que le des el pez a\nShingala para que se lo coma, y rapidito!")
 		helper_75684dd8(0, -1, 5, 0, 0)
-		event.DngPause(9, 0)
+		event.set_dungeon_pause_flags(9, 0)
 		return
 	end
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no == 2 then
-		event.SetMotion(0, "立ち")
-		event.SetMesWindowMode(0, 1)
-		event.SetMesDrawspeed(0, 1)
+		event.set_character_motion(0, "立ち")
+		event.set_message_window_mode(0, 1)
+		event.set_message_draw_speed(0, 1)
 		if active_chr_no == 2 then
 			helper_75684dd8(0, 20, 5, 256, 208)
 		else
 			helper_75684dd8(0, 21, 5, 256, 208)
 		end
-		event.Finish()
+		event.finish_event()
 		return
 	end
 	if helper_3e84c83c(0) ~= 0 then
-		event.LoadScript("d04/d04.stb", 1000)
+		event.load_event_script("d04/d04.stb", 1000)
 	end
 end
 
@@ -248,46 +248,46 @@ function script.event_201()
 	local stage_id: s32 = 0
 	local var3: s32 = 0
 	local argc: s32 = 0
-	event.Initialize()
-	var0 = event.GetBitCtrl(1) or var0
+	event.initialize_event()
+	var0 = event.has_save_control_bits(1) or var0
 	if var0 == 1 then
-		event.DngPause(9, 1)
-		event.ActchrSetDefMotion(0)
-		event.SetMesWindowMode(0, 1)
-		event.SetMesShippo(0, 0)
-		event.MesMake_2(0, "[UNI00a1]Ser[UNI00e1] mejor que le des el pez a\nShingala para que se lo coma, y rapidito!")
+		event.set_dungeon_pause_flags(9, 1)
+		event.reset_action_character_motion(0)
+		event.set_message_window_mode(0, 1)
+		event.set_message_bubble_tail(0, 0)
+		event.open_message_window_2(0, "[UNI00a1]Ser[UNI00e1] mejor que le des el pez a\nShingala para que se lo coma, y rapidito!")
 		helper_75684dd8(0, -1, 5, 0, 0)
-		event.DngPause(9, 0)
+		event.set_dungeon_pause_flags(9, 0)
 		return
 	end
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no == 2 then
-		event.SetMotion(0, "立ち")
-		event.SetMesWindowMode(0, 1)
-		event.SetMesDrawspeed(0, 1)
+		event.set_character_motion(0, "立ち")
+		event.set_message_window_mode(0, 1)
+		event.set_message_draw_speed(0, 1)
 		if active_chr_no == 2 then
 			helper_75684dd8(0, 20, 5, 256, 208)
 		else
 			helper_75684dd8(0, 21, 5, 256, 208)
 		end
-		event.Finish()
+		event.finish_event()
 		return
 	end
 	if helper_3e84c83c(1) ~= 0 then
-		stage_id = event.DngGetStageId() or stage_id
-		var3 = event.DngGetFloorId() or var3
-		argc = event.GetNextFloor(var3, 0) or argc
-		event.DngSetFloorId(argc)
-		event.SetFloorInfo(stage_id, var3, 5, 2)
-		event.SetFloorInfo(stage_id, argc, 5, 1)
-		event.StopBgm(0)
-		event.StopEnvBgm()
-		event.SndStopSrc()
+		stage_id = event.get_dungeon_stage_id() or stage_id
+		var3 = event.get_dungeon_floor() or var3
+		argc = event.get_dungeon_next_floor(var3, 0) or argc
+		event.set_dungeon_floor(argc)
+		event.set_dungeon_floor_info(stage_id, var3, 5, 2)
+		event.set_dungeon_floor_info(stage_id, argc, 5, 1)
+		event.stop_music(0)
+		event.stop_environment_music()
+		event.stop_map_object_sounds()
 		wait_frames(6)
-		event.LoadBgm(18)
-		event.LoadSound(4601)
-		event.PlayBgm(0)
-		event.LoadScript("d04/d04.stb", 1000)
+		event.load_music(18)
+		event.load_map_sounds(4601)
+		event.play_music(0)
+		event.load_event_script("d04/d04.stb", 1000)
 	end
 end
 
@@ -295,21 +295,21 @@ end
 function script.event_500()
 	local at: number = 0
 	return vm.guard(function()
-		event.Initialize()
-		event.SetFadeOut(0)
+		event.initialize_event()
+		event.fade_out_screen(0)
 		at = 1
 		vm.wait(1)
 		at = 2
 		vm.wait(2)
-		event.DelMonster(-1)
-		event.SetSavedataEtc(4)
-		event.SetBitCtrl(1, 0)
+		event.clear_event_battle_monsters(-1)
+		event.set_save_data_value(4)
+		event.set_save_control_bits(1, 0)
 		at = 3
 		helper_3d13e6aa(0)
 		at = 4
 		helper_7d6d40d6()
-		event.BgmLoadCancel()
-		event.GotoEdit(75, 100)
+		event.skip_next_music_load()
+		event.go_to_georama_edit(75, 100)
 		at = 5
 		vm.wait(5)
 		return
@@ -322,8 +322,8 @@ function script.event_500()
 				at = 4
 				helper_7d6d40d6()
 				return vm.continue_with(function()
-					event.BgmLoadCancel()
-					event.GotoEdit(75, 100)
+					event.skip_next_music_load()
+					event.go_to_georama_edit(75, 100)
 					at = 5
 					vm.wait(5)
 					return
@@ -347,59 +347,59 @@ function script.event_510()
 	local load_no: s32 = 0
 	local boss_map: s32 = 0
 	helper_d2e16403()
-	event.DngPause(1, 0)
+	event.set_dungeon_pause_flags(1, 0)
 	var0 = 0
-	event.Initialize()
-	event.AssignStack(5)
-	event.ClearStack(5)
-	event.DngPause(16384, 1)
-	event.GetActiveBgmStatus(-1)
-	var1 = event.GetEventInfoSndid(4) or var1
-	argc = event.GetSeStatus(var1, 0) or argc
-	battle_bgm_vol = event.GetBtlBgmVol() or battle_bgm_vol
-	event.SndSeStop(var1, 0)
-	event.StopBgm(0)
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
-	event.SetLoadbgFile_2("snd2/bgm/bg_060.sound.json", "textures/dungeon/image/gameover/gameover_1.json")
+	event.initialize_event()
+	event.assign_memory_stack(5)
+	event.clear_memory_stack(5)
+	event.set_dungeon_pause_flags(16384, 1)
+	event.save_music_status(-1)
+	var1 = event.get_event_sound_bank(4) or var1
+	argc = event.get_sound_effect_status(var1, 0) or argc
+	battle_bgm_vol = event.get_battle_music_volume() or battle_bgm_vol
+	event.stop_sound_effect(var1, 0)
+	event.stop_music(0)
+	active_chr_no = event.get_playable_character() or active_chr_no
+	event.start_background_file_loads_2("snd2/bgm/bg_060.sound.json", "textures/dungeon/image/gameover/gameover_1.json")
 	wait_frames(30)
 	helper_479dc9e9()
-	event.LoadBgmPack(60)
-	event.PlayBgm(0)
+	event.load_music_pack(60)
+	event.play_music(0)
 	wait_frames(30)
-	event.DngPause(1, 1)
-	event.DngCollisionAllClr()
-	event.SetMesWindowMode(0, 8)
-	event.MesMake_2(
+	event.set_dungeon_pause_flags(1, 1)
+	event.reset_dungeon_collision_primitives()
+	event.set_message_window_mode(0, 8)
+	event.open_message_window_2(
 		0,
 		"[UNI00a1]Oh, no! Shingala est[UNI00e1] muerto...\nLo necesit[UNI00e1]bamos para restablecer\nla normalidad del futuro..."
 	)
 	helper_75684dd8(0, -1, 8, 0, 0)
-	block = event.LoadImg_4(5, "textures/dungeon/image/gameover/gameover_1.json", 0) or block
-	event.SpriteInit(0)
-	event.SpriteSetType(0, 0)
-	event.SpriteSetTexture(0, "gameover1", block)
-	event.SpriteSetColor(0, 128, 128, 128, 128)
-	event.SpriteSetUvsize(0, 0, 0, 576, 128)
-	event.SpriteSetPutsize(0, 576, 128)
-	event.SpriteSetPos(0, -320, 208)
-	event.SpriteSetDraw(0, 1)
-	event.EohSyncSprite(0, 0)
-	event.ObjsInit(0)
-	event.ObjsSyncObj(0, 0)
-	event.ObjsMove(0, 288, 208, 0.0, 20)
+	block = event.load_event_image_4(5, "textures/dungeon/image/gameover/gameover_1.json", 0) or block
+	event.reset_event_sprite(0)
+	event.set_event_sprite_type(0, 0)
+	event.set_event_sprite_texture(0, "gameover1", block)
+	event.set_event_sprite_color(0, 128, 128, 128, 128)
+	event.set_event_sprite_texture_rect(0, 0, 0, 576, 128)
+	event.set_event_sprite_size(0, 576, 128)
+	event.set_event_sprite_position(0, -320, 208)
+	event.set_event_sprite_draw_pass(0, 1)
+	event.attach_object_handle_to_sprite(0, 0)
+	event.clear_object_sequence(0)
+	event.set_object_sequence_object(0, 0)
+	event.move_object_sequence(0, 288, 208, 0.0, 20)
 	wait_frames(30)
-	event.SpriteInit(1)
-	event.SpriteSetType(1, 0)
-	event.SpriteSetTexture(1, "gameover1", block)
-	event.SpriteSetColor(1, 128, 128, 128, 0)
-	event.SpriteSetUvsize(1, 0, 128, 576, 64)
-	event.SpriteSetPutsize(1, 576, 64)
-	event.SpriteSetPos(1, 256, 208)
-	event.SpriteSetDraw(1, 1)
-	event.EohSyncSprite(1, 1)
-	event.ObjsInit(1)
-	event.ObjsSyncObj(1, 1)
-	event.ObjsSetColor(1, 128, 128, 128, 128, 120)
+	event.reset_event_sprite(1)
+	event.set_event_sprite_type(1, 0)
+	event.set_event_sprite_texture(1, "gameover1", block)
+	event.set_event_sprite_color(1, 128, 128, 128, 0)
+	event.set_event_sprite_texture_rect(1, 0, 128, 576, 64)
+	event.set_event_sprite_size(1, 576, 64)
+	event.set_event_sprite_position(1, 256, 208)
+	event.set_event_sprite_draw_pass(1, 1)
+	event.attach_object_handle_to_sprite(1, 1)
+	event.clear_object_sequence(1)
+	event.set_object_sequence_object(1, 1)
+	event.set_object_sequence_color(1, 128, 128, 128, 128, 120)
 	wait_frames(120)
 	while true do
 		if helper_581cb30c(0) ~= 0 then
@@ -408,78 +408,78 @@ function script.event_510()
 			vm.wait(8)
 		end
 	end
-	debug_flag = event.GetDebugFlag() or debug_flag
+	debug_flag = event.get_debug_flag() or debug_flag
 	debug_flag = 0
 	if debug_flag == 1 then
-		event.DngDebugCommand(0)
-		event.ActchrSetDefMotion(0, 4)
+		event.run_dungeon_debug_command(0)
+		event.reset_action_character_motion(0, 4)
 	else
-		event.FadeOutBgm(30)
-		event.SetFadeOut(30)
+		event.fade_out_music(30)
+		event.fade_out_screen(30)
 		wait_frames(30)
 		if active_chr_no == 2 then
-			event.EsmClear()
+			event.clear_effect_manager()
 		end
-		event.StopBgm(0)
-		event.SpriteSetDraw(0, 0)
-		event.SpriteSetDraw(1, 0)
-		event.DelImg(0)
+		event.stop_music(0)
+		event.set_event_sprite_draw_pass(0, 0)
+		event.set_event_sprite_draw_pass(1, 0)
+		event.delete_event_image(0)
 		if var0 == 1 then
-			event.AddHpRate(1.0, 0)
-			event.AddWhp(0, 999)
-			event.AddWhp(1, 999)
-			event.DngRunEvent(-1)
-			event.DelMonster(-1)
-			event.DngPause(1, 0)
-			event.Finish()
+			event.add_hp_by_rate(1.0, 0)
+			event.add_battle_weapon_durability(0, 999)
+			event.add_battle_weapon_durability(1, 999)
+			event.run_dungeon_event(-1)
+			event.clear_event_battle_monsters(-1)
+			event.set_dungeon_pause_flags(1, 0)
+			event.finish_event()
 			return 1
 		else
-			event.SetExitFlag(1)
-			event.Finish()
+			event.set_scene_exit_flag(1)
+			event.finish_event()
 			return 0
 		end
 	end
-	event.StopBgm(0)
+	event.stop_music(0)
 	wait_frames(4)
-	load_no = event.GetBgmStatusNowNo() or load_no
-	event.LoadBgm(load_no)
-	event.SetActiveBgmStatus(-1)
-	event.SpriteSetDraw(0, 0)
-	event.SpriteSetDraw(1, 0)
-	event.DelImg(0)
-	boss_map = event.DngCheckBossMap() or boss_map
+	load_no = event.get_saved_music_number() or load_no
+	event.load_music(load_no)
+	event.restore_music_status(-1)
+	event.set_event_sprite_draw_pass(0, 0)
+	event.set_event_sprite_draw_pass(1, 0)
+	event.delete_event_image(0)
+	boss_map = event.is_dungeon_boss_floor() or boss_map
 	if boss_map ~= 1 then
 		if argc == 1 then
-			event.SndSePlay(var1, 0)
-			event.SndSetSeVol(var1, 0, battle_bgm_vol)
+			event.play_sound_effect(var1, 0)
+			event.set_sound_effect_volume(var1, 0, battle_bgm_vol)
 		end
 	end
-	event.SetCameraCtrl(1)
-	event.SetStatusbarShow(1, 1.0)
+	event.set_camera_control_enabled(1)
+	event.show_dungeon_status_bar(1, 1.0)
 	if debug_flag ~= 1 then
-		event.SetFadeIn(30)
+		event.fade_in_screen(30)
 	end
-	event.DngPause(16385, 0)
-	event.Finish()
+	event.set_dungeon_pause_flags(16385, 0)
+	event.finish_event()
 	return 0
 end
 
 --- Event 550, which map data, a script or the engine runs by number.
 function script.event_550()
-	event.Initialize()
-	event.DngPause(3, 1)
-	event.SetMesPreset(0, 4)
-	event.SetMesWindowMode(0, 4)
-	event.SetMesDrawspeed(0, 1)
-	event.MesMake_2(
+	event.initialize_event()
+	event.set_dungeon_pause_flags(3, 1)
+	event.apply_message_window_preset(0, 4)
+	event.set_message_window_mode(0, 4)
+	event.set_message_draw_speed(0, 1)
+	event.open_message_window_2(
 		0,
 		"[(!)]Si hieres a Shingala, se enfadar[UNI00e1]\n y se acercar[UNI00e1] por tu derecha.\n Abrir[UNI00e1] la boca de par en par<page>y entonces tendr[UNI00e1]s\n que lanzar dentro el Pez el[UNI00e9]ctrico."
 	)
 	helper_75684dd8(0, -1, 5, 0, 0)
-	event.SetMesWindowMode(0, 1)
-	event.SetMesDrawspeed(0, 0)
-	event.DngPause(3, 0)
-	event.Finish()
+	event.set_message_window_mode(0, 1)
+	event.set_message_draw_speed(0, 0)
+	event.set_dungeon_pause_flags(3, 0)
+	event.finish_event()
 end
 
 --- Event 1200, which map data, a script or the engine runs by number.
@@ -489,10 +489,10 @@ function script.event_1200()
 	local var2: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		flag = event.GetFlag(416) or flag
-		flag_2 = event.GetFlag(420) or flag_2
+		flag = event.get_save_flag(416) or flag
+		flag_2 = event.get_save_flag(420) or flag_2
 		if flag ~= 0 and flag_2 == 0 then
-			var2 = vm.float_bits(event.GetRand(100)) or var2
+			var2 = vm.float_bits(event.get_random_number(100)) or var2
 			if var2 < 50 then
 				at = 1
 				helper_47084b1b(0, 8610060)
@@ -523,18 +523,18 @@ end
 function script.event_14080()
 	local at: number = 0
 	return vm.guard(function()
-		event.SetFadeOut(0)
-		event.SetFlag(400, 1)
-		event.SetFlag(402, 1)
-		event.SetFlag(404, 1)
-		event.SetFlag(406, 1)
-		event.SetFlag(408, 0)
+		event.fade_out_screen(0)
+		event.set_save_flag(400, 1)
+		event.set_save_flag(402, 1)
+		event.set_save_flag(404, 1)
+		event.set_save_flag(406, 1)
+		event.set_save_flag(408, 0)
 		at = 1
 		event_99()
 		at = 2
 		helper_0f67d486()
-		event.ResetEventTrg()
-		event.GotoEdit(75, 500)
+		event.clear_event_running_flag()
+		event.go_to_georama_edit(75, 500)
 		return
 	end, function(received: { any })
 		if at <= 2 then
@@ -542,8 +542,8 @@ function script.event_14080()
 				at = 2
 				helper_0f67d486()
 				return vm.continue_with(function()
-					event.ResetEventTrg()
-					event.GotoEdit(75, 500)
+					event.clear_event_running_flag()
+					event.go_to_georama_edit(75, 500)
 					return
 				end)
 			end
@@ -557,12 +557,12 @@ end
 function script.event_14100()
 	local at: number = 0
 	return vm.guard(function()
-		event.SetFlag(400, 1)
-		event.SetFlag(402, 1)
-		event.SetFlag(404, 1)
-		event.SetFlag(406, 1)
-		event.SetFlag(408, 1)
-		event.SetFlag(410, 0)
+		event.set_save_flag(400, 1)
+		event.set_save_flag(402, 1)
+		event.set_save_flag(404, 1)
+		event.set_save_flag(406, 1)
+		event.set_save_flag(408, 1)
+		event.set_save_flag(410, 0)
 		at = 1
 		event_99()
 		at = 2
@@ -589,11 +589,11 @@ function script.event_14160()
 	return vm.guard(function()
 		at = 1
 		event_99()
-		event.SetFlag(400, 1)
-		event.SetFlag(402, 1)
-		event.SetFlag(404, 1)
-		event.SetFlag(406, 1)
-		event.SetFlag(408, 1)
+		event.set_save_flag(400, 1)
+		event.set_save_flag(402, 1)
+		event.set_save_flag(404, 1)
+		event.set_save_flag(406, 1)
+		event.set_save_flag(408, 1)
 		at = 2
 		helper_80432060()
 		return
@@ -616,19 +616,19 @@ end
 function script.event_14200()
 	local at: number = 0
 	return vm.guard(function()
-		event.SetFlag(400, 1)
-		event.SetFlag(402, 1)
-		event.SetFlag(404, 1)
-		event.SetFlag(406, 1)
-		event.SetFlag(408, 1)
-		event.SetFlag(416, 1)
+		event.set_save_flag(400, 1)
+		event.set_save_flag(402, 1)
+		event.set_save_flag(404, 1)
+		event.set_save_flag(406, 1)
+		event.set_save_flag(408, 1)
+		event.set_save_flag(416, 1)
 		at = 1
 		event_99()
 		at = 2
 		helper_7d6d40d6()
-		event.ResetEventTrg()
-		event.BgmLoadCancel()
-		event.GotoEdit(75, 100)
+		event.clear_event_running_flag()
+		event.skip_next_music_load()
+		event.go_to_georama_edit(75, 100)
 		at = 3
 		vm.wait(3)
 		return
@@ -638,9 +638,9 @@ function script.event_14200()
 				at = 2
 				helper_7d6d40d6()
 				return vm.continue_with(function()
-					event.ResetEventTrg()
-					event.BgmLoadCancel()
-					event.GotoEdit(75, 100)
+					event.clear_event_running_flag()
+					event.skip_next_music_load()
+					event.go_to_georama_edit(75, 100)
 					at = 3
 					vm.wait(3)
 					return

@@ -13,7 +13,7 @@ local function helper_7c78bc02(arg0: s32, arg1: any, arg2: s32, arg3: s32, arg4:
 		local _ = open_message(arg0, arg1, arg2, arg3, arg4)
 		at = 1
 		var8 = helper_f51aa7a3(arg0, arg5, arg6, 0)
-		event.SetMesPos(arg0, 0)
+		event.set_message_bubble_screen_slot(arg0, 0)
 		return var8
 	end, function(received: { any })
 		if at <= 1 then

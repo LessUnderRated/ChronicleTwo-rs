@@ -17,58 +17,58 @@ local function helper_8132d034(arg0: s32, arg1: any)
 	local yaw: f32 = 0
 	local yaw_2: f32 = 0
 	local var16: s32 = 0
-	event.EohSyncChara(0, 0)
-	event.ObjsInit(0)
-	event.ObjsSyncObj(0, 0)
-	event.EohSyncChara(1, arg0)
-	event.ObjsInit(1)
-	event.ObjsSyncObj(1, 1)
+	event.attach_object_handle_to_character(0, 0)
+	event.clear_object_sequence(0)
+	event.set_object_sequence_object(0, 0)
+	event.attach_object_handle_to_character(1, arg0)
+	event.clear_object_sequence(1)
+	event.set_object_sequence_object(1, 1)
 	do
-		local out1, out2, out3 = event.GetCharaPos(0)
+		local out1, out2, out3 = event.get_character_position(0)
 		var2 = out1 or var2
 		var3 = out2 or var3
 		var4 = out3 or var4
 	end
 	do
-		local _, out2, _ = event.GetCharaRot(0)
+		local _, out2, _ = event.get_character_rotation(0)
 		var9 = out2 or var9
 	end
 	do
-		local out1, out2, out3 = event.GetCharaPos(arg0)
+		local out1, out2, out3 = event.get_character_position(arg0)
 		var5 = out1 or var5
 		var6 = out2 or var6
 		var7 = out3 or var7
 	end
 	do
-		local _, out2, _ = event.GetCharaRot(arg0)
+		local _, out2, _ = event.get_character_rotation(arg0)
 		var12 = out2 or var12
 	end
-	yaw = event.GetRefAngle(var2, var3, var4, var5, var6, var7) or yaw
-	yaw_2 = event.GetRefAngle(var5, var6, var7, var2, var3, var4) or yaw_2
-	var16 = event.AngleCmp(var9, yaw, 0.1) or var16
+	yaw = event.get_direction_angle(var2, var3, var4, var5, var6, var7) or yaw
+	yaw_2 = event.get_direction_angle(var5, var6, var7, var2, var3, var4) or yaw_2
+	var16 = event.compare_angles(var9, yaw, 0.1) or var16
 	if var16 ~= 0 then
-		event.ObjsRotation(0, 0.0, yaw, 0.0, 10)
-		event.ObjsSetMotion(0, "歩き")
-		event.ObjsMotionDelay(0, 10)
+		event.rotate_object_sequence(0, 0.0, yaw, 0.0, 10)
+		event.set_object_sequence_motion(0, "歩き")
+		event.delay_object_sequence_motion_track(0, 10)
 	end
-	event.ObjsSetMotion(0, "立ち")
-	var16 = event.AngleCmp(var12, yaw_2, 0.1) or var16
+	event.set_object_sequence_motion(0, "立ち")
+	var16 = event.compare_angles(var12, yaw_2, 0.1) or var16
 	if var16 ~= 0 then
-		event.ObjsRotation(1, 0.0, yaw_2, 0.0, 10)
-		event.ObjsSetMotion(1, "歩き")
-		event.ObjsMotionDelay(1, 10)
+		event.rotate_object_sequence(1, 0.0, yaw_2, 0.0, 10)
+		event.set_object_sequence_motion(1, "歩き")
+		event.delay_object_sequence_motion_track(1, 10)
 	end
-	event.ObjsSetMotion(1, "立ち")
+	event.set_object_sequence_motion(1, "立ち")
 	helper_888ab2a3(20)
-	event.SetPakuMotion(1, "会話", 0, "立ち", 0)
+	event.set_mouth_motions(1, "会話", 0, "立ち", 0)
 	helper_0ffc2526(0, -1, arg0, 0, 0)
-	var16 = event.AngleCmp(var12, yaw_2, 0.1) or var16
+	var16 = event.compare_angles(var12, yaw_2, 0.1) or var16
 	if var16 ~= 0 then
-		event.ObjsRotation(1, 0.0, var12, 0.0, 10)
-		event.ObjsSetMotion(1, "歩き")
-		event.ObjsMotionDelay(1, 10)
+		event.rotate_object_sequence(1, 0.0, var12, 0.0, 10)
+		event.set_object_sequence_motion(1, "歩き")
+		event.delay_object_sequence_motion_track(1, 10)
 	end
-	event.ObjsSetMotion(1, "立ち")
+	event.set_object_sequence_motion(1, "立ち")
 	helper_888ab2a3(11)
 end
 

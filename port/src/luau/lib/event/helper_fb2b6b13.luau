@@ -11,19 +11,19 @@ local function helper_fb2b6b13(arg0: s32, arg1: s32)
 	local var7: f32 = 0
 	local var8: f32 = 0
 	do
-		local out1, _, out3 = event.GetCharaPos(arg0)
+		local out1, _, out3 = event.get_character_position(arg0)
 		var2 = out1 or var2
 		var4 = out3 or var4
 	end
 	do
-		local out1, _, out3 = event.GetCharaPos(arg1)
+		local out1, _, out3 = event.get_character_position(arg1)
 		var5 = out1 or var5
 		var7 = out3 or var7
 	end
-	var8 = event.GetRotLookPos(var5 - var2, var7 - var4) or var8
+	var8 = event.get_look_angle(var5 - var2, var7 - var4) or var8
 	helper_76f23193(arg0, var8)
-	event.SetCharaRot(arg0, 0.0, var8, 0.0)
-	event.SetMotion(arg0, "立ち")
+	event.set_character_rotation(arg0, 0.0, var8, 0.0)
+	event.set_character_motion(arg0, "立ち")
 end
 
 return helper_fb2b6b13

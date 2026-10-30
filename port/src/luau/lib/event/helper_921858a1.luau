@@ -8,20 +8,20 @@ local helper_4e93f9fc = require("@lib/event/helper_4e93f9fc")
 --- Helper function.
 local function helper_921858a1(arg0: s32, arg1: s32)
 	local active_chr_no: s32 = 0
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no == 1 then
-		event.SetMesPreset(0, 0)
+		event.apply_message_window_preset(0, 0)
 		helper_4e93f9fc(arg0, 0, 0)
-		event.MesMake_2(0, "やぁ、こんにちは。<page>君は、確かモニカと\n言ったね。")
+		event.open_message_window_2(0, "やぁ、こんにちは。<page>君は、確かモニカと\n言ったね。")
 		helper_0ffc2526(0, -1, arg0, arg1, 0)
-		event.MesMake_2(0, "僕はパトリ。\n魔法絵師をしているんだ。")
+		event.open_message_window_2(0, "僕はパトリ。\n魔法絵師をしているんだ。")
 		helper_0ffc2526(0, -1, arg0, arg1, 0)
-		event.SetMotion(arg0, "立ち")
-		event.Finish()
+		event.set_character_motion(arg0, "立ち")
+		event.finish_event()
 		return
 	end
-	event.SetMesPreset(0, 0)
-	event.MesMake_2(
+	event.apply_message_window_preset(0, 0)
+	event.open_message_window_2(
 		0,
 		"やぁ、ユリス、\nこんにちは。<page>いつも元気そうで\nうらやましいよ。"
 	)

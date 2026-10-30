@@ -12,9 +12,9 @@ local function helper_921947c2(arg0: s32, arg1: any)
 	local var3: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.SetMesOkuri(arg0, 0)
-		event.TrgPakuAnim(1)
-		event.TrgPakuMotion(0)
+		event.set_message_button_prompt(arg0, 0)
+		event.trigger_mouth_texture_animation(1)
+		event.trigger_mouth_motion(0)
 		var3 = 0
 		while var3 < arg1 do
 			var2 = message_step(arg0, 0)
@@ -27,10 +27,10 @@ local function helper_921947c2(arg0: s32, arg1: any)
 				var3 = vm.i32(var3 + 1)
 			end
 		end
-		event.ResetPakuMotion()
-		event.TrgPakuAnim(0)
-		event.ResetPakuAnim()
-		event.SetMesOkuri(arg0, 1)
+		event.reset_mouth_motions()
+		event.trigger_mouth_texture_animation(0)
+		event.reset_mouth_texture_animations()
+		event.set_message_button_prompt(arg0, 1)
 		close_message(arg0)
 		return var3
 	end, function(received: { any })

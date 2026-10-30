@@ -7,12 +7,12 @@ local helper_d7885d22 = require("@lib/event/helper_d7885d22")
 
 --- Helper function.
 local function helper_bc227c8c(param: s32)
-	event.SetFadeOut(25)
+	event.fade_out_screen(25)
 	helper_888ab2a3(30)
-	event.GotoMenu(6, param)
+	event.open_event_menu(6, param)
 	vm.wait(2)
 	helper_d7885d22()
-	event.SetFadeIn(30)
+	event.fade_in_screen(30)
 end
 
 return helper_bc227c8c

@@ -17,11 +17,11 @@ local wait_frames_skipping = require("@lib/event/wait_frames_skipping")
 --- Event 99, which map data, a script or the engine runs by number.
 local function event_99()
 	local flag: s32 = 0
-	flag = event.GetFlag(202) or flag
+	flag = event.get_save_flag(202) or flag
 	if flag == 0 then
-		event.Initialize()
-		event.EohSyncObj_2(0, "p01_train01")
-		event.EohSetPos(0, 0.0, 0.0, -2000.0)
+		event.initialize_event()
+		event.attach_object_handle_to_map_part_2(0, "p01_train01")
+		event.set_object_handle_position(0, 0.0, 0.0, -2000.0)
 	end
 end
 
@@ -36,10 +36,10 @@ script.event_99 = event_99
 function script.default_event()
 	local flag: s32 = 0
 	event_99()
-	flag = event.GetFlag(201) or flag
+	flag = event.get_save_flag(201) or flag
 	if flag == 0 then
-		event.SetFloorInfo(0, 8, 7, 1)
-		event.SetFloorInfo(0, 8, 5, 2)
+		event.set_dungeon_floor_info(0, 8, 7, 1)
+		event.set_dungeon_floor_info(0, 8, 5, 2)
 		helper_2fce1ae3()
 	else
 		helper_ce837ecc()
@@ -52,24 +52,24 @@ script.key_open = helper_72a5f155
 
 --- Event 160, which map data, a script or the engine runs by number.
 function script.event_160()
-	event.SetFadeOut(30, 255.0, 255.0, 255.0)
+	event.fade_out_screen(30, 255.0, 255.0, 255.0)
 	wait_frames(30)
-	event.MapJump_2(-1, "g02")
+	event.jump_to_map_2(-1, "g02")
 end
 
 --- Event 501, which map data, a script or the engine runs by number.
 function script.event_501()
 	local at: number = 0
 	return vm.guard(function()
-		event.Initialize()
-		event.SetMotion(0, "立ち", 4)
-		event.SetFadeOut(30)
+		event.initialize_event()
+		event.set_character_motion(0, "立ち", 4)
+		event.fade_out_screen(30)
 		at = 1
 		wait_frames(30)
 		at = 2
 		helper_bac19723()
-		event.BgmLoadCancel()
-		event.MapJump_3(-1, "s08", 501)
+		event.skip_next_music_load()
+		event.jump_to_map_3(-1, "s08", 501)
 		at = 3
 		vm.wait(3)
 		return
@@ -79,8 +79,8 @@ function script.event_501()
 				at = 2
 				helper_bac19723()
 				return vm.continue_with(function()
-					event.BgmLoadCancel()
-					event.MapJump_3(-1, "s08", 501)
+					event.skip_next_music_load()
+					event.jump_to_map_3(-1, "s08", 501)
 					at = 3
 					vm.wait(3)
 					return
@@ -105,48 +105,48 @@ function script.event_600()
 	local var2: f32 = 0
 	local var3: f32 = 0
 	local var4: f32 = 0
-	event.Initialize()
-	event.EohSyncChara(0, 0)
-	event.ObjsInit(0)
-	event.ObjsSyncObj(0, 0)
-	event.SetMotion(0, "立ち", 4)
+	event.initialize_event()
+	event.attach_object_handle_to_character(0, 0)
+	event.clear_object_sequence(0)
+	event.set_object_sequence_object(0, 0)
+	event.set_character_motion(0, "立ち", 4)
 	var1 = helper_ed4dc120(5, 55)
 	if var1 == 0 then
-		event.CmrsSetPos(-637.75, 234.47, 94.15)
-		event.CmrsSetRef(-573.29, 154.14, -234.77)
-		event.ObjsSetPos(0, -571.45, 132.37, -243.31)
-		event.ObjsSetRot(0, 0.0, -3.14, 0.0)
-		event.ObjsSetMotion(0, "走り", 4)
-		event.CmrsMove(-637.75, 234.47, 94.15, -561.56, 145.42, -381.61, 45)
-		event.ObjsMove(0, -570.49, 132.37, -362.93, 45)
+		event.set_camera_sequence_position(-637.75, 234.47, 94.15)
+		event.set_camera_sequence_look_at(-573.29, 154.14, -234.77)
+		event.set_object_sequence_position(0, -571.45, 132.37, -243.31)
+		event.set_object_sequence_rotation(0, 0.0, -3.14, 0.0)
+		event.set_object_sequence_motion(0, "走り", 4)
+		event.move_camera_sequence(-637.75, 234.47, 94.15, -561.56, 145.42, -381.61, 45)
+		event.move_object_sequence(0, -570.49, 132.37, -362.93, 45)
 		wait_frames(15)
-		event.SetFadeOut(30)
+		event.fade_out_screen(30)
 		wait_frames(30)
 		helper_1214600e()
 		return 1
 	end
 	do
-		local out1, out2, out3 = event.GetCharaPos(0)
+		local out1, out2, out3 = event.get_character_position(0)
 		var2 = out1 or var2
 		var3 = out2 or var3
 		var4 = out3 or var4
 	end
 	var2 = vm.f32(var2 + vm.f32(30.0 * vm.sin(0.0)))
 	var4 = vm.f32(var4 + vm.f32(30.0 * vm.cos(0.0)))
-	event.ObjsSetMotion(0, "歩き", 4, -1.0, 1)
-	event.ObjsRotation(0, 0.0, 0.0, 0.0, 15)
-	event.ObjsMove(0, var2, var3, var4, 45)
+	event.set_object_sequence_motion(0, "歩き", 4, -1.0, 1)
+	event.rotate_object_sequence(0, 0.0, 0.0, 0.0, 15)
+	event.move_object_sequence(0, var2, var3, var4, 45)
 	for var5 = 0, 44 do
 		do
-			local out1, out2, out3 = event.GetCharaPos(0)
+			local out1, out2, out3 = event.get_character_position(0)
 			var2 = out1 or var2
 			var3 = out2 or var3
 			var4 = out3 or var4
 		end
-		event.CmrsSetRef(var2, var3 + 30.0, var4)
+		event.set_camera_sequence_look_at(var2, var3 + 30.0, var4)
 		vm.wait(5)
 	end
-	event.ObjsSetMotion(0, "立ち", 4, -1.0, 1)
+	event.set_object_sequence_motion(0, "立ち", 4, -1.0, 1)
 	return 0
 end
 
@@ -155,47 +155,47 @@ function script.event_601()
 	local var0: f32 = 0
 	local var1: f32 = 0
 	local var2: f32 = 0
-	event.Initialize()
-	event.SetMesWindowMode(0, 1)
-	event.EohSyncChara(0, 0)
-	event.ObjsInit(0)
-	event.ObjsSyncObj(0, 0)
-	event.SetMotion(0, "立ち", 4)
+	event.initialize_event()
+	event.set_message_window_mode(0, 1)
+	event.attach_object_handle_to_character(0, 0)
+	event.clear_object_sequence(0)
+	event.set_object_sequence_object(0, 0)
+	event.set_character_motion(0, "立ち", 4)
 	do
-		local out1, out2, out3 = event.GetCharaPos(0)
+		local out1, out2, out3 = event.get_character_position(0)
 		var0 = out1 or var0
 		var1 = out2 or var1
 		var2 = out3 or var2
 	end
 	var0 = vm.f32(var0 + vm.f32(30.0 * vm.sin(vm.f32(3.1415927))))
 	var2 = vm.f32(var2 + vm.f32(30.0 * vm.cos(vm.f32(3.1415927))))
-	event.ObjsSetMotion(0, "歩き", 4, -1.0, 1)
-	event.ObjsRotation(0, 0.0, 3.1415927, 0.0, 15)
-	event.ObjsMove(0, var0, var1, var2, 45)
+	event.set_object_sequence_motion(0, "歩き", 4, -1.0, 1)
+	event.rotate_object_sequence(0, 0.0, 3.1415927, 0.0, 15)
+	event.move_object_sequence(0, var0, var1, var2, 45)
 	for var3 = 0, 44 do
 		do
-			local out1, out2, out3 = event.GetCharaPos(0)
+			local out1, out2, out3 = event.get_character_position(0)
 			var0 = out1 or var0
 			var1 = out2 or var1
 			var2 = out3 or var2
 		end
-		event.CmrsSetRef(var0, var1 + 30.0, var2)
+		event.set_camera_sequence_look_at(var0, var1 + 30.0, var2)
 		vm.wait(1)
 	end
-	event.ObjsSetMotion(0, "立ち", 4, -1.0, 1)
-	event.SetMesShippo(0, 0)
-	event.MesMake_2(0, "Von hier zu laufen ist\ngef[UNI00e4]hrlich.\nFahren wir Zug.")
+	event.set_object_sequence_motion(0, "立ち", 4, -1.0, 1)
+	event.set_message_bubble_tail(0, 0)
+	event.open_message_window_2(0, "Von hier zu laufen ist\ngef[UNI00e4]hrlich.\nFahren wir Zug.")
 	show_message(0, -1, 5, 0, 0)
-	event.SetMesShippo(0, 1)
+	event.set_message_bubble_tail(0, 1)
 end
 
 --- Event 610, which map data, a script or the engine runs by number.
 function script.event_610()
 	local at: number = 0
 	return vm.guard(function()
-		event.Initialize()
-		event.SetMotion(0, "立ち", 4)
-		event.SetFadeOut(30)
+		event.initialize_event()
+		event.set_character_motion(0, "立ち", 4)
+		event.fade_out_screen(30)
 		at = 1
 		wait_frames(30)
 		at = 2
@@ -223,18 +223,18 @@ script.event_12010 = helper_2fce1ae3
 function script.event_12020()
 	local at: number = 0
 	return vm.guard(function()
-		event.Initialize()
-		event.SetMotion(0, "立ち", 4)
-		event.SetFadeOut(30)
+		event.initialize_event()
+		event.set_character_motion(0, "立ち", 4)
+		event.fade_out_screen(30)
 		at = 1
 		wait_frames(30)
 		at = 2
 		helper_bac19723()
-		event.SetFadeOut(30)
+		event.fade_out_screen(30)
 		at = 3
 		wait_frames(30)
-		event.BgmLoadCancel()
-		event.MapJump_3(-1, "s08", 501)
+		event.skip_next_music_load()
+		event.jump_to_map_3(-1, "s08", 501)
 		at = 4
 		vm.wait(4)
 		return
@@ -244,11 +244,11 @@ function script.event_12020()
 				at = 2
 				helper_bac19723()
 				return vm.continue_with(function()
-					event.SetFadeOut(30)
+					event.fade_out_screen(30)
 					at = 3
 					wait_frames(30)
-					event.BgmLoadCancel()
-					event.MapJump_3(-1, "s08", 501)
+					event.skip_next_music_load()
+					event.jump_to_map_3(-1, "s08", 501)
 					at = 4
 					vm.wait(4)
 					return

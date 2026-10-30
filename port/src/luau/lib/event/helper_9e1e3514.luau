@@ -8,9 +8,9 @@ local function helper_9e1e3514(arg0: s32)
 	local var1: s32 = 0
 	local flag: s32 = 0
 	var1 = 0
-	flag = event.GetFlag(520) or flag
+	flag = event.get_save_flag(520) or flag
 	if flag == 0 then
-		event.GeoramaFunc(3, var1) -- retail: argument 2 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed
+		event.run_georama_command(3, var1) -- retail: argument 2 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed
 	end
 	helper_6b2c781b(arg0, var1)
 end

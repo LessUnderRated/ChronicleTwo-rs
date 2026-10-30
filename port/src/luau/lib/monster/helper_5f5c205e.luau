@@ -11,31 +11,31 @@ local helper_95b679db = require("@lib/monster/helper_95b679db")
 local function helper_5f5c205e()
 	local argc: s32 = 0
 	local var2: f32 = 0
-	monster.GetTargetDist()
-	argc = monster.GetRnd(100) or argc
+	monster.get_target_distance()
+	argc = monster.get_random(100) or argc
 	if argc < 60 then
 		helper_3cc46fef()
 	else
-		argc = monster.GetRnd(100) or argc
+		argc = monster.get_random(100) or argc
 		if argc < 55 then
-			monster.SetMos("歩き", -1, 0)
+			monster.set_motion("歩き", -1, 0)
 			helper_6d5002db(2.0, 3.0, 40.0, 90)
-			monster.SetMos("立ち", -1, 0)
+			monster.set_motion("立ち", -1, 0)
 		else
-			monster.SetMos("歩き", -1, 0)
+			monster.set_motion("歩き", -1, 0)
 			helper_890ee63a(3.0)
-			argc = monster.GetRnd(100) or argc
+			argc = monster.get_random(100) or argc
 			if argc < 50 then
 				var2 = -30.0
-				monster.SetMos("歩き左", -1, 0)
+				monster.set_motion("歩き左", -1, 0)
 			else
 				var2 = 30.0
-				monster.SetMos("歩き右", -1, 0)
+				monster.set_motion("歩き右", -1, 0)
 			end
 			helper_95b679db(2.0, var2, 3.0, 60)
-			monster.SetMos("歩き", -1, 0)
+			monster.set_motion("歩き", -1, 0)
 			helper_890ee63a(3.0)
-			monster.SetMos("立ち", -1, 0)
+			monster.set_motion("立ち", -1, 0)
 			helper_7ca8a12f(40.0, 45.0, 30)
 		end
 	end

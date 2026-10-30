@@ -8,12 +8,12 @@ local set_window_mode = require("@lib/event/set_window_mode")
 local function helper_574a8dfd()
 	local language_code: s32 = 0
 	set_window_mode(1, 7)
-	event.SetMesPreset(1, 2)
-	language_code = event.GetLanguage() or language_code
+	event.apply_message_window_preset(1, 2)
+	language_code = event.get_language() or language_code
 	if language_code == 0 then
-		event.MesMake_2(1, "(O)でストップ")
+		event.open_message_window_2(1, "(O)でストップ")
 	else
-		event.MesMake_2(1, "It stops with (O) button.")
+		event.open_message_window_2(1, "It stops with (O) button.")
 	end
 	open_message(1, -1, 15, 0, 0)
 end

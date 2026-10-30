@@ -11,7 +11,7 @@ local function helper_c0fce92c(lid_open: f32)
 		var1 = 0
 		lid_open = vm.f32(0.04)
 		while var1 <= 10 do
-			event.SetTbAngle(lid_open)
+			event.set_nearest_treasure_box_lid_open(lid_open)
 			lid_open = vm.f32(lid_open + vm.f32(0.18))
 			var1 = var1 + 1
 			at = 1

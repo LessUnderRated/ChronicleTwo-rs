@@ -5,8 +5,8 @@ local helper_1c04a0eb = require("@lib/event/helper_1c04a0eb")
 
 --- Helper function.
 local function helper_7fe034b9(arg0: s32, arg1: any)
-	event.SetMesPreset(0, 0)
-	event.MesMake_2(
+	event.apply_message_window_preset(0, 0)
+	event.open_message_window_2(
 		0,
 		"うちの店は刃物専門だよ。<page>一応、銃も扱ってはいるが、\nどうも飛び道具は\n性に合わなくってね。"
 	)

@@ -15,8 +15,8 @@ script.key_open = helper_1b09f02b
 --- Event 500, which map data, a script or the engine runs by number.
 function script.event_500()
 	helper_1b09f02b()
-	event.BgmLoadCancel()
-	event.MapJump_3(-1, "s31", 500)
+	event.skip_next_music_load()
+	event.jump_to_map_3(-1, "s31", 500)
 	vm.wait(2)
 end
 

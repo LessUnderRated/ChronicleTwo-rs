@@ -18,16 +18,16 @@ function script.default_event()
 	local flag: s32 = 0
 	local flag_2: s32 = 0
 	local var2: s32 = 0
-	flag = event.GetFlag(304) or flag
-	flag_2 = event.GetFlag(305) or flag_2
+	flag = event.get_save_flag(304) or flag
+	flag_2 = event.get_save_flag(305) or flag_2
 	if flag == 1 and flag_2 == 0 then
-		var2 = event.SearchCharaNo(6) or var2
-		event.SetAi(0, var2)
-		event.CharaActive(0, var2)
+		var2 = event.find_scene_character_slot(6) or var2
+		event.set_villager_ai_enabled(0, var2)
+		event.set_character_active(0, var2)
 		helper_264b9d7e()
-		event.SetAi(1, var2)
-		event.CharaActive(1, var2)
-		event.GotoOutside(-1, "m05")
+		event.set_villager_ai_enabled(1, var2)
+		event.set_character_active(1, var2)
+		event.go_to_outside_map(-1, "m05")
 	end
 end
 
@@ -41,12 +41,12 @@ script.event_1000 = helper_fe0f3321
 --- Event 13050, which map data, a script or the engine runs by number.
 function script.event_13050()
 	local var0: s32 = 0
-	var0 = event.SearchCharaNo(6) or var0
-	event.SetAi(0, var0)
-	event.CharaActive(0, var0)
+	var0 = event.find_scene_character_slot(6) or var0
+	event.set_villager_ai_enabled(0, var0)
+	event.set_character_active(0, var0)
 	helper_264b9d7e()
-	event.SetAi(1, var0)
-	event.CharaActive(1, var0)
+	event.set_villager_ai_enabled(1, var0)
+	event.set_character_active(1, var0)
 end
 
 return script

@@ -23,8 +23,8 @@ function script.default_event() end
 function script.key_open()
 	local at: number = 0
 	return vm.guard(function()
-		event.SetTime(22.0)
-		event.SetTimeStepEnable(0)
+		event.set_time_of_day(22.0)
+		event.set_time_of_day_advancing(0)
 		at = 1
 		wait_frames(30)
 		at = 2
@@ -48,7 +48,7 @@ end
 --- Event 500, which map data, a script or the engine runs by number.
 function script.event_500()
 	helper_d5e73dab()
-	event.SetExitFlag(1)
+	event.set_scene_exit_flag(1)
 end
 
 return script

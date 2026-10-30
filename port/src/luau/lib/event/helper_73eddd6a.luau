@@ -17,43 +17,43 @@ local function helper_73eddd6a()
 	local var3: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		argc = event.GetItemHaveNum(355) or argc
+		argc = event.get_owned_item_count(355) or argc
 		if argc <= 0 then
 			set_window_mode(3, 1)
-			event.MesMake_2(3, "スクープメモを\n買ってくれ。")
+			event.open_message_window_2(3, "スクープメモを\n買ってくれ。")
 			at = 1
 			show_message(3, -1, 3, 256, 208)
 			return 0
 		end
 		do
-			local out1, out2 = event.GetMenuEtc_3(5)
+			local out1, out2 = event.get_menu_value_3(5)
 			var1 = out1 or var1
 			var2 = out2 or var2
 		end
 		if var1 == var2 then
 			set_window_mode(3, 1)
-			event.MesMake_2(3, "もう、スクープは\nなさそうだな。")
+			event.open_message_window_2(3, "もう、スクープは\nなさそうだな。")
 			at = 2
 			show_message(3, -1, 3, 256, 208)
 			at = 3
 			return helper_366e5299()
 		end
-		var3 = event.GetMenuEtc_2(3) or var3
+		var3 = event.get_menu_value_2(3) or var3
 		if 0 < var3 then
 			set_window_mode(3, 8)
-			event.SetMesValue(3, 1, var3)
-			event.MesMake_2(3, "スクープ条件が、[数値１]個\n明らかになった。")
-			event.SetMesDrawspeed(3, 0)
+			event.set_message_number(3, 1, var3)
+			event.open_message_window_2(3, "スクープ条件が、[数値１]個\n明らかになった。")
+			event.set_message_draw_speed(3, 0)
 			at = 4
 			show_message(3, -1, 8, 0, 0)
 		end
 		set_window_mode(3, 1)
-		var3 = event.GetMenuEtc_2(4) or var3
+		var3 = event.get_menu_value_2(4) or var3
 		if var3 <= 0 then
-			event.MesMake_2(3, "なんだよ、スクープなんて\n撮れてないじゃないか。")
+			event.open_message_window_2(3, "なんだよ、スクープなんて\n撮れてないじゃないか。")
 		else
-			event.SetMesValue(3, 1, var3)
-			event.MesMake_2(3, "お、[数値１]枚もスクープが\n撮れてるじゃん。さすがだな。")
+			event.set_message_number(3, 1, var3)
+			event.open_message_window_2(3, "お、[数値１]枚もスクープが\n撮れてるじゃん。さすがだな。")
 		end
 		at = 5
 		show_message(3, -1, 3, 256, 208)

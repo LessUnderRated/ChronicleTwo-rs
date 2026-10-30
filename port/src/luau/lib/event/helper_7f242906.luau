@@ -8,28 +8,28 @@ local helper_c8484b43 = require("@lib/event/helper_c8484b43")
 --- Helper function.
 local function helper_7f242906(arg0: s32, arg1: s32)
 	local var2: s32 = 0
-	event.SetMesPreset(0, 0)
+	event.apply_message_window_preset(0, 0)
 	helper_c8484b43(arg0, 0, 0)
-	var2 = event.GetCnt(12) or var2
+	var2 = event.get_save_counter(12) or var2
 	if var2 < 3 then
-		event.MesMake_2(0, "Sorry, I'm still\nnot ready.<page>Can you give me\na little longer?")
+		event.open_message_window_2(0, "Sorry, I'm still\nnot ready.<page>Can you give me\na little longer?")
 		helper_0ffc2526(0, -1, arg0, arg1, 0)
-		event.MesMake_2(0, "By the way, have you been\nto Morton's for me yet?")
+		event.open_message_window_2(0, "By the way, have you been\nto Morton's for me yet?")
 		helper_0ffc2526(0, -1, arg0, arg1, 0)
-		event.SetMotion(arg0, "立ち")
-		event.Finish()
+		event.set_character_motion(arg0, "立ち")
+		event.finish_event()
 		return
 	end
-	event.MesMake_2(0, "What! How can he be\nso inconsiderate?<page>Oh well,\nyou have them.")
+	event.open_message_window_2(0, "What! How can he be\nso inconsiderate?<page>Oh well,\nyou have them.")
 	helper_0ffc2526(0, -1, arg0, arg1, 0)
-	event.MesMake_2(0, "Never mind that,\nlet's get going.<page>So where are\nwe off to?")
+	event.open_message_window_2(0, "Never mind that,\nlet's get going.<page>So where are\nwe off to?")
 	helper_0ffc2526(0, -1, arg0, arg1, 0)
-	event.SetMotion(arg0, "立ち")
-	event.SubItem(300, 20)
-	event.AddItem(299, 20)
+	event.set_character_motion(arg0, "立ち")
+	event.remove_item(300, 20)
+	event.add_inventory_item(299, 20)
 	helper_9cc4383b()
-	event.Finish()
-	event.SetQuestEtc(1, 8, 1)
+	event.finish_event()
+	event.set_quest_request(1, 8, 1)
 end
 
 return helper_7f242906

@@ -30,25 +30,25 @@ function script.on_start()
 	local value_4: f32 = 0
 	local value_4_int = true
 	do
-		local out1, out2, out3 = effect.GetWorkVect1()
+		local out1, out2, out3 = effect.get_first_work_vector()
 		work_vect1_x = out1 or work_vect1_x
 		work_vect1_y = out2 or work_vect1_y
 		work_vect1_z = out3 or work_vect1_z
 	end
-	user_id = effect.GetUserId() or user_id
-	effect.SptSetTexname("plucas_kirakira")
-	effect.SptAssignSprite_1(60)
-	effect.SptInitSprite(0, 60)
-	effect.SptSetAlphab(0, 2, 60)
-	effect.SptSetDrawFlag(0, 1, 60)
-	effect.SptSetColor(0, 128.0, 128.0, 128.0, 0.0, 60)
-	effect.SptSetPutSize(0, 8.0, 8.0, 60)
-	effect.SptSetUvSize(0, 0.0, 0.0, 64.0, 64.0, 60)
+	user_id = effect.get_owner_character() or user_id
+	effect.set_sprite_texture("plucas_kirakira")
+	effect.allocate_sprites_1(60)
+	effect.reset_sprites(0, 60)
+	effect.set_sprite_blend_mode(0, 2, 60)
+	effect.set_sprite_visible(0, 1, 60)
+	effect.set_sprite_color(0, 128.0, 128.0, 128.0, 0.0, 60)
+	effect.set_sprite_size(0, 8.0, 8.0, 60)
+	effect.set_sprite_texture_rect(0, 0.0, 0.0, 64.0, 64.0, 60)
 	var11 = 0
 	var10 = 0
 	while var10 < 90 do
 		do
-			local out1, out2, out3 = effect.ScnGetChrPos(user_id)
+			local out1, out2, out3 = effect.get_scene_character_position(user_id)
 			pos_x = out1 or pos_x
 			pos_y = out2 or pos_y
 			pos_z = out3 or pos_z
@@ -56,40 +56,40 @@ function script.on_start()
 		pos_y = vm.f32(pos_y + 25.0)
 		if vm.imod(var10, 1) == 0 then
 			for var14 = 0, 3 do
-				value_3 = effect.GetRandInt(4) or value_3
-				effect.SptSetUvSize(
+				value_3 = effect.get_random_number_int(4) or value_3
+				effect.set_sprite_texture_rect(
 					var11,
 					vm.i32(vm.imod(value_3, 2) * 32),
 					vm.i32(vm.idiv(value_3, 2) * 32),
 					32.0,
 					32.0
 				)
-				value = effect.GetRand(work_vect1_x) or value
+				value = effect.get_random_number(work_vect1_x) or value
 				value = vm.f32(vm.f32(value - vm.f32(work_vect1_x / 2.0)) + pos_x)
-				value_2 = effect.GetRand(work_vect1_y) or value_2
+				value_2 = effect.get_random_number(work_vect1_y) or value_2
 				value_2 = vm.f32(vm.f32(value_2 - vm.f32(work_vect1_y / 2.0)) + pos_y)
-				var9 = effect.GetRand(work_vect1_z) or var9
+				var9 = effect.get_random_number(work_vect1_z) or var9
 				var9 = vm.f32(vm.f32(var9 - vm.f32(work_vect1_z / 2.0)) + pos_z)
-				effect.SptSetPos(var11, value, value_2, var9)
-				value_4 = (if value_4_int then vm.float_bits(effect.GetRand(1.0)) else effect.GetRand(1.0)) or value_4
+				effect.set_sprite_position(var11, value, value_2, var9)
+				value_4 = (if value_4_int then vm.float_bits(effect.get_random_number(1.0)) else effect.get_random_number(1.0)) or value_4
 				value_4 = vm.f32(value_4 - 0.5)
 				value_4_int = false
-				effect.SptSetScale(var11, value_4, value_4)
-				effect.SptSetColor(var11, 128.0, 128.0, 128.0, 0.0)
-				effect.SptSetVeloCol(var11, 0.0, 0.0, 0.0, 32)
-				effect.SptSetAccCol(var11, 0.0, 0.0, 0.0, -4)
-				effect.SptSetBlinking(var11, 0.0, 0.0, 0.0, 64.0, 0.3926991)
-				value_2 = effect.GetRand(-0.3) or value_2
+				effect.set_sprite_scale(var11, value_4, value_4)
+				effect.set_sprite_color(var11, 128.0, 128.0, 128.0, 0.0)
+				effect.set_sprite_color_velocity(var11, 0.0, 0.0, 0.0, 32)
+				effect.set_sprite_color_acceleration(var11, 0.0, 0.0, 0.0, -4)
+				effect.set_sprite_blinking(var11, 0.0, 0.0, 0.0, 64.0, 0.3926991)
+				value_2 = effect.get_random_number(-0.3) or value_2
 				value_2 = vm.f32(value_2 - vm.f32(0.3))
-				effect.SptSetVeloPos(var11, 0.0, value_2, 0.0)
-				var9 = effect.GetRand(6.2831855) or var9
+				effect.set_sprite_velocity(var11, 0.0, value_2, 0.0)
+				var9 = effect.get_random_number(6.2831855) or var9
 				var9 = vm.f32(var9 - vm.f32(3.1415927))
-				var9 = effect.AngleLimit(var9) or var9
-				effect.SptSetRotz(var11, var9)
+				var9 = effect.wrap_angle(var9) or var9
+				effect.set_sprite_rotation(var11, var9)
 				if value_3 ~= 3 then
-					var9 = effect.GetRand(0.4) or var9
+					var9 = effect.get_random_number(0.4) or var9
 					var9 = vm.f32(var9 - vm.f32(0.2))
-					effect.SptSetVeloRotz(var11, var9)
+					effect.set_sprite_angular_velocity(var11, var9)
 				end
 				var11 = var11 + 1
 				if var11 >= 60 then

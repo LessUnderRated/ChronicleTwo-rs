@@ -6,12 +6,12 @@ local helper_70e4ac93 = require("@lib/event/helper_70e4ac93")
 --- Helper function.
 local function helper_12cfb19e(arg0: s32, arg1: any)
 	local var2: s32 = 0
-	event.SetMesPreset(0, 0)
-	var2 = event.GetChapter() or var2
+	event.apply_message_window_preset(0, 0)
+	var2 = event.get_chapter() or var2
 	if var2 ~= 8 then
-		event.MesMake_2(0, "You helped me so I'll help you, but please\ndon't take me to a place that has insects!")
+		event.open_message_window_2(0, "You helped me so I'll help you, but please\ndon't take me to a place that has insects!")
 	else
-		event.MesMake_2(
+		event.open_message_window_2(
 			0,
 			"If the Blackstone Railroad spreads\nall around the world, maybe I'll\nhave to go around the world too."
 		)

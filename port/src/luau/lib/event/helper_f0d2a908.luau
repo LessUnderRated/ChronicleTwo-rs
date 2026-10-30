@@ -22,13 +22,13 @@ local function helper_f0d2a908(arg0: s32)
 	local var7: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		var1 = event.GetEventData_2(13) or var1
-		player_chara = event.GetControlChrid() or player_chara
-		now_map_no = event.GetNowMapNo() or now_map_no
-		argc = event.GetItemHaveNum(355) or argc
+		var1 = event.get_triggered_event_data_2(13) or var1
+		player_chara = event.get_player_character_slot() or player_chara
+		now_map_no = event.get_current_map() or now_map_no
+		argc = event.get_owned_item_count(355) or argc
 		if argc <= 0 then
 			set_window_mode(arg0, 1)
-			event.MesMake_2(arg0, "Tr[UNI00e1]eme una\nNota de Logros, anda.")
+			event.open_message_window_2(arg0, "Tr[UNI00e1]eme una\nNota de Logros, anda.")
 			if now_map_no == 22 then
 				at = 1
 				helper_0ffc2526(arg0, -1, var1, player_chara, 0)
@@ -39,13 +39,13 @@ local function helper_f0d2a908(arg0: s32)
 			return 0
 		end
 		do
-			local out1, out2 = event.GetMenuEtc_3(5)
+			local out1, out2 = event.get_menu_value_3(5)
 			var5 = out1 or var5
 			var6 = out2 or var6
 		end
 		if var5 == var6 then
 			set_window_mode(arg0, 1)
-			event.MesMake_2(arg0, "Parece que no quedan\nlogros.")
+			event.open_message_window_2(arg0, "Parece que no quedan\nlogros.")
 			if now_map_no == 22 then
 				at = 3
 				helper_0ffc2526(arg0, -1, var1, player_chara, 0)
@@ -56,25 +56,25 @@ local function helper_f0d2a908(arg0: s32)
 			at = 5
 			return helper_5be12bad(arg0)
 		end
-		var7 = event.GetMenuEtc_2(3) or var7
+		var7 = event.get_menu_value_2(3) or var7
 		if 0 < var7 then
 			set_window_mode(arg0, 8)
-			event.SetMesValue(arg0, 1, var7)
-			event.MesMake_2(arg0, "Yo calculo [Number1] logros m[UNI00e1]s.")
-			event.SetMesDrawspeed(arg0, 0)
+			event.set_message_number(arg0, 1, var7)
+			event.open_message_window_2(arg0, "Yo calculo [Number1] logros m[UNI00e1]s.")
+			event.set_message_draw_speed(arg0, 0)
 			at = 6
 			helper_75684dd8(arg0, -1, 8, 0, 0)
 		end
 		set_window_mode(arg0, 1)
-		var7 = event.GetMenuEtc_2(4) or var7
+		var7 = event.get_menu_value_2(4) or var7
 		if var7 <= 0 then
-			event.MesMake_2(
+			event.open_message_window_2(
 				arg0,
 				"[UNI00a1]Oye, t[UNI00ed]o! [UNI00a1]No te relajes!\n[UNI00bf]D[UNI00f3]nde est[UNI00e1]n todas tus nuevos logros Interiores?"
 			)
 		else
-			event.SetMesValue(arg0, 1, var7)
-			event.MesMake_2(
+			event.set_message_number(arg0, 1, var7)
+			event.open_message_window_2(
 				arg0,
 				"[UNI00a1]Guau! [UNI00a1]Ya tienes [Number 1] nuevos logros!\n[UNI00a1]Sab[UNI00ed]a que lo llevabas dentro de ti!"
 			)

@@ -9,7 +9,7 @@ local function helper_7c50ce86()
 	local value: s32 = 0
 	local var1: f32 = 0
 	value = 0
-	var1 = monster.GetTargetDist() or var1
+	var1 = monster.get_target_distance() or var1
 	if var1 <= 0.0 then
 		value = vm.i32(bit32.bor(value, 1))
 	elseif var1 <= 80.0 then
@@ -31,7 +31,7 @@ local function helper_7c50ce86()
 	if helper_661d392d(0, 360.0) ~= 0 then
 		value = vm.i32(bit32.bor(value, 128))
 	end
-	monster.VPush(0, value)
+	monster.set_variable(0, value)
 end
 
 return helper_7c50ce86

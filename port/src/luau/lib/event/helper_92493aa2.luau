@@ -24,7 +24,7 @@ local function helper_92493aa2()
 	local position_z_2: f32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		active_chr_no = event.GetActiveChrNo() or active_chr_no
+		active_chr_no = event.get_playable_character() or active_chr_no
 		helper_52115bbf()
 		if active_chr_no == 0 then
 			at = 1
@@ -38,55 +38,55 @@ local function helper_92493aa2()
 			at = 3
 			helper_649c18cd(active_chr_no)
 		end
-		var1 = event.GetE3Version() or var1
+		var1 = event.is_e3_version() or var1
 		if var1 ~= 1 then
-			stage_id = event.DngGetStageId() or stage_id
-			event.DngGetFloorId()
+			stage_id = event.get_dungeon_stage_id() or stage_id
+			event.get_dungeon_floor()
 			if stage_id ~= 3 then
 				helper_fd3a2124(0)
 				do
-					local out1, out2, out3 = event.GetBeforeCameraNextPos()
+					local out1, out2, out3 = event.get_previous_camera_next_position()
 					position_x = out1 or position_x
 					position_y = out2 or position_y
 					position_z = out3 or position_z
 				end
-				event.SetCameraPos(position_x, position_y, position_z)
+				event.set_camera_position(position_x, position_y, position_z)
 				do
-					local out1, out2, out3 = event.GetBeforeCameraNextRef()
+					local out1, out2, out3 = event.get_previous_camera_next_look_at()
 					position_x = out1 or position_x
 					position_y = out2 or position_y
 					position_z = out3 or position_z
 				end
-				event.SetCameraRef(position_x, position_y, position_z)
-				event.SetMesWindowMode(0, 4)
-				event.SetMesDrawspeed(0, 1)
+				event.set_camera_look_at(position_x, position_y, position_z)
+				event.set_message_window_mode(0, 4)
+				event.set_message_draw_speed(0, 1)
 				at = 4
 				helper_c8c8b790(0, 2100, 8, 0, 0)
-				event.SetMesWindowMode(0, 1)
-				event.SetMesDrawspeed(0, 0)
+				event.set_message_window_mode(0, 1)
+				event.set_message_draw_speed(0, 0)
 			end
 		end
 		do
-			local out1, out2, out3 = event.GetBeforeCameraNextPos()
+			local out1, out2, out3 = event.get_previous_camera_next_position()
 			position_x_2 = out1 or position_x_2
 			position_y_2 = out2 or position_y_2
 			position_z_2 = out3 or position_z_2
 		end
-		event.SetCameraPos(position_x_2, position_y_2, position_z_2)
+		event.set_camera_position(position_x_2, position_y_2, position_z_2)
 		do
-			local out1, out2, out3 = event.GetBeforeCameraNextRef()
+			local out1, out2, out3 = event.get_previous_camera_next_look_at()
 			position_x_2 = out1 or position_x_2
 			position_y_2 = out2 or position_y_2
 			position_z_2 = out3 or position_z_2
 		end
-		event.SetCameraRef(position_x_2, position_y_2, position_z_2)
-		event.SetMesWindowMode(0, 4)
-		event.SetMesDrawspeed(0, 1)
+		event.set_camera_look_at(position_x_2, position_y_2, position_z_2)
+		event.set_message_window_mode(0, 4)
+		event.set_message_draw_speed(0, 1)
 		at = 5
 		helper_c8c8b790(0, 2130, 8, 0, 0)
-		event.SetMesWindowMode(0, 1)
-		event.SetMesDrawspeed(0, 0)
-		event.Finish()
+		event.set_message_window_mode(0, 1)
+		event.set_message_draw_speed(0, 0)
+		event.finish_event()
 		return
 	end, function(received: { any })
 		if at <= 5 then
@@ -98,55 +98,55 @@ local function helper_92493aa2()
 						at = 3
 						helper_649c18cd(active_chr_no)
 					end
-					var1 = event.GetE3Version() or var1
+					var1 = event.is_e3_version() or var1
 					if var1 ~= 1 then
-						stage_id = event.DngGetStageId() or stage_id
-						event.DngGetFloorId()
+						stage_id = event.get_dungeon_stage_id() or stage_id
+						event.get_dungeon_floor()
 						if stage_id ~= 3 then
 							helper_fd3a2124(0)
 							do
-								local out1, out2, out3 = event.GetBeforeCameraNextPos()
+								local out1, out2, out3 = event.get_previous_camera_next_position()
 								position_x = out1 or position_x
 								position_y = out2 or position_y
 								position_z = out3 or position_z
 							end
-							event.SetCameraPos(position_x, position_y, position_z)
+							event.set_camera_position(position_x, position_y, position_z)
 							do
-								local out1, out2, out3 = event.GetBeforeCameraNextRef()
+								local out1, out2, out3 = event.get_previous_camera_next_look_at()
 								position_x = out1 or position_x
 								position_y = out2 or position_y
 								position_z = out3 or position_z
 							end
-							event.SetCameraRef(position_x, position_y, position_z)
-							event.SetMesWindowMode(0, 4)
-							event.SetMesDrawspeed(0, 1)
+							event.set_camera_look_at(position_x, position_y, position_z)
+							event.set_message_window_mode(0, 4)
+							event.set_message_draw_speed(0, 1)
 							at = 4
 							helper_c8c8b790(0, 2100, 8, 0, 0)
-							event.SetMesWindowMode(0, 1)
-							event.SetMesDrawspeed(0, 0)
+							event.set_message_window_mode(0, 1)
+							event.set_message_draw_speed(0, 0)
 						end
 					end
 					do
-						local out1, out2, out3 = event.GetBeforeCameraNextPos()
+						local out1, out2, out3 = event.get_previous_camera_next_position()
 						position_x_2 = out1 or position_x_2
 						position_y_2 = out2 or position_y_2
 						position_z_2 = out3 or position_z_2
 					end
-					event.SetCameraPos(position_x_2, position_y_2, position_z_2)
+					event.set_camera_position(position_x_2, position_y_2, position_z_2)
 					do
-						local out1, out2, out3 = event.GetBeforeCameraNextRef()
+						local out1, out2, out3 = event.get_previous_camera_next_look_at()
 						position_x_2 = out1 or position_x_2
 						position_y_2 = out2 or position_y_2
 						position_z_2 = out3 or position_z_2
 					end
-					event.SetCameraRef(position_x_2, position_y_2, position_z_2)
-					event.SetMesWindowMode(0, 4)
-					event.SetMesDrawspeed(0, 1)
+					event.set_camera_look_at(position_x_2, position_y_2, position_z_2)
+					event.set_message_window_mode(0, 4)
+					event.set_message_draw_speed(0, 1)
 					at = 5
 					helper_c8c8b790(0, 2130, 8, 0, 0)
-					event.SetMesWindowMode(0, 1)
-					event.SetMesDrawspeed(0, 0)
-					event.Finish()
+					event.set_message_window_mode(0, 1)
+					event.set_message_draw_speed(0, 0)
+					event.finish_event()
 					return
 				end)
 			end
@@ -154,55 +154,55 @@ local function helper_92493aa2()
 				at = 3
 				helper_649c18cd(active_chr_no)
 				return vm.continue_with(function()
-					var1 = event.GetE3Version() or var1
+					var1 = event.is_e3_version() or var1
 					if var1 ~= 1 then
-						stage_id = event.DngGetStageId() or stage_id
-						event.DngGetFloorId()
+						stage_id = event.get_dungeon_stage_id() or stage_id
+						event.get_dungeon_floor()
 						if stage_id ~= 3 then
 							helper_fd3a2124(0)
 							do
-								local out1, out2, out3 = event.GetBeforeCameraNextPos()
+								local out1, out2, out3 = event.get_previous_camera_next_position()
 								position_x = out1 or position_x
 								position_y = out2 or position_y
 								position_z = out3 or position_z
 							end
-							event.SetCameraPos(position_x, position_y, position_z)
+							event.set_camera_position(position_x, position_y, position_z)
 							do
-								local out1, out2, out3 = event.GetBeforeCameraNextRef()
+								local out1, out2, out3 = event.get_previous_camera_next_look_at()
 								position_x = out1 or position_x
 								position_y = out2 or position_y
 								position_z = out3 or position_z
 							end
-							event.SetCameraRef(position_x, position_y, position_z)
-							event.SetMesWindowMode(0, 4)
-							event.SetMesDrawspeed(0, 1)
+							event.set_camera_look_at(position_x, position_y, position_z)
+							event.set_message_window_mode(0, 4)
+							event.set_message_draw_speed(0, 1)
 							at = 4
 							helper_c8c8b790(0, 2100, 8, 0, 0)
-							event.SetMesWindowMode(0, 1)
-							event.SetMesDrawspeed(0, 0)
+							event.set_message_window_mode(0, 1)
+							event.set_message_draw_speed(0, 0)
 						end
 					end
 					do
-						local out1, out2, out3 = event.GetBeforeCameraNextPos()
+						local out1, out2, out3 = event.get_previous_camera_next_position()
 						position_x_2 = out1 or position_x_2
 						position_y_2 = out2 or position_y_2
 						position_z_2 = out3 or position_z_2
 					end
-					event.SetCameraPos(position_x_2, position_y_2, position_z_2)
+					event.set_camera_position(position_x_2, position_y_2, position_z_2)
 					do
-						local out1, out2, out3 = event.GetBeforeCameraNextRef()
+						local out1, out2, out3 = event.get_previous_camera_next_look_at()
 						position_x_2 = out1 or position_x_2
 						position_y_2 = out2 or position_y_2
 						position_z_2 = out3 or position_z_2
 					end
-					event.SetCameraRef(position_x_2, position_y_2, position_z_2)
-					event.SetMesWindowMode(0, 4)
-					event.SetMesDrawspeed(0, 1)
+					event.set_camera_look_at(position_x_2, position_y_2, position_z_2)
+					event.set_message_window_mode(0, 4)
+					event.set_message_draw_speed(0, 1)
 					at = 5
 					helper_c8c8b790(0, 2130, 8, 0, 0)
-					event.SetMesWindowMode(0, 1)
-					event.SetMesDrawspeed(0, 0)
-					event.Finish()
+					event.set_message_window_mode(0, 1)
+					event.set_message_draw_speed(0, 0)
+					event.finish_event()
 					return
 				end)
 			end

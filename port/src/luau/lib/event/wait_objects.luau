@@ -7,7 +7,7 @@ local vm = require("@lib/vm")
 local function wait_objects(sequence: s32)
 	local var1: s32 = 0
 	while true do
-		var1 = event.ObjsCheck(sequence) or var1
+		var1 = event.is_object_sequence_running(sequence) or var1
 		if var1 == 0 then
 			break
 		else

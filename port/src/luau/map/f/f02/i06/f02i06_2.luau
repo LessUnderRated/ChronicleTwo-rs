@@ -14,7 +14,7 @@ script.event_99 = helper_1ef0d4b2
 
 --- The event the engine runs on entering a town or interior, jumping to a map and leaving it, and the one an omitted event number means.
 function script.default_event()
-	event.ResetCamera(1, 0.0)
+	event.reset_follow_camera(1, 0.0)
 end
 
 --- The event the town walk runs when the square button is pressed, after reloading the map script.

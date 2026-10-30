@@ -14,43 +14,43 @@ local function helper_59ec5939(arg0: s32, arg1: s32)
 	local var3: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.SetMesPreset(0, 0)
+		event.apply_message_window_preset(0, 0)
 		at = 1
 		helper_c8484b43(arg0, 0, 0)
-		var2 = event.GetMenuEtc_2(0) or var2
-		var3 = event.GetCnt(19) or var3
+		var2 = event.get_menu_value_2(0) or var2
+		var3 = event.get_save_counter(19) or var3
 		print("start=", var3, ",now=", var2, ",clear=", vm.i32(var2 - var3), "\n")
 		if vm.i32(var2 - var3) < 10 then
-			event.MesMake_2(0, "I'm still not feeling great.")
+			event.open_message_window_2(0, "I'm still not feeling great.")
 			at = 2
 			helper_0ffc2526(0, -1, arg0, arg1, 0)
-			event.MesMake_2(
+			event.open_message_window_2(
 				0,
 				"Maybe there's something\nreally wrong with me?<page>Maybe even Dr. Dell\ncan't help me now..."
 			)
 			at = 3
 			helper_0ffc2526(0, -1, arg0, arg1, 0)
-			event.SetMotion(arg0, "立ち")
-			event.Finish()
+			event.set_character_motion(arg0, "立ち")
+			event.finish_event()
 			return
 		end
-		event.MesMake_2(0, "Hello!<page>How am I feeling? Great!")
+		event.open_message_window_2(0, "Hello!<page>How am I feeling? Great!")
 		at = 4
 		helper_0ffc2526(0, -1, arg0, arg1, 0)
-		event.MesMake_2(0, "I can't believe how much better I am recently.<page>Now the world feels right again.")
+		event.open_message_window_2(0, "I can't believe how much better I am recently.<page>Now the world feels right again.")
 		at = 5
 		helper_0ffc2526(0, -1, arg0, arg1, 0)
-		event.MesMake_2(
+		event.open_message_window_2(
 			0,
 			"Oh yeah, you wanted me to do you a favour.<page>I'll do whatever I can to help.<page>You helped me,\nso I must help you."
 		)
 		at = 6
 		helper_0ffc2526(0, -1, arg0, arg1, 0)
-		event.SetMotion(arg0, "立ち")
+		event.set_character_motion(arg0, "立ち")
 		at = 7
 		helper_9cc4383b()
-		event.Finish()
-		event.SetQuestEtc(1, 17, 1)
+		event.finish_event()
+		event.set_quest_request(1, 17, 1)
 		return
 	end, function(received: { any })
 		if at <= 3 then

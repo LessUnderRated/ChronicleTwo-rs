@@ -8,10 +8,10 @@ local helper_bac0dab2 = require("@lib/event/helper_bac0dab2")
 
 --- Helper function.
 local function helper_364e0(arg0: s32, arg1: s32)
-	event.SetMotion(0, "立ち")
-	event.CmrsInit()
-	event.CmrsSetPos(-5.74, 133.71, 0.0)
-	event.CmrsSetRef(-143.54, 66.02, 0.0)
+	event.set_character_motion(0, "立ち")
+	event.clear_camera_sequence()
+	event.set_camera_sequence_position(-5.74, 133.71, 0.0)
+	event.set_camera_sequence_look_at(-143.54, 66.02, 0.0)
 	helper_888ab2a3(45)
 	helper_bac0dab2(arg0, arg1)
 	helper_bac0dab2(vm.i32(arg0 + 1), arg1)
@@ -28,15 +28,15 @@ function script.setup() end
 
 --- The event the engine runs on entering a town or interior, jumping to a map and leaving it, and the one an omitted event number means.
 function script.default_event()
-	event.ResetCamera(1, 0.0, 10.0)
+	event.reset_follow_camera(1, 0.0, 10.0)
 end
 
 --- The event the town walk runs when the square button is pressed, after reloading the map script.
 function script.key_open()
 	local now_map_no: s32 = 0
 	local now_sub_map_no: s32 = 0
-	now_map_no = event.GetNowMapNo() or now_map_no
-	now_sub_map_no = event.GetNowSubmapNo() or now_sub_map_no
+	now_map_no = event.get_current_map() or now_map_no
+	now_sub_map_no = event.get_current_submap() or now_sub_map_no
 	print(
 		"##########################map_no=",
 		now_map_no,

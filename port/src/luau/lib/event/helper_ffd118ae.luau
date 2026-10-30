@@ -15,55 +15,55 @@ local function helper_ffd118ae()
 	local var4: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.Initialize()
-		event.SetMotion(0, "立ち", 4)
+		event.initialize_event()
+		event.set_character_motion(0, "立ち", 4)
 		at = 1
 		var0 = helper_ed4dc120(1, -1)
 		if var0 == 0 then
-			event.CmrsInit()
-			event.CmrsSetPos(-2144.16, 79.66, 654.8)
-			event.CmrsSetRef(-2382.06, 11.3, 623.75)
-			event.EohSyncChara(0, 0)
-			event.ObjsInit(0)
-			event.ObjsSyncObj(0, 0)
-			event.ObjsSetPos(0, -2363.64, 0.4, 625.83)
-			event.ObjsSetRot(0, 0.0, -1.52, 0.0)
-			event.ObjsSetMotion(0, "走り", 4)
-			event.ObjsMove(0, -2489.67, 0.4, 624.1, 60)
-			event.CmrsMove2(-2144.16, 79.66, 654.8, -2388.46, 36.03, 632.32, 48, 60, 2.5)
-			event.CmrsFadeInit()
-			event.CmrsFadeDelay(30)
-			event.CmrsFadeOut(30, 0.0, 0.0, 0.0)
+			event.clear_camera_sequence()
+			event.set_camera_sequence_position(-2144.16, 79.66, 654.8)
+			event.set_camera_sequence_look_at(-2382.06, 11.3, 623.75)
+			event.attach_object_handle_to_character(0, 0)
+			event.clear_object_sequence(0)
+			event.set_object_sequence_object(0, 0)
+			event.set_object_sequence_position(0, -2363.64, 0.4, 625.83)
+			event.set_object_sequence_rotation(0, 0.0, -1.52, 0.0)
+			event.set_object_sequence_motion(0, "走り", 4)
+			event.move_object_sequence(0, -2489.67, 0.4, 624.1, 60)
+			event.move_camera_sequence_eased(-2144.16, 79.66, 654.8, -2388.46, 36.03, 632.32, 48, 60, 2.5)
+			event.mark_camera_sequence_fade_track()
+			event.delay_camera_sequence_fade_track(30)
+			event.fade_out_camera_sequence(30, 0.0, 0.0, 0.0)
 			at = 2
 			wait_frames(60)
 			return 1
 		end
-		event.EohSyncChara(0, 0)
-		event.ObjsInit(0)
-		event.ObjsSyncObj(0, 0)
+		event.attach_object_handle_to_character(0, 0)
+		event.clear_object_sequence(0)
+		event.set_object_sequence_object(0, 0)
 		do
-			local out1, out2, out3 = event.GetCharaPos(0)
+			local out1, out2, out3 = event.get_character_position(0)
 			var1 = out1 or var1
 			var2 = out2 or var2
 			var3 = out3 or var3
 		end
 		var1 = vm.f32(var1 + vm.f32(30.0 * vm.sin(vm.f32(1.59))))
 		var3 = vm.f32(var3 + vm.f32(30.0 * vm.cos(vm.f32(1.59))))
-		event.ObjsSetMotion(0, "歩き", 4, -1.0, 1)
-		event.ObjsRotation(0, 0.0, 1.59, 0.0, 15)
-		event.ObjsMove(0, var1, var2, var3, 45)
+		event.set_object_sequence_motion(0, "歩き", 4, -1.0, 1)
+		event.rotate_object_sequence(0, 0.0, 1.59, 0.0, 15)
+		event.move_object_sequence(0, var1, var2, var3, 45)
 		for var4_i = 0, 44 do
 			do
-				local out1, out2, out3 = event.GetCharaPos(0)
+				local out1, out2, out3 = event.get_character_position(0)
 				var1 = out1 or var1
 				var2 = out2 or var2
 				var3 = out3 or var3
 			end
-			event.CmrsSetRef(var1, var2 + 30.0, var3)
+			event.set_camera_sequence_look_at(var1, var2 + 30.0, var3)
 			at = 3
 			vm.wait(3)
 		end
-		event.ObjsSetMotion(0, "立ち", 4, -1.0, 1)
+		event.set_object_sequence_motion(0, "立ち", 4, -1.0, 1)
 		return 0
 	end, function(received: { any })
 		if at <= 2 then

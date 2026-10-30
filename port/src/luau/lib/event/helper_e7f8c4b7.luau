@@ -22,13 +22,13 @@ local function helper_e7f8c4b7(arg0: s32)
 	local var7: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		var1 = event.GetEventData_2(13) or var1
-		player_chara = event.GetControlChrid() or player_chara
-		now_map_no = event.GetNowMapNo() or now_map_no
-		argc = event.GetItemHaveNum(355) or argc
+		var1 = event.get_triggered_event_data_2(13) or var1
+		player_chara = event.get_player_character_slot() or player_chara
+		now_map_no = event.get_current_map() or now_map_no
+		argc = event.get_owned_item_count(355) or argc
 		if argc <= 0 then
 			set_window_mode(arg0, 1)
-			event.MesMake_2(arg0, "Bring mir mal ein paar\nKn[UNI00fc]ller-Notizen, ja?")
+			event.open_message_window_2(arg0, "Bring mir mal ein paar\nKn[UNI00fc]ller-Notizen, ja?")
 			if now_map_no == 22 then
 				at = 1
 				helper_0ffc2526(arg0, -1, var1, player_chara, 0)
@@ -39,13 +39,13 @@ local function helper_e7f8c4b7(arg0: s32)
 			return 0
 		end
 		do
-			local out1, out2 = event.GetMenuEtc_3(5)
+			local out1, out2 = event.get_menu_value_3(5)
 			var5 = out1 or var5
 			var6 = out2 or var6
 		end
 		if var5 == var6 then
 			set_window_mode(arg0, 1)
-			event.MesMake_2(arg0, "Sieht aus, als g[UNI00e4]be es\nkeine weiteren Kn[UNI00fc]ller mehr.")
+			event.open_message_window_2(arg0, "Sieht aus, als g[UNI00e4]be es\nkeine weiteren Kn[UNI00fc]ller mehr.")
 			if now_map_no == 22 then
 				at = 3
 				helper_0ffc2526(arg0, -1, var1, player_chara, 0)
@@ -56,25 +56,25 @@ local function helper_e7f8c4b7(arg0: s32)
 			at = 5
 			return helper_5fe5615c(arg0)
 		end
-		var7 = event.GetMenuEtc_2(3) or var7
+		var7 = event.get_menu_value_2(3) or var7
 		if 0 < var7 then
 			set_window_mode(arg0, 8)
-			event.SetMesValue(arg0, 1, var7)
-			event.MesMake_2(arg0, "Ich hab noch [Number1] Kn[UNI00fc]ller\nherausgefunden.")
-			event.SetMesDrawspeed(arg0, 0)
+			event.set_message_number(arg0, 1, var7)
+			event.open_message_window_2(arg0, "Ich hab noch [Number1] Kn[UNI00fc]ller\nherausgefunden.")
+			event.set_message_draw_speed(arg0, 0)
 			at = 6
 			helper_75684dd8(arg0, -1, 8, 0, 0)
 		end
 		set_window_mode(arg0, 1)
-		var7 = event.GetMenuEtc_2(4) or var7
+		var7 = event.get_menu_value_2(4) or var7
 		if var7 <= 0 then
-			event.MesMake_2(
+			event.open_message_window_2(
 				arg0,
 				"Komm schon, Mann! H[UNI00e4]ng nicht nur rum!\nWo bleiben deine neuen\nInsider-Kn[UNI00fc]ller?"
 			)
 		else
-			event.SetMesValue(arg0, 1, var7)
-			event.MesMake_2(arg0, "Juhu! Du hast [Number1] neue(n) Kn[UNI00fc]ller!\nIch wusste, dass du's schaffst!")
+			event.set_message_number(arg0, 1, var7)
+			event.open_message_window_2(arg0, "Juhu! Du hast [Number1] neue(n) Kn[UNI00fc]ller!\nIch wusste, dass du's schaffst!")
 		end
 		if now_map_no == 22 then
 			at = 7

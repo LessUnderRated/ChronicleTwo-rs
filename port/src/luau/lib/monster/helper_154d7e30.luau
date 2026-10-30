@@ -23,7 +23,7 @@ local function helper_154d7e30(next_rot: f32, rot_speed: f32)
 	if rot_speed <= vm.f32(-3.1415927) then
 		rot_speed = vm.f32(rot_speed + vm.f32(6.2831855))
 	end
-	monster.SetNextRot(next_rot, rot_speed)
+	monster.turn_toward_angle(next_rot, rot_speed)
 	local _ = helper_6f4051a2(
 		helper_28452e16(next_rot),
 		helper_28452e16(rot_speed),

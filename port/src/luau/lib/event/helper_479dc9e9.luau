@@ -7,7 +7,7 @@ local vm = require("@lib/vm")
 local function helper_479dc9e9()
 	local argc: s32 = 0
 	while true do
-		argc = event.CheckLoadbgFile() or argc
+		argc = event.is_background_load_pending() or argc
 		if argc == 0 then
 			break
 		else

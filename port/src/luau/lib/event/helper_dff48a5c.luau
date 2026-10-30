@@ -7,9 +7,9 @@ local vm = require("@lib/vm")
 local function helper_dff48a5c(arg0: f32)
 	local var1: s32 = 0
 	local power: f32 = 0
-	var1 = event.GetEquipItemno(0, 0) or var1
+	var1 = event.get_equipped_item(0, 0) or var1
 	do
-		local out1, _, _ = event.SphidaGetCulbDef(var1)
+		local out1, _, _ = event.get_sphida_club_definition(var1)
 		power = out1 or power
 	end
 	arg0 = vm.f32(arg0 * power)

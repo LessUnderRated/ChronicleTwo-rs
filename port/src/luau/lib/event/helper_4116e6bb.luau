@@ -5,7 +5,7 @@ local helper_9f2081c4 = require("@lib/event/helper_9f2081c4")
 
 --- Helper function.
 local function helper_4116e6bb(arg0: s32)
-	event.MesMake_2(0, arg0)
+	event.open_message_window_2(0, arg0)
 	helper_9f2081c4(arg0)
 end
 

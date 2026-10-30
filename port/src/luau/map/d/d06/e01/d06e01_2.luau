@@ -39,31 +39,31 @@ function script.default_event()
 	local old_map_no: s32 = 0
 	local var3: s32 = 0
 	event_99()
-	mc_load = event.CheckMcLoad() or mc_load
+	mc_load = event.take_memory_card_load_state() or mc_load
 	if mc_load == 1 then
 		helper_9dafbc83(20.0, 280.0, -600.0, vm.f32(3.14))
-		event.ResetCamera(1, 3.14, 10.0)
-		event.SetFadeIn(30)
+		event.reset_follow_camera(1, 3.14, 10.0)
+		event.fade_in_screen(30)
 	else
-		flag = event.GetFlag(702) or flag
+		flag = event.get_save_flag(702) or flag
 		if flag == 0 then
 			helper_78697792()
 			helper_9dafbc83(vm.f32(649.7), 0.0, vm.f32(-122.2), vm.f32(1.71))
-			event.ResetCamera(1, 3.14, 0.0)
-			event.SetFadeIn(30)
+			event.reset_follow_camera(1, 3.14, 0.0)
+			event.fade_in_screen(30)
 			return
 		end
-		old_map_no = event.GetOldMapNo() or old_map_no
-		var3 = event.GetMapType(old_map_no) or var3
+		old_map_no = event.get_previous_map() or old_map_no
+		var3 = event.get_map_type(old_map_no) or var3
 		if var3 ~= -1 then
 			if old_map_no == 128 or var3 == 7 or var3 == 8 then
 				helper_9dafbc83(0.0, 280.0, -650.0, 0.0)
-				event.ResetCamera(1, 3.14, 10.0)
-				event.SetFadeIn(30)
+				event.reset_follow_camera(1, 3.14, 10.0)
+				event.fade_in_screen(30)
 			else
 				helper_9dafbc83(0.0, 0.0, 600.0, vm.f32(3.14))
-				event.ResetCamera(1, 3.14, 10.0)
-				event.SetFadeIn(30)
+				event.reset_follow_camera(1, 3.14, 10.0)
+				event.fade_in_screen(30)
 			end
 		end
 	end
@@ -75,81 +75,81 @@ function script.key_open() end
 
 --- Event 151, which map data, a script or the engine runs by number.
 function script.event_151()
-	event.Initialize()
+	event.initialize_event()
 	vm.wait(1)
-	event.StopBgm(0)
+	event.stop_music(0)
 	wait_frames(4)
-	event.LoadBgm(36)
-	event.PlayBgm(0)
-	event.EohSyncObj_2(0, "p05_d06e01-0")
-	event.EohSetShow(0, 1)
-	event.SetFadeIn(30)
-	event.LoadMonsterFile(515, 1)
-	event.AutoSetMonster(515, 0.4, 62.5, -115.7, 0.0, 0.0, 0.0)
-	event.Finish()
+	event.load_music(36)
+	event.play_music(0)
+	event.attach_object_handle_to_map_part_2(0, "p05_d06e01-0")
+	event.set_object_handle_visible(0, 1)
+	event.fade_in_screen(30)
+	event.load_dungeon_monster(515, 1)
+	event.place_dungeon_monster(515, 0.4, 62.5, -115.7, 0.0, 0.0, 0.0)
+	event.finish_event()
 end
 
 --- Event 152, which map data, a script or the engine runs by number.
 function script.event_152()
-	event.Initialize()
+	event.initialize_event()
 	vm.wait(1)
-	event.DngPause(15, 1)
-	event.SpriteInit(0)
-	event.SpriteSetType(0, 0)
-	event.SpriteSetPos(0, 256, 208)
-	event.SpriteSetPutsize(0, 512, 416)
-	event.SpriteSetColor(0, 0, 0, 0, 128)
-	event.SpriteSetDraw(0, 0)
-	event.EohSyncSprite(0, 0)
-	event.ObjsInit(0)
-	event.ObjsSyncObj(0, 0)
-	event.ObjsSetColor(0, 128.0, 128.0, 128.0, 0.0, 30)
-	event.SpriteSetDraw(0, 1)
-	event.ObjsSetColor(0, 0.0, 0.0, 0.0, 128.0)
-	event.SetMesWindowMode(0, 7)
-	event.SetFadeIn(15)
-	event.MesMake_2(0, "e610『グリフォンの言い分』")
+	event.set_dungeon_pause_flags(15, 1)
+	event.reset_event_sprite(0)
+	event.set_event_sprite_type(0, 0)
+	event.set_event_sprite_position(0, 256, 208)
+	event.set_event_sprite_size(0, 512, 416)
+	event.set_event_sprite_color(0, 0, 0, 0, 128)
+	event.set_event_sprite_draw_pass(0, 0)
+	event.attach_object_handle_to_sprite(0, 0)
+	event.clear_object_sequence(0)
+	event.set_object_sequence_object(0, 0)
+	event.set_object_sequence_color(0, 128.0, 128.0, 128.0, 0.0, 30)
+	event.set_event_sprite_draw_pass(0, 1)
+	event.set_object_sequence_color(0, 0.0, 0.0, 0.0, 128.0)
+	event.set_message_window_mode(0, 7)
+	event.fade_in_screen(15)
+	event.open_message_window_2(0, "e610『グリフォンの言い分』")
 	helper_75684dd8(0, -1, 8, 0, 0)
-	event.ObjsSetColor(0, 0.0, 0.0, 0.0, 0.0, 30)
+	event.set_object_sequence_color(0, 0.0, 0.0, 0.0, 0.0, 30)
 	wait_frames(30)
-	event.SpriteSetDraw(0, 0)
-	event.DngPause(15, 0)
-	event.Finish()
+	event.set_event_sprite_draw_pass(0, 0)
+	event.set_dungeon_pause_flags(15, 0)
+	event.finish_event()
 end
 
 --- Event 153, which map data, a script or the engine runs by number.
 function script.event_153()
-	event.Initialize()
+	event.initialize_event()
 	vm.wait(1)
-	event.SetMesWindowMode(0, 7)
-	event.SetFadeIn(15)
-	event.MesMake_2(0, "勝利")
+	event.set_message_window_mode(0, 7)
+	event.fade_in_screen(15)
+	event.open_message_window_2(0, "勝利")
 	helper_75684dd8(0, -1, 8, 0, 0)
-	event.Finish()
+	event.finish_event()
 end
 
 --- Event 154, which map data, a script or the engine runs by number.
 function script.event_154()
-	event.Initialize()
+	event.initialize_event()
 	vm.wait(1)
-	event.AddItem(19, 1)
-	event.AddItem(8, 1)
-	event.AddItem(30, 1)
-	event.AddItem(33, 1)
-	event.AddItem(38, 1)
-	event.AddItem(77, 1)
-	event.AddItem(80, 1)
-	event.AddItem(59, 1)
-	event.AddItem(87, 1)
-	event.AddItem(55, 1)
-	event.AddItem(72, 1)
-	event.AddItem(84, 1)
-	event.AddItem(63, 1)
-	event.AddItem(107, 1)
-	event.AddItem(96, 1)
-	event.AddItem(99, 1)
-	event.AddItem(105, 1)
-	event.Finish()
+	event.add_inventory_item(19, 1)
+	event.add_inventory_item(8, 1)
+	event.add_inventory_item(30, 1)
+	event.add_inventory_item(33, 1)
+	event.add_inventory_item(38, 1)
+	event.add_inventory_item(77, 1)
+	event.add_inventory_item(80, 1)
+	event.add_inventory_item(59, 1)
+	event.add_inventory_item(87, 1)
+	event.add_inventory_item(55, 1)
+	event.add_inventory_item(72, 1)
+	event.add_inventory_item(84, 1)
+	event.add_inventory_item(63, 1)
+	event.add_inventory_item(107, 1)
+	event.add_inventory_item(96, 1)
+	event.add_inventory_item(99, 1)
+	event.add_inventory_item(105, 1)
+	event.finish_event()
 end
 
 --- Event 155, which map data, a script or the engine runs by number.
@@ -160,8 +160,8 @@ end
 
 --- Event 160, which map data, a script or the engine runs by number.
 function script.event_160()
-	event.SetCameraPos(0.0, 0.0, 0.0)
-	event.SetCameraRef(0.0, 0.0, 0.0)
+	event.set_camera_position(0.0, 0.0, 0.0)
+	event.set_camera_look_at(0.0, 0.0, 0.0)
 	vm.wait(1)
 	helper_c956b4a2(64)
 end
@@ -169,15 +169,15 @@ end
 --- Event 200, which map data, a script or the engine runs by number.
 function script.event_200()
 	local argc: s32 = 0
-	argc = event.GetNowLoopNo() or argc
+	argc = event.get_main_loop_mode() or argc
 	if argc == 1 then
 		if helper_624074bd() ~= 0 then
-			event.MapJump_2(-1, "g05")
+			event.jump_to_map_2(-1, "g05")
 			vm.wait(2)
 		end
 	elseif helper_6e3126e0() ~= 0 then
-		event.SetBitCtrl(1, 0)
-		event.GotoEdit(177, 100)
+		event.set_save_control_bits(1, 0)
+		event.go_to_georama_edit(177, 100)
 	end
 end
 
@@ -185,21 +185,21 @@ end
 function script.event_210()
 	local var2: s32 = 0
 	if helper_fca78145() ~= 0 then
-		event.DngSetStageId(5)
-		event.GotoMenu(3, 5)
+		event.set_dungeon_stage_id(5)
+		event.open_event_menu(3, 5)
 		vm.wait(2)
 		do
-			local _, _, out3, _ = event.GetMenuParam_4()
+			local _, _, out3, _ = event.get_menu_results_4()
 			var2 = out3 or var2
 		end
 		if var2 == 0 then
-			event.SetFadeIn(30)
+			event.fade_in_screen(30)
 			return
 		else
 			if var2 == 26 then
-				event.BgmLoadCancel()
+				event.skip_next_music_load()
 			end
-			event.GotoDng(5, var2, 1010)
+			event.go_to_dungeon(5, var2, 1010)
 		end
 	end
 end
@@ -250,21 +250,21 @@ end
 --- Event 500, which map data, a script or the engine runs by number.
 function script.event_500()
 	helper_5975de44()
-	event.FuncPointShow("", "exit", 0)
-	event.FuncPointShow("", "in_dng", 0)
+	event.set_function_point_enabled("", "exit", 0)
+	event.set_function_point_enabled("", "in_dng", 0)
 	helper_abdda14b()
-	event.SetBitCtrl(1, 1)
+	event.set_save_control_bits(1, 1)
 	vm.wait(2)
-	event.EohSyncObj_2(0, "p05_d06e01-0")
-	event.EohSetShow(0, 1)
-	event.LoadMonsterFile(515, 1)
-	event.AutoSetMonster(515, 0.4, 62.5, -115.7, 0.0, 0.0, 0.0)
+	event.attach_object_handle_to_map_part_2(0, "p05_d06e01-0")
+	event.set_object_handle_visible(0, 1)
+	event.load_dungeon_monster(515, 1)
+	event.place_dungeon_monster(515, 0.4, 62.5, -115.7, 0.0, 0.0, 0.0)
 	helper_9dafbc83(0.0, 0.0, 600.0, vm.f32(3.14))
-	event.SetCameraRef(0.0, 30.0, 600.0)
-	event.SetCameraPos(0.0, 40.0, 720.0)
-	event.ResetCamera(0)
-	event.SetFadeIn(20)
-	event.Finish()
+	event.set_camera_look_at(0.0, 30.0, 600.0)
+	event.set_camera_position(0.0, 40.0, 720.0)
+	event.reset_follow_camera(0)
+	event.fade_in_screen(20)
+	event.finish_event()
 end
 
 --- Event 502, which map data, a script or the engine runs by number.
@@ -283,48 +283,48 @@ function script.event_502()
 	local pos_z_2: f32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.Initialize()
-		event.ActchrSetDefMotion(0)
-		event.SetFadeOut(10)
+		event.initialize_event()
+		event.reset_action_character_motion(0)
+		event.fade_out_screen(10)
 		at = 1
 		wait_frames(10)
-		event.SndSeAllStop(5)
-		event.DngPause(1041, 1)
-		event.DngEffectAllClear()
+		event.stop_port_sound_effects(5)
+		event.set_dungeon_pause_flags(1041, 1)
+		event.clear_all_dungeon_effects()
 		do
-			local out1, out2, out3 = event.GetCharaPos(0)
+			local out1, out2, out3 = event.get_character_position(0)
 			var0 = out1 or var0
 			var1 = out2 or var1
 			var2 = out3 or var2
 		end
 		do
-			local out1, out2, out3 = event.GetCharaRot(0)
+			local out1, out2, out3 = event.get_character_rotation(0)
 			var3 = out1 or var3
 			var4 = out2 or var4
 			var5 = out3 or var5
 		end
 		do
-			local out1, out2, out3 = event.GetCameraPos()
+			local out1, out2, out3 = event.get_camera_position()
 			pos_x = out1 or pos_x
 			pos_y = out2 or pos_y
 			pos_z = out3 or pos_z
 		end
 		do
-			local out1, out2, out3 = event.GetCameraRef()
+			local out1, out2, out3 = event.get_camera_look_at()
 			pos_x_2 = out1 or pos_x_2
 			pos_y_2 = out2 or pos_y_2
 			pos_z_2 = out3 or pos_z_2
 		end
 		at = 2
 		helper_9cbd3d7a()
-		event.SetCharaPos(0, var0, var1, var2)
-		event.SetCharaRot(0, var3, var4, var5)
-		event.SetCameraPos(pos_x, pos_y, pos_z)
-		event.SetCameraRef(pos_x_2, pos_y_2, pos_z_2)
-		event.ResetCamera(0)
-		event.DngPause(1041, 0)
-		event.SetFadeIn(10)
-		event.Finish()
+		event.set_character_position(0, var0, var1, var2)
+		event.set_character_rotation(0, var3, var4, var5)
+		event.set_camera_position(pos_x, pos_y, pos_z)
+		event.set_camera_look_at(pos_x_2, pos_y_2, pos_z_2)
+		event.reset_follow_camera(0)
+		event.set_dungeon_pause_flags(1041, 0)
+		event.fade_in_screen(10)
+		event.finish_event()
 		return
 	end, function(received: { any })
 		if at <= 2 then
@@ -332,14 +332,14 @@ function script.event_502()
 				at = 2
 				helper_9cbd3d7a()
 				return vm.continue_with(function()
-					event.SetCharaPos(0, var0, var1, var2)
-					event.SetCharaRot(0, var3, var4, var5)
-					event.SetCameraPos(pos_x, pos_y, pos_z)
-					event.SetCameraRef(pos_x_2, pos_y_2, pos_z_2)
-					event.ResetCamera(0)
-					event.DngPause(1041, 0)
-					event.SetFadeIn(10)
-					event.Finish()
+					event.set_character_position(0, var0, var1, var2)
+					event.set_character_rotation(0, var3, var4, var5)
+					event.set_camera_position(pos_x, pos_y, pos_z)
+					event.set_camera_look_at(pos_x_2, pos_y_2, pos_z_2)
+					event.reset_follow_camera(0)
+					event.set_dungeon_pause_flags(1041, 0)
+					event.fade_in_screen(10)
+					event.finish_event()
 					return
 				end)
 			end
@@ -354,24 +354,24 @@ function script.event_504()
 	local active_chr_no: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.Initialize()
-		event.ActchrSetDefMotion(0)
-		event.SetFadeOut(10)
+		event.initialize_event()
+		event.reset_action_character_motion(0)
+		event.fade_out_screen(10)
 		at = 1
 		wait_frames(10)
-		active_chr_no = event.GetActiveChrNo() or active_chr_no
+		active_chr_no = event.get_playable_character() or active_chr_no
 		if active_chr_no == 2 then
-			event.DngSetupMainUnit(0)
+			event.switch_dungeon_main_character(0)
 		end
 		if active_chr_no == 3 then
-			event.DngSetupMainUnit(1)
+			event.switch_dungeon_main_character(1)
 		end
-		event.DelMonster(-1)
+		event.clear_event_battle_monsters(-1)
 		at = 2
 		helper_7df574d3()
-		event.SetBitCtrl(8, 1)
-		event.LoadDungeonMapFile("s31")
-		event.LoadScript("s31/s31.stb", 510)
+		event.set_save_control_bits(8, 1)
+		event.load_dungeon_map("s31")
+		event.load_event_script("s31/s31.stb", 510)
 		at = 3
 		vm.wait(3)
 		return
@@ -381,9 +381,9 @@ function script.event_504()
 				at = 2
 				helper_7df574d3()
 				return vm.continue_with(function()
-					event.SetBitCtrl(8, 1)
-					event.LoadDungeonMapFile("s31")
-					event.LoadScript("s31/s31.stb", 510)
+					event.set_save_control_bits(8, 1)
+					event.load_dungeon_map("s31")
+					event.load_event_script("s31/s31.stb", 510)
 					at = 3
 					vm.wait(3)
 					return
@@ -398,16 +398,16 @@ end
 --- Event 506, which map data, a script or the engine runs by number.
 function script.event_506()
 	helper_ab1a738b()
-	event.LoadDungeonMapFile("s35")
-	event.LoadScript("s35/s35.stb", 502)
+	event.load_dungeon_map("s35")
+	event.load_event_script("s35/s35.stb", 502)
 	vm.wait(2)
 end
 
 --- Event 508, which map data, a script or the engine runs by number.
 function script.event_508()
 	helper_571276f7()
-	event.SetBitCtrl(1, 0)
-	event.GotoEdit(187, 100)
+	event.set_save_control_bits(1, 0)
+	event.go_to_georama_edit(187, 100)
 end
 
 --- Event 1200, which map data, a script or the engine runs by number.
@@ -417,10 +417,10 @@ function script.event_1200()
 	local var3: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		flag = event.GetFlag(608) or flag
-		flag_2 = event.GetFlag(612) or flag_2
+		flag = event.get_save_flag(608) or flag
+		flag_2 = event.get_save_flag(612) or flag_2
 		if flag ~= 0 and flag_2 == 0 then
-			var3 = vm.float_bits(event.GetRand(100)) or var3
+			var3 = vm.float_bits(event.get_random_number(100)) or var3
 			if var3 < 50 then
 				at = 1
 				helper_47084b1b(0, 8550080)
@@ -456,9 +456,9 @@ script.event_16100 = helper_9cbd3d7a
 --- Event 16120, which map data, a script or the engine runs by number.
 function script.event_16120()
 	helper_7df574d3()
-	event.SetBitCtrl(8, 1)
-	event.LoadDungeonMapFile("s31")
-	event.LoadScript("s31/s31.stb", 510)
+	event.set_save_control_bits(8, 1)
+	event.load_dungeon_map("s31")
+	event.load_event_script("s31/s31.stb", 510)
 	vm.wait(2)
 end
 

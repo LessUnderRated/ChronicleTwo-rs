@@ -5,8 +5,8 @@ local helper_70e4ac93 = require("@lib/event/helper_70e4ac93")
 
 --- Helper function.
 local function helper_4378afab(arg0: s32, arg1: any)
-	event.SetMesPreset(0, 0)
-	event.MesMake_2(
+	event.apply_message_window_preset(0, 0)
+	event.open_message_window_2(
 		0,
 		"Angeln ist mein Hobby.<page>Ich tr[UNI00e4]ume davon, einmal einen\nMardan Garayan zu fangen.<page>Ich respektiere nur Leute,\ndie gro[UNI00df]e Fische fangen."
 	)

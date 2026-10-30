@@ -8,11 +8,11 @@ local helper_b765e6cd = require("@lib/monster/helper_b765e6cd")
 
 --- Helper function.
 local function helper_a8856bfe()
-	monster.SetMos("歩き", -1, 0)
+	monster.set_motion("歩き", -1, 0)
 	helper_83e135e0(vm.f32(4.2))
-	monster.SetMos("遊び", -1, 6)
+	monster.set_motion("遊び", -1, 6)
 	helper_b765e6cd(vm.f32(4.2), helper_9df6409a(67))
-	monster.SetMos("立ち", -1, 0)
+	monster.set_motion("立ち", -1, 0)
 end
 
 return helper_a8856bfe

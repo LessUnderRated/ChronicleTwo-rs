@@ -3,9 +3,9 @@
 
 --- Helper function.
 local function helper_f72a4299()
-	event.CharaActive(0, 8)
-	event.CharaActive(0, 9)
-	event.CharaActive(0, 10)
+	event.set_character_active(0, 8)
+	event.set_character_active(0, 9)
+	event.set_character_active(0, 10)
 end
 
 return helper_f72a4299

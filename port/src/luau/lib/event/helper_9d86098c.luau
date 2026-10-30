@@ -4,7 +4,7 @@
 --- Helper function.
 local function helper_9d86098c()
 	local var0: s32 = 0
-	var0 = event.GetAnalyze(207) or var0
+	var0 = event.get_georama_analysis_flag(207) or var0
 	return var0
 end
 

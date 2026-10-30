@@ -3,16 +3,16 @@
 
 --- Helper function.
 local function helper_7f754b8f(arg0: s32)
-	event.FuncPointShow("", "flame-1", arg0)
-	event.FuncPointShow("", "func", arg0)
-	event.FuncPointShow("", "func0", arg0)
-	event.FuncPointShow("", "func1", arg0)
-	event.FuncPointShow("", "func2", arg0)
-	event.FuncPointShow("", "func3", arg0)
-	event.FuncPointShow("", "func4", arg0)
-	event.FuncPointShow("", "func5", arg0)
-	event.FuncPointShow("", "func8", arg0)
-	event.StopEnvBgm()
+	event.set_function_point_enabled("", "flame-1", arg0)
+	event.set_function_point_enabled("", "func", arg0)
+	event.set_function_point_enabled("", "func0", arg0)
+	event.set_function_point_enabled("", "func1", arg0)
+	event.set_function_point_enabled("", "func2", arg0)
+	event.set_function_point_enabled("", "func3", arg0)
+	event.set_function_point_enabled("", "func4", arg0)
+	event.set_function_point_enabled("", "func5", arg0)
+	event.set_function_point_enabled("", "func8", arg0)
+	event.stop_environment_music()
 end
 
 return helper_7f754b8f

@@ -5,9 +5,9 @@ local vm = require("@lib/vm")
 
 --- Helper function.
 local function helper_c44453a9()
-	event.GotoMenu(26)
+	event.open_event_menu(26)
 	vm.wait(1)
-	event.LoadScript("d01/d01_sfida.stb", 6000)
+	event.load_event_script("d01/d01_sfida.stb", 6000)
 end
 
 return helper_c44453a9

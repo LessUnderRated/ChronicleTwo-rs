@@ -7,12 +7,12 @@ local helper_02c38d54 = require("@lib/event/helper_02c38d54")
 local function helper_3e566142()
 	local flag: s32 = 0
 	local debug_flag: s32 = 0
-	flag = event.GetFlag(404) or flag
+	flag = event.get_save_flag(404) or flag
 	if flag ~= 1 then
-		debug_flag = event.GetDebugFlag() or debug_flag
+		debug_flag = event.get_debug_flag() or debug_flag
 		if debug_flag == 0 then
-			event.CharaActive(0, 120)
-			event.CharaActive(0, 121)
+			event.set_character_active(0, 120)
+			event.set_character_active(0, 121)
 		end
 	end
 	helper_02c38d54()

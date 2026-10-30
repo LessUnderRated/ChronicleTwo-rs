@@ -3,14 +3,14 @@
 
 --- Helper function.
 local function helper_aa5b3ebe(arg0: any)
-	event.Initialize()
+	event.initialize_event()
 	if arg0 == 0 then
-		event.SetMpcharaMotion("p01_s03t", "kikan-m", "機関")
-		event.SetFadeIn(30)
-		event.GotoSubgame(3)
+		event.set_map_piece_character_motion("p01_s03t", "kikan-m", "機関")
+		event.fade_in_screen(30)
+		event.start_sub_game(3)
 	else
-		event.SetExitFlag(1)
-		event.SetFadeIn(30)
+		event.set_scene_exit_flag(1)
+		event.fade_in_screen(30)
 		return
 	end
 end

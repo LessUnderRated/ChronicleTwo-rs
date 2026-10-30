@@ -5,8 +5,8 @@ local helper_1c04a0eb = require("@lib/event/helper_1c04a0eb")
 
 --- Helper function.
 local function helper_3655639b(arg0: s32, arg1: any)
-	event.SetMesPreset(0, 0)
-	event.MesMake_2(
+	event.apply_message_window_preset(0, 0)
+	event.open_message_window_2(
 		0,
 		"坊ちゃん、何か困った事が\nあれば、誰よりもまず\nこの私に相談してください。"
 	)

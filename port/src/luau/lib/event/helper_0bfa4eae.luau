@@ -6,9 +6,9 @@ local function helper_0bfa4eae(arg0: any)
 	local var1: s32 = 0
 	local get_lxf: f32 = 0
 	local get_lyf: f32 = 0
-	var1 = event.GetMesWindowMode(arg0) or var1
+	var1 = event.get_message_window_frame(arg0) or var1
 	do
-		local out1, out2, _, _ = event.GetApad_4()
+		local out1, out2, _, _ = event.get_analog_sticks_4()
 		get_lxf = out1 or get_lxf
 		get_lyf = out2 or get_lyf
 	end

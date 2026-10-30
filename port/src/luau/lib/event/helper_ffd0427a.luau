@@ -18,7 +18,7 @@ local function helper_ffd0427a(arg0: s32, arg1: s32)
 			if var2 < 0.0 then
 				var2 = 0.0
 			end
-			event.SetStatusbarShow(var2)
+			event.show_dungeon_status_bar(var2)
 			var3 = var3 + 1
 			vm.wait(1)
 		end
@@ -29,7 +29,7 @@ local function helper_ffd0427a(arg0: s32, arg1: s32)
 			if var2 > 1.0 then
 				var2 = 1.0
 			end
-			event.SetStatusbarShow(var2)
+			event.show_dungeon_status_bar(var2)
 			var3 = var3 + 1
 			vm.wait(2)
 		end

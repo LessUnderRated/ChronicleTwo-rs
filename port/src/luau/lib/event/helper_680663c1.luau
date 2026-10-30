@@ -44,60 +44,60 @@ local function helper_680663c1(arg0: s32)
 				var3 = vm.i32(var3 * 2)
 				var4 = vm.i32(var4 + 1)
 			end
-			event.SetMesQuestionGyou(0, 0)
+			event.set_message_selection_top_line(0, 0)
 			if vm.i32(bit32.band(arg0, var3)) ~= 0 then
 				at = 2
 				helper_75684dd8(0, 2213, 5, 0, 0)
 				var2 = 0
 			else
-				event.SysSePlay(24)
+				event.play_system_sound_effect(24)
 				if bit32.band(arg0, 8) ~= 0 then
-					active_chr_no = event.GetActiveChrNo() or active_chr_no
+					active_chr_no = event.get_playable_character() or active_chr_no
 					if active_chr_no == 0 or active_chr_no == 2 then
 						at = 3
 						helper_75684dd8(0, 2215, 5, 0, 0)
-						event.SetCharaCondition(0, 1, 0)
-						event.AddHpRate2(0, -0.7)
+						event.set_character_status(0, 1, 0)
+						event.add_character_hp_by_rate(0, -0.7)
 					else
 						at = 4
 						helper_75684dd8(0, 2216, 5, 0, 0)
-						event.SetCharaCondition(1, 1, 0)
-						event.AddHpRate2(1, -0.7)
+						event.set_character_status(1, 1, 0)
+						event.add_character_hp_by_rate(1, -0.7)
 					end
 					var2 = 1
 				end
 				if bit32.band(arg0, 16) ~= 0 then
 					at = 5
 					helper_75684dd8(0, 2211, 5, 0, 0)
-					event.SetTbStatus(0)
+					event.set_nearest_treasure_box_state(0)
 					do
-						local out1, out2, out3, _ = event.GetDunWorldCoord(1)
+						local out1, out2, out3, _ = event.get_dungeon_event_point(1)
 						var6 = out1 or var6
 						var7 = out2 or var7
 						var8 = out3 or var8
 					end
-					var10 = event.GetSndId(4) or var10
-					event.SndSePlay(var10, 11)
-					event.DngCreateEffect("爆発", var6, var7 + 4.0, var8, 5)
+					var10 = event.get_sound_id(4) or var10
+					event.play_sound_effect(var10, 11)
+					event.create_dungeon_effect("爆発", var6, var7 + 4.0, var8, 5)
 					var2 = 1
 				end
 				if bit32.band(arg0, 32) ~= 0 then
-					active_chr_no_2 = event.GetActiveChrNo() or active_chr_no_2
+					active_chr_no_2 = event.get_playable_character() or active_chr_no_2
 					if active_chr_no_2 == 3 then
 						active_chr_no_2 = 1
 					end
-					event.UdataAddWhp(active_chr_no_2, 0, -999)
-					event.UdataAddWhp(active_chr_no_2, 1, -999)
+					event.add_weapon_durability(active_chr_no_2, 0, -999)
+					event.add_weapon_durability(active_chr_no_2, 1, -999)
 					do
-						local _, out2 = event.UdataGetAbs(active_chr_no_2, 0)
+						local _, out2 = event.get_weapon_absorption(active_chr_no_2, 0)
 						max = out2 or max
 					end
-					event.UdataAddAbs(active_chr_no_2, 0, vm.idiv(vm.i32(-max), 10))
+					event.add_weapon_absorption(active_chr_no_2, 0, vm.idiv(vm.i32(-max), 10))
 					do
-						local _, out2 = event.UdataGetAbs(active_chr_no_2, 1)
+						local _, out2 = event.get_weapon_absorption(active_chr_no_2, 1)
 						max = out2 or max
 					end
-					event.UdataAddAbs(active_chr_no_2, 1, vm.idiv(vm.i32(-max), 10))
+					event.add_weapon_absorption(active_chr_no_2, 1, vm.idiv(vm.i32(-max), 10))
 					at = 6
 					helper_75684dd8(0, 2212, 5, 0, 0)
 					var2 = 1

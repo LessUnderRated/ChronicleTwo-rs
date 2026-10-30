@@ -5,14 +5,14 @@
 local function helper_19b130fb()
 	local flag: s32 = 0
 	local flag_2: s32 = 0
-	flag = event.GetFlag(202) or flag
-	flag_2 = event.GetFlag(204) or flag_2
+	flag = event.get_save_flag(202) or flag
+	flag_2 = event.get_save_flag(204) or flag_2
 	if flag == 1 and flag_2 == 0 then
-		event.CharaActive(1, 122)
-		event.CharaActive(1, 123)
+		event.set_character_active(1, 122)
+		event.set_character_active(1, 123)
 	else
-		event.CharaActive(0, 122)
-		event.CharaActive(0, 123)
+		event.set_character_active(0, 122)
+		event.set_character_active(0, 123)
 	end
 end
 

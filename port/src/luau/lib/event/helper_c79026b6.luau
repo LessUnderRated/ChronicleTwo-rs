@@ -6,14 +6,14 @@ local helper_c8484b43 = require("@lib/event/helper_c8484b43")
 
 --- Helper function.
 local function helper_c79026b6(arg0: s32, arg1: s32)
-	event.SetMesPreset(0, 0)
+	event.apply_message_window_preset(0, 0)
 	helper_c8484b43(arg0, 0, 0)
-	event.MesMake_2(0, "Lavoro qui come domestica,\nma sin da bambina avevo\nun sogno: diventare sarta!")
+	event.open_message_window_2(0, "Lavoro qui come domestica,\nma sin da bambina avevo\nun sogno: diventare sarta!")
 	helper_0ffc2526(0, -1, arg0, arg1, 0)
-	event.MesMake_2(0, "I sogni non diventano mai realt[UNI00e0],\necco perch[UNI00e9] si chiamano sogni.")
+	event.open_message_window_2(0, "I sogni non diventano mai realt[UNI00e0],\necco perch[UNI00e9] si chiamano sogni.")
 	helper_0ffc2526(0, -1, arg0, arg1, 0)
-	event.SetMotion(arg0, "立ち")
-	event.Finish()
+	event.set_character_motion(arg0, "立ち")
+	event.finish_event()
 end
 
 return helper_c79026b6

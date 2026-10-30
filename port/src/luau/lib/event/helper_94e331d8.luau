@@ -8,8 +8,8 @@ local function helper_94e331d8()
 	local var0: s32 = 0
 	var0 = 8
 	while var0 < 20 do
-		event.DeleteChara(var0)
-		event.DeleteVillager(var0)
+		event.delete_character(var0)
+		event.delete_villager(var0)
 		var0 = var0 + 1
 		vm.wait(1)
 	end

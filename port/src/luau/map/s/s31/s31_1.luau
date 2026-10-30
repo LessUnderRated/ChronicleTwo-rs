@@ -43,26 +43,26 @@ function script.default_event()
 	local var3: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.Initialize()
+		event.initialize_event()
 		event_99()
 		print("start_event--------------------------------------------\n")
-		mc_load = event.CheckMcLoad() or mc_load
+		mc_load = event.take_memory_card_load_state() or mc_load
 		if mc_load == 1 then
 			helper_e57c38b0()
 			helper_9dafbc83(vm.f32(94.2), vm.f32(34.8), vm.f32(2842.4), 0.0)
-			event.ResetCamera(1, 0.0, 20.0)
-			event.SetFadeIn(30)
+			event.reset_follow_camera(1, 0.0, 20.0)
+			event.fade_in_screen(30)
 		else
-			old_map_no = event.GetOldMapNo() or old_map_no
-			var2 = event.GetMapType(old_map_no) or var2
+			old_map_no = event.get_previous_map() or old_map_no
+			var2 = event.get_map_type(old_map_no) or var2
 			if var2 ~= -1 then
 				if old_map_no == 77 then
 					helper_e57c38b0()
 					helper_9dafbc83(0.0, 80.0, 2560.0, 0.0)
-					event.ResetCamera(1, 0.0, 20.0)
-					event.SetFadeIn(30)
+					event.reset_follow_camera(1, 0.0, 20.0)
+					event.fade_in_screen(30)
 				else
-					var3 = event.GetCnt(1) or var3
+					var3 = event.get_save_counter(1) or var3
 					if
 						(old_map_no == 18 or old_map_no == 23 or old_map_no == 120 or old_map_no == 108)
 						and var3 == 8
@@ -71,8 +71,8 @@ function script.default_event()
 						at = 1
 						helper_feca1275()
 						helper_946c0402()
-						event.SetFadeIn(15)
-						event.ResetCamera(1, 0.0)
+						event.fade_in_screen(15)
+						event.reset_follow_camera(1, 0.0)
 					else
 						at = 2
 						helper_f1a67e90()
@@ -80,7 +80,7 @@ function script.default_event()
 					end
 				end
 			end
-			event.SetMotion(0, "立ち")
+			event.set_character_motion(0, "立ち")
 		end
 		return
 	end, function(received: { any })
@@ -102,7 +102,7 @@ script.key_open = helper_4e5867bf
 --- Event 200, which map data, a script or the engine runs by number.
 function script.event_200()
 	if helper_9202ddbf() ~= 0 then
-		event.MapJump_2(-1, "s33")
+		event.jump_to_map_2(-1, "s33")
 		vm.wait(2)
 	end
 end
@@ -118,22 +118,22 @@ function script.event_250()
 		if var0 ~= 1 then
 			return
 		end
-		event.SetCnt(1, 8)
-		var1 = event.GetEventData_2(3) or var1
+		event.set_save_counter(1, 8)
+		var1 = event.get_triggered_event_data_2(3) or var1
 		if var1 <= 1 then
 			at = 2
 			helper_f4ec8310()
-			event.StopBgm(0)
+			event.stop_music(0)
 			at = 3
 			vm.wait(3)
-			event.MapJump_2(-1, "s37")
+			event.jump_to_map_2(-1, "s37")
 			at = 4
 			vm.wait(4)
 		else
 			at = 5
 			helper_fdad3d3b()
-			event.StopBgm(0)
-			event.MapJump_2(100, "s38")
+			event.stop_music(0)
+			event.jump_to_map_2(100, "s38")
 		end
 		return
 	end, function(received: { any })
@@ -169,23 +169,23 @@ end
 --- Event 510, which map data, a script or the engine runs by number.
 function script.event_510()
 	helper_5122231f()
-	event.LoadDungeonMapFile("s35")
-	event.LoadScript("s35/s35.stb", 500)
+	event.load_dungeon_map("s35")
+	event.load_event_script("s35/s35.stb", 500)
 	vm.wait(2)
 end
 
 --- Event 520, which map data, a script or the engine runs by number.
 function script.event_520()
 	helper_4e5867bf()
-	event.LoadDungeonMapFile("d06b01")
-	event.LoadScript("d06b01/d06b01.stb", 511)
+	event.load_dungeon_map("d06b01")
+	event.load_event_script("d06b01/d06b01.stb", 511)
 	vm.wait(2)
 end
 
 --- Event 1000, which map data, a script or the engine runs by number.
 function script.event_1000()
 	local var0: s32 = 0
-	var0 = event.GetEventData_2(13) or var0
+	var0 = event.get_triggered_event_data_2(13) or var0
 	if var0 == 8 then
 		helper_bac5d242()
 	end

@@ -13,37 +13,37 @@ local function helper_2ddb5a7a()
 	local pos_x: f32 = 0
 	local pos_y: f32 = 0
 	local pos_z: f32 = 0
-	event.Initialize()
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	event.initialize_event()
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no ~= 1 then
 		frame = 86
 	else
 		frame = 64
 	end
-	event.EohSyncChara(0, 0)
-	event.ObjsInit(0)
-	event.ObjsSyncObj(0, 0)
-	event.ObjsSetMotion(0, "立ち", 4)
+	event.attach_object_handle_to_character(0, 0)
+	event.clear_object_sequence(0)
+	event.set_object_sequence_object(0, 0)
+	event.set_object_sequence_motion(0, "立ち", 4)
 	do
-		local out1, out2, out3 = event.EohGetRot(0)
+		local out1, out2, out3 = event.get_object_handle_rotation(0)
 		rot_x = out1 or rot_x
 		rot_y = out2 or rot_y
 		rot_z = out3 or rot_z
 	end
 	do
-		local out1, out2, out3 = event.GetCameraPos()
+		local out1, out2, out3 = event.get_camera_position()
 		pos_x = out1 or pos_x
 		pos_y = out2 or pos_y
 		pos_z = out3 or pos_z
 	end
-	event.ObjsReference(0, pos_x, pos_y, pos_z, 6)
+	event.turn_object_sequence_toward(0, pos_x, pos_y, pos_z, 6)
 	wait_objects(0)
-	event.ObjsSetMotion(0, "だめだめ", 6)
-	event.ObjsNextMotion(0, "立ち", 4)
-	event.ObjsRotDelay(0, frame)
-	event.ObjsRotation(0, rot_x, rot_y, rot_z, 6)
+	event.set_object_sequence_motion(0, "だめだめ", 6)
+	event.queue_object_sequence_next_motion(0, "立ち", 4)
+	event.delay_object_sequence_rotation_track(0, frame)
+	event.rotate_object_sequence(0, rot_x, rot_y, rot_z, 6)
 	wait_objects(0)
-	event.Finish()
+	event.finish_event()
 end
 
 return helper_2ddb5a7a

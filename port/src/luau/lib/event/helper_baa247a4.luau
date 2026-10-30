@@ -36,35 +36,35 @@ local function helper_baa247a4(arg0: s32, arg1: s32, arg2: any, arg3: s32)
 	local rot_y_3: f32 = 0
 	local var39: f32 = 0
 	local var40: f32 = 0
-	event.Initialize()
-	event.EohSyncChara(0, arg1)
+	event.initialize_event()
+	event.attach_object_handle_to_character(0, arg1)
 	do
-		local out1, out2, out3 = event.GetCharaPos(arg0)
+		local out1, out2, out3 = event.get_character_position(arg0)
 		var6 = out1 or var6
 		var7 = out2 or var7
 		var8 = out3 or var8
 	end
 	do
-		local _, out2, _ = event.GetCharaRot(arg0)
+		local _, out2, _ = event.get_character_rotation(arg0)
 		var13 = out2 or var13
 	end
 	do
-		local out1, out2, out3 = event.EohGetPos(0)
+		local out1, out2, out3 = event.get_object_handle_position(0)
 		pos_x = out1 or pos_x
 		pos_y = out2 or pos_y
 		pos_z = out3 or pos_z
 	end
 	do
-		local _, out2, _ = event.EohGetRot(0)
+		local _, out2, _ = event.get_object_handle_rotation(0)
 		rot_y = out2 or rot_y
 	end
 	y = vm.f32(pos_x - var6)
 	x = vm.f32(pos_z - var8)
-	var4 = event.GetRotLookPos(y, x) or var4
-	var5 = event.GetRotLookPos(-y, -x) or var5
+	var4 = event.get_look_angle(y, x) or var4
+	var5 = event.get_look_angle(-y, -x) or var5
 	if arg3 ~= 0 then
 		do
-			local out1, out2, out3, out4, out5, out6 = event.SetTalkCamera(var6, var7, var8, pos_x, pos_y, pos_z, var4)
+			local out1, out2, out3, out4, out5, out6 = event.get_talk_camera_points(var6, var7, var8, pos_x, pos_y, pos_z, var4)
 			offset_x = out1 or offset_x
 			offset_y = out2 or offset_y
 			offset_z = out3 or offset_z
@@ -72,9 +72,9 @@ local function helper_baa247a4(arg0: s32, arg1: s32, arg2: any, arg3: s32)
 			var22 = out5 or var22
 			middle_z = out6 or middle_z
 		end
-		event.SetCameraPos(offset_x, offset_y, offset_z)
-		event.SetCameraRef(middle_x, var22, middle_z)
-		event.SetCrossfade(10)
+		event.set_camera_position(offset_x, offset_y, offset_z)
+		event.set_camera_look_at(middle_x, var22, middle_z)
+		event.start_crossfade(10)
 	end
 	var31 = var13
 	var32 = var4
@@ -95,30 +95,30 @@ local function helper_baa247a4(arg0: s32, arg1: s32, arg2: any, arg3: s32)
 		var37 = vm.f32(var37 - vm.f32(6.2831855))
 	end
 	if -0.5 < var33 and var33 < 0.5 then
-		event.SetMotion(arg0, "立ち")
+		event.set_character_motion(arg0, "立ち")
 	else
-		event.SetMotion(arg0, "歩き")
+		event.set_character_motion(arg0, "歩き")
 	end
 	if -0.5 < var37 and var37 < 0.5 then
 	else
-		event.SetMotion(arg1, "歩き")
+		event.set_character_motion(arg1, "歩き")
 	end
 	var39 = 0.0
 	var40 = vm.f32(helper_baeaba52(helper_05ce8bed(var33), helper_05ce8bed(var37)) * 8.0)
 	while var39 < var40 do
 		rot_y_2 = interpolate(0.0, var33, var39, var40)
 		rot_y_2 = vm.f32(rot_y_2 + var31)
-		event.SetCharaRot(arg0, 0.0, rot_y_2, 0.0)
+		event.set_character_rotation(arg0, 0.0, rot_y_2, 0.0)
 		rot_y_3 = interpolate(0.0, var37, var39, var40)
 		rot_y_3 = vm.f32(rot_y_3 + var35)
-		event.EohSetRot(0, 0.0, rot_y_3, 0.0)
+		event.set_object_handle_rotation(0, 0.0, rot_y_3, 0.0)
 		var39 = vm.f32(var39 + 1.0)
 		vm.wait(1)
 	end
-	event.SetMotion(arg0, "立ち")
-	event.SetMotion(arg1, "会話")
-	event.SetCharaRot(arg0, 0.0, var4, 0.0)
-	event.EohSetRot(0, 0.0, var5, 0.0)
+	event.set_character_motion(arg0, "立ち")
+	event.set_character_motion(arg1, "会話")
+	event.set_character_rotation(arg0, 0.0, var4, 0.0)
+	event.set_object_handle_rotation(0, 0.0, var5, 0.0)
 end
 
 return helper_baa247a4

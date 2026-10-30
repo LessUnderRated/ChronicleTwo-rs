@@ -7,8 +7,8 @@ local helper_68ec7c8d = require("@lib/event/helper_68ec7c8d")
 --- Helper function.
 local function helper_6955414c()
 	local flag: s32 = 0
-	event.SetFlag(40, 1)
-	flag = event.GetFlag(4) or flag
+	event.set_save_flag(40, 1)
+	flag = event.get_save_flag(4) or flag
 	if flag == 1 then
 		helper_01df4541()
 	end

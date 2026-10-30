@@ -10,12 +10,12 @@ local helper_f0df9191 = require("@lib/event/helper_f0df9191")
 local function helper_e82e424a(arg0: s32, arg1: s32)
 	local flag: s32 = 0
 	local var3: s32 = 0
-	flag = event.GetFlag(42) or flag
+	flag = event.get_save_flag(42) or flag
 	if flag == 0 then
 		helper_4823d22b(arg0, arg1)
 		return
 	end
-	var3 = event.GetQuestEtc(0, 0) or var3
+	var3 = event.get_quest_request_status(0, 0) or var3
 	if var3 == 0 then
 		helper_f0df9191(arg0, arg1)
 		return

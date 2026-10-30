@@ -41,17 +41,17 @@ script.key_open = helper_2b8f531b
 --- Event 500, which map data, a script or the engine runs by number.
 function script.event_500()
 	helper_2b8f531b()
-	event.BgmLoadCancel()
-	event.LoadDungeonMapFile("d05b01")
-	event.LoadScript("d05b01/d05b01.stb", 561)
+	event.skip_next_music_load()
+	event.load_dungeon_map("d05b01")
+	event.load_event_script("d05b01/d05b01.stb", 561)
 end
 
 --- Event 510, which map data, a script or the engine runs by number.
 function script.event_510()
 	helper_99e8cb63()
-	event.BgmLoadCancel()
-	event.LoadDungeonMapFile("d05b01")
-	event.LoadScript("d05b01/d05b01.stb", 571)
+	event.skip_next_music_load()
+	event.load_dungeon_map("d05b01")
+	event.load_event_script("d05b01/d05b01.stb", 571)
 end
 
 return script

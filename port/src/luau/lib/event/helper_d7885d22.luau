@@ -5,9 +5,9 @@ local close_message = require("@lib/event/close_message")
 
 --- Helper function.
 local function helper_d7885d22()
-	event.CharaActive(0)
+	event.set_character_active(0)
 	close_message(1)
-	event.Finish()
+	event.finish_event()
 end
 
 return helper_d7885d22

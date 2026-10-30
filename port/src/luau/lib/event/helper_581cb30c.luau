@@ -4,7 +4,7 @@
 --- Helper function.
 local function helper_581cb30c(button: s32)
 	local var1: s32 = 0
-	var1 = event.ChkPadCtrl(button) or var1
+	var1 = event.get_pad_button_state(button) or var1
 	return var1
 end
 

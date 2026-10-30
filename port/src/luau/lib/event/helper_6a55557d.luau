@@ -25,26 +25,26 @@ local function helper_6a55557d(arg0: s32)
 	local position_x_2: f32 = 0
 	local position_y_2: f32 = 0
 	local position_z_2: f32 = 0
-	event.SphidaSetStatusFlag(0)
-	event.DeleteChara(12)
-	event.EsmClear()
-	event.DelExtMotion(0)
-	event.SetMotion(0, "立ち", 4)
-	event.CharaNormalDrive(0)
-	event.CharaResetDa(0)
-	event.EohSyncChara(0, 2)
-	event.EohSetShow(0, 1)
-	event.SetCameraCtrl(1)
-	event.DeleteSwordEffect()
-	omake_mode = event.SphidaGetOmakeMode() or omake_mode
-	get_now_horl = event.SphidaGetNowHole() or get_now_horl
+	event.set_sphida_status_panel_visible(0)
+	event.delete_character(12)
+	event.clear_effect_manager()
+	event.delete_character_extension_packs(0)
+	event.set_character_motion(0, "立ち", 4)
+	event.update_character_motion(0)
+	event.reset_character_cloth_and_hair(0)
+	event.attach_object_handle_to_character(0, 2)
+	event.set_object_handle_visible(0, 1)
+	event.set_camera_control_enabled(1)
+	event.delete_sword_afterimage()
+	omake_mode = event.is_sphida_bonus_course() or omake_mode
+	get_now_horl = event.get_sphida_saved_hole() or get_now_horl
 	if arg0 == 1 and omake_mode == 1 then
-		count = event.SphidaGetParCount() or count
+		count = event.get_sphida_par() or count
 		if get_now_horl ~= 8 then
-			event.SphidaSetScore(-1, vm.i32(count + 3))
+			event.set_sphida_hole_score(-1, vm.i32(count + 3))
 		end
 		helper_7b560508()
-		get_now_horl_2 = event.SphidaGetNowHole() or get_now_horl_2
+		get_now_horl_2 = event.get_sphida_saved_hole() or get_now_horl_2
 		if get_now_horl_2 == 8 then
 			helper_c44453a9()
 			return
@@ -54,54 +54,54 @@ local function helper_6a55557d(arg0: s32)
 		return
 	end
 	if omake_mode == 0 then
-		event.SetStatusbarShow(1, 0.1)
+		event.show_dungeon_status_bar(1, 0.1)
 	end
-	event.SetCrossfade(15)
+	event.start_crossfade(15)
 	if arg0 == 1 then
 		if omake_mode == 0 then
-			stage_id = event.DngGetStageId() or stage_id
-			var6 = event.DngGetFloorId() or var6
-			var7 = event.GetFloorInfo(stage_id, var6, 4) or var7
+			stage_id = event.get_dungeon_stage_id() or stage_id
+			var6 = event.get_dungeon_floor() or var6
+			var7 = event.get_dungeon_floor_info(stage_id, var6, 4) or var7
 			if var7 == 1 then
-				event.SetFloorInfo(stage_id, var6, 5, 128)
-				event.AddYarikomiMedal(1)
+				event.set_dungeon_floor_info(stage_id, var6, 5, 128)
+				event.add_yarikomi_medals(1)
 				do
-					local out1, out2, out3 = event.GetBeforeCameraNextPos()
+					local out1, out2, out3 = event.get_previous_camera_next_position()
 					position_x = out1 or position_x
 					position_y = out2 or position_y
 					position_z = out3 or position_z
 				end
-				event.SetCameraPos(position_x, position_y, position_z)
+				event.set_camera_position(position_x, position_y, position_z)
 				do
-					local out1, out2, out3 = event.GetBeforeCameraNextRef()
+					local out1, out2, out3 = event.get_previous_camera_next_look_at()
 					position_x = out1 or position_x
 					position_y = out2 or position_y
 					position_z = out3 or position_z
 				end
-				event.SetCameraRef(position_x, position_y, position_z)
-				event.SetMesWindowMode(0, 4)
+				event.set_camera_look_at(position_x, position_y, position_z)
+				event.set_message_window_mode(0, 4)
 				helper_75684dd8(0, 2010, 8, 0, 0)
-				event.ResetCamera(0)
+				event.reset_follow_camera(0)
 			end
 		end
 	end
-	count_2 = event.SphidaGetParCount() or count_2
+	count_2 = event.get_sphida_par() or count_2
 	if arg0 == 0 and count_2 <= 0 then
 		do
-			local out1, out2, out3 = event.GetBeforeCameraNextPos()
+			local out1, out2, out3 = event.get_previous_camera_next_position()
 			position_x_2 = out1 or position_x_2
 			position_y_2 = out2 or position_y_2
 			position_z_2 = out3 or position_z_2
 		end
-		event.SetCameraPos(position_x_2, position_y_2, position_z_2)
+		event.set_camera_position(position_x_2, position_y_2, position_z_2)
 		do
-			local out1, out2, out3 = event.GetBeforeCameraNextRef()
+			local out1, out2, out3 = event.get_previous_camera_next_look_at()
 			position_x_2 = out1 or position_x_2
 			position_y_2 = out2 or position_y_2
 			position_z_2 = out3 or position_z_2
 		end
-		event.SetCameraRef(position_x_2, position_y_2, position_z_2)
-		event.SetMesWindowMode(0, 4)
+		event.set_camera_look_at(position_x_2, position_y_2, position_z_2)
+		event.set_message_window_mode(0, 4)
 		if omake_mode == 0 then
 			helper_75684dd8(0, 2003, 8, 0, 0)
 		else
@@ -112,18 +112,18 @@ local function helper_6a55557d(arg0: s32)
 				helper_c44453a9()
 				return
 			else
-				event.MesMake_2(0, "La sph[UNI00e8]re a disparu.\nPasse au parcours suivant.")
+				event.open_message_window_2(0, "La sph[UNI00e8]re a disparu.\nPasse au parcours suivant.")
 				helper_75684dd8(0, -1, 8, 0, 0)
 			end
-			event.SetFadeOut(30)
+			event.fade_out_screen(30)
 			wait_frames(30)
 			helper_7b560508()
 			helper_7982ab52()
 			return
 		end
-		event.ResetCamera(0)
+		event.reset_follow_camera(0)
 	end
-	event.Finish()
+	event.finish_event()
 end
 
 return helper_6a55557d

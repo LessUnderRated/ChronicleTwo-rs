@@ -7,21 +7,21 @@ local helper_84c07dcc = require("@lib/event/helper_84c07dcc")
 
 --- Helper function.
 local function helper_54c9b76a(arg0: s32, arg1: s32)
-	event.SetMesPreset(0, 0)
-	event.MesMake_2(0, "Grrr, grrr..")
+	event.apply_message_window_preset(0, 0)
+	event.open_message_window_2(0, "Grrr, grrr..")
 	helper_84c07dcc(arg0)
-	event.MesMake_2(0, "...1212,<page>No, no. Seguro que era 1122.<page>[UNI00bf]O era 1010?")
+	event.open_message_window_2(0, "...1212,<page>No, no. Seguro que era 1122.<page>[UNI00bf]O era 1010?")
 	helper_0ffc2526(0, -1, arg0, arg1, 0)
-	event.MesMake_2(0, "Grrr, grrr..")
+	event.open_message_window_2(0, "Grrr, grrr..")
 	helper_0ffc2526(0, -1, arg0, arg1, 0)
-	event.SetMesPreset(0, 4)
-	event.SetMesWindowMode(0, 4)
-	event.MesMake_2(
+	event.apply_message_window_preset(0, 4)
+	event.set_message_window_mode(0, 4)
+	event.open_message_window_2(
 		0,
 		'[(!)]Si ni siquiera se ha enterado\n de que le has dicho "hola".Debe de\ntener problemas graves.<page>[(!)][UNI00bf]Por qu[UNI00e9] no pruebas despu[UNI00e9]s?\n A lo mejor le puedes echar una mano\n o escucharle o algo.'
 	)
 	helper_75684dd8(0, -1, 8, 0, 0)
-	event.SetMesPreset(0, 0)
+	event.apply_message_window_preset(0, 0)
 end
 
 return helper_54c9b76a

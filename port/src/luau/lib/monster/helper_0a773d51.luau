@@ -3,7 +3,7 @@
 
 --- Helper function.
 local function helper_0a773d51(value: s32)
-	monster.VPush2(11, value)
+	monster.set_secondary_variable(11, value)
 end
 
 return helper_0a773d51

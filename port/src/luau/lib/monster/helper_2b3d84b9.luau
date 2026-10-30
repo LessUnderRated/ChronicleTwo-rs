@@ -13,31 +13,31 @@ local helper_c3e8ae39 = require("@lib/monster/helper_c3e8ae39")
 --- Helper function.
 local function helper_2b3d84b9()
 	local argc: s32 = 0
-	argc = monster.GetRnd(100) or argc
+	argc = monster.get_random(100) or argc
 	if argc < 65 then
-		argc = monster.GetRnd(100) or argc
+		argc = monster.get_random(100) or argc
 		if argc < 5 then
-			monster.SetMos("歩き", 0.65, 0)
+			monster.set_motion("歩き", 0.65, 0)
 			helper_2aa4e058(4.0, 20.0, 15)
 			helper_06e363ee()
-			monster.SetMos("立ち", -1, 0)
+			monster.set_motion("立ち", -1, 0)
 			helper_c3e8ae39(3)
 		else
-			monster.SetMos("歩き", 0.65, 0)
+			monster.set_motion("歩き", 0.65, 0)
 			helper_890ee63a(4.0)
 			helper_9662aa5e()
-			monster.SetMos("立ち", -1, 0)
+			monster.set_motion("立ち", -1, 0)
 			helper_c3e8ae39(3)
 		end
 	else
-		argc = monster.GetRnd(100) or argc
+		argc = monster.get_random(100) or argc
 		if argc < 80 then
-			monster.SetMos("歩き", 0.65, 0)
+			monster.set_motion("歩き", 0.65, 0)
 			helper_890ee63a(4.0)
-			monster.SetMos("歩き", 0.6, 0)
+			monster.set_motion("歩き", 0.6, 0)
 			helper_b9b0f992(vm.f32(2.4), 4.0, 49.0, 60)
 		else
-			monster.SetMos("歩き", 0.65, 0)
+			monster.set_motion("歩き", 0.65, 0)
 			helper_890ee63a(4.0)
 			helper_0fbe415e(1)
 		end

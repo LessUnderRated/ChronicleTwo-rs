@@ -11,15 +11,15 @@ function script.setup() end
 
 --- The event the engine runs on entering a town or interior, jumping to a map and leaving it, and the one an omitted event number means.
 function script.default_event()
-	event.ResetCamera(1, 0.0, 10.0)
+	event.reset_follow_camera(1, 0.0, 10.0)
 end
 
 --- The event the town walk runs when the square button is pressed, after reloading the map script.
 function script.key_open()
 	local now_map_no: s32 = 0
 	local now_sub_map_no: s32 = 0
-	now_map_no = event.GetNowMapNo() or now_map_no
-	now_sub_map_no = event.GetNowSubmapNo() or now_sub_map_no
+	now_map_no = event.get_current_map() or now_map_no
+	now_sub_map_no = event.get_current_submap() or now_sub_map_no
 	print(
 		"##########################map_no=",
 		now_map_no,

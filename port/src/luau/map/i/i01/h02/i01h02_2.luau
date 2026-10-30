@@ -14,13 +14,13 @@ function script.setup() end
 --- The event the engine runs on entering a town or interior, jumping to a map and leaving it, and the one an omitted event number means.
 function script.default_event()
 	helper_1ef0d4b2()
-	event.Initialize()
-	event.SetCharaPos(0, -5.0, 0.0, 82.0)
-	event.SetCharaRot(0, 0, 3.14, 0)
-	event.SetMotion(0, "立ち")
-	event.ResetCamera(1)
-	event.SetFadeIn(30)
-	event.Finish()
+	event.initialize_event()
+	event.set_character_position(0, -5.0, 0.0, 82.0)
+	event.set_character_rotation(0, 0, 3.14, 0)
+	event.set_character_motion(0, "立ち")
+	event.reset_follow_camera(1)
+	event.fade_in_screen(30)
+	event.finish_event()
 end
 
 --- Event 200, which map data, a script or the engine runs by number.
@@ -30,13 +30,13 @@ script.event_200 = helper_0499eecb
 function script.event_400()
 	local var0: s32 = 0
 	local var1: s32 = 0
-	event.SetEventData(14, 12)
+	event.set_event_data_field(14, 12)
 	var0 = 24
-	event.SetEventData(13, var0)
-	var1 = event.GetSavedataEtc(0) or var1
+	event.set_event_data_field(13, var0)
+	var1 = event.get_save_data_value(0) or var1
 	if var1 == 100 then
 		helper_de72cef6()
-		event.SetAi(1, var0)
+		event.set_villager_ai_enabled(1, var0)
 		return
 	end
 	helper_2a9040b5()
@@ -46,11 +46,11 @@ end
 function script.event_1000()
 	local var0: s32 = 0
 	local var1: s32 = 0
-	var0 = event.GetEventData_2(13) or var0
-	var1 = event.GetSavedataEtc(0) or var1
+	var0 = event.get_triggered_event_data_2(13) or var0
+	var1 = event.get_save_data_value(0) or var1
 	if var1 == 100 then
 		helper_de72cef6()
-		event.SetAi(1, var0)
+		event.set_villager_ai_enabled(1, var0)
 		return
 	end
 	helper_2a9040b5()

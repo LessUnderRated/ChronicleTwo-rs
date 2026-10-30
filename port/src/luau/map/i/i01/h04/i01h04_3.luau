@@ -21,21 +21,21 @@ function script.key_open() end
 function script.event_550()
 	local var0: s32 = 0
 	local chara_id: s32 = 0
-	var0 = event.GetSavedataEtc(0) or var0
+	var0 = event.get_save_data_value(0) or var0
 	if var0 == 100 then
 		helper_1ef0d4b2()
 		return
 	end
-	event.SetEventData(14, 15)
-	chara_id = event.GetCharaId(15) or chara_id
-	event.SetEventData(13, chara_id)
+	event.set_event_data_field(14, 15)
+	chara_id = event.get_character_slot_by_number(15) or chara_id
+	event.set_event_data_field(13, chara_id)
 	helper_fe0f3321()
 end
 
 --- Event 1000, which map data, a script or the engine runs by number.
 function script.event_1000()
 	local var0: s32 = 0
-	var0 = event.GetSavedataEtc(0) or var0
+	var0 = event.get_save_data_value(0) or var0
 	if var0 == 100 then
 		helper_1ef0d4b2()
 		return

@@ -7,24 +7,24 @@ local show_message = require("@lib/event/show_message")
 
 --- Helper function.
 local function helper_e7e22de9(arg0: s32, arg1: s32)
-	event.SetMesPreset(0, 0)
-	event.MesMake_2(0, "Ronchonnements...")
+	event.apply_message_window_preset(0, 0)
+	event.open_message_window_2(0, "Ronchonnements...")
 	helper_84c07dcc(arg0)
-	event.MesMake_2(
+	event.open_message_window_2(
 		0,
 		"...1212,<page>Mais non, c'[UNI00e9]tait 2211, c'est certain.<page>Ou peut-[UNI00ea]tre bien 1010."
 	)
 	helper_0ffc2526(0, -1, arg0, arg1, 0)
-	event.MesMake_2(0, "Ronchonnements...")
+	event.open_message_window_2(0, "Ronchonnements...")
 	helper_0ffc2526(0, -1, arg0, arg1, 0)
-	event.SetMesPreset(0, 4)
-	event.SetMesWindowMode(0, 4)
-	event.MesMake_2(
+	event.apply_message_window_preset(0, 4)
+	event.set_message_window_mode(0, 4)
+	event.open_message_window_2(
 		0,
 		"[(!)]S'il ne te remarque m[UNI00ea]me pas quand \n   tu dis \"Bonjour\", c'est qu'il \n   doit avoir de gros, gros probl[UNI00e8]mes.<page>[(!)]Pourquoi ne pas r[UNI00e9]essayer plus tard\n   Tu pourras peut-[UNI00ea]tre l'aider, ou\n   l'[UNI00e9]couter se plaindre, au pire !"
 	)
 	show_message(0, -1, 8, 0, 0)
-	event.SetMesPreset(0, 0)
+	event.apply_message_window_preset(0, 0)
 end
 
 return helper_e7e22de9

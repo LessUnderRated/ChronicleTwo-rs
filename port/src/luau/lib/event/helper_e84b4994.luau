@@ -18,30 +18,30 @@ local function helper_e84b4994()
 	local var7: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.Initialize()
-		event.SetMotion(0, "立ち")
+		event.initialize_event()
+		event.set_character_motion(0, "立ち")
 		at = 1
 		var0 = helper_ed4dc120(5, 2)
-		event.EohSyncChara(0, 0)
-		event.ObjsInit(0)
-		event.ObjsSyncObj(0, 0)
+		event.attach_object_handle_to_character(0, 0)
+		event.clear_object_sequence(0)
+		event.set_object_sequence_object(0, 0)
 		if var0 == 0 then
-			event.SetCrossfade(10)
-			event.CmrsSetPos(-165.74, 34.03, 218.78)
-			event.CmrsSetRef(-253.92, 30.71, 96.73)
-			event.ObjsSetPos(0, -268.17, 20.61, 70.01)
-			event.ObjsSetRot(0, 0.0, -2.51, 0.0)
-			event.ObjsSetMotion(0, "走り", 4)
-			event.ObjsMove(0, -403.16, 20.61, -110.47, 50)
+			event.start_crossfade(10)
+			event.set_camera_sequence_position(-165.74, 34.03, 218.78)
+			event.set_camera_sequence_look_at(-253.92, 30.71, 96.73)
+			event.set_object_sequence_position(0, -268.17, 20.61, 70.01)
+			event.set_object_sequence_rotation(0, 0.0, -2.51, 0.0)
+			event.set_object_sequence_motion(0, "走り", 4)
+			event.move_object_sequence(0, -403.16, 20.61, -110.47, 50)
 			at = 2
 			wait_frames(30)
-			event.SetFadeOut(20)
+			event.fade_out_screen(20)
 			at = 3
 			wait_frames(20)
 			return 1
 		else
 			do
-				local out1, out2, out3 = event.GetCharaPos(0)
+				local out1, out2, out3 = event.get_character_position(0)
 				var1 = out1 or var1
 				var2 = out2 or var2
 				var3 = out3 or var3
@@ -49,19 +49,19 @@ local function helper_e84b4994()
 			var4 = vm.f32(vm.f32(vm.sin(vm.f32(1.33)) * 30.0) + var1)
 			var5 = 0.0
 			var6 = vm.f32(vm.f32(vm.cos(vm.f32(1.33)) * 30.0) + var3)
-			event.ObjsMove(0, var4, var5, var6, 30)
-			event.ObjsReference(0, var4, var5, var6, 10)
-			event.ObjsSetMotion(0, "歩き")
+			event.move_object_sequence(0, var4, var5, var6, 30)
+			event.turn_object_sequence_toward(0, var4, var5, var6, 10)
+			event.set_object_sequence_motion(0, "歩き")
 			var7 = 0
 			while var7 < 30 do
 				do
-					local out1, out2, out3 = event.GetCharaPos(0)
+					local out1, out2, out3 = event.get_character_position(0)
 					var1 = out1 or var1
 					var2 = out2 or var2
 					var3 = out3 or var3
 				end
 				var2 = vm.f32(var2 + 30.0)
-				event.SetCameraRef(var1, var2, var3)
+				event.set_camera_look_at(var1, var2, var3)
 				var7 = var7 + 1
 				at = 4
 				vm.wait(4)

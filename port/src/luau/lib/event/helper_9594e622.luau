@@ -8,7 +8,7 @@ local set_window_mode = require("@lib/event/set_window_mode")
 local function helper_9594e622(arg0: any, arg1: s32)
 	local var2: s32 = 0
 	local argc: s32 = 0
-	event.SetMesPreset(1, 4)
+	event.apply_message_window_preset(1, 4)
 	set_window_mode(1, 4)
 	var2 = -1
 	if arg1 <= 0 then
@@ -16,18 +16,18 @@ local function helper_9594e622(arg0: any, arg1: s32)
 	end
 	if arg1 == 1 then
 		var2 = 10
-		event.SetMesItem(1, 1, arg0)
+		event.set_message_item_name(1, 1, arg0)
 	end
 	if 1 < arg1 then
 		var2 = 11
-		event.SetMesItem(1, 1, arg0)
-		event.SetMesValue(1, 2, arg1)
+		event.set_message_item_name(1, 1, arg0)
+		event.set_message_number(1, 2, arg1)
 	end
 	if var2 == -1 then
 		return
 	end
-	argc = event.GetSysSndId() or argc
-	event.SndSePlay(argc, 18)
+	argc = event.get_system_sound_id() or argc
+	event.play_sound_effect(argc, 18)
 	helper_75684dd8(1, var2, 8, 0, 0)
 end
 

@@ -5,14 +5,14 @@ local vm = require("@lib/vm")
 
 --- Helper function.
 local function helper_9959c129()
-	event.CharaActive(1, 0)
-	event.SetCharaPos(0, -687.4, 0.0, -77.8)
-	event.SetCharaRot(0, 0.0, 1.62, 0.0)
-	event.ObjsSetPos(4, 0.0, 0.0, 0.0)
-	event.DeleteChara(40)
-	event.DeleteChara(41)
-	event.DeleteChara(42)
-	event.Finish()
+	event.set_character_active(1, 0)
+	event.set_character_position(0, -687.4, 0.0, -77.8)
+	event.set_character_rotation(0, 0.0, 1.62, 0.0)
+	event.set_object_sequence_position(4, 0.0, 0.0, 0.0)
+	event.delete_character(40)
+	event.delete_character(41)
+	event.delete_character(42)
+	event.finish_event()
 	vm.wait(1)
 end
 

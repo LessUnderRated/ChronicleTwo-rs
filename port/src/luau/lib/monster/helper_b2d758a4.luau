@@ -28,24 +28,24 @@ local function helper_b2d758a4()
 	local var22: f32 = 0
 	local var23: f32 = 0
 	local var25: f32 = 0
-	monster.Ext(100, "飛行") -- retail: the handler rejects 1 arguments
-	monster.MySeStop(1, 0, "飛行")
+	monster.call_command(100, "飛行") -- retail: the handler rejects 1 arguments
+	monster.stop_sound(1, 0, "飛行")
 	var0 = 1
 	while var0 ~= 0 do
 		do
-			local out1, _, out3 = monster.GetStsAttr()
+			local out1, _, out3 = monster.get_status_ailments()
 			var1 = out1 or var1
 			var3 = out3 or var3
 		end
-		monster.GetEventInfo_3(var4) -- retail: argument 1 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed
-		monster.Ext(50, var7, var8, var9) -- retail: the handler rejects 3 arguments
+		monster.get_event_info_3(var4) -- retail: argument 1 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed
+		monster.call_command(50, var7, var8, var9) -- retail: the handler rejects 3 arguments
 		do
-			local out1, _ = monster.CheckPause(var10) -- retail: argument 1 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed
+			local out1, _ = monster.get_pause_flags(var10) -- retail: argument 1 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed
 			result = vm.bits_float(out1) or result
 		end
 		var14 = helper_4de07275(var7, var9, result, 0.5, 800.0, var1, var3)
 		if var14 ~= 0 then
-			monster.MySeStop(1, 1, "ハッケーン！")
+			monster.stop_sound(1, 1, "ハッケーン！")
 			var15 = helper_abe18b40(var7, var9, result, var1, var3)
 			if var15 < vm.f32(-0.005) or vm.f32(0.005) < var15 then
 				if 0 < var15 then
@@ -64,7 +64,7 @@ local function helper_b2d758a4()
 				var0 = 0
 			end
 		else
-			monster.MySeStop(1, 1, "いないよぅ～")
+			monster.stop_sound(1, 1, "いないよぅ～")
 			var16 = helper_abe18b40(var7, var9, result, vm.f32(268.8), vm.f32(-322.4))
 			if true then
 				if 0 < var16 then
@@ -94,12 +94,12 @@ local function helper_b2d758a4()
 		if var22 <= vm.f32(-3.1415927) then
 			var22 = vm.f32(var22 + vm.f32(6.2831855))
 		end
-		monster.SetPause(var17, var18, var19)
+		monster.set_pause_flags(var17, var18, var19)
 		do
-			local _, out2 = monster.CheckPause(var23) -- retail: argument 1 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed
+			local _, out2 = monster.get_pause_flags(var23) -- retail: argument 1 passes a reference where the handler reads a value, the low bits of the variable's address; the variable's value is passed
 			var25 = out2 or var25
 		end
-		monster.GetBitFlag(var23, var22, var25)
+		monster.is_save_flag_set(var23, var22, var25)
 		vm.wait()
 	end
 end

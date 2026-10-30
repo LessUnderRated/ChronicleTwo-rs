@@ -10,8 +10,8 @@ local function helper_a052ddbe(rot_speed: f32, arg1: s32)
 	local var2: f32 = 0
 	local _ = helper_787df986(rot_speed)
 	for var4 = 0, arg1 - 1 do
-		var2 = monster.GetTargetAngle() or var2
-		monster.SetNextRot(var2, rot_speed)
+		var2 = monster.get_target_angle() or var2
+		monster.turn_toward_angle(var2, rot_speed)
 		helper_bee0409d()
 	end
 	helper_442b9962()

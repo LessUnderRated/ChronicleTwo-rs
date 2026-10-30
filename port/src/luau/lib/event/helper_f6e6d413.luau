@@ -6,9 +6,9 @@ local show_message = require("@lib/event/show_message")
 
 --- Helper function.
 local function helper_f6e6d413()
-	event.SetMesPreset(1, 4)
+	event.apply_message_window_preset(1, 4)
 	set_window_mode(1, 4)
-	event.GetFishingtournamentEtc_2(0, 1)
+	event.get_fishing_tournament_info_2(0, 1)
 	show_message(1, -1, 8, 0, 0)
 end
 

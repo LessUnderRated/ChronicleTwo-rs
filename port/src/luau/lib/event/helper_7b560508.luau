@@ -4,10 +4,10 @@
 --- Helper function.
 local function helper_7b560508()
 	for var0 = 0, 15 do
-		event.DeleteChara(8 + var0)
+		event.delete_character(8 + var0)
 	end
-	event.DelImg(0)
-	event.SphidaInit()
+	event.delete_event_image(0)
+	event.initialize_sphida()
 end
 
 return helper_7b560508

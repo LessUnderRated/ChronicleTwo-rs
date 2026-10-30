@@ -19,124 +19,124 @@ local show_message = require("@lib/event/show_message")
 local function helper_1f748(arg0: s32, arg1: s32)
 	local var2: s32 = 0
 	local flag: s32 = 0
-	var2 = event.GetChapter() or var2
+	var2 = event.get_chapter() or var2
 	if var2 ~= 8 then
 		if arg1 == 1 then
-			flag = event.GetFlag(57) or flag
+			flag = event.get_save_flag(57) or flag
 			if flag == 0 then
-				event.SetFlag(57, 1)
-				event.MesMake_2(
+				event.set_save_flag(57, 1)
+				event.open_message_window_2(
 					arg0,
 					"わしはここに住む事になったが\nバース壱号の事も心配じゃ。<page>今まで通り、列車は\nわしが動かすからな。<page>ボルネオはちと荒っぽいし、\nトムはまだ若造じゃからの。<page>これからは、この家と列車を\n行き来する事になるのう。<page>大変じゃ・・・"
 				)
 			else
-				event.MesMake_2(arg0, "スティーブの調子はどうじゃな？")
+				event.open_message_window_2(arg0, "スティーブの調子はどうじゃな？")
 			end
 		end
 		if arg1 == 2 then
-			event.MesMake_2(arg0, "部屋でおとなしくしてるなんて、\nがまんできないぞ。")
+			event.open_message_window_2(arg0, "部屋でおとなしくしてるなんて、\nがまんできないぞ。")
 		end
 		if arg1 == 3 then
-			event.MesMake_2(
+			event.open_message_window_2(
 				arg0,
 				"草木や花は世話した分だけ\nキッチリ育ちます。手を抜くなんて\nできませんぜ。"
 			)
 		end
 		if arg1 == 4 then
-			event.MesMake_2(
+			event.open_message_window_2(
 				arg0,
 				"秘密基地は大丈夫かな？\n誰かに確かめて来て欲しいけど、\n秘密だから頼めないよなぁ・・・"
 			)
 		end
 		if arg1 == 5 then
-			event.MesMake_2(
+			event.open_message_window_2(
 				arg0,
 				"むらさき色って素晴らしい色だよ。\n暖かいようで冷たくて、\n明るいようで暗くてさ。"
 			)
 		end
 		if arg1 == 6 then
-			event.MesMake_2(arg0, "病に苦しむ人がいるなら、\nどこへでも行くつもりだよ。")
+			event.open_message_window_2(arg0, "病に苦しむ人がいるなら、\nどこへでも行くつもりだよ。")
 		end
 		if arg1 == 7 then
-			event.MesMake_2(arg0, "どこに行っても美味い物を作るのが\nプロの料理人です。")
+			event.open_message_window_2(arg0, "どこに行っても美味い物を作るのが\nプロの料理人です。")
 		end
 		if arg1 == 8 then
-			event.MesMake_2(arg0, "やっぱりお家はがんじょうな方が\n良いじゃない？")
+			event.open_message_window_2(arg0, "やっぱりお家はがんじょうな方が\n良いじゃない？")
 		end
 		if arg1 == 9 then
-			event.MesMake_2(
+			event.open_message_window_2(
 				arg0,
 				"木の実も美味いけど、やっぱ\nあの赤いのが最高だ。\nまた、持ってきてくれよな。"
 			)
 		end
 		if arg1 == 10 then
-			event.MesMake_2(
+			event.open_message_window_2(
 				arg0,
 				"書物にとって湿気は大敵です。\n水の近くに住むなんてとんでもない。"
 			)
 		end
 		if arg1 == 11 then
-			event.MesMake_2(
+			event.open_message_window_2(
 				arg0,
 				"おしゃれでも可愛くもないけど、\n私にしか作れない服を作っていきます。"
 			)
 		end
 		if arg1 == 12 then
-			event.MesMake_2(arg0, "新しい場所で心機一転だ。\n初心に戻ってパンを焼くよ。")
+			event.open_message_window_2(arg0, "新しい場所で心機一転だ。\n初心に戻ってパンを焼くよ。")
 		end
 		if arg1 == 13 then
-			event.MesMake_2(arg0, "何でも良いから\n派手にぶっ壊したいぜ。")
+			event.open_message_window_2(arg0, "何でも良いから\n派手にぶっ壊したいぜ。")
 		end
 		if arg1 == 14 then
-			event.MesMake_2(arg0, "未知のモンスターを発見したら、\nただちに報告するように。")
+			event.open_message_window_2(arg0, "未知のモンスターを発見したら、\nただちに報告するように。")
 		end
 		if arg1 == 15 then
-			event.MesMake_2(
+			event.open_message_window_2(
 				arg0,
 				"まだ男だ女だと区別する奴がいるけど、\n剣の道は剣の道だ。強い奴が正しいのさ。"
 			)
 		end
 		if arg1 == 16 then
-			event.MesMake_2(arg0, "こんな小さな家に、家族だけで住むのも\n悪くないかもな。")
+			event.open_message_window_2(arg0, "こんな小さな家に、家族だけで住むのも\n悪くないかもな。")
 		end
 		if arg1 == 17 then
-			event.MesMake_2(arg0, "モートンはちゃんとやっているかな。\n心配だ・・・")
+			event.open_message_window_2(arg0, "モートンはちゃんとやっているかな。\n心配だ・・・")
 		end
 		if arg1 == 18 then
-			event.MesMake_2(arg0, "まだ教会のない町があるのなら、\n私がそこに赴きましょう。")
+			event.open_message_window_2(arg0, "まだ教会のない町があるのなら、\n私がそこに赴きましょう。")
 		end
 		if arg1 == 19 then
-			event.MesMake_2(
+			event.open_message_window_2(
 				arg0,
 				"最近はあまり月の事を考えなくなったよ。\nトモダチがたくさん出来たからかな？"
 			)
 		end
 		if arg1 == 20 then
-			event.MesMake_2(arg0, "土地が違えば魚も変わる。\n釣りの仕方も工夫しないとな。")
+			event.open_message_window_2(arg0, "土地が違えば魚も変わる。\n釣りの仕方も工夫しないとな。")
 		end
 		if arg1 == 21 then
-			event.MesMake_2(arg0, "ここの水は魚が良く育ちそうだわ。")
+			event.open_message_window_2(arg0, "ここの水は魚が良く育ちそうだわ。")
 		end
 		if arg1 == 22 then
-			event.MesMake_2(
+			event.open_message_window_2(
 				arg0,
 				"パトリったら、また女の人の絵を\n描き始めたの。私以上の美人に\nするんですって。"
 			)
 		end
 		if arg1 == 23 then
-			event.MesMake_2(
+			event.open_message_window_2(
 				arg0,
 				"虫ってどうしてあんな気味の悪い形を\nしているのかしら・・・"
 			)
 		end
 		if arg1 == 24 then
-			event.MesMake_2(
+			event.open_message_window_2(
 				arg0,
 				"もっとかわいいお家にしてちょうだい。\nかわいさに限界なんてないのよ！"
 			)
 		end
 		if arg1 == 25 then
-			event.MesMake_2(arg0, "まさかこの歳になって引っ越すとは\n思わなかったよ。")
+			event.open_message_window_2(arg0, "まさかこの歳になって引っ越すとは\n思わなかったよ。")
 		end
 	else
 		helper_1505ebf3(arg0, arg1)
@@ -147,18 +147,18 @@ end
 local function helper_20a60()
 	local var1: s32 = 0
 	local var2: s32 = 0
-	event.GetControlChrid()
-	var1 = event.GetEventData_2(13) or var1
-	var2 = event.GetEventData_2(14) or var2
+	event.get_player_character_slot()
+	var1 = event.get_triggered_event_data_2(13) or var1
+	var2 = event.get_triggered_event_data_2(14) or var2
 	print("talk_chara_id=", var1, "talk_chara=", var2, "\n")
-	event.CtrlcStay()
-	event.SetAi(0, var1)
-	event.SetMesShippo(0, 1)
-	event.SetMesPreset(0, 0)
-	event.MesMake_2(0, "こんにちは。\nいい天気だね。")
+	event.stop_camera_control_movement()
+	event.set_villager_ai_enabled(0, var1)
+	event.set_message_bubble_tail(0, 1)
+	event.apply_message_window_preset(0, 0)
+	event.open_message_window_2(0, "こんにちは。\nいい天気だね。")
 	helper_1f748(0, var2)
 	helper_1c04a0eb(var1, -1, 0, 0)
-	event.SetAi(1, var1)
+	event.set_villager_ai_enabled(1, var1)
 end
 
 --- Helper function.
@@ -192,13 +192,13 @@ local function helper_20f2c()
 	local var30: s32 = 0
 	local var31: s32 = 0
 	local var32: s32 = 0
-	var1 = event.GetEventData_2(13) or var1
-	var2 = event.GetEventData_2(14) or var2
-	now_party_chara_id = event.GetNowPartyChara() or now_party_chara_id
-	event.SetMotion(0, "立ち")
-	event.SetMotion(var1, "立ち")
-	event.Initialize()
-	event.SetMesPreset(1, 0)
+	var1 = event.get_triggered_event_data_2(13) or var1
+	var2 = event.get_triggered_event_data_2(14) or var2
+	now_party_chara_id = event.get_party_npc() or now_party_chara_id
+	event.set_character_motion(0, "立ち")
+	event.set_character_motion(var1, "立ち")
+	event.initialize_event()
+	event.apply_message_window_preset(1, 0)
 	var4 = 0
 	if var2 == 10 or var2 == 18 then
 		var4 = 8
@@ -215,74 +215,74 @@ local function helper_20f2c()
 	if var2 == 9 or var2 == 11 or var2 == 13 then
 		var4 = 40
 	end
-	event.SetMesEtc(1, 4, 30, 60, 144, -1)
-	event.SetMesEtc(1, 9, 20 + var4, 16)
+	event.set_message_window_option(1, 4, 30, 60, 144, -1)
+	event.set_message_window_option(1, 9, 20 + var4, 16)
 	do
-		local out1, _, out3 = event.GetCharaPos(0)
+		local out1, _, out3 = event.get_character_position(0)
 		var11 = out1 or var11
 		var13 = out3 or var13
 	end
 	do
-		local out1, _, out3 = event.GetCharaRot(0)
+		local out1, _, out3 = event.get_character_rotation(0)
 		var14 = out1 or var14
 		var16 = out3 or var16
 	end
 	do
-		local out1, out2, out3 = event.GetCharaPos(var1)
+		local out1, out2, out3 = event.get_character_position(var1)
 		var5 = out1 or var5
 		var6 = out2 or var6
 		var7 = out3 or var7
 	end
 	do
-		local out1, _, out3 = event.GetCharaRot(var1)
+		local out1, _, out3 = event.get_character_rotation(var1)
 		var8 = out1 or var8
 		var10 = out3 or var10
 	end
-	var17 = event.GetRotLookPos(var5 - var11, var7 - var13) or var17
-	event.SetCharaRot(0, var14, var17, var16)
-	var18 = event.GetRotLookPos(var11 - var5, var13 - var7) or var18
-	event.SetCharaRot(var1, var8, var18, var10)
-	now_map_no = event.GetNowMapNo() or now_map_no
+	var17 = event.get_look_angle(var5 - var11, var7 - var13) or var17
+	event.set_character_rotation(0, var14, var17, var16)
+	var18 = event.get_look_angle(var11 - var5, var13 - var7) or var18
+	event.set_character_rotation(var1, var8, var18, var10)
+	now_map_no = event.get_current_map() or now_map_no
 	if now_map_no ~= 1 then
 		do
-			local out1, out2, out3 = event.FuncPointGetPos("", "gcamp")
+			local out1, out2, out3 = event.get_function_point_position("", "gcamp")
 			var20 = out1 or var20
 			var21 = out2 or var21
 			var22 = out3 or var22
 		end
-		event.SetCameraPos(var20, var21, var22)
-		event.SetCameraRef(var5, var6 + 30.0, var7)
-		var18 = event.GetRotLookPos(var20 - var5, var22 - var7) or var18
-		event.SetCharaRot(var1, var8, var18, var10)
+		event.set_camera_position(var20, var21, var22)
+		event.set_camera_look_at(var5, var6 + 30.0, var7)
+		var18 = event.get_look_angle(var20 - var5, var22 - var7) or var18
+		event.set_character_rotation(var1, var8, var18, var10)
 	else
 		pos_x = vm.f32(vm.sin(var18) * 30.0)
 		pos_x = vm.f32(pos_x + var5)
 		pos_y = vm.f32(var6 + 33.0)
 		pos_z = vm.f32(vm.cos(var18) * 30.0)
 		pos_z = vm.f32(pos_z + var7)
-		event.SetCameraPos(pos_x, pos_y, pos_z)
+		event.set_camera_position(pos_x, pos_y, pos_z)
 		pos_x_2 = var5
 		pos_y_2 = vm.f32(var6 + 30.0)
 		pos_z_2 = var7
-		event.SetCameraRef(pos_x_2, pos_y_2, pos_z_2)
+		event.set_camera_look_at(pos_x_2, pos_y_2, pos_z_2)
 	end
-	event.CharaActive(0, 0)
+	event.set_character_active(0, 0)
 	vm.wait(1)
-	event.SetCrossfade(10)
+	event.start_crossfade(10)
 	var29 = 0
 	while true do
 		set_window_mode(3, 1)
 		helper_1f748(3, var2)
 		var30 = -1
-		event.SetMesDrawspeed(3, 0, 0)
+		event.set_message_draw_speed(3, 0, 0)
 		set_window_mode(1, 8)
-		event.SetMesDrawspeed(1, 0, 0)
-		var31 = event.GetPartyCharaMesNo_3(var2, 0) or var31
-		event.SetMesItemDirect(1, 1, var31)
+		event.set_message_draw_speed(1, 0, 0)
+		var31 = event.get_npc_message_number_3(var2, 0) or var31
+		event.set_message_item_system_message(1, 1, var31)
 		open_message(1, 1, 1, 0, 0)
 		set_window_mode(2, 2)
 		do
-			local out1, out2 = event.GetPartyCharaMesNo_4(var2, 4)
+			local out1, out2 = event.get_npc_message_number_4(var2, 4)
 			var30 = out1 or var30
 			var32 = out2 or var32
 		end
@@ -290,56 +290,56 @@ local function helper_20f2c()
 			var30 = 30
 		end
 		if var32 == 4 then
-			event.SetMesItemDirect(2, 1, var30)
+			event.set_message_item_system_message(2, 1, var30)
 			var30 = 31
 		end
 		if var32 == 5 then
-			event.SetMesItemDirect(2, 1, var30)
-			event.SetMesItemDirect(2, 2, vm.i32(var30 + 1))
+			event.set_message_item_system_message(2, 1, var30)
+			event.set_message_item_system_message(2, 2, vm.i32(var30 + 1))
 			var30 = 32
 		end
 		var29 = helper_bac0e30d(2, var30, 7, 0, 0, var32, vm.i32(var32 - 1))
 		if var29 == 0 then
 			if var2 == now_party_chara_id then
 				helper_d7885d22()
-				event.SetCrossfade(10)
+				event.start_crossfade(10)
 				return
 			end
 			if now_party_chara_id ~= 26 then
-				event.SetFadeOut(25)
+				event.fade_out_screen(25)
 				helper_888ab2a3(30)
-				event.SetNpcStatus(var2, 1)
-				event.GotoSelectParty()
+				event.set_npc_party_status(var2, 1)
+				event.open_party_select_menu()
 				vm.wait(4)
 				helper_d7885d22()
-				event.SetFadeIn(30)
+				event.fade_in_screen(30)
 				return
 			end
 			set_window_mode(3, 8)
-			event.SetMesDrawspeed(3, 0, 0)
-			event.MesMake_2(
+			event.set_message_draw_speed(3, 0, 0)
+			event.open_message_window_2(
 				3,
 				"[(!)]今は連れて行けない。リンを\n   岬灯台に連れて行くのが先だ！"
 			)
 			show_message(3, -1, 9, 0, 0)
-			event.SetMesDrawspeed(3, 0, 0.6)
+			event.set_message_draw_speed(3, 0, 0.6)
 		end
 		if var29 == 1 then
 			set_window_mode(3, 8)
-			event.SetMesDrawspeed(3, 0, 0)
-			var30 = event.GetPartyCharaMesNo_3(var2, 3) or var30
+			event.set_message_draw_speed(3, 0, 0)
+			var30 = event.get_npc_message_number_3(var2, 3) or var30
 			show_message(3, var30, 9, 0, 0)
-			event.SetMesDrawspeed(3, 0, 0.6)
+			event.set_message_draw_speed(3, 0, 0.6)
 		end
 		if 3 < var32 then
 			if var32 == 5 then
 				if var29 == 2 then
 					if var2 == 1 then
-						event.SetSavedataEtc(2)
-						event.MesMake_2(3, "よし、これで\n修理完了じゃ！")
+						event.set_save_data_value(2)
+						event.open_message_window_2(3, "よし、これで\n修理完了じゃ！")
 						show_message(3, -1, 3, 256, 208)
 						helper_d7885d22()
-						event.SetCrossfade(10)
+						event.start_crossfade(10)
 					end
 					if not (var2 == 4) then
 						break
@@ -434,15 +434,15 @@ local function helper_20f2c()
 						helper_c0869c7f()
 						show_message(3, -1, 3, 256, 208)
 						helper_d7885d22()
-						event.SetCrossfade(10)
+						event.start_crossfade(10)
 					end
 					if var2 == 14 then
-						event.SetFadeOut(25)
+						event.fade_out_screen(25)
 						helper_888ab2a3(30)
-						event.GotoMenu(25)
+						event.open_event_menu(25)
 						vm.wait(35)
 						helper_d7885d22()
-						event.SetFadeIn(30)
+						event.fade_in_screen(30)
 					end
 					return
 				end
@@ -463,7 +463,7 @@ local function helper_20f2c()
 		end
 	end
 	helper_d7885d22()
-	event.SetCrossfade(10)
+	event.start_crossfade(10)
 end
 
 local script: { [any]: (...any) -> ...any } = {}
@@ -477,13 +477,13 @@ script.event_99 = helper_c6c63376
 --- The event the engine runs on entering a town or interior, jumping to a map and leaving it, and the one an omitted event number means.
 function script.default_event()
 	helper_c6c63376()
-	event.ResetCamera(1, 0.0)
-	event.SetFadeIn(30)
+	event.reset_follow_camera(1, 0.0)
+	event.fade_in_screen(30)
 end
 
 --- The event the town walk runs when the square button is pressed, after reloading the map script.
 function script.key_open()
-	event.MesMake_2(0, "お洒落")
+	event.open_message_window_2(0, "お洒落")
 	show_message(0, -1, 8, 0, 0)
 end
 

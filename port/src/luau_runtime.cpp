@@ -597,9 +597,9 @@ enum class Variant : unsigned char {
 std::string_view VariantSuffix(Variant variant) {
     switch (variant) {
         case Variant::Int:
-            return "Int";
+            return "_int";
         case Variant::Float:
-            return "Float";
+            return "_float";
         default:
             return "";
     }
@@ -981,7 +981,7 @@ void RegisterCommand(lua_State *lua, const luau_bindings::Command &command, Vari
 
 /**
  *
- * Creates one read-only global table per native namespace, holding each command, the Int and Float variants of commands with tagged parameters, and the generic Ext entry.
+ * Creates one read-only global table per native namespace, holding each command, the _int and _float variants of commands with tagged parameters, and the generic call_command entry.
  *
  */
 void RegisterNamespaces(lua_State *lua) {
@@ -994,8 +994,8 @@ void RegisterNamespaces(lua_State *lua) {
                 RegisterCommand(lua, command, Variant::Float);
             }
         }
-        lua_pushcclosure(lua, CallExt, "Ext", 0);
-        lua_setfield(lua, -2, "Ext");
+        lua_pushcclosure(lua, CallExt, "call_command", 0);
+        lua_setfield(lua, -2, "call_command");
         lua_setreadonly(lua, -1, 1);
         const std::string space(kind.space);
         lua_setfield(lua, LUA_GLOBALSINDEX, space.c_str());

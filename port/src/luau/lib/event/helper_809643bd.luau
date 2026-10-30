@@ -6,7 +6,7 @@ local helper_186669aa = require("@lib/event/helper_186669aa")
 --- Helper function.
 local function helper_809643bd()
 	local flag: s32 = 0
-	flag = event.GetFlag(37) or flag
+	flag = event.get_save_flag(37) or flag
 	helper_186669aa(if flag == 0 then 1 else 0)
 end
 

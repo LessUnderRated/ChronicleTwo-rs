@@ -44,13 +44,13 @@ local function helper_ffb740a9()
 	local var30: s32 = 0
 	local var31: s32 = 0
 	local var32: s32 = 0
-	var1 = event.GetEventData_2(13) or var1
-	var2 = event.GetEventData_2(14) or var2
-	now_party_chara_id = event.GetNowPartyChara() or now_party_chara_id
-	event.SetMotion(0, "立ち")
-	event.SetMotion(var1, "立ち")
-	event.Initialize()
-	event.SetMesPreset(1, 0)
+	var1 = event.get_triggered_event_data_2(13) or var1
+	var2 = event.get_triggered_event_data_2(14) or var2
+	now_party_chara_id = event.get_party_npc() or now_party_chara_id
+	event.set_character_motion(0, "立ち")
+	event.set_character_motion(var1, "立ち")
+	event.initialize_event()
+	event.apply_message_window_preset(1, 0)
 	var4 = 0
 	if var2 == 18 then
 		var4 = 20
@@ -79,74 +79,74 @@ local function helper_ffb740a9()
 	if var2 == 9 then
 		var4 = 56
 	end
-	event.SetMesEtc(1, 4, 30, 60, 168, -1)
-	event.SetMesEtc(1, 9, 20 + var4, 16)
+	event.set_message_window_option(1, 4, 30, 60, 168, -1)
+	event.set_message_window_option(1, 9, 20 + var4, 16)
 	do
-		local out1, _, out3 = event.GetCharaPos(0)
+		local out1, _, out3 = event.get_character_position(0)
 		var11 = out1 or var11
 		var13 = out3 or var13
 	end
 	do
-		local out1, _, out3 = event.GetCharaRot(0)
+		local out1, _, out3 = event.get_character_rotation(0)
 		var14 = out1 or var14
 		var16 = out3 or var16
 	end
 	do
-		local out1, out2, out3 = event.GetCharaPos(var1)
+		local out1, out2, out3 = event.get_character_position(var1)
 		var5 = out1 or var5
 		var6 = out2 or var6
 		var7 = out3 or var7
 	end
 	do
-		local out1, _, out3 = event.GetCharaRot(var1)
+		local out1, _, out3 = event.get_character_rotation(var1)
 		var8 = out1 or var8
 		var10 = out3 or var10
 	end
-	var17 = event.GetRotLookPos(var5 - var11, var7 - var13) or var17
-	event.SetCharaRot(0, var14, var17, var16)
-	var18 = event.GetRotLookPos(var11 - var5, var13 - var7) or var18
-	event.SetCharaRot(var1, var8, var18, var10)
-	now_map_no = event.GetNowMapNo() or now_map_no
+	var17 = event.get_look_angle(var5 - var11, var7 - var13) or var17
+	event.set_character_rotation(0, var14, var17, var16)
+	var18 = event.get_look_angle(var11 - var5, var13 - var7) or var18
+	event.set_character_rotation(var1, var8, var18, var10)
+	now_map_no = event.get_current_map() or now_map_no
 	if now_map_no ~= 1 then
 		do
-			local out1, out2, out3 = event.FuncPointGetPos("", "gcamp")
+			local out1, out2, out3 = event.get_function_point_position("", "gcamp")
 			var20 = out1 or var20
 			var21 = out2 or var21
 			var22 = out3 or var22
 		end
-		event.SetCameraPos(var20, var21, var22)
-		event.SetCameraRef(var5, var6 + 30.0, var7)
-		var18 = event.GetRotLookPos(var20 - var5, var22 - var7) or var18
-		event.SetCharaRot(var1, var8, var18, var10)
+		event.set_camera_position(var20, var21, var22)
+		event.set_camera_look_at(var5, var6 + 30.0, var7)
+		var18 = event.get_look_angle(var20 - var5, var22 - var7) or var18
+		event.set_character_rotation(var1, var8, var18, var10)
 	else
 		pos_x = vm.f32(vm.sin(var18) * 30.0)
 		pos_x = vm.f32(pos_x + var5)
 		pos_y = vm.f32(var6 + 33.0)
 		pos_z = vm.f32(vm.cos(var18) * 30.0)
 		pos_z = vm.f32(pos_z + var7)
-		event.SetCameraPos(pos_x, pos_y, pos_z)
+		event.set_camera_position(pos_x, pos_y, pos_z)
 		pos_x_2 = var5
 		pos_y_2 = vm.f32(var6 + 30.0)
 		pos_z_2 = var7
-		event.SetCameraRef(pos_x_2, pos_y_2, pos_z_2)
+		event.set_camera_look_at(pos_x_2, pos_y_2, pos_z_2)
 	end
-	event.CharaActive(0, 0)
+	event.set_character_active(0, 0)
 	vm.wait(1)
-	event.SetCrossfade(10)
+	event.start_crossfade(10)
 	var29 = 0
 	while true do
 		set_window_mode(3, 1)
 		helper_88bef1b9(3, var2)
 		var30 = -1
-		event.SetMesDrawspeed(3, 0, 0)
+		event.set_message_draw_speed(3, 0, 0)
 		set_window_mode(1, 8)
-		event.SetMesDrawspeed(1, 0, 0)
-		var31 = event.GetPartyCharaMesNo_3(var2, 0) or var31
-		event.SetMesItemDirect(1, 1, var31)
+		event.set_message_draw_speed(1, 0, 0)
+		var31 = event.get_npc_message_number_3(var2, 0) or var31
+		event.set_message_item_system_message(1, 1, var31)
 		open_message(1, 1, 1, 0, 0)
 		set_window_mode(2, 2)
 		do
-			local out1, out2 = event.GetPartyCharaMesNo_4(var2, 4)
+			local out1, out2 = event.get_npc_message_number_4(var2, 4)
 			var30 = out1 or var30
 			var32 = out2 or var32
 		end
@@ -154,53 +154,53 @@ local function helper_ffb740a9()
 			var30 = 30
 		end
 		if var32 == 4 then
-			event.SetMesItemDirect(2, 1, var30)
+			event.set_message_item_system_message(2, 1, var30)
 			var30 = 31
 		end
 		if var32 == 5 then
-			event.SetMesItemDirect(2, 1, var30)
-			event.SetMesItemDirect(2, 2, vm.i32(var30 + 1))
+			event.set_message_item_system_message(2, 1, var30)
+			event.set_message_item_system_message(2, 2, vm.i32(var30 + 1))
 			var30 = 32
 		end
 		var29 = helper_bac0e30d(2, var30, 7, 0, 0, var32, vm.i32(var32 - 1))
 		if var29 == 0 then
 			if var2 == now_party_chara_id then
 				helper_61258276()
-				event.SetCrossfade(10)
+				event.start_crossfade(10)
 				return
 			end
 			if now_party_chara_id ~= 26 then
-				event.SetFadeOut(25)
+				event.fade_out_screen(25)
 				wait_frames(30)
-				event.SetNpcStatus(var2, 1)
-				event.GotoSelectParty()
+				event.set_npc_party_status(var2, 1)
+				event.open_party_select_menu()
 				vm.wait(5)
 				helper_61258276()
-				event.SetFadeIn(30)
+				event.fade_in_screen(30)
 				return
 			end
 			set_window_mode(3, 8)
-			event.SetMesDrawspeed(3, 0, 0)
-			event.MesMake_2(3, "[(!)]You can't do that right now. You have\nto bring Lin to the lighthouse first!")
+			event.set_message_draw_speed(3, 0, 0)
+			event.open_message_window_2(3, "[(!)]You can't do that right now. You have\nto bring Lin to the lighthouse first!")
 			show_message(3, -1, 9, 0, 0)
-			event.SetMesDrawspeed(3, 0, 0.6)
+			event.set_message_draw_speed(3, 0, 0.6)
 		end
 		if var29 == 1 then
 			set_window_mode(3, 8)
-			event.SetMesDrawspeed(3, 0, 0)
-			var30 = event.GetPartyCharaMesNo_3(var2, 3) or var30
+			event.set_message_draw_speed(3, 0, 0)
+			var30 = event.get_npc_message_number_3(var2, 3) or var30
 			show_message(3, var30, 9, 0, 0)
-			event.SetMesDrawspeed(3, 0, 0.6)
+			event.set_message_draw_speed(3, 0, 0.6)
 		end
 		if 3 < var32 then
 			if var32 == 5 then
 				if var29 == 2 then
 					if var2 == 1 then
-						event.SetSavedataEtc(2)
-						event.MesMake_2(3, "Alright, we're finished\nwith repairs!")
+						event.set_save_data_value(2)
+						event.open_message_window_2(3, "Alright, we're finished\nwith repairs!")
 						show_message(3, -1, 3, 256, 208)
 						helper_61258276()
-						event.SetCrossfade(10)
+						event.start_crossfade(10)
 					end
 					if not (var2 == 4) then
 						break
@@ -295,15 +295,15 @@ local function helper_ffb740a9()
 						helper_44905ff1()
 						show_message(3, -1, 3, 256, 208)
 						helper_61258276()
-						event.SetCrossfade(10)
+						event.start_crossfade(10)
 					end
 					if var2 == 14 then
-						event.SetFadeOut(25)
+						event.fade_out_screen(25)
 						wait_frames(30)
-						event.GotoMenu(25)
+						event.open_event_menu(25)
 						vm.wait(36)
 						helper_61258276()
-						event.SetFadeIn(30)
+						event.fade_in_screen(30)
 					end
 					return
 				end
@@ -324,7 +324,7 @@ local function helper_ffb740a9()
 		end
 	end
 	helper_61258276()
-	event.SetCrossfade(10)
+	event.start_crossfade(10)
 end
 
 return helper_ffb740a9

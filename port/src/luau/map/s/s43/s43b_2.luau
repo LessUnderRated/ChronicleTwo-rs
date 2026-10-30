@@ -39,7 +39,7 @@ end
 
 --- Event 152, which map data, a script or the engine runs by number.
 function script.event_152()
-	event.GotoEdit(17, 153)
+	event.go_to_georama_edit(17, 153)
 end
 
 --- Event 8000, which map data, a script or the engine runs by number.

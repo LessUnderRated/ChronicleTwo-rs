@@ -26,9 +26,9 @@ local function helper_61c6b169(arg0: s32)
 	local var10: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		now_party_chara_id = event.GetNowPartyChara() or now_party_chara_id
+		now_party_chara_id = event.get_party_npc() or now_party_chara_id
 		if now_party_chara_id == 4 then
-			event.MesMake_2(0, "Lo scrigno sembra chiuso a chiave.\nFallo aprire a Donny.\nForzalo.\nLascia perdere.")
+			event.open_message_window_2(0, "Lo scrigno sembra chiuso a chiave.\nFallo aprire a Donny.\nForzalo.\nLascia perdere.")
 			open_message(0, -1, 5, 0, 0)
 		else
 			open_message(0, 2220, 5, 0, 0)
@@ -37,16 +37,16 @@ local function helper_61c6b169(arg0: s32)
 		var1 = helper_39af59c5(0, 3, 3, 0)
 		if var1 == 1 then
 			if now_party_chara_id == 4 then
-				event.MesMake_2(0, "Va bene! Ci penso io!")
+				event.open_message_window_2(0, "Va bene! Ci penso io!")
 				at = 2
 				helper_75684dd8(0, -1, 5, 0, 0)
 				arg0 = helper_af712f29(arg0, 2)
 				var2 = 0
 			else
-				event.SetStatusbarShow(0, 0.16666667)
+				event.show_dungeon_status_bar(0, 0.16666667)
 				at = 3
 				wait_frames(6)
-				event.GotoUseItem(297)
+				event.open_use_item_menu(297)
 				at = 4
 				vm.wait(4)
 				item = vmhost.used_item() or item
@@ -60,47 +60,47 @@ local function helper_61c6b169(arg0: s32)
 					helper_5fb66cb1()
 					var2 = 1
 				end
-				event.SetStatusbarShow(1, 0.16666667)
+				event.show_dungeon_status_bar(1, 0.16666667)
 			end
 		end
 		if var1 == 2 then
-			event.SysSePlay(24)
-			event.SetMesQuestionGyou(0, 0)
+			event.play_system_sound_effect(24)
+			event.set_message_selection_top_line(0, 0)
 			if bit32.band(arg0, 8) ~= 0 then
-				active_chr_no = event.GetActiveChrNo() or active_chr_no
+				active_chr_no = event.get_playable_character() or active_chr_no
 				if active_chr_no == 0 or active_chr_no == 2 then
 					at = 6
 					helper_75684dd8(0, 2215, 5, 0, 0)
-					event.SetCharaCondition(0, 1, 0)
-					event.AddHpRate2(0, -0.7)
+					event.set_character_status(0, 1, 0)
+					event.add_character_hp_by_rate(0, -0.7)
 				else
 					at = 7
 					helper_75684dd8(0, 2216, 5, 0, 0)
-					event.SetCharaCondition(1, 1, 0)
-					event.AddHpRate2(1, -0.7)
+					event.set_character_status(1, 1, 0)
+					event.add_character_hp_by_rate(1, -0.7)
 				end
 				var2 = 0
 			end
 			if bit32.band(arg0, 16) ~= 0 then
 				at = 8
 				helper_75684dd8(0, 2211, 5, 0, 0)
-				event.SetTbStatus(0)
+				event.set_nearest_treasure_box_state(0)
 				do
-					local out1, out2, out3, _ = event.GetDunWorldCoord(1)
+					local out1, out2, out3, _ = event.get_dungeon_event_point(1)
 					var6 = out1 or var6
 					var7 = out2 or var7
 					var8 = out3 or var8
 				end
-				var10 = event.GetSndId(4) or var10
-				event.SndSePlay(var10, 11)
-				event.DngCreateEffect("爆発", var6, var7 + 4.0, var8, 5)
+				var10 = event.get_sound_id(4) or var10
+				event.play_sound_effect(var10, 11)
+				event.create_dungeon_effect("爆発", var6, var7 + 4.0, var8, 5)
 				var2 = 1
 			end
 			if bit32.band(arg0, 32) ~= 0 then
 				at = 9
 				helper_75684dd8(0, 2212, 5, 0, 0)
-				event.AddWhp(0, -999)
-				event.AddWhp(1, -999)
+				event.add_battle_weapon_durability(0, -999)
+				event.add_battle_weapon_durability(1, -999)
 				var2 = 0
 			end
 			arg0 = helper_af712f29(arg0, 2)

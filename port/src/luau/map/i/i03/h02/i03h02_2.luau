@@ -22,7 +22,7 @@ function script.event_151()
 		helper_c50beb15()
 		at = 2
 		helper_bcc35d7c()
-		event.LoadScript("i03h02/i03h02_2.stb", 151)
+		event.load_event_script("i03h02/i03h02_2.stb", 151)
 		return
 	end, function(received: { any })
 		if at <= 2 then
@@ -30,7 +30,7 @@ function script.event_151()
 				at = 2
 				helper_bcc35d7c()
 				return vm.continue_with(function()
-					event.LoadScript("i03h02/i03h02_2.stb", 151)
+					event.load_event_script("i03h02/i03h02_2.stb", 151)
 					return
 				end)
 			end

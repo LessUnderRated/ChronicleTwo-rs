@@ -8,10 +8,10 @@ local function helper_ab0a8186(arg0: s32, arg1: f32, arg2: s32, arg3: s32)
 	if arg3 ~= 0 then
 		helper_76f23193(arg0, arg1)
 	end
-	event.SetMotion(arg0, "立ち")
-	event.Finish()
+	event.set_character_motion(arg0, "立ち")
+	event.finish_event()
 	if arg2 ~= 0 then
-		event.SetCrossfade(10)
+		event.start_crossfade(10)
 	end
 end
 

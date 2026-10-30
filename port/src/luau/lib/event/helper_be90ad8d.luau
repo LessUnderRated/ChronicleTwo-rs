@@ -28,9 +28,9 @@ local function helper_be90ad8d()
 	local var8: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.Initialize()
+		event.initialize_event()
 		do
-			local out1, out2, out3, out4, out5 = event.GetTboxParam()
+			local out1, out2, out3, out4, out5 = event.get_nearest_treasure_box_contents()
 			flags = out1 or flags
 			item_x = out2 or item_x
 			item_y = out3 or item_y
@@ -43,28 +43,28 @@ local function helper_be90ad8d()
 		print("item2 = ", item_y, ", ", num_y, "\n")
 		print("-----------------------------------------------------------------------------------------\n")
 		if bit32.band(flags, 256) ~= 0 then
-			now_party_chara_id = event.GetNowPartyChara() or now_party_chara_id
+			now_party_chara_id = event.get_party_npc() or now_party_chara_id
 			if now_party_chara_id == 9 then
-				event.DngPause(513, 1)
+				event.set_dungeon_pause_flags(513, 1)
 				helper_ce85b54c()
-				event.SetMesWindowMode(0, 1)
-				event.SetMesShippo(0, 0)
-				event.MesMake_2(0, "Was? Moment! Ich rieche etwas!\n      Vorsicht!\nIch glaub, es ist ein Mime.")
+				event.set_message_window_mode(0, 1)
+				event.set_message_bubble_tail(0, 0)
+				event.open_message_window_2(0, "Was? Moment! Ich rieche etwas!\n      Vorsicht!\nIch glaub, es ist ein Mime.")
 				at = 1
 				helper_75684dd8(0, -1, 5, 0, 0)
-				event.SetMesQuestionGyou(0, 1)
-				event.SetMesShippo(0, 0)
-				event.SetMesEtc(0, 0, 1)
-				event.SetMesEtc(0, 1, 1)
-				event.MesMake_2(0, "Immer noch [UNI00f6]ffnen?\nJa.\nNein.")
+				event.set_message_selection_top_line(0, 1)
+				event.set_message_bubble_tail(0, 0)
+				event.set_message_window_option(0, 0, 1)
+				event.set_message_window_option(0, 1, 1)
+				event.open_message_window_2(0, "Immer noch [UNI00f6]ffnen?\nJa.\nNein.")
 				open_message(0, -1, 5, 0, 0)
 				at = 2
 				var6 = helper_39af59c5(0, 2, 2, 0)
-				event.SetMesQuestionGyou(0, 0)
-				event.SetMesShippo(0, 1)
-				event.SetMesEtc(0, 0, 0)
-				event.SetMesEtc(0, 1, 0)
-				event.DngPause(513, 0)
+				event.set_message_selection_top_line(0, 0)
+				event.set_message_bubble_tail(0, 1)
+				event.set_message_window_option(0, 0, 0)
+				event.set_message_window_option(0, 1, 0)
+				event.set_dungeon_pause_flags(513, 0)
 				if var6 == 1 then
 				else
 					return 0
@@ -74,20 +74,20 @@ local function helper_be90ad8d()
 			helper_5a4034b0(item_x, num_x)
 			return 0
 		end
-		event.DngPause(513, 1)
+		event.set_dungeon_pause_flags(513, 1)
 		helper_ce85b54c()
-		event.SetMesWindowMode(0, 1)
-		event.SetMesQuestionGyou(0, 1)
-		event.SetMesShippo(0, 0)
-		event.SetMesEtc(0, 0, 1)
-		event.SetMesEtc(0, 1, 1)
+		event.set_message_window_mode(0, 1)
+		event.set_message_selection_top_line(0, 1)
+		event.set_message_bubble_tail(0, 0)
+		event.set_message_window_option(0, 0, 1)
+		event.set_message_window_option(0, 1, 1)
 		if bit32.band(flags, 2) ~= 0 then
 			at = 4
 			local t0: s32
 			t0, flags = helper_6516b17d(flags)
 			if t0 ~= 0 then
-				event.DngPause(513, 0)
-				event.Finish()
+				event.set_dungeon_pause_flags(513, 0)
+				event.finish_event()
 				return 0
 			end
 		end
@@ -96,19 +96,19 @@ local function helper_be90ad8d()
 			local t1: s32
 			t1, flags = helper_680663c1(flags)
 			if t1 ~= 0 then
-				event.DngPause(513, 0)
-				event.Finish()
+				event.set_dungeon_pause_flags(513, 0)
+				event.finish_event()
 				return 0
 			end
 		end
-		event.SetMesQuestionGyou(0, 0)
-		event.SetMesShippo(0, 1)
-		event.SetMesEtc(0, 0, 0)
-		event.SetMesEtc(0, 1, 0)
-		event.DngPause(513, 0)
-		event.SetCrossfade(30)
-		event.SetStatusbarShow(0, 0.16666667)
-		event.CharaActive(0, 0)
+		event.set_message_selection_top_line(0, 0)
+		event.set_message_bubble_tail(0, 1)
+		event.set_message_window_option(0, 0, 0)
+		event.set_message_window_option(0, 1, 0)
+		event.set_dungeon_pause_flags(513, 0)
+		event.start_crossfade(30)
+		event.show_dungeon_status_bar(0, 0.16666667)
+		event.set_character_active(0, 0)
 		var8 = 0
 		if bit32.band(flags, 512) ~= 0 then
 			at = 6
@@ -125,7 +125,7 @@ local function helper_be90ad8d()
 			helper_3fccffcb(item_x, num_x)
 			var8 = 1
 		end
-		event.SetStatusbarShow(1, 0.16666667)
+		event.show_dungeon_status_bar(1, 0.16666667)
 		return item_x
 	end, function(received: { any })
 		if at <= 2 then

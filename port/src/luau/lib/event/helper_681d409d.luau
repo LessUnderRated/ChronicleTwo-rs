@@ -9,12 +9,12 @@ local helper_efde1e95 = require("@lib/event/helper_efde1e95")
 --- Helper function.
 local function helper_681d409d(arg0: s32, arg1: s32)
 	local var2: s32 = 0
-	var2 = event.GetQuestEtc(0, 0) or var2
+	var2 = event.get_quest_request_status(0, 0) or var2
 	if var2 ~= 2 then
 		helper_efde1e95(arg0, arg1)
 		return
 	end
-	var2 = event.GetQuestEtc(0, 19) or var2
+	var2 = event.get_quest_request_status(0, 19) or var2
 	if var2 == 0 then
 		helper_5040c4f0(arg0, arg1)
 		return

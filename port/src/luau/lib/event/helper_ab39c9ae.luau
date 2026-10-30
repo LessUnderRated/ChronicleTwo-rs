@@ -6,12 +6,12 @@ local helper_1c04a0eb = require("@lib/event/helper_1c04a0eb")
 --- Helper function.
 local function helper_ab39c9ae(arg0: s32, arg1: any, arg2: s32)
 	local var3: s32 = 0
-	event.SetMesPreset(0, 0)
-	var3 = event.GetChapter() or var3
+	event.apply_message_window_preset(0, 0)
+	var3 = event.get_chapter() or var3
 	if arg2 ~= 0 and var3 == 8 then
-		event.MesMake_2(0, "これから先も、永久に世界が\n平和でありますように。")
+		event.open_message_window_2(0, "これから先も、永久に世界が\n平和でありますように。")
 	else
-		event.MesMake_2(0, "正しき事を成そうとするなら、\n賢くあらねばなりません。")
+		event.open_message_window_2(0, "正しき事を成そうとするなら、\n賢くあらねばなりません。")
 	end
 	helper_1c04a0eb(arg0, -1, 0, 0)
 end

@@ -4,17 +4,17 @@
 --- Helper function.
 local function helper_278438ff()
 	local flag: s32 = 0
-	flag = event.GetFlag(536) or flag
-	event.GetFlag(540)
+	flag = event.get_save_flag(536) or flag
+	event.get_save_flag(540)
 	if flag == 1 then
-		event.AssignStack(4)
-		event.ClearStack(4)
-		event.LoadChara(4, "chara/p00_05a.gltf", "info", 8)
-		event.CharaActive(8)
-		event.SetCharaPos(8, 0.0, 70.0, -80.0)
-		event.SetCharaRot(8, 0.0, 0.0, 0.0)
-		event.SetMotion(8, "立ち", 4)
-		event.SetCharaNo(8, 400)
+		event.assign_memory_stack(4)
+		event.clear_memory_stack(4)
+		event.load_character(4, "chara/p00_05a.gltf", "info", 8)
+		event.set_character_active(8)
+		event.set_character_position(8, 0.0, 70.0, -80.0)
+		event.set_character_rotation(8, 0.0, 0.0, 0.0)
+		event.set_character_motion(8, "立ち", 4)
+		event.set_scene_character_number(8, 400)
 	end
 end
 

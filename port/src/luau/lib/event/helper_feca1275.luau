@@ -20,72 +20,72 @@ local function helper_feca1275()
 	local var6: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.EohSyncObj_2(1, "p01_train01")
-		event.EohSetPos(1, 790.0, 0.0, 3600.0)
-		event.EohSetRot(1, 0.0, 1.57, 0.0)
-		var0 = event.GetCnt(0) or var0
+		event.attach_object_handle_to_map_part_2(1, "p01_train01")
+		event.set_object_handle_position(1, 790.0, 0.0, 3600.0)
+		event.set_object_handle_rotation(1, 0.0, 1.57, 0.0)
+		var0 = event.get_save_counter(0) or var0
 		if var0 == 0 then
 			helper_946c0402()
-			event.CharaNormalDrive(0)
-			event.CharaResetDa(0)
-			event.ResetCamera(1, 0.0)
-			event.SetFadeIn(30)
+			event.update_character_motion(0)
+			event.reset_character_cloth_and_hair(0)
+			event.reset_follow_camera(1, 0.0)
+			event.fade_in_screen(30)
 			return
 		end
-		var1 = event.GetCnt(15) or var1
-		event.Initialize()
-		event.EohSyncChara(0, 0)
-		event.ObjsInit(0)
-		event.ObjsSyncObj(0, 0)
+		var1 = event.get_save_counter(15) or var1
+		event.initialize_event()
+		event.attach_object_handle_to_character(0, 0)
+		event.clear_object_sequence(0)
+		event.set_object_sequence_object(0, 0)
 		if var1 == 0 then
-			event.EohSyncObj_3(2, "p01_train01", "s3601_12-m1")
-			event.EohSyncObj_3(3, "p01_train01", "s3601_14-m6")
-			event.EohSyncObj_3(4, "p01_train01", "s3601_16-m1")
-			event.EohSyncObj_3(5, "p01_train01", "s3601_17-m")
+			event.attach_object_handle_to_map_part_3(2, "p01_train01", "s3601_12-m1")
+			event.attach_object_handle_to_map_part_3(3, "p01_train01", "s3601_14-m6")
+			event.attach_object_handle_to_map_part_3(4, "p01_train01", "s3601_16-m1")
+			event.attach_object_handle_to_map_part_3(5, "p01_train01", "s3601_17-m")
 			if var0 == 2 then
-				event.EohSyncObj_3(2, "p01_train01", "s3601_12-m5")
-				event.EohSyncObj_3(3, "p01_train01", "s3601_14-m10")
-				event.EohSyncObj_3(4, "p01_train01", "s3601_16-m4")
-				event.EohSyncObj_3(5, "p01_train01", "s3601_17-m2")
+				event.attach_object_handle_to_map_part_3(2, "p01_train01", "s3601_12-m5")
+				event.attach_object_handle_to_map_part_3(3, "p01_train01", "s3601_14-m10")
+				event.attach_object_handle_to_map_part_3(4, "p01_train01", "s3601_16-m4")
+				event.attach_object_handle_to_map_part_3(5, "p01_train01", "s3601_17-m2")
 			end
 			if var0 == 3 then
-				event.EohSyncObj_3(2, "p01_train01", "s3601_12-m3")
-				event.EohSyncObj_3(3, "p01_train01", "s3601_14-m8")
-				event.EohSyncObj_3(4, "p01_train01", "s3601_16-m5")
-				event.EohSyncObj_3(5, "p01_train01", "s3601_17-m4")
+				event.attach_object_handle_to_map_part_3(2, "p01_train01", "s3601_12-m3")
+				event.attach_object_handle_to_map_part_3(3, "p01_train01", "s3601_14-m8")
+				event.attach_object_handle_to_map_part_3(4, "p01_train01", "s3601_16-m5")
+				event.attach_object_handle_to_map_part_3(5, "p01_train01", "s3601_17-m4")
 			end
 		else
-			event.EohSyncObj_3(2, "p01_train01", "s3601_12-m")
-			event.EohSyncObj_3(3, "p01_train01", "s3601_14-m7")
-			event.EohSyncObj_3(4, "p01_train01", "s3601_16-m")
-			event.EohSyncObj_3(5, "p01_train01", "s3601_17-m1")
+			event.attach_object_handle_to_map_part_3(2, "p01_train01", "s3601_12-m")
+			event.attach_object_handle_to_map_part_3(3, "p01_train01", "s3601_14-m7")
+			event.attach_object_handle_to_map_part_3(4, "p01_train01", "s3601_16-m")
+			event.attach_object_handle_to_map_part_3(5, "p01_train01", "s3601_17-m1")
 			if var0 == 2 then
-				event.EohSyncObj_3(2, "p01_train01", "s3601_12-m4")
-				event.EohSyncObj_3(3, "p01_train01", "s3601_14-m11")
-				event.EohSyncObj_3(4, "p01_train01", "s3601_16-m2")
-				event.EohSyncObj_3(5, "p01_train01", "s3601_17-m3")
+				event.attach_object_handle_to_map_part_3(2, "p01_train01", "s3601_12-m4")
+				event.attach_object_handle_to_map_part_3(3, "p01_train01", "s3601_14-m11")
+				event.attach_object_handle_to_map_part_3(4, "p01_train01", "s3601_16-m2")
+				event.attach_object_handle_to_map_part_3(5, "p01_train01", "s3601_17-m3")
 			end
 			if var0 == 3 then
-				event.EohSyncObj_3(2, "p01_train01", "s3601_12-m2")
-				event.EohSyncObj_3(3, "p01_train01", "s3601_14-m9")
-				event.EohSyncObj_3(4, "p01_train01", "s3601_16-m3")
-				event.EohSyncObj_3(5, "p01_train01", "s3601_17-m5")
+				event.attach_object_handle_to_map_part_3(2, "p01_train01", "s3601_12-m2")
+				event.attach_object_handle_to_map_part_3(3, "p01_train01", "s3601_14-m9")
+				event.attach_object_handle_to_map_part_3(4, "p01_train01", "s3601_16-m3")
+				event.attach_object_handle_to_map_part_3(5, "p01_train01", "s3601_17-m5")
 			end
 		end
-		event.ObjsSyncObj(2, 2)
-		event.ObjsSetRot(2, 0.0, 0.0, 0.0)
-		event.ObjsSyncObj(3, 3)
-		event.ObjsSetRot(3, 0.0, 0.0, 0.0)
-		event.ObjsSyncObj(4, 4)
-		event.ObjsSetRot(4, 0.0, 0.0, 0.0)
+		event.set_object_sequence_object(2, 2)
+		event.set_object_sequence_rotation(2, 0.0, 0.0, 0.0)
+		event.set_object_sequence_object(3, 3)
+		event.set_object_sequence_rotation(3, 0.0, 0.0, 0.0)
+		event.set_object_sequence_object(4, 4)
+		event.set_object_sequence_rotation(4, 0.0, 0.0, 0.0)
 		do
-			local out1, out2, out3 = event.EohGetPos(5)
+			local out1, out2, out3 = event.get_object_handle_position(5)
 			pos_x = out1 or pos_x
 			pos_y = out2 or pos_y
 			pos_z = out3 or pos_z
 		end
-		event.ObjsSyncObj(5, 5)
-		event.ObjsSetRot(5, 0.0, 0.0, 0.0)
+		event.set_object_sequence_object(5, 5)
+		event.set_object_sequence_rotation(5, 0.0, 0.0, 0.0)
 		var5 = 240.0
 		if var0 == 2 then
 			var5 = -270.0
@@ -93,63 +93,63 @@ local function helper_feca1275()
 		if var0 == 3 then
 			var5 = -790.0
 		end
-		event.CmrsInit()
+		event.clear_camera_sequence()
 		if var1 == 0 then
-			event.CmrsSetPos(var5 - vm.f32(135.23), 32.86, 3321.61)
-			event.CmrsSetRef(var5, 31.8, 3450.0)
+			event.set_camera_sequence_position(var5 - vm.f32(135.23), 32.86, 3321.61)
+			event.set_camera_sequence_look_at(var5, 31.8, 3450.0)
 		else
-			event.CmrsSetPos(var5 + vm.f32(135.23), 32.86, 3878.39)
-			event.CmrsSetRef(var5, 31.8, 3750.0)
+			event.set_camera_sequence_position(var5 + vm.f32(135.23), 32.86, 3878.39)
+			event.set_camera_sequence_look_at(var5, 31.8, 3750.0)
 		end
-		event.SetFadeIn(30)
+		event.fade_in_screen(30)
 		if var1 == 0 then
-			event.ObjsSetPos(0, var5, 30.0, 3580.0)
-			event.ObjsSetRot(0, 0.0, 3.1415927, 0.0)
+			event.set_object_sequence_position(0, var5, 30.0, 3580.0)
+			event.set_object_sequence_rotation(0, 0.0, 3.1415927, 0.0)
 		else
-			event.ObjsSetPos(0, var5, 25.9, 3650.0)
-			event.ObjsSetRot(0, 0.0, 0.0, 0.0)
+			event.set_object_sequence_position(0, var5, 25.9, 3650.0)
+			event.set_object_sequence_rotation(0, 0.0, 0.0, 0.0)
 		end
 		if var1 == 0 then
-			event.ObjsRotation(2, 0.0, 0.0, 1.5707964, 30)
-			event.ObjsRotation(3, 0.0, 0.0, 1.5707964, 30)
-			event.ObjsRotation(4, 0.0, 0.0, -0.3926991, 30)
-			event.ObjsRotation(5, 0.0, 0.0, -0.3926991, 30)
+			event.rotate_object_sequence(2, 0.0, 0.0, 1.5707964, 30)
+			event.rotate_object_sequence(3, 0.0, 0.0, 1.5707964, 30)
+			event.rotate_object_sequence(4, 0.0, 0.0, -0.3926991, 30)
+			event.rotate_object_sequence(5, 0.0, 0.0, -0.3926991, 30)
 		else
-			event.ObjsRotation(2, 0.0, 0.0, -1.5707964, 30)
-			event.ObjsRotation(3, 0.0, 0.0, -1.5707964, 30)
-			event.ObjsRotation(4, 0.0, 0.0, 0.3926991, 30)
-			event.ObjsRotation(5, 0.0, 0.0, 0.3926991, 30)
+			event.rotate_object_sequence(2, 0.0, 0.0, -1.5707964, 30)
+			event.rotate_object_sequence(3, 0.0, 0.0, -1.5707964, 30)
+			event.rotate_object_sequence(4, 0.0, 0.0, 0.3926991, 30)
+			event.rotate_object_sequence(5, 0.0, 0.0, 0.3926991, 30)
 		end
-		var6 = event.GetSndId(2) or var6
-		event.SndSePlay(var6, 92)
+		var6 = event.get_sound_id(2) or var6
+		event.play_sound_effect(var6, 92)
 		at = 1
 		wait_frames(30)
-		event.ObjsMove(5, pos_x + 22.5, pos_y - 9.5, pos_z, 30)
+		event.move_object_sequence(5, pos_x + 22.5, pos_y - 9.5, pos_z, 30)
 		at = 2
 		wait_frames(20)
 		if var1 == 0 then
-			event.ObjsMove(0, var5, 0.0, 3500.0, 30)
+			event.move_object_sequence(0, var5, 0.0, 3500.0, 30)
 		else
-			event.ObjsMove(0, var5, 0.0, 3700.0, 30)
+			event.move_object_sequence(0, var5, 0.0, 3700.0, 30)
 		end
-		event.ObjsSetMotion(0, "走り", 4)
-		event.EohSetFootSoundId(0, 6)
+		event.set_object_sequence_motion(0, "走り", 4)
+		event.set_object_handle_footstep_sound(0, 6)
 		at = 3
 		wait_objects(0)
-		event.EohSetFootSoundId(0, 0)
-		event.ObjsSetMotion(0, "立ち")
+		event.set_object_handle_footstep_sound(0, 0)
+		event.set_object_sequence_motion(0, "立ち")
 		at = 4
 		wait_frames(10)
-		event.SetFadeIn(1)
-		event.EohSetRot(2, 0.0, 0.0, 0.0)
-		event.EohSetRot(3, 0.0, 0.0, 0.0)
-		event.EohSetRot(4, 0.0, 0.0, 0.0)
-		event.EohSetPos(5, pos_x, pos_y, pos_z)
-		event.EohSetRot(5, 0.0, 0.0, 0.0)
+		event.fade_in_screen(1)
+		event.set_object_handle_rotation(2, 0.0, 0.0, 0.0)
+		event.set_object_handle_rotation(3, 0.0, 0.0, 0.0)
+		event.set_object_handle_rotation(4, 0.0, 0.0, 0.0)
+		event.set_object_handle_position(5, pos_x, pos_y, pos_z)
+		event.set_object_handle_rotation(5, 0.0, 0.0, 0.0)
 		helper_946c0402()
-		event.CharaNormalDrive(0)
-		event.CharaResetDa(0)
-		event.ResetCamera(1, 0.0)
+		event.update_character_motion(0)
+		event.reset_character_cloth_and_hair(0)
+		event.reset_follow_camera(1, 0.0)
 		return
 	end, function(received: { any })
 		if at <= 4 then

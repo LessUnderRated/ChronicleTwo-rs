@@ -3,13 +3,13 @@
 
 --- Helper function.
 local function helper_50c65522()
-	event.CharaActive(1, 0)
-	event.DeleteChara(11)
-	event.DeleteChara(9)
-	event.DeleteChara(10)
-	event.DelImg(0)
-	event.SetStatusbarShow(1, 1.0)
-	event.Finish()
+	event.set_character_active(1, 0)
+	event.delete_character(11)
+	event.delete_character(9)
+	event.delete_character(10)
+	event.delete_event_image(0)
+	event.show_dungeon_status_bar(1, 1.0)
+	event.finish_event()
 end
 
 return helper_50c65522

@@ -11,12 +11,12 @@ local function helper_6d912f07()
 	local var0: any = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.Initialize()
-		event.SetMotion(0, "立ち")
+		event.initialize_event()
+		event.set_character_motion(0, "立ち")
 		at = 1
 		var0 = helper_ed4dc120(4, -1)
 		if var0 == 0 then
-			event.SetFadeOut(30)
+			event.fade_out_screen(30)
 			at = 2
 			helper_888ab2a3(30)
 			return 1

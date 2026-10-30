@@ -22,9 +22,9 @@ local function helper_19658e9b(arg0: f32, arg1: f32, arg2: f32)
 		rot_speed = vm.f32(rot_speed + vm.f32(6.2831855))
 	end
 	while true do
-		var3 = monster.GetTargetAngle() or var3
-		monster.SetNextRot(var3, rot_speed)
-		var4 = monster.NowMosWait() or var4
+		var3 = monster.get_target_angle() or var3
+		monster.turn_toward_angle(var3, rot_speed)
+		var4 = monster.get_motion_progress() or var4
 		if var4 < vm.f32(arg1 + arg2) and var4 > vm.f32(arg1 - arg2) then
 			break
 		else

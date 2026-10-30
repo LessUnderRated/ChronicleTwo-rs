@@ -13,22 +13,22 @@ local function helper_cc4413ca(arg0: f32, arg1: f32, arg2: f32, arg3: f32)
 	local var8: f32 = 0
 	local var9: s32 = 0
 	do
-		local out1, out2, out3 = event.GetCharaPos(0)
+		local out1, out2, out3 = event.get_character_position(0)
 		arg0 = out1 or arg0
 		arg1 = out2 or arg1
 		arg2 = out3 or arg2
 	end
-	event.SphidaSetBallPos(arg0, arg1 + 3.0, arg2)
-	event.SetCharaPos(8, arg0, arg1 + 3.0, arg2)
-	event.SetCharaPos(9, arg0, arg1 + 3.0, arg2)
+	event.set_sphida_ball_position(arg0, arg1 + 3.0, arg2)
+	event.set_character_position(8, arg0, arg1 + 3.0, arg2)
+	event.set_character_position(9, arg0, arg1 + 3.0, arg2)
 	arg1 = vm.f32(arg1 + 3.0)
 	do
-		local out1, out2, out3 = event.SphidaGetPinPos()
+		local out1, out2, out3 = event.get_sphida_pin_position()
 		pos_x = out1 or pos_x
 		pos_y = out2 or pos_y
 		pos_z = out3 or pos_z
 	end
-	arg3 = event.GetRefAngle(arg0, arg1, arg2, pos_x, pos_y, pos_z) or arg3
+	arg3 = event.get_direction_angle(arg0, arg1, arg2, pos_x, pos_y, pos_z) or arg3
 	var7 = 0.0
 	var8 = 0.0
 	while var7 <= vm.f32(3.1415927) do
@@ -59,10 +59,10 @@ local function helper_cc4413ca(arg0: f32, arg1: f32, arg2: f32, arg3: f32)
 			end
 		end
 	end
-	event.SetCharaRot(0, 0.0, arg3, 0.0)
-	event.SetMotion(0, "かまえ", 4)
-	event.CharaNormalDrive(0)
-	event.CharaResetDa(0)
+	event.set_character_rotation(0, 0.0, arg3, 0.0)
+	event.set_character_motion(0, "かまえ", 4)
+	event.update_character_motion(0)
+	event.reset_character_cloth_and_hair(0)
 	return arg0, arg1, arg2, arg3
 end
 

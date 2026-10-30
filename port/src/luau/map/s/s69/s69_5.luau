@@ -27,19 +27,19 @@ local wait_objects = require("@lib/event/wait_objects")
 --- Event 99, which map data, a script or the engine runs by number.
 local function event_99()
 	local var0: s32 = 0
-	event.StopBgm(0)
-	event.LoadSound(8694)
-	var0 = event.GetCnt(17) or var0
+	event.stop_music(0)
+	event.load_map_sounds(8694)
+	var0 = event.get_save_counter(17) or var0
 	if bit32.band(var0, 256) == 0 or bit32.band(var0, 512) == 0 then
-		event.StopBgm(0)
+		event.stop_music(0)
 		wait_frames(4)
-		event.LoadBgm(190)
-		event.PlayBgm(0)
+		event.load_music(190)
+		event.play_music(0)
 	else
-		event.SetLoadbgFile_1("snd2/bgm/bg_193.sound.json")
+		event.start_background_file_loads_1("snd2/bgm/bg_193.sound.json")
 		helper_479dc9e9()
-		event.LoadBgmPack(193)
-		event.PlayBgm(0)
+		event.load_music_pack(193)
+		event.play_music(0)
 	end
 end
 
@@ -57,27 +57,27 @@ function script.default_event()
 	return vm.guard(function()
 		at = 1
 		event_99()
-		event.Initialize()
+		event.initialize_event()
 		at = 2
 		vm.wait(2)
-		var0 = event.GetCnt(17) or var0
+		var0 = event.get_save_counter(17) or var0
 		if bit32.band(var0, 256) == 0 or bit32.band(var0, 512) == 0 then
-			var0 = event.GetCnt(20) or var0
+			var0 = event.get_save_counter(20) or var0
 			if bit32.band(var0, 8) == 0 then
 				at = 3
 				helper_cffd0192()
-				var0 = event.GetCnt(20) or var0
+				var0 = event.get_save_counter(20) or var0
 				var0 = vm.i32(bit32.bor(var0, 8))
-				event.SetCnt(20, var0)
+				event.set_save_counter(20, var0)
 			end
 			helper_2e528bdf()
 		end
 		helper_7d7eee8f(vm.f32(5.2), 0.0, -790.0, 0.0)
-		event.SetCameraRef(5.2, 30.0, -790.0)
-		event.SetCameraPos(5.2, 40.0, -910.0)
-		event.ResetCamera(0)
-		event.SetFadeIn(30)
-		event.Finish()
+		event.set_camera_look_at(5.2, 30.0, -790.0)
+		event.set_camera_position(5.2, 40.0, -910.0)
+		event.reset_follow_camera(0)
+		event.fade_in_screen(30)
+		event.finish_event()
 		return
 	end, function(received: { any })
 		if at <= 3 then
@@ -85,16 +85,16 @@ function script.default_event()
 				at = 3
 				helper_cffd0192()
 				return vm.continue_with(function()
-					var0 = event.GetCnt(20) or var0
+					var0 = event.get_save_counter(20) or var0
 					var0 = vm.i32(bit32.bor(var0, 8))
-					event.SetCnt(20, var0)
+					event.set_save_counter(20, var0)
 					helper_2e528bdf()
 					helper_7d7eee8f(vm.f32(5.2), 0.0, -790.0, 0.0)
-					event.SetCameraRef(5.2, 30.0, -790.0)
-					event.SetCameraPos(5.2, 40.0, -910.0)
-					event.ResetCamera(0)
-					event.SetFadeIn(30)
-					event.Finish()
+					event.set_camera_look_at(5.2, 30.0, -790.0)
+					event.set_camera_position(5.2, 40.0, -910.0)
+					event.reset_follow_camera(0)
+					event.fade_in_screen(30)
+					event.finish_event()
 					return
 				end)
 			end
@@ -126,51 +126,51 @@ end
 --- Event 200, which map data, a script or the engine runs by number.
 function script.event_200()
 	local argc: s32 = 0
-	event.Initialize()
+	event.initialize_event()
 	vm.wait(1)
-	event.AddItem(305, 1)
-	event.AddItem(306, 1)
-	argc = event.GetItemHaveNum(10) or argc
+	event.add_inventory_item(305, 1)
+	event.add_inventory_item(306, 1)
+	argc = event.get_owned_item_count(10) or argc
 	if argc <= 0 then
-		event.AddItem(10, 1)
+		event.add_inventory_item(10, 1)
 	end
-	argc = event.GetItemHaveNum(302) or argc
+	argc = event.get_owned_item_count(302) or argc
 	if argc <= 0 then
-		event.AddItem(302, 1)
+		event.add_inventory_item(302, 1)
 	end
-	event.SetFlag(220, 1)
-	event.SetFlag(317, 1)
-	event.DelMonster(-1)
-	event.Finish()
+	event.set_save_flag(220, 1)
+	event.set_save_flag(317, 1)
+	event.clear_event_battle_monsters(-1)
+	event.finish_event()
 end
 
 --- Event 300, which map data, a script or the engine runs by number.
 function script.event_300()
 	local active_chr_no: s32 = 0
 	local var1: any = 0
-	event.Initialize()
-	event.ActchrSetDefMotion(0)
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	event.initialize_event()
+	event.reset_action_character_motion(0)
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no == 2 or active_chr_no == 3 then
-		event.SetMesWindowMode(0, 1)
-		event.SetMesDrawspeed(0, 1)
+		event.set_message_window_mode(0, 1)
+		event.set_message_draw_speed(0, 1)
 		if active_chr_no == 2 then
 			helper_75684dd8(0, 20, 5, 256, 208)
 		else
 			helper_75684dd8(0, 21, 5, 256, 208)
 		end
-		event.Finish()
+		event.finish_event()
 		return
 	end
 	var1 = helper_ed4dc120(2, -1)
 	if var1 == 0 then
-		event.DelMonster(-1)
-		event.DngPause(16384, 0)
-		event.SetFadeOut(30)
+		event.clear_event_battle_monsters(-1)
+		event.set_dungeon_pause_flags(16384, 0)
+		event.fade_out_screen(30)
 		wait_frames(30)
-		event.LoadScript("d07/d07.stb", 1000)
+		event.load_event_script("d07/d07.stb", 1000)
 	else
-		event.Finish()
+		event.finish_event()
 	end
 end
 
@@ -179,19 +179,19 @@ function script.treasure_box()
 	local var0: s32 = 0
 	local var1: s32 = 0
 	var0 = helper_49aaf6a2()
-	var1 = event.GetCnt(17) or var1
+	var1 = event.get_save_counter(17) or var1
 	if var0 == 189 then
 		if bit32.band(var1, 256) == 0 then
-			var1 = event.GetCnt(17) or var1
+			var1 = event.get_save_counter(17) or var1
 			var1 = vm.i32(bit32.bor(var1, 256))
-			event.SetCnt(17, var1)
+			event.set_save_counter(17, var1)
 			return
 		end
 	end
 	if var0 == 189 then
-		var1 = event.GetCnt(17) or var1
+		var1 = event.get_save_counter(17) or var1
 		var1 = vm.i32(bit32.bor(var1, 512))
-		event.SetCnt(17, var1)
+		event.set_save_counter(17, var1)
 	end
 end
 
@@ -232,112 +232,112 @@ function script.random_circle()
 	local position_x: f32 = 0
 	local position_y: f32 = 0
 	local position_z: f32 = 0
-	event.Initialize()
-	event.DngPause(513, 1)
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	event.initialize_event()
+	event.set_dungeon_pause_flags(513, 1)
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no == 2 or active_chr_no == 3 then
-		event.SetMesPreset(0, 4)
-		event.SetMesWindowMode(0, 4)
-		event.SetMesDrawspeed(0, 1)
+		event.apply_message_window_preset(0, 4)
+		event.set_message_window_mode(0, 4)
+		event.set_message_draw_speed(0, 1)
 		helper_ce85b54c()
 		if active_chr_no == 2 then
 			helper_75684dd8(0, 22, 8, 0, 0)
 		else
 			helper_75684dd8(0, 23, 8, 0, 0)
 		end
-		event.SetMesWindowMode(0, 1)
-		event.SetMesDrawspeed(0, 0)
+		event.set_message_window_mode(0, 1)
+		event.set_message_draw_speed(0, 0)
 		do
-			local out1, out2, out3 = event.GetCharaPos(0)
+			local out1, out2, out3 = event.get_character_position(0)
 			var1 = out1 or var1
 			var2 = out2 or var2
 			var3 = out3 or var3
 		end
 		do
-			local out1, out2, out3 = event.RandomCircleGetPos(-1)
+			local out1, out2, out3 = event.get_random_circle_position(-1)
 			pos_x = out1 or pos_x
 			pos_y = out2 or pos_y
 			pos_z = out3 or pos_z
 		end
-		yaw = event.GetRefAngle(pos_x, pos_y, pos_z, var1, var2, var3) or yaw
+		yaw = event.get_direction_angle(pos_x, pos_y, pos_z, var1, var2, var3) or yaw
 		var1 = vm.f32(vm.f32(vm.sin(yaw) * 25.0) + pos_x)
 		var2 = pos_y
 		var3 = vm.f32(vm.f32(vm.cos(yaw) * 25.0) + pos_z)
-		event.SetCharaPos(0, var1, var2, var3)
-		event.DngPause(513, 0)
-		event.Finish()
+		event.set_character_position(0, var1, var2, var3)
+		event.set_dungeon_pause_flags(513, 0)
+		event.finish_event()
 		return
 	end
-	event.SetLoadbgFile_1("snd2/sp/sp_011.sound.json")
+	event.start_background_file_loads_1("snd2/sp/sp_011.sound.json")
 	vm.wait(3)
 	helper_ce85b54c()
 	do
-		local out1, out2, out3 = event.RandomCircleGetPos(-1)
+		local out1, out2, out3 = event.get_random_circle_position(-1)
 		pos_x_2 = out1 or pos_x_2
 		pos_y_2 = out2 or pos_y_2
 		pos_z_2 = out3 or pos_z_2
 	end
-	event.SetCameraCtrl(0)
-	event.SetFcameraFollowFlag(1)
-	event.SetFcameraFollowA(pos_x_2, pos_y_2 + 30.0, pos_z_2)
-	event.SetCameraSpeed(8.0)
-	event.SetFcameraFollowOfs(0.0, 0.0, 0.0)
-	event.SetFcameraHeight(0.0)
-	event.SetFcameraDist(80.0)
-	event.AssignStack(5)
-	event.ClearStack(5)
+	event.set_camera_control_enabled(0)
+	event.set_follow_camera_following(1)
+	event.set_follow_camera_target_alternate(pos_x_2, pos_y_2 + 30.0, pos_z_2)
+	event.set_camera_speed(8.0)
+	event.set_follow_camera_offset(0.0, 0.0, 0.0)
+	event.set_follow_camera_height(0.0)
+	event.set_follow_camera_distance(80.0)
+	event.assign_memory_stack(5)
+	event.clear_memory_stack(5)
 	helper_479dc9e9()
-	var11 = event.SndLoadSound_3(8, "snd2/sp/sp_011.sound.json") or var11
-	event.ChangeDir("event/dng/")
-	event.SetLoadbgFile_2("ring.gltf", "randomcoin.gltf")
+	var11 = event.load_sound_effect_file_3(8, "snd2/sp/sp_011.sound.json") or var11
+	event.change_directory("event/dng/")
+	event.start_background_file_loads_2("ring.gltf", "randomcoin.gltf")
 	vm.wait(5)
 	helper_479dc9e9()
-	weight = event.GetRndcMotNowt() or weight
-	event.RandomCircleOff(-1)
-	event.LoadChara(5, "ring.gltf", "info", 12)
-	event.CharaActive(1, 12)
-	event.SetCharaPos(12, pos_x_2, pos_y_2, pos_z_2)
-	event.SetMotion(12, "ループ", 6)
-	event.CharaNormalDrive(12)
-	event.SetCharaMotNowt(12, weight)
-	event.EohSyncChara(4, 12)
-	event.ObjsInit(4)
-	event.ObjsSyncObj(4, 4)
-	event.ObjsNextMotion(4, "消滅", 6)
-	event.LoadChara(5, "randomcoin.gltf", "info", 13)
-	event.CharaActive(1, 13)
-	event.SetCharaPos(13, pos_x_2, pos_y_2 - 30.0, pos_z_2)
-	var14 = event.GetRand(6.2831855) or var14
+	weight = event.get_random_circle_motion_frame() or weight
+	event.deactivate_random_circle(-1)
+	event.load_character(5, "ring.gltf", "info", 12)
+	event.set_character_active(1, 12)
+	event.set_character_position(12, pos_x_2, pos_y_2, pos_z_2)
+	event.set_character_motion(12, "ループ", 6)
+	event.update_character_motion(12)
+	event.set_character_motion_frame(12, weight)
+	event.attach_object_handle_to_character(4, 12)
+	event.clear_object_sequence(4)
+	event.set_object_sequence_object(4, 4)
+	event.queue_object_sequence_next_motion(4, "消滅", 6)
+	event.load_character(5, "randomcoin.gltf", "info", 13)
+	event.set_character_active(1, 13)
+	event.set_character_position(13, pos_x_2, pos_y_2 - 30.0, pos_z_2)
+	var14 = event.get_random_number(6.2831855) or var14
 	var14 = vm.f32(var14 - vm.f32(3.1415927))
-	var14 = event.AngleLimit(var14) or var14
-	event.SetCharaRot(13, 0.0, var14, 0.0)
-	event.ChangeDir("")
-	now_party_chara_id = event.GetNowPartyChara() or now_party_chara_id
-	event.EohSyncChara(5, 13)
-	event.ObjsInit(5)
-	event.ObjsSyncObj(5, 5)
-	event.ObjsSetScale(5, 0.0, 0.0, 0.0)
-	event.ObjsSetScale(5, 1.0, 1.0, 1.0, 40)
-	event.ObjsMove2(5, pos_x_2, pos_y_2 + 40.0, pos_z_2, 30, 2, 0.5)
+	var14 = event.wrap_angle(var14) or var14
+	event.set_character_rotation(13, 0.0, var14, 0.0)
+	event.change_directory("")
+	now_party_chara_id = event.get_party_npc() or now_party_chara_id
+	event.attach_object_handle_to_character(5, 13)
+	event.clear_object_sequence(5)
+	event.set_object_sequence_object(5, 5)
+	event.set_object_sequence_scale(5, 0.0, 0.0, 0.0)
+	event.set_object_sequence_scale(5, 1.0, 1.0, 1.0, 40)
+	event.move_object_sequence_eased(5, pos_x_2, pos_y_2 + 40.0, pos_z_2, 30, 2, 0.5)
 	var18 = 0
 	var19 = vm.f32(0.6)
 	while true do
 		do
-			local _, out2, _ = event.GetCharaRot(13)
+			local _, out2, _ = event.get_character_rotation(13)
 			var14 = out2 or var14
 		end
 		var14 = vm.f32(var14 + var19)
-		var14 = event.AngleLimit(var14) or var14
-		event.SetCharaRot(13, 0.0, var14, 0.0)
+		var14 = event.wrap_angle(var14) or var14
+		event.set_character_rotation(13, 0.0, var14, 0.0)
 		if var18 == 10 then
-			event.SndSePlay(var11, 0)
+			event.play_sound_effect(var11, 0)
 		end
 		if var18 == 30 then
 			helper_cf085f53()
 		end
 		if (if var18 >= 30 then helper_581cb30c(0) else 0) ~= 0 or var18 > 300 then
-			event.SndSeStop(var11, 0)
-			event.SndSePlay(var11, 3)
+			event.stop_sound_effect(var11, 0)
+			event.play_sound_effect(var11, 3)
 			vm.wait(7)
 			break
 		else
@@ -346,59 +346,59 @@ function script.random_circle()
 		end
 	end
 	helper_3cf99f2c()
-	event.EohSyncChara(5, 13)
-	event.ObjsInit(5)
-	event.ObjsSyncObj(5, 5)
+	event.attach_object_handle_to_character(5, 13)
+	event.clear_object_sequence(5)
+	event.set_object_sequence_object(5, 5)
 	do
-		local out1, out2, out3 = event.GetCameraPos()
+		local out1, out2, out3 = event.get_camera_position()
 		pos_x_3 = out1 or pos_x_3
 		pos_y_3 = out2 or pos_y_3
 		pos_z_3 = out3 or pos_z_3
 	end
 	do
-		local out1, out2, out3 = event.GetCameraRef()
+		local out1, out2, out3 = event.get_camera_look_at()
 		pos_x_4 = out1 or pos_x_4
 		pos_y_4 = out2 or pos_y_4
 		pos_z_4 = out3 or pos_z_4
 	end
-	var26 = event.GetRefAngle(pos_x_4, pos_y_4, pos_z_4, pos_x_3, pos_y_3, pos_z_3) or var26
+	var26 = event.get_direction_angle(pos_x_4, pos_y_4, pos_z_4, pos_x_3, pos_y_3, pos_z_3) or var26
 	var27 = 0
-	var27 = vm.float_bits(event.GetRand(10)) or var27
+	var27 = vm.float_bits(event.get_random_number(10)) or var27
 	var27 = vm.i32(var27 + 4)
 	var18 = 0
 	while true do
 		do
-			local _, out2, _ = event.GetCharaRot(13)
+			local _, out2, _ = event.get_character_rotation(13)
 			var14 = out2 or var14
 		end
 		var14 = vm.f32(var14 + var19)
-		var14 = event.AngleLimit(var14) or var14
-		event.SetCharaRot(13, 0.0, var14, 0.0)
+		var14 = event.wrap_angle(var14) or var14
+		event.set_character_rotation(13, 0.0, var14, 0.0)
 		vm.wait(9)
 		if var18 >= var27 then
 			if var19 > vm.f32(0.08) then
 				var19 = vm.f32(var19 * vm.f32(0.9))
 			end
 			angle = var26
-			angle = event.AngleLimit(angle) or angle
+			angle = event.wrap_angle(angle) or angle
 			if var14 < angle and helper_f7fba8ce(var14, angle, vm.f32(0.08)) == 0 then
-				event.SetCharaRot(13, 0.0, angle, 0.0)
+				event.set_character_rotation(13, 0.0, angle, 0.0)
 				circle_id = 0
 				break
 			end
 			angle = vm.f32(var26 - vm.f32(3.1415927))
-			angle = event.AngleLimit(angle) or angle
+			angle = event.wrap_angle(angle) or angle
 			if var14 < angle and helper_f7fba8ce(var14, angle, vm.f32(0.08)) == 0 then
-				event.SetCharaRot(13, 0.0, angle, 0.0)
+				event.set_character_rotation(13, 0.0, angle, 0.0)
 				circle_id = 1
 				break
 			end
 		end
 		var18 = vm.i32(var18 + 1)
 	end
-	var26 = event.GetRefAngle(pos_x_4, pos_y_4, pos_z_4, pos_x_3, pos_y_3, pos_z_3) or var26
+	var26 = event.get_direction_angle(pos_x_4, pos_y_4, pos_z_4, pos_x_3, pos_y_3, pos_z_3) or var26
 	do
-		local _, out2, _ = event.GetCharaRot(13)
+		local _, out2, _ = event.get_character_rotation(13)
 		var14 = out2 or var14
 	end
 	if helper_f7fba8ce(var14, var26, 1.0) == 0 then
@@ -408,14 +408,14 @@ function script.random_circle()
 	end
 	var26 = var14
 	wait_frames(20)
-	var29 = vm.float_bits(event.GetRand(10)) or var29
+	var29 = vm.float_bits(event.get_random_number(10)) or var29
 	if now_party_chara_id == 24 then
 		var30 = 100
 	else
 		var30 = 6
 	end
 	if var29 < var30 then
-		var29 = vm.float_bits(event.GetRand(10)) or var29
+		var29 = vm.float_bits(event.get_random_number(10)) or var29
 		if circle_id == 0 then
 			if now_party_chara_id == 24 then
 				var30 = 0
@@ -429,8 +429,8 @@ function script.random_circle()
 		end
 		if var29 < var30 then
 			var26 = vm.f32(var26 + vm.f32(3.14))
-			var26 = event.AngleLimit(var26) or var26
-			event.ObjsRotation(5, 0.0, var26, 0.0, 8)
+			var26 = event.wrap_angle(var26) or var26
+			event.rotate_object_sequence(5, 0.0, var26, 0.0, 8)
 			if circle_id == 0 then
 				circle_id = 1
 			else
@@ -438,24 +438,24 @@ function script.random_circle()
 			end
 			wait_frames(10)
 		else
-			var29 = vm.float_bits(event.GetRand(10)) or var29
+			var29 = vm.float_bits(event.get_random_number(10)) or var29
 			if var29 < 1 then
 				var26 = vm.f32(var26 + vm.f32(3.14))
-				var26 = event.AngleLimit(var26) or var26
-				event.ObjsRotation(5, 0.0, var26, 0.0, 6)
+				var26 = event.wrap_angle(var26) or var26
+				event.rotate_object_sequence(5, 0.0, var26, 0.0, 6)
 				var26 = vm.f32(var26 + vm.f32(1.57))
-				var26 = event.AngleLimit(var26) or var26
-				event.ObjsRotation(5, 0.0, var26, 0.0, 3)
+				var26 = event.wrap_angle(var26) or var26
+				event.rotate_object_sequence(5, 0.0, var26, 0.0, 3)
 				var26 = vm.f32(var26 + vm.f32(1.57))
-				var26 = event.AngleLimit(var26) or var26
-				event.ObjsRotation(5, 0.0, var26, 0.0, 3)
+				var26 = event.wrap_angle(var26) or var26
+				event.rotate_object_sequence(5, 0.0, var26, 0.0, 3)
 				wait_frames(20)
 			end
 		end
 	end
-	var26 = event.GetRefAngle(pos_x_4, pos_y_4, pos_z_4, pos_x_3, pos_y_3, pos_z_3) or var26
+	var26 = event.get_direction_angle(pos_x_4, pos_y_4, pos_z_4, pos_x_3, pos_y_3, pos_z_3) or var26
 	do
-		local _, out2, _ = event.GetCharaRot(13)
+		local _, out2, _ = event.get_character_rotation(13)
 		var14 = out2 or var14
 	end
 	if helper_f7fba8ce(var14, var26, 1.0) == 0 then
@@ -463,22 +463,22 @@ function script.random_circle()
 	else
 		circle_id = 1
 	end
-	event.SetMesPreset(0, 4)
-	event.SetMesWindowMode(0, 4)
-	event.SetMesDrawspeed(0, 1)
+	event.apply_message_window_preset(0, 4)
+	event.set_message_window_mode(0, 4)
+	event.set_message_draw_speed(0, 1)
 	bright_rate = 1.0
 	var18 = 0
-	var32 = event.GetRndCircleTrapid(circle_id) or var32
+	var32 = event.get_random_circle_effect(circle_id) or var32
 	if circle_id == 0 then
-		event.SndSePlay(var11, 1)
+		event.play_sound_effect(var11, 1)
 		while var18 < 30 do
-			event.BscnSetBlightRate(bright_rate)
+			event.set_dungeon_brightness_rate(bright_rate)
 			bright_rate = vm.f32(bright_rate + vm.f32(0.03))
 			var18 = var18 + 1
 			vm.wait(13)
 		end
 		helper_75684dd8(0, 2310, 8, 0, 0)
-		result = event.SetRndCircleStatus(var32) or result
+		result = event.apply_random_circle_effect(var32) or result
 		if var32 == 1 then
 			helper_75684dd8(0, 2311, 8, 0, 0)
 		end
@@ -489,19 +489,19 @@ function script.random_circle()
 			helper_75684dd8(0, 2313, 8, 0, 0)
 		end
 		if var32 == 4 then
-			event.PostTreasureBox(pos_x_2, pos_y_2, pos_z_2, var26, 294)
+			event.place_treasure_box(pos_x_2, pos_y_2, pos_z_2, var26, 294)
 			helper_75684dd8(0, 2314, 8, 0, 0)
 		end
 	else
-		event.SndSePlay(var11, 2)
+		event.play_sound_effect(var11, 2)
 		while var18 < 30 do
-			event.BscnSetBlightRate(bright_rate)
+			event.set_dungeon_brightness_rate(bright_rate)
 			bright_rate = vm.f32(bright_rate - vm.f32(0.03))
 			var18 = var18 + 1
 			vm.wait(19)
 		end
 		helper_75684dd8(0, 2320, 8, 0, 0)
-		result = event.SetRndCircleStatus(var32) or result
+		result = event.apply_random_circle_effect(var32) or result
 		if var32 == 5 then
 			if active_chr_no == 0 or active_chr_no == 2 then
 				helper_75684dd8(0, 2321, 8, 0, 0)
@@ -537,32 +537,32 @@ function script.random_circle()
 			helper_75684dd8(0, 2330, 8, 0, 0)
 		end
 	end
-	event.SetMesWindowMode(0, 1)
-	event.SetMesDrawspeed(0, 0)
-	event.BscnSetBlightRate(1.0)
+	event.set_message_window_mode(0, 1)
+	event.set_message_draw_speed(0, 0)
+	event.set_dungeon_brightness_rate(1.0)
 	if var32 == 1 then
-		event.SetPullItem(pos_x_2, pos_y_2, pos_z_2, 1, 10, result / 10.0)
+		event.spawn_pull_items(pos_x_2, pos_y_2, pos_z_2, 1, 10, result / 10.0)
 	end
-	event.DngPause(513, 0)
-	event.SetCameraCtrl(1)
+	event.set_dungeon_pause_flags(513, 0)
+	event.set_camera_control_enabled(1)
 	do
-		local out1, out2, out3 = event.GetBeforeCameraNextPos()
+		local out1, out2, out3 = event.get_previous_camera_next_position()
 		position_x = out1 or position_x
 		position_y = out2 or position_y
 		position_z = out3 or position_z
 	end
-	event.SetCameraPos(position_x, position_y, position_z)
+	event.set_camera_position(position_x, position_y, position_z)
 	do
-		local out1, out2, out3 = event.GetBeforeCameraNextRef()
+		local out1, out2, out3 = event.get_previous_camera_next_look_at()
 		position_x = out1 or position_x
 		position_y = out2 or position_y
 		position_z = out3 or position_z
 	end
-	event.SetCameraRef(position_x, position_y, position_z)
-	event.DeleteChara(12)
-	event.DeleteChara(13)
-	event.SetCrossfade(15)
-	event.Finish()
+	event.set_camera_look_at(position_x, position_y, position_z)
+	event.delete_character(12)
+	event.delete_character(13)
+	event.start_crossfade(15)
+	event.finish_event()
 end
 
 --- The dungeon system event run when the player uses the geostone.
@@ -588,189 +588,189 @@ function script.geostone()
 	local argc: s32 = 0
 	local stage_id: s32 = 0
 	local var23: s32 = 0
-	event.Initialize()
-	event.DngPause(513, 1)
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	event.initialize_event()
+	event.set_dungeon_pause_flags(513, 1)
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no == 2 or active_chr_no == 3 then
-		event.SetMesPreset(0, 4)
-		event.SetMesWindowMode(0, 4)
-		event.SetMesDrawspeed(0, 1)
+		event.apply_message_window_preset(0, 4)
+		event.set_message_window_mode(0, 4)
+		event.set_message_draw_speed(0, 1)
 		helper_ce85b54c()
 		if active_chr_no == 2 then
 			helper_75684dd8(0, 22, 8, 0, 0)
 		else
 			helper_75684dd8(0, 23, 8, 0, 0)
 		end
-		event.SetMesWindowMode(0, 1)
-		event.SetMesDrawspeed(0, 0)
-		event.DngPause(513, 0)
-		event.Finish()
+		event.set_message_window_mode(0, 1)
+		event.set_message_draw_speed(0, 0)
+		event.set_dungeon_pause_flags(513, 0)
+		event.finish_event()
 		return
 	end
-	event.DngPause(16, 1)
-	event.AssignStack(5)
-	event.ClearStack(5)
-	event.SetFlag(31, 1)
-	event.SetMotion(0, "立ち")
+	event.set_dungeon_pause_flags(16, 1)
+	event.assign_memory_stack(5)
+	event.clear_memory_stack(5)
+	event.set_save_flag(31, 1)
+	event.set_character_motion(0, "立ち")
 	do
-		local out1, out2, out3 = event.GetCharaPos(0)
+		local out1, out2, out3 = event.get_character_position(0)
 		var1 = out1 or var1
 		var2 = out2 or var2
 		var3 = out3 or var3
 	end
 	if active_chr_no == 0 then
-		event.SetLoadbgFile_3(
+		event.start_background_file_loads_3(
 			"dungeon/chara/c01_gio.gltf",
 			"event/itemget_ev/itemget_ev.gltf",
 			"snd2/sp/sp_012.sound.json"
 		)
 		vm.wait(3)
 		helper_479dc9e9()
-		event.LoadMotion(5, "dungeon/chara/c01_gio.gltf", "info", 0)
+		event.load_character_motion_pack(5, "dungeon/chara/c01_gio.gltf", "info", 0)
 	end
 	if active_chr_no == 1 then
-		event.SetLoadbgFile_3(
+		event.start_background_file_loads_3(
 			"dungeon/chara/c02_gio.gltf",
 			"event/itemget_ev/itemget_ev.gltf",
 			"snd2/sp/sp_012.sound.json"
 		)
 		vm.wait(5)
 		helper_479dc9e9()
-		event.LoadMotion(5, "dungeon/chara/c02_gio.gltf", "info", 0)
+		event.load_character_motion_pack(5, "dungeon/chara/c02_gio.gltf", "info", 0)
 	end
-	var4 = event.SndLoadSound_3(8, "snd2/sp/sp_012.sound.json") or var4
-	event.EohSyncChara(0, 0)
-	event.ObjsInit(0)
-	event.ObjsSyncObj(0, 0)
+	var4 = event.load_sound_effect_file_3(8, "snd2/sp/sp_012.sound.json") or var4
+	event.attach_object_handle_to_character(0, 0)
+	event.clear_object_sequence(0)
+	event.set_object_sequence_object(0, 0)
 	do
-		local out1, out2, out3 = event.GetCameraPos()
+		local out1, out2, out3 = event.get_camera_position()
 		pos_x = out1 or pos_x
 		pos_y = out2 or pos_y
 		pos_z = out3 or pos_z
 	end
 	do
-		local out1, out2, out3 = event.GetCharaPos(0)
+		local out1, out2, out3 = event.get_character_position(0)
 		var8 = out1 or var8
 		var9 = out2 or var9
 		var10 = out3 or var10
 	end
-	event.CopyVector(var8, var9, var10)
-	event.GeostoneAnimeOff()
-	event.EohSyncGeostone(1)
+	event.copy_vector(var8, var9, var10)
+	event.stop_geostone_animation()
+	event.attach_object_handle_to_geostone(1)
 	do
-		local out1, out2, out3 = event.EohGetPos(1)
+		local out1, out2, out3 = event.get_object_handle_position(1)
 		pos_x_2 = out1 or pos_x_2
 		pos_y_2 = out2 or pos_y_2
 		pos_z_2 = out3 or pos_z_2
 	end
 	pos_y_2 = vm.f32(var9 + 18.0)
-	event.EohSetPos(1, pos_x_2, pos_y_2, pos_z_2)
-	event.ObjsInit(1)
-	event.ObjsSyncObj(1, 1)
-	var17 = event.GetRefAngle(pos_x_2, pos_y_2, pos_z_2, pos_x, pos_y, pos_z) or var17
-	var17 = event.AngleLimit(var17) or var17
+	event.set_object_handle_position(1, pos_x_2, pos_y_2, pos_z_2)
+	event.clear_object_sequence(1)
+	event.set_object_sequence_object(1, 1)
+	var17 = event.get_direction_angle(pos_x_2, pos_y_2, pos_z_2, pos_x, pos_y, pos_z) or var17
+	var17 = event.wrap_angle(var17) or var17
 	if active_chr_no == 0 then
 		var17 = vm.f32(var17 + vm.f32(2.9))
 	end
 	if active_chr_no == 1 then
 		var17 = vm.f32(var17 + vm.f32(2.4))
 	end
-	var17 = event.AngleLimit(var17) or var17
+	var17 = event.wrap_angle(var17) or var17
 	var8 = vm.f32(vm.f32(vm.sin(var17) * 14.0) + pos_x_2)
 	var10 = vm.f32(vm.f32(vm.cos(var17) * 14.0) + pos_z_2)
-	event.SetCharaPos(0, var8, var9, var10)
+	event.set_character_position(0, var8, var9, var10)
 	var17 = vm.f32(var17 - vm.f32(3.1415927))
-	var17 = event.AngleLimit(var17) or var17
-	event.SetCharaRot(0, 0.0, var17, 0.0)
-	event.EohResetDaPosition(0)
-	event.LoadChara(5, "event/itemget_ev/itemget_ev.gltf", "info", 12)
-	event.CharaActive(0, 12)
+	var17 = event.wrap_angle(var17) or var17
+	event.set_character_rotation(0, 0.0, var17, 0.0)
+	event.reset_object_handle_dynamic_animation(0)
+	event.load_character(5, "event/itemget_ev/itemget_ev.gltf", "info", 12)
+	event.set_character_active(0, 12)
 	if active_chr_no == 0 then
-		event.SetCameraCtrl(0)
-		event.SetFcameraFollowFlag(1)
-		event.SetFcameraFollowA(var8, var9 + 18.0, var10)
-		event.SetCameraSpeed(16.0)
-		event.SetFcameraFollowOfs(0.0, 6.0, 0.0)
-		event.SetFcameraHeight(-14.0)
-		event.SetFcameraDist(54.0)
-		event.SetCharaPos(12, var8, var9 + 36.0, var10)
+		event.set_camera_control_enabled(0)
+		event.set_follow_camera_following(1)
+		event.set_follow_camera_target_alternate(var8, var9 + 18.0, var10)
+		event.set_camera_speed(16.0)
+		event.set_follow_camera_offset(0.0, 6.0, 0.0)
+		event.set_follow_camera_height(-14.0)
+		event.set_follow_camera_distance(54.0)
+		event.set_character_position(12, var8, var9 + 36.0, var10)
 	end
 	if active_chr_no == 1 then
-		event.SetCameraCtrl(0)
-		event.SetFcameraFollowFlag(1)
-		event.SetFcameraFollowA(var8, var9 + 18.0, var10)
-		event.SetCameraSpeed(16.0)
-		event.SetFcameraFollowOfs(0.0, 0.0, 0.0)
-		event.SetFcameraHeight(-5.0)
-		event.SetFcameraDist(34.0)
+		event.set_camera_control_enabled(0)
+		event.set_follow_camera_following(1)
+		event.set_follow_camera_target_alternate(var8, var9 + 18.0, var10)
+		event.set_camera_speed(16.0)
+		event.set_follow_camera_offset(0.0, 0.0, 0.0)
+		event.set_follow_camera_height(-5.0)
+		event.set_follow_camera_distance(34.0)
 		pos_x_3 = vm.f32(vm.f32(vm.sin(var17) * 8.0) + var8)
 		pos_y_3 = vm.f32(var9 + 18.0)
 		pos_z_3 = vm.f32(vm.f32(vm.cos(var17) * 8.0) + var10)
-		event.SetCharaPos(12, pos_x_3, pos_y_3, pos_z_3)
+		event.set_character_position(12, pos_x_3, pos_y_3, pos_z_3)
 	end
-	event.EohSyncChara(2, 1)
-	event.EohSetShow(2, 0)
-	event.EohSyncChara(3, 2)
-	event.EohSetShow(3, 0)
-	event.SetCrossfade(30)
-	event.ObjsSetMotion(0, "取る", 6)
-	event.ObjsNextMotion(0, "取るL", 4)
+	event.attach_object_handle_to_character(2, 1)
+	event.set_object_handle_visible(2, 0)
+	event.attach_object_handle_to_character(3, 2)
+	event.set_object_handle_visible(3, 0)
+	event.start_crossfade(30)
+	event.set_object_sequence_motion(0, "取る", 6)
+	event.queue_object_sequence_next_motion(0, "取るL", 4)
 	wait_frames(16)
-	event.SndSePlay(var4, 0)
+	event.play_sound_effect(var4, 0)
 	wait_frames(2)
-	event.EohSetPos(1, 0.0, 0.0, 0.0)
-	event.GeostoneSetReference(0, "item")
+	event.set_object_handle_position(1, 0.0, 0.0, 0.0)
+	event.attach_geostone_to_character_frame(0, "item")
 	wait_frames(10)
 	do
-		local out1, out2, out3 = event.GetCameraPos()
+		local out1, out2, out3 = event.get_camera_position()
 		pos_x = out1 or pos_x
 		pos_y = out2 or pos_y
 		pos_z = out3 or pos_z
 	end
-	var17 = event.GetRefAngle(var8, var9, var10, pos_x, pos_y, pos_z) or var17
-	event.SetCharaRot(12, 0.0, var17, 0.0)
-	event.CharaActive(1, 12)
-	event.EohSyncChara(4, 12)
-	event.ObjsInit(4)
-	event.ObjsSyncObj(4, 4)
-	event.ObjsSetMotion(4, "発動", 6, 1.2)
-	event.ObjsMotionWait(4)
-	event.ObjsResetMotion(4)
-	event.ObjsSetMotion(4, "発動", 5)
+	var17 = event.get_direction_angle(var8, var9, var10, pos_x, pos_y, pos_z) or var17
+	event.set_character_rotation(12, 0.0, var17, 0.0)
+	event.set_character_active(1, 12)
+	event.attach_object_handle_to_character(4, 12)
+	event.clear_object_sequence(4)
+	event.set_object_sequence_object(4, 4)
+	event.set_object_sequence_motion(4, "発動", 6, 1.2)
+	event.wait_object_sequence_motion_end(4)
+	event.reset_object_sequence_motion(4)
+	event.set_object_sequence_motion(4, "発動", 5)
 	wait_frames(20)
-	event.SndSePlay(var4, 1)
+	event.play_sound_effect(var4, 1)
 	wait_objects(0)
-	event.SetMesPreset(0, 4)
-	event.SetMesWindowMode(0, 4)
-	event.SetMesDrawspeed(0, 1)
-	argc = event.GetSysSndId() or argc
-	event.SndSePlay(argc, 18)
+	event.apply_message_window_preset(0, 4)
+	event.set_message_window_mode(0, 4)
+	event.set_message_draw_speed(0, 1)
+	argc = event.get_system_sound_id() or argc
+	event.play_sound_effect(argc, 18)
 	helper_75684dd8(0, 2400, 8, 0, 0)
-	event.SetMesWindowMode(0, 1)
-	event.SetMesDrawspeed(0, 0)
-	stage_id = event.DngGetStageId() or stage_id
-	var23 = event.DngGetFloorId() or var23
-	event.SetFloorInfo(stage_id, var23, 5, 256)
-	event.SetCrossfade(10)
+	event.set_message_window_mode(0, 1)
+	event.set_message_draw_speed(0, 0)
+	stage_id = event.get_dungeon_stage_id() or stage_id
+	var23 = event.get_dungeon_floor() or var23
+	event.set_dungeon_floor_info(stage_id, var23, 5, 256)
+	event.start_crossfade(10)
 	if active_chr_no == 1 then
-		event.SetMotion(0, "取る戻り", 6)
+		event.set_character_motion(0, "取る戻り", 6)
 		vm.wait(13)
 	end
-	event.DngPause(529, 0)
-	event.SetMotion(0, "立ち", 4)
-	event.SetCharaPos(0, var1, var2, var3)
-	event.EohResetDaPosition(0)
-	event.EohSyncChara(2, 1)
-	event.EohSetShow(2, 1)
-	event.EohSyncChara(3, 2)
-	event.EohSetShow(3, 1)
-	event.GeostoneDelReference()
-	event.GeostoneSetFlag(0)
-	event.EohSetScale(1, 1.0, 1.0, 1.0)
-	event.DelExtMotion(0)
-	event.DeleteChara(12)
-	event.SetCameraCtrl(1)
-	event.Finish()
+	event.set_dungeon_pause_flags(529, 0)
+	event.set_character_motion(0, "立ち", 4)
+	event.set_character_position(0, var1, var2, var3)
+	event.reset_object_handle_dynamic_animation(0)
+	event.attach_object_handle_to_character(2, 1)
+	event.set_object_handle_visible(2, 1)
+	event.attach_object_handle_to_character(3, 2)
+	event.set_object_handle_visible(3, 1)
+	event.detach_geostone_from_character_frame()
+	event.set_geostone_placed(0)
+	event.set_object_handle_scale(1, 1.0, 1.0, 1.0)
+	event.delete_character_extension_packs(0)
+	event.delete_character(12)
+	event.set_camera_control_enabled(1)
+	event.finish_event()
 end
 
 --- Event 1200, which map data, a script or the engine runs by number.
@@ -783,61 +783,61 @@ function script.floor_clear()
 	local var0: s32 = 0
 	local stage_id: s32 = 0
 	local var2: s32 = 0
-	event.Initialize()
+	event.initialize_event()
 	vm.wait(1)
-	event.ActchrSetDefMotion(0, 4)
-	event.FadeOutBgm(60)
-	var0 = event.GetCnt(17) or var0
+	event.reset_action_character_motion(0, 4)
+	event.fade_out_music(60)
+	var0 = event.get_save_counter(17) or var0
 	if bit32.band(var0, 256) == 0 then
-		event.PostTreasureBox(50.0, 0.0, 600.0, 3.14, 189)
+		event.place_treasure_box(50.0, 0.0, 600.0, 3.14, 189)
 	end
 	if bit32.band(var0, 512) == 0 then
-		event.PostTreasureBox(-50.0, 0.0, 600.0, 3.14, 189)
+		event.place_treasure_box(-50.0, 0.0, 600.0, 3.14, 189)
 	end
 	if bit32.band(var0, 256) == 0 or bit32.band(var0, 512) == 0 then
-		event.SetCrossfade(30)
-		event.SetCameraPos(-6.4, 43.21, 329.72)
-		event.SetCameraRef(-3.01, 30.0, 440.22)
-		event.SetCharaPos(0, -3.03, 0.0, 439.67)
-		event.SetCharaRot(0, 0.0, 0.03, 0.0)
+		event.start_crossfade(30)
+		event.set_camera_position(-6.4, 43.21, 329.72)
+		event.set_camera_look_at(-3.01, 30.0, 440.22)
+		event.set_character_position(0, -3.03, 0.0, 439.67)
+		event.set_character_rotation(0, 0.0, 0.03, 0.0)
 		wait_frames(30)
-		event.ResetCamera(0)
+		event.reset_follow_camera(0)
 	end
-	event.SetLoadbgFile_1("snd2/bgm/bg_193.sound.json")
+	event.start_background_file_loads_1("snd2/bgm/bg_193.sound.json")
 	helper_479dc9e9()
-	event.LoadBgmPack(193)
-	event.PlayBgm(0)
-	stage_id = event.DngGetStageId() or stage_id
-	var2 = event.DngGetFloorId() or var2
-	event.SetFloorInfo(stage_id, var2, 5, 2)
-	event.Finish()
+	event.load_music_pack(193)
+	event.play_music(0)
+	stage_id = event.get_dungeon_stage_id() or stage_id
+	var2 = event.get_dungeon_floor() or var2
+	event.set_dungeon_floor_info(stage_id, var2, 5, 2)
+	event.finish_event()
 end
 
 --- The dungeon system event run on the first examination of a random stone.
 function script.random_stone_guide()
-	event.Initialize()
-	event.ActchrSetDefMotion(0)
-	event.DngPause(513, 1)
-	event.SetFlag(50, 1)
-	event.SetMesPreset(0, 4)
-	event.SetMesWindowMode(0, 4)
-	event.SetMesDrawspeed(0, 1)
+	event.initialize_event()
+	event.reset_action_character_motion(0)
+	event.set_dungeon_pause_flags(513, 1)
+	event.set_save_flag(50, 1)
+	event.apply_message_window_preset(0, 4)
+	event.set_message_window_mode(0, 4)
+	event.set_message_draw_speed(0, 1)
 	helper_75684dd8(0, 2600, 8, 0, 0)
 	vm.wait(2)
-	event.SetMesWindowMode(0, 1)
-	event.SetMesDrawspeed(0, 0)
-	event.DngPause(513, 0)
-	event.Finish()
+	event.set_message_window_mode(0, 1)
+	event.set_message_draw_speed(0, 0)
+	event.set_dungeon_pause_flags(513, 0)
+	event.finish_event()
 end
 
 --- Event 2510, which map data, a script or the engine runs by number.
 function script.event_2510()
 	local var0: s32 = 0
-	event.Initialize()
-	event.DngPause(515, 1)
-	event.SetMesPreset(0, 4)
-	event.SetMesWindowMode(0, 4)
-	event.SetMesDrawspeed(0, 1)
+	event.initialize_event()
+	event.set_dungeon_pause_flags(515, 1)
+	event.apply_message_window_preset(0, 4)
+	event.set_message_window_mode(0, 4)
+	event.set_message_draw_speed(0, 1)
 	open_message(0, 2610, 8, 0, 0)
 	wait_frames(30)
 	do
@@ -845,20 +845,20 @@ function script.event_2510()
 		_, var0 = wait_message_answer(0, 0, var0)
 	end
 	close_message(0)
-	event.SetMesWindowMode(0, 1)
-	event.SetMesDrawspeed(0, 0)
-	event.DngPause(515, 0)
-	event.Finish()
+	event.set_message_window_mode(0, 1)
+	event.set_message_draw_speed(0, 0)
+	event.set_dungeon_pause_flags(515, 0)
+	event.finish_event()
 end
 
 --- The dungeon system event run the first time the player levels up.
 function script.level_up_guide()
 	local var0: s32 = 0
-	event.Initialize()
-	event.DngPause(515, 1)
-	event.SetMesPreset(0, 4)
-	event.SetMesWindowMode(0, 4)
-	event.SetMesDrawspeed(0, 1)
+	event.initialize_event()
+	event.set_dungeon_pause_flags(515, 1)
+	event.apply_message_window_preset(0, 4)
+	event.set_message_window_mode(0, 4)
+	event.set_message_draw_speed(0, 1)
 	open_message(0, 2620, 8, 0, 0)
 	wait_frames(30)
 	do
@@ -869,69 +869,69 @@ function script.level_up_guide()
 	helper_75684dd8(0, 2621, 8, 0, 0)
 	helper_75684dd8(0, 2622, 8, 0, 0)
 	helper_75684dd8(0, 2623, 8, 0, 0)
-	event.MesMake_2(0, "Consulta Ayuda en el men[UNI00fa] Principal para obtener m[UNI00e1]s informaci[UNI00f3]n.")
+	event.open_message_window_2(0, "Consulta Ayuda en el men[UNI00fa] Principal para obtener m[UNI00e1]s informaci[UNI00f3]n.")
 	helper_75684dd8(0, -1, 8, 0, 0)
 	vm.wait(7)
-	event.SetMesWindowMode(0, 1)
-	event.SetMesDrawspeed(0, 0)
-	event.DngPause(515, 0)
-	event.Finish()
+	event.set_message_window_mode(0, 1)
+	event.set_message_draw_speed(0, 0)
+	event.set_dungeon_pause_flags(515, 0)
+	event.finish_event()
 end
 
 --- The dungeon system event run the first time the ridepod's wheels are used.
 function script.robo_bike_guide()
-	event.Initialize()
-	event.ActchrSetDefMotion(0)
-	event.DngPause(513, 1)
-	event.SetMesPreset(0, 4)
-	event.SetMesWindowMode(0, 4)
-	event.SetMesDrawspeed(0, 1)
-	event.MesMake_2(
+	event.initialize_event()
+	event.reset_action_character_motion(0)
+	event.set_dungeon_pause_flags(513, 1)
+	event.apply_message_window_preset(0, 4)
+	event.set_message_window_mode(0, 4)
+	event.set_message_draw_speed(0, 1)
+	event.open_message_window_2(
 		0,
 		"[(!)]Conducci[UNI00f3]n del Buggy\n   Acelerar (L)↑/ Frenar (L)↓\n   Girar (L) ← o →\n   Curvas cerradas [l1] + (L) ← o →"
 	)
 	helper_75684dd8(0, -1, 8, 0, 0)
 	vm.wait(2)
-	event.SetMesWindowMode(0, 1)
-	event.SetMesDrawspeed(0, 0)
-	event.DngPause(513, 0)
-	event.Finish()
+	event.set_message_window_mode(0, 1)
+	event.set_message_draw_speed(0, 0)
+	event.set_dungeon_pause_flags(513, 0)
+	event.finish_event()
 end
 
 --- The dungeon system event run the first time the magic sword counter fills.
 function script.magic_sword_guide()
-	event.Initialize()
-	event.DngPause(515, 1)
-	event.SetMesPreset(0, 4)
-	event.SetMesWindowMode(0, 4)
-	event.SetMesDrawspeed(0, 1)
-	event.MesMake_2(0, "[(!)]Has aprendido a usar la Hoja de absorci[UNI00f3]n m[UNI00e1]gica.")
+	event.initialize_event()
+	event.set_dungeon_pause_flags(515, 1)
+	event.apply_message_window_preset(0, 4)
+	event.set_message_window_mode(0, 4)
+	event.set_message_draw_speed(0, 1)
+	event.open_message_window_2(0, "[(!)]Has aprendido a usar la Hoja de absorci[UNI00f3]n m[UNI00e1]gica.")
 	helper_75684dd8(0, -1, 8, 0, 0)
-	event.MesMake_2(
+	event.open_message_window_2(
 		0,
 		"La Hoja de absorci[UNI00f3]n m[UNI00e1]gica es una habilidad que\nte permite absorber la energ[UNI00ed]a de ataques elementales,\ncomo el Fuego, mientras te defiendes. Al blandir la\nespada, se dispara en forma de magia."
 	)
 	helper_75684dd8(0, -1, 8, 0, 0)
-	event.MesMake_2(
+	event.open_message_window_2(
 		0,
 		"Puedes recargar continuamente\nenerg[UNI00ed]a de un elemental.\nSin embargo, si absorbes\nenerg[UNI00ed]a elemental de otro tipo, pierdes toda la carga."
 	)
 	helper_75684dd8(0, -1, 8, 0, 0)
-	event.MesMake_2(
+	event.open_message_window_2(
 		0,
 		"La cantidad de energ[UNI00ed]a elemental que puedes absorber\ndepende de la resistencia del arma que est[UNI00e9]s usando."
 	)
 	helper_75684dd8(0, -1, 8, 0, 0)
-	event.MesMake_2(
+	event.open_message_window_2(
 		0,
 		"Para liberar energ[UNI00ed]a elemental absorbida\nen forma de magia, pulsa el bot[UNI00f3]n [l1]\nmientras te defiendes con el bot[UNI00f3]n [r1]."
 	)
 	helper_75684dd8(0, -1, 8, 0, 0)
 	vm.wait(6)
-	event.SetMesWindowMode(0, 1)
-	event.SetMesDrawspeed(0, 0)
-	event.DngPause(515, 0)
-	event.Finish()
+	event.set_message_window_mode(0, 1)
+	event.set_message_draw_speed(0, 0)
+	event.set_dungeon_pause_flags(515, 0)
+	event.finish_event()
 end
 
 return script

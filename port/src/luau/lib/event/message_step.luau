@@ -21,7 +21,7 @@ local function message_step(window: any, answers: s32)
 	if answers == 2 then
 		var3 = 1
 	end
-	var4 = event.GetMesWindowMode(window) or var4
+	var4 = event.get_message_window_frame(window) or var4
 	var5 = 1
 	if var4 == 7 then
 		var5 = 0
@@ -29,8 +29,8 @@ local function message_step(window: any, answers: s32)
 	if var4 == 0 then
 		var5 = 0
 	end
-	stream_playing = event.GetMesVoice() or stream_playing
-	var7 = event.GetMesStatus(window) or var7
+	stream_playing = event.is_voice_stream_playing() or stream_playing
+	var7 = event.get_message_window_state(window) or var7
 	if var7 == 0 then
 		return 0
 	end
@@ -39,8 +39,8 @@ local function message_step(window: any, answers: s32)
 	end
 	if var7 == 3 then
 		if stream_playing == 0 then
-			event.TrgPakuAnim(0)
-			event.TrgPakuMotion(1)
+			event.trigger_mouth_texture_animation(0)
+			event.trigger_mouth_motion(1)
 		end
 	end
 	if var7 == 4 then
@@ -48,14 +48,14 @@ local function message_step(window: any, answers: s32)
 	end
 	if var7 == 5 then
 		if stream_playing == 0 then
-			event.TrgPakuAnim(0)
-			event.TrgPakuMotion(1)
+			event.trigger_mouth_texture_animation(0)
+			event.trigger_mouth_motion(1)
 		end
 	end
-	pressed = event.CheckButton(0) or pressed
-	pressed_2 = event.CheckButton(1) or pressed_2
-	pressed_3 = event.CheckButton(2) or pressed_3
-	pressed_4 = event.CheckButton(3) or pressed_4
+	pressed = event.is_event_button_pressed(0) or pressed
+	pressed_2 = event.is_event_button_pressed(1) or pressed_2
+	pressed_3 = event.is_event_button_pressed(2) or pressed_3
+	pressed_4 = event.is_event_button_pressed(3) or pressed_4
 	if
 		(
 			if (if (if pressed ~= 0 then 1 else pressed_2) ~= 0 then 1 else if var2 ~= 0 then pressed_3 else 0)
@@ -66,29 +66,29 @@ local function message_step(window: any, answers: s32)
 	then
 		if var5 ~= 0 then
 			if pressed_2 ~= 0 then
-				event.MesSePlay(0)
+				event.play_message_sound(0)
 			end
 			if pressed ~= 0 then
-				event.MesSePlay(1)
+				event.play_message_sound(1)
 			end
 			if (if var2 ~= 0 then pressed_3 else 0) ~= 0 then
-				event.MesSePlay(0)
+				event.play_message_sound(0)
 			end
 			if (if var3 ~= 0 then pressed_4 else 0) ~= 0 then
-				event.MesSePlay(0)
+				event.play_message_sound(0)
 			end
 		end
 		if var7 == 5 then
-			event.MesNextpage(window)
+			event.advance_message_page(window)
 			if stream_playing == 0 then
-				event.TrgPakuAnim(1)
-				event.TrgPakuMotion(0)
+				event.trigger_mouth_texture_animation(1)
+				event.trigger_mouth_motion(0)
 			end
 		end
 		if var7 == 3 then
 			if stream_playing == 0 then
-				event.TrgPakuAnim(0)
-				event.TrgPakuMotion(2)
+				event.trigger_mouth_texture_animation(0)
+				event.trigger_mouth_motion(2)
 			end
 			if (if var2 ~= 0 then pressed_3 else 0) ~= 0 then
 				return 2
@@ -99,11 +99,11 @@ local function message_step(window: any, answers: s32)
 			return 1
 		end
 		if var7 ~= 5 and var7 ~= 3 then
-			event.SetMesDrawspeed(window, 0.0)
-			event.TrgPakuAnim(0)
-			event.TrgPakuMotion(1)
+			event.set_message_draw_speed(window, 0.0)
+			event.trigger_mouth_texture_animation(0)
+			event.trigger_mouth_motion(1)
 			if stream_playing ~= 0 then
-				event.StreamStop(1)
+				event.stop_voice_stream(1)
 			end
 		end
 	end

@@ -13,8 +13,8 @@ local function helper_8aa6dccc(arg0: s32, arg1: any, arg2: any, arg3: s32, arg4:
 		vm.wait(1)
 		at = 2
 		vm.wait(2)
-		event.MesMake_2(arg0, arg1)
-		event.SetMesAutoset(arg0, arg2, arg3)
+		event.open_message_window_2(arg0, arg1)
+		event.place_message_bubble(arg0, arg2, arg3)
 		at = 3
 		return helper_39af59c5(arg0, arg4, arg5, 0)
 	end, function(received: { any })

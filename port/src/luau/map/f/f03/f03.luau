@@ -26,26 +26,26 @@ local wait_objects = require("@lib/event/wait_objects")
 --- Event 99, which map data, a script or the engine runs by number.
 local function event_99()
 	local var0: s32 = 0
-	event.EohSyncObj_2(1, "p04_f0301")
+	event.attach_object_handle_to_map_part_2(1, "p04_f0301")
 	var0 = helper_6be25ed2()
 	if var0 == 0 then
-		event.FuncPointShow("", "event_400", 0)
-		event.FuncPointShow("", "event_401", 0)
-		event.FuncPointShow("", "event_402", 0)
-		event.FuncPointShow("", "event_403", 0)
-		event.FuncPointShow("", "event_404", 0)
+		event.set_function_point_enabled("", "event_400", 0)
+		event.set_function_point_enabled("", "event_401", 0)
+		event.set_function_point_enabled("", "event_402", 0)
+		event.set_function_point_enabled("", "event_403", 0)
+		event.set_function_point_enabled("", "event_404", 0)
 	else
-		event.EohSetShow(1, 0)
+		event.set_object_handle_visible(1, 0)
 	end
 	if helper_13ff22fe() == 0 then
-		event.EohSyncObj_2(1, "p14_f0301")
-		event.EohSetShow(1, 0)
-		event.EohSyncObj_2(1, "p15_f0301")
-		event.EohSetShow(1, 0)
-		event.EohSyncObj_2(1, "p16_f0301")
-		event.EohSetShow(1, 0)
-		event.EohSyncObj_2(1, "p17_f0301")
-		event.EohSetShow(1, 0)
+		event.attach_object_handle_to_map_part_2(1, "p14_f0301")
+		event.set_object_handle_visible(1, 0)
+		event.attach_object_handle_to_map_part_2(1, "p15_f0301")
+		event.set_object_handle_visible(1, 0)
+		event.attach_object_handle_to_map_part_2(1, "p16_f0301")
+		event.set_object_handle_visible(1, 0)
+		event.attach_object_handle_to_map_part_2(1, "p17_f0301")
+		event.set_object_handle_visible(1, 0)
 	end
 	helper_d0e95767()
 end
@@ -54,108 +54,108 @@ end
 local function helper_1d55c()
 	local active_chr_no: s32 = 0
 	vm.section(function()
-		event.SetFlag(456, 1)
-		event.Initialize()
-		event.SetMesWindowMode(0, 7)
-		event.AssignStack(5)
-		event.ClearStack(5)
-		active_chr_no = event.GetActiveChrNo() or active_chr_no
-		event.SetStatus(1, 0, 256, 1)
-		event.ChangeDir("event/e400/e456/")
-		event.LoadMes(0, 5, "e456.txt")
+		event.set_save_flag(456, 1)
+		event.initialize_event()
+		event.set_message_window_mode(0, 7)
+		event.assign_memory_stack(5)
+		event.clear_memory_stack(5)
+		active_chr_no = event.get_playable_character() or active_chr_no
+		event.set_scene_status_flags(1, 0, 256, 1)
+		event.change_directory("event/e400/e456/")
+		event.load_message_file(0, 5, "e456.txt")
 		if active_chr_no == 0 then
-			event.LoadMotion(5, "e456_mints.gltf", "info", 0)
-			event.CharaActive(0)
-			event.EohSyncChara(0, 0)
-			event.ObjsInit(0)
-			event.ObjsSyncObj(0, 0)
+			event.load_character_motion_pack(5, "e456_mints.gltf", "info", 0)
+			event.set_character_active(0)
+			event.attach_object_handle_to_character(0, 0)
+			event.clear_object_sequence(0)
+			event.set_object_sequence_object(0, 0)
 		end
 		if active_chr_no == 1 then
-			event.LoadMotion(5, "e456_monica.gltf", "info", 0)
-			event.CharaActive(0)
-			event.EohSyncChara(1, 0)
-			event.ObjsInit(1)
-			event.ObjsSyncObj(1, 1)
+			event.load_character_motion_pack(5, "e456_monica.gltf", "info", 0)
+			event.set_character_active(0)
+			event.attach_object_handle_to_character(1, 0)
+			event.clear_object_sequence(1)
+			event.set_object_sequence_object(1, 1)
 		end
-		event.ChangeDir("")
+		event.change_directory("")
 		if active_chr_no == 1 then
-			event.LoadChara(5, "chara/c01_base.gltf", "info", 32)
-			event.LoadEquip(5, 0, 4, "info", 32)
-			event.LoadEquip(5, 0, 3, "info", 32)
-			event.LoadEquip(5, 0, 2, "info", 32, 33)
-			event.LoadMotion(5, "event/e400/e456/e456_mints.gltf", "info", 32)
-			event.EohSyncChara(0, 32)
-			event.ObjsInit(0)
-			event.ObjsSyncObj(0, 0)
+			event.load_character(5, "chara/c01_base.gltf", "info", 32)
+			event.load_equipment_model(5, 0, 4, "info", 32)
+			event.load_equipment_model(5, 0, 3, "info", 32)
+			event.load_equipment_model(5, 0, 2, "info", 32, 33)
+			event.load_character_motion_pack(5, "event/e400/e456/e456_mints.gltf", "info", 32)
+			event.attach_object_handle_to_character(0, 32)
+			event.clear_object_sequence(0)
+			event.set_object_sequence_object(0, 0)
 		else
-			event.LoadChara(5, "chara/c02_base.gltf", "info", 32)
-			event.LoadEquip(5, 1, 4, "info", 32)
-			event.LoadEquip(5, 1, 3, "info", 32)
-			event.LoadEquip(5, 1, 2, "info", 32, 33)
-			event.LoadMotion(5, "event/e400/e456/e456_monica.gltf", "info", 32)
-			event.EohSyncChara(1, 32)
-			event.ObjsInit(1)
-			event.ObjsSyncObj(1, 1)
+			event.load_character(5, "chara/c02_base.gltf", "info", 32)
+			event.load_equipment_model(5, 1, 4, "info", 32)
+			event.load_equipment_model(5, 1, 3, "info", 32)
+			event.load_equipment_model(5, 1, 2, "info", 32, 33)
+			event.load_character_motion_pack(5, "event/e400/e456/e456_monica.gltf", "info", 32)
+			event.attach_object_handle_to_character(1, 32)
+			event.clear_object_sequence(1)
+			event.set_object_sequence_object(1, 1)
 		end
-		event.CharaActive(32)
-		event.CharaActive(33)
-		event.EohSetPos(0, -15.0, 190.0, 980.0)
-		event.EohSetRot(0, 0.0, 2.42, 0.0)
-		event.EohSetFootSoundId(0, 6)
-		event.EohSetTexAnim(0, 0)
-		event.EohSetTexAnim(0, 1, "デフォルト顔")
-		event.EohSetTexAnim(0, 1, "通常目パチ")
-		event.EohSetPos(1, 10.0, 190.0, 1010.0)
-		event.EohSetRot(1, 0.0, 2.66, 0.0)
-		event.EohSetFootSoundId(1, 6)
-		event.EohSetTexAnim(1, 0)
-		event.EohSetTexAnim(1, 1, "デフォルト顔")
-		event.EohSetTexAnim(1, 1, "通常目パチ")
-		event.InitDramaScene()
-		event.CmrsInit()
-		event.CmrsSetPos(-121.94, 324.32, 1079.66)
-		event.CmrsSetRef(60.51, 330.31, 947.34)
-		event.CmrsMove2(-121.94, 324.32, 1079.66, -127.07, 330.31, 851.61, 60, 0, 1.0)
-		event.SetFadeIn(30)
+		event.set_character_active(32)
+		event.set_character_active(33)
+		event.set_object_handle_position(0, -15.0, 190.0, 980.0)
+		event.set_object_handle_rotation(0, 0.0, 2.42, 0.0)
+		event.set_object_handle_footstep_sound(0, 6)
+		event.set_object_handle_texture_animation(0, 0)
+		event.set_object_handle_texture_animation(0, 1, "デフォルト顔")
+		event.set_object_handle_texture_animation(0, 1, "通常目パチ")
+		event.set_object_handle_position(1, 10.0, 190.0, 1010.0)
+		event.set_object_handle_rotation(1, 0.0, 2.66, 0.0)
+		event.set_object_handle_footstep_sound(1, 6)
+		event.set_object_handle_texture_animation(1, 0)
+		event.set_object_handle_texture_animation(1, 1, "デフォルト顔")
+		event.set_object_handle_texture_animation(1, 1, "通常目パチ")
+		event.enable_drama_skip()
+		event.clear_camera_sequence()
+		event.set_camera_sequence_position(-121.94, 324.32, 1079.66)
+		event.set_camera_sequence_look_at(60.51, 330.31, 947.34)
+		event.move_camera_sequence_eased(-121.94, 324.32, 1079.66, -127.07, 330.31, 851.61, 60, 0, 1.0)
+		event.fade_in_screen(30)
 		wait_camera()
-		event.CmrsSetPos(-43.47, 251.31, 889.38)
-		event.CmrsSetRef(0.73, 198.66, 1005.94)
-		event.ObjsSetMotion(0, "指さし", 6)
-		event.ObjsNextMotion(0, "指さしL", 4)
-		event.SetPakuAnim(0, "通常口パク")
+		event.set_camera_sequence_position(-43.47, 251.31, 889.38)
+		event.set_camera_sequence_look_at(0.73, 198.66, 1005.94)
+		event.set_object_sequence_motion(0, "指さし", 6)
+		event.queue_object_sequence_next_motion(0, "指さしL", 4)
+		event.set_mouth_texture_animations(0, "通常口パク")
 		helper_4116e6bb(4560010)
 		wait_objects(0)
-		event.ObjsSetMotion(0, "指さし戻り", 6)
-		event.ObjsNextMotion(0, "立ち", 4)
-		event.SetPakuAnim(1, "通常口パク")
+		event.set_object_sequence_motion(0, "指さし戻り", 6)
+		event.queue_object_sequence_next_motion(0, "立ち", 4)
+		event.set_mouth_texture_animations(1, "通常口パク")
 		helper_4116e6bb(4560020)
 		wait_objects(0)
-		event.ObjsSetMotion(0, "走り")
-		event.ObjsMove(0, -15.0, 190.0, 820.0, 60)
-		event.ObjsRotation(0, 0.0, 3.14, 0.0, 10)
+		event.set_object_sequence_motion(0, "走り")
+		event.move_object_sequence(0, -15.0, 190.0, 820.0, 60)
+		event.rotate_object_sequence(0, 0.0, 3.14, 0.0, 10)
 		helper_888ab2a3(4)
-		event.ObjsSetMotion(1, "走り")
-		event.ObjsMove(1, 10.0, 190.0, 870.0, 56)
-		event.ObjsRotation(1, 0.0, 3.14, 0.0, 10)
+		event.set_object_sequence_motion(1, "走り")
+		event.move_object_sequence(1, 10.0, 190.0, 870.0, 56)
+		event.rotate_object_sequence(1, 0.0, 3.14, 0.0, 10)
 		helper_888ab2a3(26)
-		event.SetFadeOut(30)
+		event.fade_out_screen(30)
 		helper_888ab2a3(30)
 	end)
 	vm.entry(9)
-	event.CancelDramaScene()
-	event.CharaActive(0)
-	event.CharaActive(32)
-	event.CharaActive(33)
-	event.SetStatus(1, 0, 256, 0)
-	event.EohSetFootSoundId(0, 0)
-	event.EohSetFootSoundId(1, 0)
-	event.DelExtMotion(0)
-	event.DeleteChara(32)
-	event.DeleteChara(33)
-	event.LoadMes(0, -1)
+	event.cancel_drama_scene_skip()
+	event.set_character_active(0)
+	event.set_character_active(32)
+	event.set_character_active(33)
+	event.set_scene_status_flags(1, 0, 256, 0)
+	event.set_object_handle_footstep_sound(0, 0)
+	event.set_object_handle_footstep_sound(1, 0)
+	event.delete_character_extension_packs(0)
+	event.delete_character(32)
+	event.delete_character(33)
+	event.load_message_file(0, -1)
 	helper_9dafbc83(0.0, 190.0, 500.0, vm.f32(-3.14))
-	event.ResetCamera(1, 3.14, 10)
-	event.SetFadeIn(30)
+	event.reset_follow_camera(1, 3.14, 10)
+	event.fade_in_screen(30)
 end
 
 --- Helper function.
@@ -164,125 +164,125 @@ local function helper_1ec20()
 	local active_chr_no: s32 = 0
 	vm.section(function()
 		vm.entry(1)
-		event.SetFlag(460, 1)
-		event.Initialize()
-		event.SetMesWindowMode(0, 7)
-		event.LoadSound(4514)
-		var0 = event.SndLoadSound_2(4514) or var0
-		event.AssignStack(5)
-		event.ClearStack(5)
-		active_chr_no = event.GetActiveChrNo() or active_chr_no
-		event.SetStatus(1, 0, 256, 1)
-		event.ChangeDir("event/e400/e460/")
-		event.LoadMes(0, 5, "e460.txt")
+		event.set_save_flag(460, 1)
+		event.initialize_event()
+		event.set_message_window_mode(0, 7)
+		event.load_map_sounds(4514)
+		var0 = event.load_sound_effect_file_2(4514) or var0
+		event.assign_memory_stack(5)
+		event.clear_memory_stack(5)
+		active_chr_no = event.get_playable_character() or active_chr_no
+		event.set_scene_status_flags(1, 0, 256, 1)
+		event.change_directory("event/e400/e460/")
+		event.load_message_file(0, 5, "e460.txt")
 		if active_chr_no == 0 then
-			event.LoadMotion(5, "e460_mints.gltf", "info", 0)
-			event.CharaActive(0)
-			event.EohSyncChara(0, 0)
-			event.ObjsInit(0)
-			event.ObjsSyncObj(0, 0)
+			event.load_character_motion_pack(5, "e460_mints.gltf", "info", 0)
+			event.set_character_active(0)
+			event.attach_object_handle_to_character(0, 0)
+			event.clear_object_sequence(0)
+			event.set_object_sequence_object(0, 0)
 		end
 		if active_chr_no == 1 then
-			event.LoadMotion(5, "e460_monica.gltf", "info", 0)
-			event.CharaActive(0)
-			event.EohSyncChara(1, 0)
-			event.ObjsInit(1)
-			event.ObjsSyncObj(1, 1)
+			event.load_character_motion_pack(5, "e460_monica.gltf", "info", 0)
+			event.set_character_active(0)
+			event.attach_object_handle_to_character(1, 0)
+			event.clear_object_sequence(1)
+			event.set_object_sequence_object(1, 1)
 		end
-		event.ChangeDir("")
+		event.change_directory("")
 		if active_chr_no == 1 then
-			event.LoadChara(5, "chara/c01_base.gltf", "info", 32)
-			event.LoadEquip(5, 0, 4, "info", 32)
-			event.LoadEquip(5, 0, 3, "info", 32)
-			event.LoadEquip(5, 0, 2, "info", 32, 33)
-			event.LoadMotion(5, "event/e400/e460/e460_mints.gltf", "info", 32)
-			event.EohSyncChara(0, 32)
-			event.ObjsInit(0)
-			event.ObjsSyncObj(0, 0)
+			event.load_character(5, "chara/c01_base.gltf", "info", 32)
+			event.load_equipment_model(5, 0, 4, "info", 32)
+			event.load_equipment_model(5, 0, 3, "info", 32)
+			event.load_equipment_model(5, 0, 2, "info", 32, 33)
+			event.load_character_motion_pack(5, "event/e400/e460/e460_mints.gltf", "info", 32)
+			event.attach_object_handle_to_character(0, 32)
+			event.clear_object_sequence(0)
+			event.set_object_sequence_object(0, 0)
 		else
-			event.LoadChara(5, "chara/c02_base.gltf", "info", 32)
-			event.LoadEquip(5, 1, 4, "info", 32)
-			event.LoadEquip(5, 1, 3, "info", 32)
-			event.LoadEquip(5, 1, 2, "info", 32, 33)
-			event.LoadMotion(5, "event/e400/e460/e460_monica.gltf", "info", 32)
-			event.EohSyncChara(1, 32)
-			event.ObjsInit(1)
-			event.ObjsSyncObj(1, 1)
+			event.load_character(5, "chara/c02_base.gltf", "info", 32)
+			event.load_equipment_model(5, 1, 4, "info", 32)
+			event.load_equipment_model(5, 1, 3, "info", 32)
+			event.load_equipment_model(5, 1, 2, "info", 32, 33)
+			event.load_character_motion_pack(5, "event/e400/e460/e460_monica.gltf", "info", 32)
+			event.attach_object_handle_to_character(1, 32)
+			event.clear_object_sequence(1)
+			event.set_object_sequence_object(1, 1)
 		end
-		event.CharaActive(32)
-		event.CharaActive(33)
-		event.EohSetPos(0, 10.0, 190.0, 1010.0)
-		event.EohSetRot(0, 0.0, 3.14, 0.0)
-		event.EohSetFootSoundId(0, 6)
-		event.EohSetTexAnim(0, 0)
-		event.EohSetTexAnim(0, 1, "デフォルト顔")
-		event.EohSetTexAnim(0, 1, "通常目パチ")
-		event.EohSetPos(1, -15.0, 190.0, 980.0)
-		event.EohSetRot(1, 0.0, 3.14, 0.0)
-		event.EohSetFootSoundId(1, 6)
-		event.EohSetTexAnim(1, 0)
-		event.EohSetTexAnim(1, 1, "デフォルト顔")
-		event.EohSetTexAnim(1, 1, "通常目パチ")
-		event.InitDramaScene()
-		event.CmrsInit()
-		event.CmrsSetPos(1.18, 274.82, 1359.97)
-		event.CmrsSetRef(120.59, 276.91, 1224.84)
-		event.CmrsMove2(1.18, 274.82, 1359.97, -53.13, 276.91, 1185.49, 60, 0, 1.0)
-		event.ObjsSetMotion(0, "歩き", 4)
-		event.ObjsMotionDelay(0, 70)
-		event.ObjsSetMotion(0, "立ち")
-		event.ObjsMove(0, 10.0, 190.0, 950.0, 70)
-		event.ObjsSetMotion(1, "歩き", 4)
-		event.ObjsMotionDelay(1, 80)
-		event.ObjsSetMotion(1, "立ち")
-		event.ObjsMove(1, -15.0, 190.0, 900.0, 60)
-		event.SetFadeIn(30)
+		event.set_character_active(32)
+		event.set_character_active(33)
+		event.set_object_handle_position(0, 10.0, 190.0, 1010.0)
+		event.set_object_handle_rotation(0, 0.0, 3.14, 0.0)
+		event.set_object_handle_footstep_sound(0, 6)
+		event.set_object_handle_texture_animation(0, 0)
+		event.set_object_handle_texture_animation(0, 1, "デフォルト顔")
+		event.set_object_handle_texture_animation(0, 1, "通常目パチ")
+		event.set_object_handle_position(1, -15.0, 190.0, 980.0)
+		event.set_object_handle_rotation(1, 0.0, 3.14, 0.0)
+		event.set_object_handle_footstep_sound(1, 6)
+		event.set_object_handle_texture_animation(1, 0)
+		event.set_object_handle_texture_animation(1, 1, "デフォルト顔")
+		event.set_object_handle_texture_animation(1, 1, "通常目パチ")
+		event.enable_drama_skip()
+		event.clear_camera_sequence()
+		event.set_camera_sequence_position(1.18, 274.82, 1359.97)
+		event.set_camera_sequence_look_at(120.59, 276.91, 1224.84)
+		event.move_camera_sequence_eased(1.18, 274.82, 1359.97, -53.13, 276.91, 1185.49, 60, 0, 1.0)
+		event.set_object_sequence_motion(0, "歩き", 4)
+		event.delay_object_sequence_motion_track(0, 70)
+		event.set_object_sequence_motion(0, "立ち")
+		event.move_object_sequence(0, 10.0, 190.0, 950.0, 70)
+		event.set_object_sequence_motion(1, "歩き", 4)
+		event.delay_object_sequence_motion_track(1, 80)
+		event.set_object_sequence_motion(1, "立ち")
+		event.move_object_sequence(1, -15.0, 190.0, 900.0, 60)
+		event.fade_in_screen(30)
 		wait_camera()
 		wait_objects(0)
 		wait_objects(1)
-		event.CmrsSetPos(-86.36, 229.97, 864.78)
-		event.CmrsSetRef(-1.3, 198.75, 922.91)
-		event.ObjsSetRot(0, 0.0, -2.54, 0.0)
-		event.ObjsResetDaPosition(0)
-		event.SndSePlay(var0, 0)
-		event.ObjsSetRot(1, 0.0, -2.18, 0.0)
-		event.ObjsSetMotion(1, "遠見", 6, -1.0, 1)
-		event.ObjsNextMotion(1, "遠見Ｌ", 4)
-		event.SetPakuAnim(1, "通常口パク")
+		event.set_camera_sequence_position(-86.36, 229.97, 864.78)
+		event.set_camera_sequence_look_at(-1.3, 198.75, 922.91)
+		event.set_object_sequence_rotation(0, 0.0, -2.54, 0.0)
+		event.reset_object_sequence_dynamic_animation(0)
+		event.play_sound_effect(var0, 0)
+		event.set_object_sequence_rotation(1, 0.0, -2.18, 0.0)
+		event.set_object_sequence_motion(1, "遠見", 6, -1.0, 1)
+		event.queue_object_sequence_next_motion(1, "遠見Ｌ", 4)
+		event.set_mouth_texture_animations(1, "通常口パク")
 		helper_4116e6bb(4600010)
 		wait_objects(1)
-		event.SndSePlay(var0, 1)
-		event.ObjsSetMotion(1, "遠見戻り", 2)
-		event.ObjsNextMotion(1, "立ち", 4)
-		event.SetPakuAnim(0, "通常口パク")
+		event.play_sound_effect(var0, 1)
+		event.set_object_sequence_motion(1, "遠見戻り", 2)
+		event.queue_object_sequence_next_motion(1, "立ち", 4)
+		event.set_mouth_texture_animations(0, "通常口パク")
 		helper_4116e6bb(4600020)
 		wait_objects(1)
-		event.ObjsSetMotion(1, "走り")
-		event.ObjsMove(1, -15.0, 190.0, 740.0, 60)
-		event.ObjsRotation(1, 0.0, 3.14, 0.0, 10)
+		event.set_object_sequence_motion(1, "走り")
+		event.move_object_sequence(1, -15.0, 190.0, 740.0, 60)
+		event.rotate_object_sequence(1, 0.0, 3.14, 0.0, 10)
 		helper_888ab2a3(4)
-		event.ObjsSetMotion(0, "走り")
-		event.ObjsMove(0, 10.0, 190.0, 790.0, 56)
-		event.ObjsRotation(0, 0.0, 3.14, 0.0, 10)
+		event.set_object_sequence_motion(0, "走り")
+		event.move_object_sequence(0, 10.0, 190.0, 790.0, 56)
+		event.rotate_object_sequence(0, 0.0, 3.14, 0.0, 10)
 		helper_888ab2a3(26)
-		event.SetFadeOut(30)
+		event.fade_out_screen(30)
 		helper_888ab2a3(30)
 	end)
 	vm.entry(12)
-	event.CancelDramaScene()
-	event.CharaActive(0)
-	event.CharaActive(32)
-	event.CharaActive(33)
-	event.SetStatus(1, 0, 256, 0)
-	event.EohSetFootSoundId(0, 0)
-	event.EohSetFootSoundId(1, 0)
-	event.DelExtMotion(0)
-	event.DeleteChara(32)
-	event.DeleteChara(33)
-	event.LoadMes(0, -1)
+	event.cancel_drama_scene_skip()
+	event.set_character_active(0)
+	event.set_character_active(32)
+	event.set_character_active(33)
+	event.set_scene_status_flags(1, 0, 256, 0)
+	event.set_object_handle_footstep_sound(0, 0)
+	event.set_object_handle_footstep_sound(1, 0)
+	event.delete_character_extension_packs(0)
+	event.delete_character(32)
+	event.delete_character(33)
+	event.load_message_file(0, -1)
 	helper_9dafbc83(0.0, 190.0, 500.0, vm.f32(-3.14))
-	event.ResetCamera(1, 3.14, 10)
-	event.SetFadeIn(30)
+	event.reset_follow_camera(1, 3.14, 10)
+	event.fade_in_screen(30)
 end
 
 local script: { [any]: (...any) -> ...any } = {}
@@ -303,7 +303,7 @@ function script.default_event()
 	return vm.guard(function()
 		event_99()
 		helper_d0e95767()
-		event.GetDioramaPercent(2)
+		event.get_georama_analysis_percent(2)
 		var1 = 0
 		if helper_72334e82() ~= 0 then
 			var1 = 1
@@ -317,28 +317,28 @@ function script.default_event()
 		end
 		if helper_08c337b8() ~= 0 then
 			var1 = 1
-			event.BgmPlayCancel()
-			event.MapJump_3(-1, "f03i0301", 504)
+			event.skip_next_music_play()
+			event.jump_to_map_3(-1, "f03i0301", 504)
 			at = 3
 			vm.wait(3)
 		end
 		if var1 == 1 then
 			return
 		end
-		old_map_no = event.GetOldMapNo() or old_map_no
+		old_map_no = event.get_previous_map() or old_map_no
 		if old_map_no == 2 then
-			event.Initialize()
+			event.initialize_event()
 			at = 4
 			vm.wait(4)
 			helper_7d7eee8f(160.0, vm.f32(286.2), 1849.5, vm.f32(-2.87))
-			event.ResetCamera(1, 3.14, 2.0)
-			event.SetFadeIn(30)
+			event.reset_follow_camera(1, 3.14, 2.0)
+			event.fade_in_screen(30)
 		end
 		if old_map_no == 110 then
-			event.Initialize()
+			event.initialize_event()
 			at = 5
 			vm.wait(5)
-			var3 = event.GetCnt(2) or var3
+			var3 = event.get_save_counter(2) or var3
 			if var3 == 0 then
 				helper_7d7eee8f(0.0, 360.0, -755.0, 0.0)
 			end
@@ -354,43 +354,43 @@ function script.default_event()
 			if var3 == 4 then
 				helper_7d7eee8f(315.0, 280.0, -885.0, vm.f32(0.7853982))
 			end
-			event.ResetCamera(1, 0.0, 2.0)
-			event.SetFadeIn(30)
+			event.reset_follow_camera(1, 0.0, 2.0)
+			event.fade_in_screen(30)
 		end
 		if old_map_no == 113 then
-			event.Initialize()
+			event.initialize_event()
 			at = 6
 			vm.wait(6)
 			helper_7d7eee8f(1080.0, 190.0, -120.0, vm.f32(-2.355))
-			event.ResetCamera(1, 0.0, 2.0)
-			event.SetFadeIn(30)
+			event.reset_follow_camera(1, 0.0, 2.0)
+			event.fade_in_screen(30)
 		end
 		if old_map_no == 141 then
-			event.Initialize()
+			event.initialize_event()
 			at = 7
 			vm.wait(7)
 			helper_7d7eee8f(vm.f32(-1080.6), 190.0, vm.f32(-2277.9), vm.f32(0.77))
-			event.ResetCamera(1, 0.0, 2.0)
-			event.SetFadeIn(30)
+			event.reset_follow_camera(1, 0.0, 2.0)
+			event.fade_in_screen(30)
 		end
 		if old_map_no == 142 then
-			event.Initialize()
+			event.initialize_event()
 			at = 8
 			vm.wait(8)
 			helper_7d7eee8f(vm.f32(1050.1), 190.0, vm.f32(-2249.6), vm.f32(-0.77))
-			event.ResetCamera(1, 0.0, 2.0)
-			event.SetFadeIn(30)
+			event.reset_follow_camera(1, 0.0, 2.0)
+			event.fade_in_screen(30)
 		end
 		if old_map_no == 114 then
-			event.Initialize()
+			event.initialize_event()
 			at = 9
 			vm.wait(9)
 			helper_7d7eee8f(vm.f32(-1078.3), 190.0, -117.5, vm.f32(2.36))
-			event.ResetCamera(1, 0.0, 2.0)
-			event.SetFadeIn(30)
+			event.reset_follow_camera(1, 0.0, 2.0)
+			event.fade_in_screen(30)
 		end
-		old_sub_map_no = event.GetOldSubmapNo() or old_sub_map_no
-		get_old_interior_map_no = event.GetOldInteriorMapNo() or get_old_interior_map_no
+		old_sub_map_no = event.get_previous_submap() or old_sub_map_no
+		get_old_interior_map_no = event.get_previous_interior_map() or get_old_interior_map_no
 		print("map_no=", old_map_no, "##############\n")
 		print("old_submap_no=", old_sub_map_no, "##############\n")
 		print("old_interior_map_no=", get_old_interior_map_no, "##############\n")
@@ -405,28 +405,28 @@ function script.default_event()
 				return vm.continue_with(function()
 					if helper_08c337b8() ~= 0 then
 						var1 = 1
-						event.BgmPlayCancel()
-						event.MapJump_3(-1, "f03i0301", 504)
+						event.skip_next_music_play()
+						event.jump_to_map_3(-1, "f03i0301", 504)
 						at = 3
 						vm.wait(3)
 					end
 					if var1 == 1 then
 						return
 					end
-					old_map_no = event.GetOldMapNo() or old_map_no
+					old_map_no = event.get_previous_map() or old_map_no
 					if old_map_no == 2 then
-						event.Initialize()
+						event.initialize_event()
 						at = 4
 						vm.wait(4)
 						helper_7d7eee8f(160.0, vm.f32(286.2), 1849.5, vm.f32(-2.87))
-						event.ResetCamera(1, 3.14, 2.0)
-						event.SetFadeIn(30)
+						event.reset_follow_camera(1, 3.14, 2.0)
+						event.fade_in_screen(30)
 					end
 					if old_map_no == 110 then
-						event.Initialize()
+						event.initialize_event()
 						at = 5
 						vm.wait(5)
-						var3 = event.GetCnt(2) or var3
+						var3 = event.get_save_counter(2) or var3
 						if var3 == 0 then
 							helper_7d7eee8f(0.0, 360.0, -755.0, 0.0)
 						end
@@ -442,43 +442,43 @@ function script.default_event()
 						if var3 == 4 then
 							helper_7d7eee8f(315.0, 280.0, -885.0, vm.f32(0.7853982))
 						end
-						event.ResetCamera(1, 0.0, 2.0)
-						event.SetFadeIn(30)
+						event.reset_follow_camera(1, 0.0, 2.0)
+						event.fade_in_screen(30)
 					end
 					if old_map_no == 113 then
-						event.Initialize()
+						event.initialize_event()
 						at = 6
 						vm.wait(6)
 						helper_7d7eee8f(1080.0, 190.0, -120.0, vm.f32(-2.355))
-						event.ResetCamera(1, 0.0, 2.0)
-						event.SetFadeIn(30)
+						event.reset_follow_camera(1, 0.0, 2.0)
+						event.fade_in_screen(30)
 					end
 					if old_map_no == 141 then
-						event.Initialize()
+						event.initialize_event()
 						at = 7
 						vm.wait(7)
 						helper_7d7eee8f(vm.f32(-1080.6), 190.0, vm.f32(-2277.9), vm.f32(0.77))
-						event.ResetCamera(1, 0.0, 2.0)
-						event.SetFadeIn(30)
+						event.reset_follow_camera(1, 0.0, 2.0)
+						event.fade_in_screen(30)
 					end
 					if old_map_no == 142 then
-						event.Initialize()
+						event.initialize_event()
 						at = 8
 						vm.wait(8)
 						helper_7d7eee8f(vm.f32(1050.1), 190.0, vm.f32(-2249.6), vm.f32(-0.77))
-						event.ResetCamera(1, 0.0, 2.0)
-						event.SetFadeIn(30)
+						event.reset_follow_camera(1, 0.0, 2.0)
+						event.fade_in_screen(30)
 					end
 					if old_map_no == 114 then
-						event.Initialize()
+						event.initialize_event()
 						at = 9
 						vm.wait(9)
 						helper_7d7eee8f(vm.f32(-1078.3), 190.0, -117.5, vm.f32(2.36))
-						event.ResetCamera(1, 0.0, 2.0)
-						event.SetFadeIn(30)
+						event.reset_follow_camera(1, 0.0, 2.0)
+						event.fade_in_screen(30)
 					end
-					old_sub_map_no = event.GetOldSubmapNo() or old_sub_map_no
-					get_old_interior_map_no = event.GetOldInteriorMapNo() or get_old_interior_map_no
+					old_sub_map_no = event.get_previous_submap() or old_sub_map_no
+					get_old_interior_map_no = event.get_previous_interior_map() or get_old_interior_map_no
 					print("map_no=", old_map_no, "##############\n")
 					print("old_submap_no=", old_sub_map_no, "##############\n")
 					print("old_interior_map_no=", get_old_interior_map_no, "##############\n")
@@ -528,47 +528,47 @@ function script.key_open() end
 --- Event 300, which map data, a script or the engine runs by number.
 function script.event_300()
 	helper_6ac55e60(160.0, vm.f32(286.2), 1849.5, 0.0)
-	event.MapJump_2(-1, "g03")
+	event.jump_to_map_2(-1, "g03")
 	vm.wait(2)
 end
 
 --- Event 400, which map data, a script or the engine runs by number.
 function script.event_400()
 	helper_47990fb3(vm.f32(3.1415927), 1)
-	event.SetCnt(2, 0)
-	event.MapJump_2(-1, "f03i04")
+	event.set_save_counter(2, 0)
+	event.jump_to_map_2(-1, "f03i04")
 	vm.wait(2)
 end
 
 --- Event 401, which map data, a script or the engine runs by number.
 function script.event_401()
 	helper_47990fb3(vm.f32(0.7853982), 0)
-	event.SetCnt(2, 2)
-	event.MapJump_2(-1, "f03i04")
+	event.set_save_counter(2, 2)
+	event.jump_to_map_2(-1, "f03i04")
 	vm.wait(2)
 end
 
 --- Event 402, which map data, a script or the engine runs by number.
 function script.event_402()
 	helper_47990fb3(vm.f32(2.3561945), 0)
-	event.SetCnt(2, 1)
-	event.MapJump_2(-1, "f03i04")
+	event.set_save_counter(2, 1)
+	event.jump_to_map_2(-1, "f03i04")
 	vm.wait(2)
 end
 
 --- Event 403, which map data, a script or the engine runs by number.
 function script.event_403()
 	helper_47990fb3(vm.f32(-2.3561945), 0)
-	event.SetCnt(2, 4)
-	event.MapJump_2(-1, "f03i04")
+	event.set_save_counter(2, 4)
+	event.jump_to_map_2(-1, "f03i04")
 	vm.wait(2)
 end
 
 --- Event 404, which map data, a script or the engine runs by number.
 function script.event_404()
 	helper_47990fb3(vm.f32(-0.7853982), 0)
-	event.SetCnt(2, 3)
-	event.MapJump_2(-1, "f03i04")
+	event.set_save_counter(2, 3)
+	event.jump_to_map_2(-1, "f03i04")
 	vm.wait(2)
 end
 
@@ -577,12 +577,12 @@ function script.event_405()
 	local flag: s32 = 0
 	local flag_2: s32 = 0
 	helper_47990fb3(vm.f32(0.7853982), 0)
-	flag = event.GetFlag(408) or flag
-	flag_2 = event.GetFlag(412) or flag_2
+	flag = event.get_save_flag(408) or flag
+	flag_2 = event.get_save_flag(412) or flag_2
 	if flag == 1 and flag_2 == 0 then
-		event.BgmLoadCancel()
+		event.skip_next_music_load()
 	end
-	event.MapJump_3(-1, "f03i0301", 100)
+	event.jump_to_map_3(-1, "f03i0301", 100)
 	vm.wait(2)
 end
 
@@ -591,36 +591,36 @@ function script.event_406()
 	local flag: s32 = 0
 	local flag_2: s32 = 0
 	local flag_3: s32 = 0
-	flag = event.GetFlag(400) or flag
-	flag_2 = event.GetFlag(420) or flag_2
+	flag = event.get_save_flag(400) or flag
+	flag_2 = event.get_save_flag(420) or flag_2
 	if flag == 1 and flag_2 == 0 then
-		event.SetMotion(0, "立ち")
+		event.set_character_motion(0, "立ち")
 		set_window_mode(0, 1)
-		event.MesMake_2(0, "開かない。後で来てみよう。")
+		event.open_message_window_2(0, "開かない。後で来てみよう。")
 		show_message(0, -1, 5, 256, 208)
 		return
 	else
-		flag_3 = event.GetFlag(428) or flag_3
+		flag_3 = event.get_save_flag(428) or flag_3
 		if flag_3 == 0 then
-			event.BgmLoadCancel()
+			event.skip_next_music_load()
 		end
 	end
 	helper_47990fb3(vm.f32(-2.3561945), 0)
-	event.MapJump_3(-1, "f03i0302", 100)
+	event.jump_to_map_3(-1, "f03i0302", 100)
 	vm.wait(3)
 end
 
 --- Event 407, which map data, a script or the engine runs by number.
 function script.event_407()
 	helper_47990fb3(vm.f32(2.3561945), 0)
-	event.MapJump_3(-1, "f03i0303", 100)
+	event.jump_to_map_3(-1, "f03i0303", 100)
 	vm.wait(2)
 end
 
 --- Event 408, which map data, a script or the engine runs by number.
 function script.event_408()
 	helper_47990fb3(vm.f32(-0.7853982), 0)
-	event.MapJump_3(-1, "f03i0304", 100)
+	event.jump_to_map_3(-1, "f03i0304", 100)
 	vm.wait(2)
 end
 
@@ -629,37 +629,37 @@ script.event_1000 = helper_d3e304cd
 
 --- Event 14560, which map data, a script or the engine runs by number.
 function script.event_14560()
-	event.DbgSetAnalyzeFlag(2, 2, 0)
-	event.DbgSetAnalyzeFlag(2, 3, 0)
-	event.DbgSetAnalyzeFlag(2, 4, 0)
-	event.DbgSetAnalyzeFlag(2, 5, 0)
-	event.DbgSetAnalyzeFlag(2, 6, 0)
-	event.DbgSetAnalyzeFlag(2, 7, 0)
-	event.DbgSetAnalyzeFlag(2, 8, 0)
-	event.DbgSetAnalyzeFlag(2, 9, 0)
-	event.DbgSetAnalyzeFlag(2, 0, 1)
-	event.DbgSetAnalyzeFlag(2, 1, 1)
-	event.SetFlag(456, 0)
-	event.SetFlag(460, 1)
-	event.MapJump_3(-1, 82, 100)
+	event.set_georama_analyze_flag(2, 2, 0)
+	event.set_georama_analyze_flag(2, 3, 0)
+	event.set_georama_analyze_flag(2, 4, 0)
+	event.set_georama_analyze_flag(2, 5, 0)
+	event.set_georama_analyze_flag(2, 6, 0)
+	event.set_georama_analyze_flag(2, 7, 0)
+	event.set_georama_analyze_flag(2, 8, 0)
+	event.set_georama_analyze_flag(2, 9, 0)
+	event.set_georama_analyze_flag(2, 0, 1)
+	event.set_georama_analyze_flag(2, 1, 1)
+	event.set_save_flag(456, 0)
+	event.set_save_flag(460, 1)
+	event.jump_to_map_3(-1, 82, 100)
 	vm.wait(1)
 end
 
 --- Event 14600, which map data, a script or the engine runs by number.
 function script.event_14600()
-	event.DbgSetAnalyzeFlag(2, 3, 0)
-	event.DbgSetAnalyzeFlag(2, 4, 0)
-	event.DbgSetAnalyzeFlag(2, 5, 0)
-	event.DbgSetAnalyzeFlag(2, 6, 0)
-	event.DbgSetAnalyzeFlag(2, 7, 0)
-	event.DbgSetAnalyzeFlag(2, 8, 0)
-	event.DbgSetAnalyzeFlag(2, 9, 0)
-	event.DbgSetAnalyzeFlag(2, 0, 1)
-	event.DbgSetAnalyzeFlag(2, 1, 1)
-	event.DbgSetAnalyzeFlag(2, 2, 1)
-	event.SetFlag(456, 1)
-	event.SetFlag(460, 0)
-	event.MapJump_3(-1, 82, 100)
+	event.set_georama_analyze_flag(2, 3, 0)
+	event.set_georama_analyze_flag(2, 4, 0)
+	event.set_georama_analyze_flag(2, 5, 0)
+	event.set_georama_analyze_flag(2, 6, 0)
+	event.set_georama_analyze_flag(2, 7, 0)
+	event.set_georama_analyze_flag(2, 8, 0)
+	event.set_georama_analyze_flag(2, 9, 0)
+	event.set_georama_analyze_flag(2, 0, 1)
+	event.set_georama_analyze_flag(2, 1, 1)
+	event.set_georama_analyze_flag(2, 2, 1)
+	event.set_save_flag(456, 1)
+	event.set_save_flag(460, 0)
+	event.jump_to_map_3(-1, 82, 100)
 	vm.wait(1)
 end
 

@@ -32,10 +32,10 @@ local function helper_1f628()
 	local var0: any = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.SetMotion(0, "立ち")
-		event.Initialize()
+		event.set_character_motion(0, "立ち")
+		event.initialize_event()
 		set_window_mode(0, 4)
-		event.MesMake_2(0, "Hineingehen\nVerlassen")
+		event.open_message_window_2(0, "Hineingehen\nVerlassen")
 		at = 1
 		var0 = helper_7e7c045c(0, -1, 5, 256, 208, 2, 0)
 		if var0 == -1 then
@@ -43,13 +43,13 @@ local function helper_1f628()
 			return 0
 		end
 		if var0 == 1 then
-			event.SetFadeOut(15)
+			event.fade_out_screen(15)
 			at = 2
 			wait_frames(15)
-			event.GotoMenu(19, 0)
+			event.open_event_menu(19, 0)
 			at = 3
 			vm.wait(3)
-			event.SetFadeIn(15)
+			event.fade_in_screen(15)
 			at = 4
 			wait_frames(15)
 			return 0
@@ -86,131 +86,131 @@ local function helper_229d4()
 	local flag_2: s32 = 0
 	local active_chr_no_2: s32 = 0
 	local active_chr_no_3: s32 = 0
-	event.GetControlChrid()
-	var1 = event.GetEventData_2(13) or var1
-	var2 = event.GetEventData_2(14) or var2
+	event.get_player_character_slot()
+	var1 = event.get_triggered_event_data_2(13) or var1
+	var2 = event.get_triggered_event_data_2(14) or var2
 	print("talk_chara_id=", var1, "talk_chara=", var2, "\n")
 	do
-		local out1, out2 = event.GetMesEtc(0, 3, var2)
+		local out1, out2 = event.get_message_window_option(0, 3, var2)
 		var3 = out1 or var3
 		var4 = out2 or var4
 	end
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no == 1 then
 		var5 = 2
 	else
 		var5 = 1
 	end
-	event.CtrlcStay()
-	event.SetAi(0, var1)
-	event.SetMesShippo(0, 1)
-	event.SetMesPreset(0, 0)
+	event.stop_camera_control_movement()
+	event.set_villager_ai_enabled(0, var1)
+	event.set_message_bubble_tail(0, 1)
+	event.apply_message_window_preset(0, 0)
 	if var2 == 1012 or var2 == 1015 or var2 == 1018 then
 		helper_25dbeff8()
-		event.SetAi(1, var1)
+		event.set_villager_ai_enabled(1, var1)
 		return
 	end
 	if var2 == 50 then
-		event.MesMake_2(0, "Hey! Ab hier\nist abgesperrt.")
+		event.open_message_window_2(0, "Hey! Ab hier\nist abgesperrt.")
 		helper_1c04a0eb(var1, -1, 0, 0)
-		event.SetAi(1, var1)
+		event.set_villager_ai_enabled(1, var1)
 		return
 	end
-	var7 = event.GetChapter() or var7
+	var7 = event.get_chapter() or var7
 	if var7 == 1 then
-		flag = event.GetFlag(9) or flag
+		flag = event.get_save_flag(9) or flag
 		if var2 == 2 then
 			if flag == 0 then
-				event.MesMake_2(
+				event.open_message_window_2(
 					0,
 					"Sieh dir das an. Kaum zu\nglauben, dass das Ding\nfr[UNI00fc]her richtig gerast ist, was?<page>Ist es aber ... vor langer Zeit.<page>Ich tr[UNI00e4]ume davon, mit dem\nDing noch mal loszufahren. Darum\nhalte ich es auch in Schuss.<page>Wenn es je dazu kommt, kann\nich ihn sofort wieder\nauf die Gleise bringen."
 				)
 			else
-				event.MesMake_2(
+				event.open_message_window_2(
 					0,
 					"Du wei[UNI00df]t doch, dass man immer ver-\nsteift, wenn man zu selten trainiert.\nDas gilt f[UNI00fc]r Maschinen auch."
 				)
 			end
 			helper_1c04a0eb(var1, -1, 0, 0)
-			event.SetAi(1, var1)
+			event.set_villager_ai_enabled(1, var1)
 			return
 		end
 		if var2 == 63 then
 			if flag == 0 then
-				event.MesMake_2(
+				event.open_message_window_2(
 					0,
 					"Hallo Max!\nDie Bahn f[UNI00e4]hrt schon seit\neiner Ewigkeit nicht mehr.<page>Aber ich k[UNI00fc]mmere mich\ntrotzdem immer um den Bahnhof."
 				)
 			else
-				event.MesMake_2(
+				event.open_message_window_2(
 					0,
 					"Der B[UNI00fc]rgermeister l[UNI00e4]sst die Bahn\nendlich wieder fahren. Aber\nnicht f[UNI00fc]r alle.<page>Oh Mann, ich w[UNI00fc]rde die\nLeute so gern einsteigen lassen ..."
 				)
 			end
 			helper_1c04a0eb(var1, -1, 0, 0)
-			event.SetAi(1, var1)
+			event.set_villager_ai_enabled(1, var1)
 			return
 		end
 		if var2 == 65 then
 			if flag == 0 then
-				event.MesMake_2(
+				event.open_message_window_2(
 					0,
 					"Hi, Max. Wusstest du, dass der\nBahnhofsvorsteher mein Vater ist?\nWir k[UNI00fc]mmern uns um den Bahnhof.<page>Bis die Bahn eines Tages\nwieder fahren darf ..."
 				)
 			else
-				event.MesMake_2(
+				event.open_message_window_2(
 					0,
 					"Die Bahn f[UNI00e4]hrt!\nAber es wird etwas dauern, bis\nder Bahnhof wieder normal ist ..."
 				)
 			end
 			helper_1c04a0eb(var1, -1, 0, 0)
-			event.SetAi(1, var1)
+			event.set_villager_ai_enabled(1, var1)
 			return
 		end
 	end
 	if var7 == 8 then
-		flag_2 = event.GetFlag(804) or flag_2
+		flag_2 = event.get_save_flag(804) or flag_2
 		if var2 == 61 then
 			if flag_2 == 0 then
-				event.MesMake_2(
+				event.open_message_window_2(
 					0,
 					"Ich verehre Monica seit langem\nheimlich, aber in letzter\nZeit war sie nicht hier.<page>Darum kann ich mich so schlecht\nauf die Arbeit konzentrieren."
 				)
 			else
-				active_chr_no_2 = event.GetActiveChrNo() or active_chr_no_2
+				active_chr_no_2 = event.get_playable_character() or active_chr_no_2
 				if active_chr_no_2 ~= 1 then
-					event.MesMake_2(0, "He, Max!\nMonica ist zur[UNI00fc]ck, ja?\nDa werden sich alle freuen!")
+					event.open_message_window_2(0, "He, Max!\nMonica ist zur[UNI00fc]ck, ja?\nDa werden sich alle freuen!")
 				else
-					event.MesMake_2(0, "Monica! Wie geht's dir?\nIch hab dich echt vermisst.")
+					event.open_message_window_2(0, "Monica! Wie geht's dir?\nIch hab dich echt vermisst.")
 				end
 			end
 			helper_1c04a0eb(var1, -1, 0, 0)
-			event.SetAi(1, var1)
+			event.set_villager_ai_enabled(1, var1)
 			return
 		end
 		if var2 == 80 then
 			if flag_2 == 0 then
-				event.MesMake_2(
+				event.open_message_window_2(
 					0,
 					"Ich konnte gerade normal mit\nMonica reden, da ist sie\nverschwunden.<page>Komm schon,  Max,\nsag mir doch, wo sie ist!"
 				)
 			else
-				active_chr_no_3 = event.GetActiveChrNo() or active_chr_no_3
+				active_chr_no_3 = event.get_playable_character() or active_chr_no_3
 				if active_chr_no_3 ~= 1 then
-					event.MesMake_2(0, "Monica ist zur[UNI00fc]ck.\nWie kann das sein?")
+					event.open_message_window_2(0, "Monica ist zur[UNI00fc]ck.\nWie kann das sein?")
 				else
-					event.MesMake_2(0, "Monica, du bist zur[UNI00fc]ck!\nWie kann das sein?")
+					event.open_message_window_2(0, "Monica, du bist zur[UNI00fc]ck!\nWie kann das sein?")
 				end
 			end
 			helper_1c04a0eb(var1, -1, 0, 0)
-			event.SetAi(1, var1)
+			event.set_villager_ai_enabled(1, var1)
 			return
 		end
 	end
-	event.MesMake_2(0, "Tagchen.\nSch[UNI00f6]nes Wetter, nicht wahr?")
-	event.MesMake_2(0, vm.i32(vm.i32(vm.i32(var3 * 10000) + vm.i32(var4 * 10)) + var5))
+	event.open_message_window_2(0, "Tagchen.\nSch[UNI00f6]nes Wetter, nicht wahr?")
+	event.open_message_window_2(0, vm.i32(vm.i32(vm.i32(var3 * 10000) + vm.i32(var4 * 10)) + var5))
 	helper_1c04a0eb(var1, -1, 0, 0)
-	event.SetAi(1, var1)
+	event.set_villager_ai_enabled(1, var1)
 end
 
 local script: { [any]: (...any) -> ...any } = {}
@@ -228,34 +228,34 @@ function script.default_event()
 	local var2: s32 = 0
 	local var3: s32 = 0
 	local var4: s32 = 0
-	event.Initialize()
+	event.initialize_event()
 	helper_4919d694()
 	print("start_event--------------------------------------------\n")
-	mc_load = event.CheckMcLoad() or mc_load
+	mc_load = event.take_memory_card_load_state() or mc_load
 	if mc_load == 1 then
-		event.SetCharaPos(0, -240.0, 35.8, 140.0)
-		event.SetCharaRot(0, 0.0, 3.14, 0.0)
-		event.SetMotion(0, "立ち", 4)
-		event.CharaNormalDrive(0)
-		event.CharaResetDa(0)
-		event.ResetCamera(1, 3.14, 20.0)
+		event.set_character_position(0, -240.0, 35.8, 140.0)
+		event.set_character_rotation(0, 0.0, 3.14, 0.0)
+		event.set_character_motion(0, "立ち", 4)
+		event.update_character_motion(0)
+		event.reset_character_cloth_and_hair(0)
+		event.reset_follow_camera(1, 3.14, 20.0)
 	else
-		old_map_no = event.GetOldMapNo() or old_map_no
-		var2 = event.GetMapType(old_map_no) or var2
+		old_map_no = event.get_previous_map() or old_map_no
+		var2 = event.get_map_type(old_map_no) or var2
 		if var2 ~= -1 then
 			if old_map_no == 10 or old_map_no == 22 or old_map_no == 121 then
-				event.SetCharaPos(0, 0.0, 198.8, 1450.0)
-				event.SetCharaRot(0, 0.0, 3.14, 0.0)
-				event.ResetCamera(1, 3.14)
-				event.SetFadeIn(30)
+				event.set_character_position(0, 0.0, 198.8, 1450.0)
+				event.set_character_rotation(0, 0.0, 3.14, 0.0)
+				event.reset_follow_camera(1, 3.14)
+				event.fade_in_screen(30)
 			else
-				var3 = event.GetCnt(1) or var3
+				var3 = event.get_save_counter(1) or var3
 				if (old_map_no == 18 or old_map_no == 23 or old_map_no == 120 or old_map_no == 108) and var3 == 1 then
 					helper_946c0402()
-					event.SetFadeIn(15)
-					event.ResetCamera(1, 0.0)
+					event.fade_in_screen(15)
+					event.reset_follow_camera(1, 0.0)
 				else
-					var4 = event.GetChapter() or var4
+					var4 = event.get_chapter() or var4
 					if var4 ~= 6 and var4 ~= 7 then
 						helper_48172752()
 					else
@@ -264,7 +264,7 @@ function script.default_event()
 				end
 			end
 		end
-		event.SetMotion(0, "立ち")
+		event.set_character_motion(0, "立ち")
 	end
 end
 
@@ -281,13 +281,13 @@ function script.event_160()
 	local pos_z: f32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.Initialize()
+		event.initialize_event()
 		at = 1
 		vm.wait(1)
-		event.EohSyncObj_2(0, "p01_train01")
-		event.EohSetRot(0, 0.0, 0.0, 0.0)
+		event.attach_object_handle_to_map_part_2(0, "p01_train01")
+		event.set_object_handle_rotation(0, 0.0, 0.0, 0.0)
 		do
-			local out1, out2, out3 = event.EohGetPos(0)
+			local out1, out2, out3 = event.get_object_handle_position(0)
 			pos_x = out1 or pos_x
 			pos_y = out2 or pos_y
 			pos_z = out3 or pos_z
@@ -295,22 +295,22 @@ function script.event_160()
 		print("pos[0]=", vm.float(pos_x), "-----------\n")
 		print("pos[1]=", vm.float(pos_y), "-----------\n")
 		print("pos[2]=", vm.float(pos_z), "-----------\n")
-		event.EohSetPos(0, pos_x, pos_y, 0.0)
-		event.CharaActive(0, 122)
-		event.CharaActive(0, 123)
-		event.CharaActive(0, 0)
-		event.SetCameraPos(-345.21, 89.08, 234.02)
-		event.SetCameraRef(-238.57, 83.73, 148.63)
+		event.set_object_handle_position(0, pos_x, pos_y, 0.0)
+		event.set_character_active(0, 122)
+		event.set_character_active(0, 123)
+		event.set_character_active(0, 0)
+		event.set_camera_position(-345.21, 89.08, 234.02)
+		event.set_camera_look_at(-238.57, 83.73, 148.63)
 		at = 2
 		vm.wait(2)
 		at = 3
 		helper_c956b4a2(64)
-		event.CharaActive(1, 122)
-		event.CharaActive(1, 123)
-		event.CharaActive(1, 0)
-		event.EohSetPos(0, pos_x, pos_y, -1800.0)
-		event.EohSetRot(0, 0.0, 3.1415927, 0.0)
-		event.ResetCamera(0)
+		event.set_character_active(1, 122)
+		event.set_character_active(1, 123)
+		event.set_character_active(1, 0)
+		event.set_object_handle_position(0, pos_x, pos_y, -1800.0)
+		event.set_object_handle_rotation(0, 0.0, 3.1415927, 0.0)
+		event.reset_follow_camera(0)
 		return
 	end, function(received: { any })
 		if at <= 3 then
@@ -331,10 +331,10 @@ end
 --- Event 200, which map data, a script or the engine runs by number.
 function script.event_200()
 	vm.wait(1)
-	event.MapJump_2(-1, "m02")
+	event.jump_to_map_2(-1, "m02")
 	vm.wait(2)
-	event.Ext(103, 1645.1, -41.3, -1812.6) -- retail: the handler rejects 3 arguments
-	event.Ext(104, 0, -0.09, 0) -- retail: the handler rejects 3 arguments
+	event.call_command(103, 1645.1, -41.3, -1812.6) -- retail: the handler rejects 3 arguments
+	event.call_command(104, 0, -0.09, 0) -- retail: the handler rejects 3 arguments
 end
 
 --- Event 250, which map data, a script or the engine runs by number.
@@ -345,18 +345,18 @@ function script.event_250()
 	local var3: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		flag = event.GetFlag(202) or flag
+		flag = event.get_save_flag(202) or flag
 		if flag == 0 then
 			at = 1
 			helper_18d9c3c9(0, vm.f32(1.57))
 			set_window_mode(0, 1)
-			event.MesMake_2(
+			event.open_message_window_2(
 				0,
 				"Cedric nannte dieses Ding einen\nZug, nicht wahr ...?<page>Jetzt benutzen Borneo und Erik\nes als Wohnung.<page>Cedric sagt, es ist fr[UNI00fc]her\ngefahren - lang bevor ich\nauf die Welt kam.<page>Ist das wahr?"
 			)
 			at = 2
 			helper_75684dd8(0, -1, 5, 256, 208)
-			event.MesMake_2(
+			event.open_message_window_2(
 				0,
 				"Kann etwas so Gro[UNI00df]es\nwirklich fahren?<page>Wenn es sich bewegt,\nw[UNI00fc]rde ich das echt gerne sehen!"
 			)
@@ -369,37 +369,37 @@ function script.event_250()
 		if var1 ~= 1 then
 			return
 		end
-		event.SetCnt(1, 1)
-		var2 = event.GetChapter() or var2
-		var3 = event.GetEventData_2(3) or var3
+		event.set_save_counter(1, 1)
+		var2 = event.get_chapter() or var2
+		var3 = event.get_triggered_event_data_2(3) or var3
 		if var3 <= 1 then
 			if var2 ~= 6 and var2 ~= 7 then
 				at = 5
 				helper_f4ec8310()
-				event.StopBgm(0)
+				event.stop_music(0)
 				at = 6
 				vm.wait(6)
-				event.MapJump_2(-1, "s08")
+				event.jump_to_map_2(-1, "s08")
 			else
 				at = 7
 				helper_f4ec8310()
-				event.StopBgm(0)
+				event.stop_music(0)
 				at = 8
 				vm.wait(8)
-				event.MapJump_2(-1, "s37")
+				event.jump_to_map_2(-1, "s37")
 			end
 			at = 9
 			vm.wait(9)
 		elseif var2 ~= 6 and var2 ~= 7 then
 			at = 10
 			helper_826a3ea7(0)
-			event.StopBgm(0)
-			event.MapJump_2(100, "s07")
+			event.stop_music(0)
+			event.jump_to_map_2(100, "s07")
 		else
 			at = 11
 			helper_fdad3d3b()
-			event.StopBgm(0)
-			event.MapJump_2(100, "s38")
+			event.stop_music(0)
+			event.jump_to_map_2(100, "s38")
 		end
 		return
 	end, function(received: { any })
@@ -441,11 +441,11 @@ script.event_400 = helper_f57795f8
 --- Event 500, which map data, a script or the engine runs by number.
 function script.event_500()
 	local var0: s32 = 0
-	var0 = event.SearchCharaNo(2) or var0
-	event.CharaActive(0, var0)
-	event.SetAi(0, var0)
+	var0 = event.find_scene_character_slot(2) or var0
+	event.set_character_active(0, var0)
+	event.set_villager_ai_enabled(0, var0)
 	helper_c169a116()
-	event.GotoDng(0, -1, 1000)
+	event.go_to_dungeon(0, -1, 1000)
 end
 
 --- Event 1000, which map data, a script or the engine runs by number.

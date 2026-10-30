@@ -18,38 +18,38 @@ local function helper_f20e2c61()
 	local var7: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.Initialize()
-		event.SetMotion(0, "立ち")
-		event.SetMesQuestionGyou(0, 0)
-		event.SetMesWindowMode(0, 5)
-		event.SetMesDrawspeed(0, 1)
+		event.initialize_event()
+		event.set_character_motion(0, "立ち")
+		event.set_message_selection_top_line(0, 0)
+		event.set_message_window_mode(0, 5)
+		event.set_message_draw_speed(0, 1)
 		at = 1
 		var0 = helper_ed4dc120(5, 75)
-		event.EohSyncChara(0, 0)
-		event.ObjsInit(0)
-		event.ObjsSyncObj(0, 0)
+		event.attach_object_handle_to_character(0, 0)
+		event.clear_object_sequence(0)
+		event.set_object_sequence_object(0, 0)
 		if var0 == 0 then
-			event.CmrsSetPos(1635.73, 32.56, 1292.96)
-			event.CmrsSetRef(1754.78, 30.0, 1358.67)
-			event.ObjsSetPos(0, 1782.12, 0.0, 1373.78)
-			event.ObjsSetRot(0, 0.0, 1.0, 0.0)
-			event.ObjsSetMotion(0, "走り", 4, -1, 1)
-			event.ObjsInitPas(0)
-			event.ObjsSetPasFrm(0, 50)
-			event.ObjsAddPas(0, 1782.12, 0.0, 1373.78)
-			event.ObjsAddPas(0, 1825.81, 0.0, 1397.9)
-			event.ObjsAddPas(0, 1906.73, 0.0, 1437.54)
-			event.ObjsAddPas(0, 1986.2, 0.0, 1465.28)
-			event.ObjsStartPas(0)
+			event.set_camera_sequence_position(1635.73, 32.56, 1292.96)
+			event.set_camera_sequence_look_at(1754.78, 30.0, 1358.67)
+			event.set_object_sequence_position(0, 1782.12, 0.0, 1373.78)
+			event.set_object_sequence_rotation(0, 0.0, 1.0, 0.0)
+			event.set_object_sequence_motion(0, "走り", 4, -1, 1)
+			event.clear_object_sequence_path(0)
+			event.set_object_sequence_path_frames(0, 50)
+			event.add_object_sequence_path_point(0, 1782.12, 0.0, 1373.78)
+			event.add_object_sequence_path_point(0, 1825.81, 0.0, 1397.9)
+			event.add_object_sequence_path_point(0, 1906.73, 0.0, 1437.54)
+			event.add_object_sequence_path_point(0, 1986.2, 0.0, 1465.28)
+			event.start_object_sequence_path(0)
 			at = 2
 			wait_frames(20)
-			event.SetFadeOut(30)
+			event.fade_out_screen(30)
 			at = 3
 			wait_frames(30)
 			return 1
 		else
 			do
-				local out1, out2, out3 = event.GetCharaPos(0)
+				local out1, out2, out3 = event.get_character_position(0)
 				var1 = out1 or var1
 				var2 = out2 or var2
 				var3 = out3 or var3
@@ -57,19 +57,19 @@ local function helper_f20e2c61()
 			var4 = vm.f32(vm.f32(vm.sin(vm.f32(-2.15)) * 30.0) + var1)
 			var5 = 0.0
 			var6 = vm.f32(vm.f32(vm.cos(vm.f32(-2.15)) * 30.0) + var3)
-			event.ObjsMove(0, var4, var5, var6, 30)
-			event.ObjsReference(0, var4, var5, var6, 10)
-			event.ObjsSetMotion(0, "歩き")
+			event.move_object_sequence(0, var4, var5, var6, 30)
+			event.turn_object_sequence_toward(0, var4, var5, var6, 10)
+			event.set_object_sequence_motion(0, "歩き")
 			var7 = 0
 			while var7 < 30 do
 				do
-					local out1, out2, out3 = event.GetCharaPos(0)
+					local out1, out2, out3 = event.get_character_position(0)
 					var1 = out1 or var1
 					var2 = out2 or var2
 					var3 = out3 or var3
 				end
 				var2 = vm.f32(var2 + 30.0)
-				event.SetCameraRef(var1, var2, var3)
+				event.set_camera_look_at(var1, var2, var3)
 				var7 = var7 + 1
 				at = 4
 				vm.wait(4)

@@ -3,15 +3,15 @@
 
 --- Helper function.
 local function helper_68186cf4(arg0: s32)
-	event.Initialize()
-	event.EohSyncObj_3(0, "p01_s06", "s06_02-a0")
-	event.EohSyncObj_3(1, "p01_s06", "s06_03-a0")
+	event.initialize_event()
+	event.attach_object_handle_to_map_part_3(0, "p01_s06", "s06_02-a0")
+	event.attach_object_handle_to_map_part_3(1, "p01_s06", "s06_03-a0")
 	if arg0 ~= 0 then
-		event.EohSetShow(0, 1)
-		event.EohSetShow(1, 1)
+		event.set_object_handle_visible(0, 1)
+		event.set_object_handle_visible(1, 1)
 	else
-		event.EohSetShow(0, 0)
-		event.EohSetShow(1, 0)
+		event.set_object_handle_visible(0, 0)
+		event.set_object_handle_visible(1, 0)
 	end
 end
 

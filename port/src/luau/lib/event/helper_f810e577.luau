@@ -6,14 +6,14 @@ local wait_camera = require("@lib/event/wait_camera")
 
 --- Helper function.
 local function helper_f810e577(arg0: any)
-	event.CmrsSetPos(-0.73, 30.22, -58.88)
-	event.CmrsSetRef(0.18, 32.06, -95.16)
-	event.SetCharaPos(34, 0.22, 5.19, -94.18)
-	event.SetCharaRot(34, 0.0, 0.0, 0.0)
-	event.CmrsMove2(-0.4, 30.22, -71.81, 0.18, 32.06, -95.16, 100, 0, 0.4)
-	event.SetPakuAnim(2, "通常口パク")
+	event.set_camera_sequence_position(-0.73, 30.22, -58.88)
+	event.set_camera_sequence_look_at(0.18, 32.06, -95.16)
+	event.set_character_position(34, 0.22, 5.19, -94.18)
+	event.set_character_rotation(34, 0.0, 0.0, 0.0)
+	event.move_camera_sequence_eased(-0.4, 30.22, -71.81, 0.18, 32.06, -95.16, 100, 0, 0.4)
+	event.set_mouth_texture_animations(2, "通常口パク")
 	helper_4116e6bb(1090080)
-	event.ResetPakuAnim()
+	event.reset_mouth_texture_animations()
 	wait_camera()
 end
 

@@ -13,10 +13,10 @@ local function helper_117e5b58()
 	local var0: any = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.SetMotion(0, "立ち")
-		event.Initialize()
+		event.set_character_motion(0, "立ち")
+		event.initialize_event()
 		set_window_mode(0, 4)
-		event.MesMake_2(0, "Go inside\nLeave")
+		event.open_message_window_2(0, "Go inside\nLeave")
 		at = 1
 		var0 = helper_bac0e30d(0, -1, 5, 256, 208, 2, 0)
 		if var0 == -1 then
@@ -24,13 +24,13 @@ local function helper_117e5b58()
 			return 0
 		end
 		if var0 == 1 then
-			event.SetFadeOut(15)
+			event.fade_out_screen(15)
 			at = 2
 			wait_frames(15)
-			event.GotoMenu(19, 0)
+			event.open_event_menu(19, 0)
 			at = 3
 			vm.wait(3)
-			event.SetFadeIn(15)
+			event.fade_in_screen(15)
 			at = 4
 			wait_frames(15)
 			return 0

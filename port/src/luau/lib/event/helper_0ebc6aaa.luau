@@ -5,8 +5,8 @@ local helper_70e4ac93 = require("@lib/event/helper_70e4ac93")
 
 --- Helper function.
 local function helper_0ebc6aaa(arg0: s32, arg1: any)
-	event.SetMesPreset(0, 0)
-	event.MesMake_2(
+	event.apply_message_window_preset(0, 0)
+	event.open_message_window_2(
 		0,
 		"You're good with machines,\nbut don't you think it's time for\nyou to start learning about mining?"
 	)

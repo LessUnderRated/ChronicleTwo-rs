@@ -6,7 +6,7 @@ local vm = require("@lib/vm")
 --- Helper function.
 local function helper_11504ed4(arg0: f32, arg1: f32, arg2: f32, arg3: f32)
 	local var4: f32 = 0
-	monster.Ext(
+	monster.call_command(
 		20,
 		vm.f32(vm.f32(arg2 - arg0) * vm.f32(arg2 - arg0)) + vm.f32(vm.f32(arg3 - arg1) * vm.f32(arg3 - arg1)),
 		var4

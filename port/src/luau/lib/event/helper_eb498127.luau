@@ -14,12 +14,12 @@ local function helper_eb498127()
 	local var1: any = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.Initialize()
-		event.SetMotion(0, "立ち")
-		active_chr_no = event.GetActiveChrNo() or active_chr_no
+		event.initialize_event()
+		event.set_character_motion(0, "立ち")
+		active_chr_no = event.get_playable_character() or active_chr_no
 		if active_chr_no == 2 or active_chr_no == 3 then
-			event.SetMesWindowMode(0, 1)
-			event.SetMesDrawspeed(0, 1)
+			event.set_message_window_mode(0, 1)
+			event.set_message_draw_speed(0, 1)
 			if active_chr_no == 2 then
 				at = 1
 				helper_75684dd8(0, 20, 5, 256, 208)
@@ -27,19 +27,19 @@ local function helper_eb498127()
 				at = 2
 				helper_75684dd8(0, 21, 5, 256, 208)
 			end
-			event.Finish()
+			event.finish_event()
 			return 0
 		end
 		at = 3
 		var1 = helper_ed4dc120(5, 124)
 		if var1 == 0 then
-			event.SetFadeOut(30)
+			event.fade_out_screen(30)
 			at = 4
 			wait_frames(30)
-			event.Finish()
+			event.finish_event()
 			return 1
 		end
-		event.Finish()
+		event.finish_event()
 		return 0
 	end, function(received: { any })
 		if at <= 2 then

@@ -21,88 +21,88 @@ local function edit_analyze_changed()
 	local stage_id: s32 = 0
 	local var7: s32 = 0
 	local argc: s32 = 0
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
-	event.ActchrSetDefMotion(0)
-	flag = event.GetFlag(7) or flag
+	active_chr_no = event.get_playable_character() or active_chr_no
+	event.reset_action_character_motion(0)
+	flag = event.get_save_flag(7) or flag
 	if flag == 0 then
-		event.Initialize()
-		event.DngPause(1, 1)
-		var2 = event.JoinPartyMember(2) or var2
+		event.initialize_event()
+		event.set_dungeon_pause_flags(1, 1)
+		var2 = event.set_party_member(2) or var2
 		if var2 ~= 0 then
-			var1 = event.GetMesWindowMode(0) or var1
-			event.SetMesWindowMode(0, 1)
-			event.SetMesShippo(0, 0)
-			event.MesMake_2(0, "Daf[UNI00fc]r ist jetzt keine Zeit!")
+			var1 = event.get_message_window_frame(0) or var1
+			event.set_message_window_mode(0, 1)
+			event.set_message_bubble_tail(0, 0)
+			event.open_message_window_2(0, "Daf[UNI00fc]r ist jetzt keine Zeit!")
 			helper_75684dd8(0, -1, 5, 0, 0)
-			event.SetMesWindowMode(0, var1)
+			event.set_message_window_mode(0, var1)
 			vm.wait(2)
-			event.DngPause(1, 0)
-			event.Finish()
+			event.set_dungeon_pause_flags(1, 0)
+			event.finish_event()
 			return
 		else
-			event.SetMotion(0, "立ち")
-			var1 = event.GetMesWindowMode(0) or var1
-			event.SetMesWindowMode(0, 1)
-			event.SetMesShippo(0, 0)
-			flag = event.GetFlag(104) or flag
+			event.set_character_motion(0, "立ち")
+			var1 = event.get_message_window_frame(0) or var1
+			event.set_message_window_mode(0, 1)
+			event.set_message_bubble_tail(0, 0)
+			flag = event.get_save_flag(104) or flag
 			if flag == 1 then
-				event.MesMake_2(0, "Die T[UNI00fc]r geht nicht auf.\nGehen wir erstmal wieder hoch.")
+				event.open_message_window_2(0, "Die T[UNI00fc]r geht nicht auf.\nGehen wir erstmal wieder hoch.")
 			else
-				event.MesMake_2(0, "Daf[UNI00fc]r ist jetzt keine Zeit!")
+				event.open_message_window_2(0, "Daf[UNI00fc]r ist jetzt keine Zeit!")
 			end
 			helper_75684dd8(0, -1, 5, 0, 0)
-			event.SetMesWindowMode(0, var1)
+			event.set_message_window_mode(0, var1)
 			vm.wait(4)
-			event.DngPause(1, 0)
-			event.Finish()
+			event.set_dungeon_pause_flags(1, 0)
+			event.finish_event()
 			return
 		end
 	end
-	event.Initialize()
-	event.SetMotion(0, "立ち")
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	event.initialize_event()
+	event.set_character_motion(0, "立ち")
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no == 2 then
-		event.SetMesWindowMode(0, 1)
-		event.SetMesShippo(0, 0)
-		event.MesMake_2(0, "Du kannst offenbar nur\nvorw[UNI00e4]rts gehen, wenn du vom\nRidepod absteigst.")
+		event.set_message_window_mode(0, 1)
+		event.set_message_bubble_tail(0, 0)
+		event.open_message_window_2(0, "Du kannst offenbar nur\nvorw[UNI00e4]rts gehen, wenn du vom\nRidepod absteigst.")
 		helper_75684dd8(0, -1, 8, 256, 208)
-		event.Finish()
+		event.finish_event()
 		return
 	end
 	if active_chr_no == 3 then
-		event.SetMesWindowMode(0, 1)
-		event.SetMesShippo(0, 0)
+		event.set_message_window_mode(0, 1)
+		event.set_message_bubble_tail(0, 0)
 		helper_75684dd8(0, 21, 8, 256, 208)
-		event.Finish()
+		event.finish_event()
 		return
 	end
-	event.SetMesWindowMode(0, 5)
-	event.SetMesDrawspeed(0, 1)
+	event.set_message_window_mode(0, 5)
+	event.set_message_draw_speed(0, 1)
 	var5 = helper_ed4dc120(1, -1)
 	if var5 == 0 then
-		event.SetBitCtrl(1, 0)
-		stage_id = event.DngGetStageId() or stage_id
-		var7 = event.DngGetFloorId() or var7
-		argc = event.GetNextFloor(var7, 0) or argc
-		event.DngSetFloorId(argc)
-		event.SetFloorInfo(stage_id, var7, 5, 2)
-		event.SetFloorInfo(stage_id, argc, 5, 1)
-		event.SetFadeOut(30)
+		event.set_save_control_bits(1, 0)
+		stage_id = event.get_dungeon_stage_id() or stage_id
+		var7 = event.get_dungeon_floor() or var7
+		argc = event.get_dungeon_next_floor(var7, 0) or argc
+		event.set_dungeon_floor(argc)
+		event.set_dungeon_floor_info(stage_id, var7, 5, 2)
+		event.set_dungeon_floor_info(stage_id, argc, 5, 1)
+		event.fade_out_screen(30)
 		wait_frames(30)
-		flag = event.GetFlag(8) or flag
+		flag = event.get_save_flag(8) or flag
 		if flag == 0 then
-			event.StopBgm(0)
-			event.SetFlag(8, 1)
-			event.BgmLoadCancel()
-			event.GotoEdit(12, 540)
+			event.stop_music(0)
+			event.set_save_flag(8, 1)
+			event.skip_next_music_load()
+			event.go_to_georama_edit(12, 540)
 			vm.wait(9)
 			return
 		end
-		event.BgmLoadCancel()
-		event.GotoDng(0, 5, 1000)
+		event.skip_next_music_load()
+		event.go_to_dungeon(0, 5, 1000)
 		vm.wait(10)
 	end
-	event.Finish()
+	event.finish_event()
 end
 
 local script: { [any]: (...any) -> ...any } = {}
@@ -121,31 +121,31 @@ script.edit_analyze_changed = edit_analyze_changed
 
 --- Event 500, which map data, a script or the engine runs by number.
 function script.event_500()
-	event.LoadMonsterFile(614, 1)
+	event.load_dungeon_monster(614, 1)
 	helper_ddf26f90()
-	event.SndLoadSound_3(4, "snd2/event/ev_200_000.sound.json")
-	event.LoadScript("s06/s06_1.stb", -1)
+	event.load_sound_effect_file_3(4, "snd2/event/ev_200_000.sound.json")
+	event.load_event_script("s06/s06_1.stb", -1)
 end
 
 --- Event 501, which map data, a script or the engine runs by number.
 function script.event_501()
-	event.Initialize()
-	event.LoadScript("s06/s06c_1.stb", 500)
+	event.initialize_event()
+	event.load_event_script("s06/s06c_1.stb", 500)
 	vm.wait(1)
 end
 
 --- Event 510, which map data, a script or the engine runs by number.
 function script.event_510()
-	event.LoadMonsterFile(601, 1)
+	event.load_dungeon_monster(601, 1)
 	helper_e3cd9d43()
-	event.LoadScript("s06/s06_1.stb", -1)
+	event.load_event_script("s06/s06_1.stb", -1)
 end
 
 --- Event 520, which map data, a script or the engine runs by number.
 function script.event_520()
-	event.LoadMonsterFile(601, 1)
+	event.load_dungeon_monster(601, 1)
 	helper_126fe783()
-	event.LoadScript("s06/s06_1.stb", -1)
+	event.load_event_script("s06/s06_1.stb", -1)
 end
 
 --- Event 1200, which map data, a script or the engine runs by number.
@@ -154,14 +154,14 @@ function script.event_1200()
 	local flag: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		active_chr_no = event.GetActiveChrNo() or active_chr_no
+		active_chr_no = event.get_playable_character() or active_chr_no
 		if active_chr_no == 2 then
-			flag = event.GetFlag(7) or flag
+			flag = event.get_save_flag(7) or flag
 			if flag == 0 then
-				event.SetFlag(6, 1)
+				event.set_save_flag(6, 1)
 				at = 1
 				vm.wait(1)
-				event.LoadScript("s06/s06.stb", 503)
+				event.load_event_script("s06/s06.stb", 503)
 			else
 				at = 2
 				helper_2a1e9b48(0)

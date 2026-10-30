@@ -9,13 +9,13 @@ local function helper_ed4dc120(arg0: s32, arg1: s32)
 	local var2: any = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.SetMesQuestionGyou(1, 0)
-		event.SetMesWindowMode(1, 5)
-		event.SetMesDrawspeed(1, 1)
-		event.SetMesItemDirect(1, 1, vm.i32(arg1 + 20000))
+		event.set_message_selection_top_line(1, 0)
+		event.set_message_window_mode(1, 5)
+		event.set_message_draw_speed(1, 1)
+		event.set_message_item_system_message(1, 1, vm.i32(arg1 + 20000))
 		at = 1
 		var2 = helper_bac0e30d(1, vm.i32(arg0 + 70), 8, 256, 208, 2, 1)
-		event.SetMesDrawspeed(1, 0)
+		event.set_message_draw_speed(1, 0)
 		return var2
 	end, function(received: { any })
 		if at <= 1 then

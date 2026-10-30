@@ -19,18 +19,18 @@ function script.default_event()
 	local flag: s32 = 0
 	local flag_2: s32 = 0
 	helper_1ef0d4b2()
-	flag = event.GetFlag(400) or flag
+	flag = event.get_save_flag(400) or flag
 	if flag == 1 then
-		flag_2 = event.GetFlag(428) or flag_2
+		flag_2 = event.get_save_flag(428) or flag_2
 		if flag_2 == 0 then
-			event.AddItem(373)
+			event.add_inventory_item(373)
 			helper_ca023157()
 			return
 		end
 	end
 	helper_9dafbc83(62.0, vm.f32(69.1), -197.0, vm.f32(1.57))
-	event.ResetCamera(1, 3.14, 10)
-	event.SetFadeIn(30)
+	event.reset_follow_camera(1, 3.14, 10)
+	event.fade_in_screen(30)
 end
 
 --- The event the town walk runs when the square button is pressed, after reloading the map script.
@@ -40,12 +40,12 @@ script.key_open = helper_ca023157
 function script.event_400()
 	local var0: s32 = 0
 	helper_3300e99f(vm.f32(3.1415927))
-	event.SetMotion(0, "立ち")
-	var0 = event.GetSndId(2) or var0
-	event.SndSePlay(var0, 94)
-	event.SetFadeOut(30)
+	event.set_character_motion(0, "立ち")
+	var0 = event.get_sound_id(2) or var0
+	event.play_sound_effect(var0, 94)
+	event.fade_out_screen(30)
 	wait_frames(30)
-	event.MapJump_2(-1, "f03")
+	event.jump_to_map_2(-1, "f03")
 	vm.wait(3)
 end
 

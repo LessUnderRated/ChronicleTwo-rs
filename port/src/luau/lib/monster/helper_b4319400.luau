@@ -9,7 +9,7 @@ local function helper_b4319400()
 	local var3: f32 = 0
 	while true do
 		vm.wait()
-		var3 = monster.GetTargetDist() or var3
+		var3 = monster.get_target_distance() or var3
 		if var3 < 200.0 then
 			vm.wait()
 			return

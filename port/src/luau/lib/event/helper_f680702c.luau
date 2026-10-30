@@ -15,53 +15,53 @@ local function helper_f680702c(arg0: s32, arg1: s32)
 	local ball_col: s32 = 0
 	local stage_id: s32 = 0
 	local var13: f32 = 0
-	event.AssignStack(4)
-	event.ClearStack(4)
-	event.ChangeDir("dungeon/sphida/")
-	language_code = event.GetLanguage() or language_code
+	event.assign_memory_stack(4)
+	event.clear_memory_stack(4)
+	event.change_directory("dungeon/sphida/")
+	language_code = event.get_language() or language_code
 	if language_code == 0 then
-		block = event.LoadImg_4(4, "sphida_bar.json", 0) or block
+		block = event.load_event_image_4(4, "sphida_bar.json", 0) or block
 	else
-		block = event.LoadImg_4(4, "eng_sphida_bar.img", 0) or block
+		block = event.load_event_image_4(4, "eng_sphida_bar.img", 0) or block
 	end
-	event.SphidaSetUp(4, block, arg0, arg1)
+	event.set_up_sphida(4, block, arg0, arg1)
 	do
-		local out1, out2, out3 = event.SphidaGetPinPos()
+		local out1, out2, out3 = event.get_sphida_pin_position()
 		pos_x_2 = out1 or pos_x_2
 		pos_y_2 = out2 or pos_y_2
 		pos_z_2 = out3 or pos_z_2
 	end
 	do
-		local out1, out2, out3 = event.SphidaGetBallPos()
+		local out1, out2, out3 = event.get_sphida_ball_position()
 		pos_x = out1 or pos_x
 		pos_y = out2 or pos_y
 		pos_z = out3 or pos_z
 	end
-	pin_col = event.SphidaGetPinCol() or pin_col
-	ball_col = event.SphidaGetBallCol() or ball_col
-	event.LoadChara(4, "bball.gltf", "info", 8)
-	event.LoadChara(4, "rball.gltf", "info", 9)
+	pin_col = event.get_sphida_pin_color() or pin_col
+	ball_col = event.get_sphida_ball_color() or ball_col
+	event.load_character(4, "bball.gltf", "info", 8)
+	event.load_character(4, "rball.gltf", "info", 9)
 	if ball_col == 0 then
-		event.CharaActive(0, 8)
-		event.CharaActive(1, 9)
+		event.set_character_active(0, 8)
+		event.set_character_active(1, 9)
 	else
-		event.CharaActive(1, 8)
-		event.CharaActive(0, 9)
+		event.set_character_active(1, 8)
+		event.set_character_active(0, 9)
 	end
 	if pin_col == 0 then
-		event.LoadChara(4, "rgool.gltf", "info", 10)
-		event.LoadChara(4, "rgool2.gltf", "info", 11)
+		event.load_character(4, "rgool.gltf", "info", 10)
+		event.load_character(4, "rgool2.gltf", "info", 11)
 	else
-		event.LoadChara(4, "bgool.gltf", "info", 10)
-		event.LoadChara(4, "bgool2.gltf", "info", 11)
+		event.load_character(4, "bgool.gltf", "info", 10)
+		event.load_character(4, "bgool2.gltf", "info", 11)
 	end
-	event.SphidaSetColModel(4, "gool_a.gltf")
-	event.ChangeDir("")
-	event.CharaActive(10)
-	event.CharaActive(11)
-	event.SetCharaType(10, 4)
-	event.SetCharaType(11, 4)
-	stage_id = event.DngGetStageId() or stage_id
+	event.load_sphida_collision_model(4, "gool_a.gltf")
+	event.change_directory("")
+	event.set_character_active(10)
+	event.set_character_active(11)
+	event.set_scene_character_type(10, 4)
+	event.set_scene_character_type(11, 4)
+	stage_id = event.get_dungeon_stage_id() or stage_id
 	if stage_id == 0 then
 		var13 = 1300.0
 	end
@@ -83,18 +83,18 @@ local function helper_f680702c(arg0: s32, arg1: s32)
 	if stage_id == 6 then
 		var13 = 2000.0
 	end
-	event.SetCharaFarDist(8, var13)
-	event.SetCharaShow(8, 1, 1, 1.0)
-	event.SetCharaFarDist(9, var13)
-	event.SetCharaShow(9, 1, 1, 1.0)
-	event.SetCharaFarDist(10, var13)
-	event.SetCharaShow(10, 1, 1, 1.0)
-	event.SetCharaFarDist(11, var13)
-	event.SetCharaShow(11, 1, 1, 1.0)
-	event.SetCharaPos(8, pos_x, pos_y, pos_z)
-	event.SetCharaPos(9, pos_x, pos_y, pos_z)
-	event.SetCharaPos(10, pos_x_2, pos_y_2, pos_z_2)
-	event.SetCharaPos(11, pos_x_2, pos_y_2, pos_z_2)
+	event.set_character_draw_distance(8, var13)
+	event.set_character_visible(8, 1, 1, 1.0)
+	event.set_character_draw_distance(9, var13)
+	event.set_character_visible(9, 1, 1, 1.0)
+	event.set_character_draw_distance(10, var13)
+	event.set_character_visible(10, 1, 1, 1.0)
+	event.set_character_draw_distance(11, var13)
+	event.set_character_visible(11, 1, 1, 1.0)
+	event.set_character_position(8, pos_x, pos_y, pos_z)
+	event.set_character_position(9, pos_x, pos_y, pos_z)
+	event.set_character_position(10, pos_x_2, pos_y_2, pos_z_2)
+	event.set_character_position(11, pos_x_2, pos_y_2, pos_z_2)
 end
 
 return helper_f680702c

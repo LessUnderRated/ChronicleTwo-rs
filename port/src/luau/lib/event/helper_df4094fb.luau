@@ -6,12 +6,12 @@ local function helper_df4094fb(arg0: s32)
 	local flag: s32 = 0
 	local flag_2: s32 = 0
 	local var3: s32 = 0
-	flag = event.GetFlag(203) or flag
-	flag_2 = event.GetFlag(204) or flag_2
+	flag = event.get_save_flag(203) or flag
+	flag_2 = event.get_save_flag(204) or flag_2
 	if flag ~= 0 and flag_2 == 0 then
 		return 0
 	end
-	var3 = event.GetCnt(1) or var3
+	var3 = event.get_save_counter(1) or var3
 	print("CheckTrainDoor,station_id=", var3, ",lr=", arg0, "-----------------------------\n")
 	if var3 == 2 then
 		if arg0 ~= 0 then

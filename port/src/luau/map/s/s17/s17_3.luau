@@ -69,32 +69,32 @@ local function default_event()
 	local flag_3: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		flag = event.GetFlag(300) or flag
-		flag_2 = event.GetFlag(320) or flag_2
-		flag_3 = event.GetFlag(317) or flag_3
+		flag = event.get_save_flag(300) or flag
+		flag_2 = event.get_save_flag(320) or flag_2
+		flag_3 = event.get_save_flag(317) or flag_3
 		if flag == 1 then
 			if flag_2 == 1 then
 				if flag_3 == 0 then
 					at = 1
 					helper_adcd807d()
-					event.InitLocalCnt()
-					event.DngPause(8192, 1)
-					event.SetCharaChangeMask(0, 1)
-					event.SetCharaChangeMask(2, 0)
-					event.SetCharaChangeMask(1, 0)
-					event.SetCharaChangeMask(3, 0)
-					event.SetBitCtrl(1, 1)
+					event.clear_local_event_counters()
+					event.set_dungeon_pause_flags(8192, 1)
+					event.set_character_change_unmasked(0, 1)
+					event.set_character_change_unmasked(2, 0)
+					event.set_character_change_unmasked(1, 0)
+					event.set_character_change_unmasked(3, 0)
+					event.set_save_control_bits(1, 1)
 				else
 					at = 2
 					helper_6673bb50()
-					event.FuncPointShow("", "exit", 1)
-					event.FuncPointShow("", "talk", 0)
-					event.EohSyncObj_3(0, "p01_s17", "s17_02-a0_1")
-					event.EohSetShow(0, 0)
-					event.EohSyncObj_3(0, "p01_s17", "s17_02-c0_1")
-					event.EohSetShow(0, 0)
-					event.FuncPointShow("p01_s17", "invent_30001-0", 0)
-					event.FuncPointShow("", "branch", 0)
+					event.set_function_point_enabled("", "exit", 1)
+					event.set_function_point_enabled("", "talk", 0)
+					event.attach_object_handle_to_map_part_3(0, "p01_s17", "s17_02-a0_1")
+					event.set_object_handle_visible(0, 0)
+					event.attach_object_handle_to_map_part_3(0, "p01_s17", "s17_02-c0_1")
+					event.set_object_handle_visible(0, 0)
+					event.set_function_point_enabled("p01_s17", "invent_30001-0", 0)
+					event.set_function_point_enabled("", "branch", 0)
 					return
 				end
 			else
@@ -104,14 +104,14 @@ local function default_event()
 				return
 			end
 		else
-			event.Initialize()
-			event.SetCharaPos(0, 0.0, 62.57, 1305.0)
-			event.SetCharaRot(0, 0.0, 3.14, 0.0)
-			event.SetCameraPos(-0.16, 110.89, 1405.0)
-			event.SetCameraRef(0.0, 92.57, 1305.0)
-			event.ResetCamera(0)
-			event.SetFadeIn(30)
-			event.Finish()
+			event.initialize_event()
+			event.set_character_position(0, 0.0, 62.57, 1305.0)
+			event.set_character_rotation(0, 0.0, 3.14, 0.0)
+			event.set_camera_position(-0.16, 110.89, 1405.0)
+			event.set_camera_look_at(0.0, 92.57, 1305.0)
+			event.reset_follow_camera(0)
+			event.fade_in_screen(30)
+			event.finish_event()
 		end
 		return
 	end, function(received: { any })
@@ -120,14 +120,14 @@ local function default_event()
 				at = 2
 				helper_6673bb50()
 				return vm.continue_with(function()
-					event.FuncPointShow("", "exit", 1)
-					event.FuncPointShow("", "talk", 0)
-					event.EohSyncObj_3(0, "p01_s17", "s17_02-a0_1")
-					event.EohSetShow(0, 0)
-					event.EohSyncObj_3(0, "p01_s17", "s17_02-c0_1")
-					event.EohSetShow(0, 0)
-					event.FuncPointShow("p01_s17", "invent_30001-0", 0)
-					event.FuncPointShow("", "branch", 0)
+					event.set_function_point_enabled("", "exit", 1)
+					event.set_function_point_enabled("", "talk", 0)
+					event.attach_object_handle_to_map_part_3(0, "p01_s17", "s17_02-a0_1")
+					event.set_object_handle_visible(0, 0)
+					event.attach_object_handle_to_map_part_3(0, "p01_s17", "s17_02-c0_1")
+					event.set_object_handle_visible(0, 0)
+					event.set_function_point_enabled("p01_s17", "invent_30001-0", 0)
+					event.set_function_point_enabled("", "branch", 0)
 					return
 				end)
 			end
@@ -151,161 +151,161 @@ local function helper_2f708()
 	vm.section(function()
 		at = 1
 		vm.entry(1)
-		event.SetFlag(314, 1)
-		event.Initialize()
-		event.SetMesWindowMode(0, 7)
-		event.DngSetupMainUnit(0)
-		event.SetActiveChrNo(0)
-		var0 = event.SndLoadSound_2(3809) or var0
-		active_chr_no = event.GetActiveChrNo() or active_chr_no
-		event.SetStatus(1, 0, 256, 1)
+		event.set_save_flag(314, 1)
+		event.initialize_event()
+		event.set_message_window_mode(0, 7)
+		event.switch_dungeon_main_character(0)
+		event.set_playable_character(0)
+		var0 = event.load_sound_effect_file_2(3809) or var0
+		active_chr_no = event.get_playable_character() or active_chr_no
+		event.set_scene_status_flags(1, 0, 256, 1)
 		if active_chr_no == 0 then
 		else
 		end
-		event.ChangeDir("event/e300/e314/")
-		event.UnlockStack(4)
-		event.LoadMes(0, 4, "e314_1.txt")
-		event.AssignStack(5)
-		event.ClearStack(5)
+		event.change_directory("event/e300/e314/")
+		event.unlock_memory_stack(4)
+		event.load_message_file(0, 4, "e314_1.txt")
+		event.assign_memory_stack(5)
+		event.clear_memory_stack(5)
 		if active_chr_no == 0 then
-			event.LoadMotion(5, "e314_mints.gltf", "info", 0)
-			event.CharaActive(0)
-			event.EohSyncChara(0, 0)
-			event.ObjsInit(0)
-			event.ObjsSyncObj(0, 0)
+			event.load_character_motion_pack(5, "e314_mints.gltf", "info", 0)
+			event.set_character_active(0)
+			event.attach_object_handle_to_character(0, 0)
+			event.clear_object_sequence(0)
+			event.set_object_sequence_object(0, 0)
 		end
-		block = event.LoadImg_4(5, "e314_1.json", 1) or block
-		event.SpriteInit(0)
-		event.SpriteSetType(0, 0)
-		event.SpriteSetTexture(0, "e31401", block)
-		event.SpriteSetColor(0, 128, 128, 128, 0)
-		event.SpriteSetUvsize(0, 0, 0, 512, 448)
-		event.SpriteSetPutsize(0, 512, 448)
-		event.SpriteSetPos(0, 256, 224)
-		event.SpriteSetDraw(0, 1)
-		event.EohSyncSprite(2, 0)
-		event.ObjsInit(2)
-		event.ObjsSyncObj(2, 2)
-		event.SpriteInit(1)
-		event.SpriteSetType(1, 0)
-		event.SpriteSetTexture(1, "e31402", block)
-		event.SpriteSetColor(1, 128, 128, 128, 0)
-		event.SpriteSetUvsize(1, 0, 0, 512, 448)
-		event.SpriteSetPutsize(1, 512, 448)
-		event.SpriteSetPos(1, 256, 224)
-		event.SpriteSetDraw(1, 1)
-		event.EohSyncSprite(3, 1)
-		event.ObjsInit(3)
-		event.ObjsSyncObj(3, 3)
-		event.SpriteInit(2)
-		event.SpriteSetType(2, 0)
-		event.SpriteSetTexture(2, "e31403", block)
-		event.SpriteSetColor(2, 128, 128, 128, 0)
-		event.SpriteSetUvsize(2, 0, 0, 512, 448)
-		event.SpriteSetPutsize(2, 512, 448)
-		event.SpriteSetPos(2, 256, 224)
-		event.SpriteSetDraw(2, 1)
-		event.EohSyncSprite(4, 2)
-		event.ObjsInit(4)
-		event.ObjsSyncObj(4, 4)
-		event.ChangeDir("")
+		block = event.load_event_image_4(5, "e314_1.json", 1) or block
+		event.reset_event_sprite(0)
+		event.set_event_sprite_type(0, 0)
+		event.set_event_sprite_texture(0, "e31401", block)
+		event.set_event_sprite_color(0, 128, 128, 128, 0)
+		event.set_event_sprite_texture_rect(0, 0, 0, 512, 448)
+		event.set_event_sprite_size(0, 512, 448)
+		event.set_event_sprite_position(0, 256, 224)
+		event.set_event_sprite_draw_pass(0, 1)
+		event.attach_object_handle_to_sprite(2, 0)
+		event.clear_object_sequence(2)
+		event.set_object_sequence_object(2, 2)
+		event.reset_event_sprite(1)
+		event.set_event_sprite_type(1, 0)
+		event.set_event_sprite_texture(1, "e31402", block)
+		event.set_event_sprite_color(1, 128, 128, 128, 0)
+		event.set_event_sprite_texture_rect(1, 0, 0, 512, 448)
+		event.set_event_sprite_size(1, 512, 448)
+		event.set_event_sprite_position(1, 256, 224)
+		event.set_event_sprite_draw_pass(1, 1)
+		event.attach_object_handle_to_sprite(3, 1)
+		event.clear_object_sequence(3)
+		event.set_object_sequence_object(3, 3)
+		event.reset_event_sprite(2)
+		event.set_event_sprite_type(2, 0)
+		event.set_event_sprite_texture(2, "e31403", block)
+		event.set_event_sprite_color(2, 128, 128, 128, 0)
+		event.set_event_sprite_texture_rect(2, 0, 0, 512, 448)
+		event.set_event_sprite_size(2, 512, 448)
+		event.set_event_sprite_position(2, 256, 224)
+		event.set_event_sprite_draw_pass(2, 1)
+		event.attach_object_handle_to_sprite(4, 2)
+		event.clear_object_sequence(4)
+		event.set_object_sequence_object(4, 4)
+		event.change_directory("")
 		if active_chr_no == 1 then
-			event.LoadChara(5, "chara/c01_base.gltf", "info", 13)
-			event.LoadEquip(5, 0, 4, "info", 13)
-			event.LoadEquip(5, 0, 3, "info", 13)
-			event.LoadEquip(5, 0, 2, "info", 13, 14)
-			event.LoadMotion(5, "event/e300/e314/e314_mints.gltf", "info", 13)
-			event.LoadMotion(5, "event/basic_evmot/mints_set.gltf", "info", 13)
-			event.EohSyncChara(0, 13)
-			event.ObjsInit(0)
-			event.ObjsSyncObj(0, 0)
-			event.LoadMotion(5, "event/basic_evmot/monica_set.gltf", "info", 0)
+			event.load_character(5, "chara/c01_base.gltf", "info", 13)
+			event.load_equipment_model(5, 0, 4, "info", 13)
+			event.load_equipment_model(5, 0, 3, "info", 13)
+			event.load_equipment_model(5, 0, 2, "info", 13, 14)
+			event.load_character_motion_pack(5, "event/e300/e314/e314_mints.gltf", "info", 13)
+			event.load_character_motion_pack(5, "event/basic_evmot/mints_set.gltf", "info", 13)
+			event.attach_object_handle_to_character(0, 13)
+			event.clear_object_sequence(0)
+			event.set_object_sequence_object(0, 0)
+			event.load_character_motion_pack(5, "event/basic_evmot/monica_set.gltf", "info", 0)
 		else
-			event.LoadMotion(5, "event/e300/e314/e314_monica.gltf", "info", 13)
-			event.LoadMotion(5, "event/basic_evmot/monica_set.gltf", "info", 13)
-			event.EohSyncChara(1, 13)
-			event.ObjsInit(1)
-			event.ObjsSyncObj(1, 1)
-			event.LoadMotion(5, "event/basic_evmot/mints_set.gltf", "info", 0)
+			event.load_character_motion_pack(5, "event/e300/e314/e314_monica.gltf", "info", 13)
+			event.load_character_motion_pack(5, "event/basic_evmot/monica_set.gltf", "info", 13)
+			event.attach_object_handle_to_character(1, 13)
+			event.clear_object_sequence(1)
+			event.set_object_sequence_object(1, 1)
+			event.load_character_motion_pack(5, "event/basic_evmot/mints_set.gltf", "info", 0)
 		end
-		event.CharaActive(13)
-		event.CharaActive(14)
-		event.EohSetPos(0, 10.0, 40.79, 1150.0)
-		event.EohSetRot(0, 0.0, -1.57, 0.0)
-		event.EohSetMotion(0, "立ち", 4)
-		event.EohSetTexAnim(0, 0)
-		event.EohSetTexAnim(0, 1, "デフォルト顔")
-		event.EohSetTexAnim(0, 1, "通常目パチ")
-		event.EohSetFootSoundId(0, 1)
-		event.EohSetPos(1, -10.0, 40.79, 1150.0)
-		event.EohSetRot(1, 0.0, 1.57, 0.0)
-		event.EohSetMotion(1, "立ち", 4)
-		event.EohSetTexAnim(1, 0)
-		event.EohSetTexAnim(1, 1, "デフォルト顔")
-		event.EohSetTexAnim(1, 1, "通常目パチ")
-		event.EohSetFootSoundId(1, 1)
-		debug_flag = event.GetDebugFlag() or debug_flag
+		event.set_character_active(13)
+		event.set_character_active(14)
+		event.set_object_handle_position(0, 10.0, 40.79, 1150.0)
+		event.set_object_handle_rotation(0, 0.0, -1.57, 0.0)
+		event.set_object_handle_motion(0, "立ち", 4)
+		event.set_object_handle_texture_animation(0, 0)
+		event.set_object_handle_texture_animation(0, 1, "デフォルト顔")
+		event.set_object_handle_texture_animation(0, 1, "通常目パチ")
+		event.set_object_handle_footstep_sound(0, 1)
+		event.set_object_handle_position(1, -10.0, 40.79, 1150.0)
+		event.set_object_handle_rotation(1, 0.0, 1.57, 0.0)
+		event.set_object_handle_motion(1, "立ち", 4)
+		event.set_object_handle_texture_animation(1, 0)
+		event.set_object_handle_texture_animation(1, 1, "デフォルト顔")
+		event.set_object_handle_texture_animation(1, 1, "通常目パチ")
+		event.set_object_handle_footstep_sound(1, 1)
+		debug_flag = event.get_debug_flag() or debug_flag
 		if debug_flag ~= 0 then
-			event.InitDramaScene()
+			event.enable_drama_skip()
 		end
-		event.CmrsInit()
-		event.CmrsSetPos(0.0, 62.86, 1089.96)
-		event.CmrsSetRef(0.0, 52.74, 1185.03)
-		event.SetFadeIn(30)
-		event.SetPakuAnim(1, "通常口パク")
+		event.clear_camera_sequence()
+		event.set_camera_sequence_position(0.0, 62.86, 1089.96)
+		event.set_camera_sequence_look_at(0.0, 52.74, 1185.03)
+		event.fade_in_screen(30)
+		event.set_mouth_texture_animations(1, "通常口パク")
 		at = 2
 		helper_4116e6bb(3140010)
-		event.ObjsSetMotion(1, "歩き")
-		event.ObjsMove(1, -10.0, 40.79, 1200.0, 40, 1)
-		event.ObjsRotation(1, 0.0, 0.0, 0.0, 10)
+		event.set_object_sequence_motion(1, "歩き")
+		event.move_object_sequence(1, -10.0, 40.79, 1200.0, 40, 1)
+		event.rotate_object_sequence(1, 0.0, 0.0, 0.0, 10)
 		at = 3
 		wait_frames(10)
-		event.ObjsSetMotion(0, "歩き")
-		event.ObjsMove(0, 10.0, 40.79, 1180.0, 30, 1)
-		event.ObjsRotation(0, 0.0, 0.0, 0.0, 10)
-		event.SetFadeOut(30)
+		event.set_object_sequence_motion(0, "歩き")
+		event.move_object_sequence(0, 10.0, 40.79, 1180.0, 30, 1)
+		event.rotate_object_sequence(0, 0.0, 0.0, 0.0, 10)
+		event.fade_out_screen(30)
 		at = 4
 		wait_frames(30)
 		at = 5
 		wait_objects(0)
 		while true do
-			event.SetFadeIn(30)
-			event.SetMesWindowMode(0, 7)
-			event.ObjsSetMotion(1, "歩き")
-			event.ObjsSetRot(1, 0.0, 0.0, 0.0)
-			event.ObjsResetDaPosition(1)
-			event.ObjsSetMotion(0, "立ち", 4)
-			event.CharaActive(0, 0)
+			event.fade_in_screen(30)
+			event.set_message_window_mode(0, 7)
+			event.set_object_sequence_motion(1, "歩き")
+			event.set_object_sequence_rotation(1, 0.0, 0.0, 0.0)
+			event.reset_object_sequence_dynamic_animation(1)
+			event.set_object_sequence_motion(0, "立ち", 4)
+			event.set_character_active(0, 0)
 			at = 6
 			helper_b55f37c0(var0)
 			at = 7
 			vm.wait(7)
-			event.SetMesWindowMode(0, 1)
-			event.SetMesShippo(0, 0)
-			event.MesMake_2(0, "Ja\nNein")
+			event.set_message_window_mode(0, 1)
+			event.set_message_bubble_tail(0, 0)
+			event.open_message_window_2(0, "Ja\nNein")
 			open_message(0, -1, 5, 0, 0)
 			at = 8
 			var6 = helper_39af59c5(0, 2, 0, 1)
-			event.SetMesPos(0, 0)
+			event.set_message_bubble_screen_slot(0, 0)
 			if var6 == 1 then
 				at = 9
 				vm.wait(9)
 				break
 			else
-				event.SetFadeOut(30)
+				event.fade_out_screen(30)
 				at = 10
 				wait_frames(30)
 			end
 		end
-		event.SetMesWindowMode(0, 7)
-		event.ObjsSetMotion(1, "がっつ", 2)
-		event.ObjsNextMotion(1, "立ち", 4)
-		event.ObjsSeDelay(1, 10)
-		event.ObjsSePlay(1, var0, 4)
-		event.SetPakuAnim(1, "通常口パク")
+		event.set_message_window_mode(0, 7)
+		event.set_object_sequence_motion(1, "がっつ", 2)
+		event.queue_object_sequence_next_motion(1, "立ち", 4)
+		event.delay_object_sequence_sound_track(1, 10)
+		event.play_object_sequence_sound(1, var0, 4)
+		event.set_mouth_texture_animations(1, "通常口パク")
 		at = 11
 		helper_4116e6bb(3140160)
-		event.SetFadeOut(30)
+		event.fade_out_screen(30)
 		at = 12
 		wait_frames(30)
 	end, function(received: { any }): boolean
@@ -344,79 +344,79 @@ local function helper_2f708()
 	end)
 	at = 13
 	vm.entry(13)
-	event.CancelDramaScene()
-	event.SetStatus(1, 0, 256, 0)
-	event.DelExtMotion(0)
-	event.DelExtMotion(13)
-	event.DelImg(1)
-	event.LoadMes(0, -1)
-	event.SphidaSetPlayFlag(1)
-	event.EohSetFootSoundId(0, 0)
-	event.CharaActive(0)
-	event.SetCharaPos(0, -25.0, 62.7, 1285.3)
-	event.SetCharaRot(0, 0.0, 3.14, 0.0)
-	event.SetMotion(0, "立ち", 4)
-	event.CharaNormalDrive(0)
-	event.CharaResetDa(0)
-	event.CharaActive(13)
-	event.SetCharaPos(13, 68.04, 41.85, 1180.61)
-	event.SetCharaRot(13, 0.0, 3.14, 0.0)
-	event.SetMotion(13, "立ち", 4)
-	event.CharaNormalDrive(13)
-	event.CharaResetDa(13)
-	event.SetCameraRef(-25.0, 92.7, 1285.3)
-	event.SetCameraPos(-25.0, 102.7, 1385.3)
-	event.ResetCamera(0)
-	event.Finish()
+	event.cancel_drama_scene_skip()
+	event.set_scene_status_flags(1, 0, 256, 0)
+	event.delete_character_extension_packs(0)
+	event.delete_character_extension_packs(13)
+	event.delete_event_image(1)
+	event.load_message_file(0, -1)
+	event.set_sphida_playing(1)
+	event.set_object_handle_footstep_sound(0, 0)
+	event.set_character_active(0)
+	event.set_character_position(0, -25.0, 62.7, 1285.3)
+	event.set_character_rotation(0, 0.0, 3.14, 0.0)
+	event.set_character_motion(0, "立ち", 4)
+	event.update_character_motion(0)
+	event.reset_character_cloth_and_hair(0)
+	event.set_character_active(13)
+	event.set_character_position(13, 68.04, 41.85, 1180.61)
+	event.set_character_rotation(13, 0.0, 3.14, 0.0)
+	event.set_character_motion(13, "立ち", 4)
+	event.update_character_motion(13)
+	event.reset_character_cloth_and_hair(13)
+	event.set_camera_look_at(-25.0, 92.7, 1285.3)
+	event.set_camera_position(-25.0, 102.7, 1385.3)
+	event.reset_follow_camera(0)
+	event.finish_event()
 end
 
 --- Helper function.
 local function helper_44098()
-	event.Initialize()
-	event.SetMesPreset(0, 4)
-	event.SetMesWindowMode(0, 4)
-	event.SetMesDrawspeed(0, 1)
-	event.MesMake_2(
+	event.initialize_event()
+	event.apply_message_window_preset(0, 4)
+	event.set_message_window_mode(0, 4)
+	event.set_message_draw_speed(0, 1)
+	event.open_message_window_2(
 		0,
 		'"Der Schlag"\n1) Ziele mit dem linken Analog-Stick\n2) Hole aus mit (O)\n3) Bestimme die Schlagkraft\n    mit (O)\n4) Spiele die Kugel mit (O)'
 	)
 	helper_75684dd8(0, -1, 8, 0, 0)
-	event.MesMake_2(
+	event.open_message_window_2(
 		0,
 		'"Die Aufprallzone"\nAls roter Balken unter der\nSchlagkraft-Anzeige dargestellt.\nSpiele die Kugel in der Mitte der<page>Aufprallzone f[UNI00fc]r weite Schl[UNI00e4]ge.'
 	)
 	helper_75684dd8(0, -1, 8, 0, 0)
-	event.MesMake_2(
+	event.open_message_window_2(
 		0,
 		"Ein Treffer au[UNI00df]erhalb der\nAufprallzone f[UNI00fc]hrt dazu, dass die\nKugel in die falsche Richtung fliegt."
 	)
 	helper_75684dd8(0, -1, 8, 0, 0)
-	event.MesMake_2(
+	event.open_message_window_2(
 		0,
 		'"Aufprallpunkt [UNI00e4]ndern"\nIndem du den linken Analog-Stick beim\nAufprall in eine Richtung dr[UNI00fc]ckst,\nbestimmst du, wo du die Kugel<page>triffst.\nDadurch [UNI00e4]nderst du Folgendes:'
 	)
 	helper_75684dd8(0, -1, 8, 0, 0)
-	event.MesMake_2(
+	event.open_message_window_2(
 		0,
 		"Oben - Topspin, der beschleunigt.\nUnten - Backspin, der verlangsamt.\nLinks - Slice nach rechts.\nRechts - Hook nach links."
 	)
 	helper_75684dd8(0, -1, 8, 0, 0)
-	event.MesMake_2(
+	event.open_message_window_2(
 		0,
 		"Falls die Kugel an einem Ort\nlandet, der unzug[UNI00e4]nglich ist, holst\ndu sie mit (#) zu dir."
 	)
 	helper_75684dd8(0, -1, 8, 0, 0)
-	event.MesMake_2(0, '[(!)]Spheda ist jetzt unter "Hilfe"\n   im Hauptmen[UNI00fc] aufgef[UNI00fc]hrt.')
+	event.open_message_window_2(0, '[(!)]Spheda ist jetzt unter "Hilfe"\n   im Hauptmen[UNI00fc] aufgef[UNI00fc]hrt.')
 	helper_75684dd8(0, -1, 8, 0, 0)
 end
 
 --- Helper function.
 local function helper_2da78()
-	event.Initialize()
-	event.SetMesWindowMode(0, 1)
-	event.MesMake_2(0, "Sieh nach, ob du einen Stock\nhast. Dann zeige ich dir, wie man\ndie Kugel schl[UNI00e4]gt.")
+	event.initialize_event()
+	event.set_message_window_mode(0, 1)
+	event.open_message_window_2(0, "Sieh nach, ob du einen Stock\nhast. Dann zeige ich dir, wie man\ndie Kugel schl[UNI00e4]gt.")
 	helper_bd088cc0(13, -1)
-	event.Finish()
+	event.finish_event()
 end
 
 --- Helper function.
@@ -435,84 +435,84 @@ local function helper_31c78()
 	local var15: any = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.Initialize()
+		event.initialize_event()
 		var0 = 13
-		event.SetMesWindowMode(0, 1)
-		event.SetMesShippo(0, 1)
-		event.EohSyncChara(0, 0)
-		event.ObjsInit(0)
-		event.ObjsSyncObj(0, 0)
-		event.EohSetFootSoundId(0, 1)
-		event.EohSyncChara(1, var0)
-		event.ObjsInit(1)
-		event.ObjsSyncObj(1, 1)
-		event.EohSetFootSoundId(1, 1)
+		event.set_message_window_mode(0, 1)
+		event.set_message_bubble_tail(0, 1)
+		event.attach_object_handle_to_character(0, 0)
+		event.clear_object_sequence(0)
+		event.set_object_sequence_object(0, 0)
+		event.set_object_handle_footstep_sound(0, 1)
+		event.attach_object_handle_to_character(1, var0)
+		event.clear_object_sequence(1)
+		event.set_object_sequence_object(1, 1)
+		event.set_object_handle_footstep_sound(1, 1)
 		do
-			local out1, out2, out3 = event.GetCharaPos(0)
+			local out1, out2, out3 = event.get_character_position(0)
 			var1 = out1 or var1
 			var2 = out2 or var2
 			var3 = out3 or var3
 		end
 		do
-			local _, out2, _ = event.GetCharaRot(0)
+			local _, out2, _ = event.get_character_rotation(0)
 			var8 = out2 or var8
 		end
 		do
-			local out1, out2, out3 = event.GetCharaPos(var0)
+			local out1, out2, out3 = event.get_character_position(var0)
 			var4 = out1 or var4
 			var5 = out2 or var5
 			var6 = out3 or var6
 		end
 		do
-			local _, out2, _ = event.GetCharaRot(var0)
+			local _, out2, _ = event.get_character_rotation(var0)
 			var11 = out2 or var11
 		end
-		yaw = event.GetRefAngle(var1, var2, var3, var4, var5, var6) or yaw
-		yaw_2 = event.GetRefAngle(var4, var5, var6, var1, var2, var3) or yaw_2
-		var15 = event.AngleCmp(var8, yaw, 0.1) or var15
+		yaw = event.get_direction_angle(var1, var2, var3, var4, var5, var6) or yaw
+		yaw_2 = event.get_direction_angle(var4, var5, var6, var1, var2, var3) or yaw_2
+		var15 = event.compare_angles(var8, yaw, 0.1) or var15
 		if var15 ~= 0 then
-			event.ObjsRotation(0, 0.0, yaw, 0.0, 10)
-			event.ObjsSetMotion(0, "歩き")
-			event.ObjsMotionDelay(0, 10)
+			event.rotate_object_sequence(0, 0.0, yaw, 0.0, 10)
+			event.set_object_sequence_motion(0, "歩き")
+			event.delay_object_sequence_motion_track(0, 10)
 		end
-		event.ObjsSetMotion(0, "立ち")
-		var15 = event.AngleCmp(var11, yaw_2, 0.1) or var15
+		event.set_object_sequence_motion(0, "立ち")
+		var15 = event.compare_angles(var11, yaw_2, 0.1) or var15
 		if var15 ~= 0 then
-			event.ObjsRotation(1, 0.0, yaw_2, 0.0, 10)
-			event.ObjsSetMotion(1, "歩き")
-			event.ObjsMotionDelay(1, 10)
+			event.rotate_object_sequence(1, 0.0, yaw_2, 0.0, 10)
+			event.set_object_sequence_motion(1, "歩き")
+			event.delay_object_sequence_motion_track(1, 10)
 		end
-		event.ObjsSetMotion(1, "立ち")
+		event.set_object_sequence_motion(1, "立ち")
 		at = 1
 		wait_frames(20)
-		event.SetPakuMotion(1, "会話", 0, "立ち", 0)
-		event.MesMake_2(0, "Wie?\nDu h[UNI00f6]rst auf?")
+		event.set_mouth_motions(1, "会話", 0, "立ち", 0)
+		event.open_message_window_2(0, "Wie?\nDu h[UNI00f6]rst auf?")
 		at = 2
 		helper_0ffc2526(0, -1, var0, 0, 0)
-		event.SetMesShippo(0, 0)
-		event.MesMake_2(0, "Ja\nNein")
+		event.set_message_bubble_tail(0, 0)
+		event.open_message_window_2(0, "Ja\nNein")
 		open_message(0, -1, 5, 0, 0)
 		at = 3
 		var15 = helper_39af59c5(0, 2, 1, 0)
-		event.SetMesPos(0, 0)
-		event.SetMesShippo(0, 1)
+		event.set_message_bubble_screen_slot(0, 0)
+		event.set_message_bubble_tail(0, 1)
 		if var15 == 0 then
-			event.SetFadeOut(30)
+			event.fade_out_screen(30)
 			at = 4
 			wait_frames(30)
 			return 1
 		else
-			event.MesMake_2(0, "Ja.\nViel Gl[UNI00fc]ck, Max!")
+			event.open_message_window_2(0, "Ja.\nViel Gl[UNI00fc]ck, Max!")
 			at = 5
 			helper_0ffc2526(0, -1, var0, 0, 0)
 		end
-		var15 = event.AngleCmp(var11, yaw_2, 0.1) or var15
+		var15 = event.compare_angles(var11, yaw_2, 0.1) or var15
 		if var15 ~= 0 then
-			event.ObjsRotation(1, 0.0, var11, 0.0, 10)
-			event.ObjsSetMotion(1, "歩き")
-			event.ObjsMotionDelay(1, 10)
+			event.rotate_object_sequence(1, 0.0, var11, 0.0, 10)
+			event.set_object_sequence_motion(1, "歩き")
+			event.delay_object_sequence_motion_track(1, 10)
 		end
-		event.ObjsSetMotion(1, "立ち")
+		event.set_object_sequence_motion(1, "立ち")
 		at = 6
 		wait_objects(1)
 		return 0
@@ -551,24 +551,24 @@ local function helper_186f0()
 	local var1: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		active_chr_no = event.GetActiveChrNo() or active_chr_no
+		active_chr_no = event.get_playable_character() or active_chr_no
 		if active_chr_no ~= 0 then
-			event.SetMesWindowMode(0, 4)
+			event.set_message_window_mode(0, 4)
 			at = 1
 			helper_75684dd8(0, 2000, 8, 0, 0)
 			return 1
 		end
-		var1 = event.GetEquipItemno(0, 0) or var1
+		var1 = event.get_equipped_item(0, 0) or var1
 		if var1 ~= 9 and var1 ~= 10 and var1 ~= 11 and var1 ~= 12 and var1 ~= 13 and var1 ~= 14 then
-			event.SetMesWindowMode(0, 4)
-			event.MesMake_2(0, "Nimm den Schl[UNI00e4]ger.")
+			event.set_message_window_mode(0, 4)
+			event.open_message_window_2(0, "Nimm den Schl[UNI00e4]ger.")
 			at = 2
 			helper_75684dd8(0, -1, 8, 0, 0)
 			return 1
 		end
-		event.SetMesWindowMode(0, 1)
-		event.SphidaSetCulbNo(var1)
-		event.PadAutoRepeatOff()
+		event.set_message_window_mode(0, 1)
+		event.set_sphida_club(var1)
+		event.disable_pad_auto_repeat()
 		return 0
 	end, function(received: { any })
 		if at <= 1 then
@@ -641,17 +641,17 @@ local function helper_1af2c()
 	local yaw: f32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.Initialize()
-		event.SetMotion(0, "立ち")
+		event.initialize_event()
+		event.set_character_motion(0, "立ち")
 		at = 1
 		if helper_186f0() ~= 0 then
-			event.Finish()
+			event.finish_event()
 			return 0
 		end
-		event.SetStatusbarShow(0, 1.0)
-		event.AssignStack(5)
-		event.ClearStack(5)
-		event.SetLoadbgFile_4(
+		event.show_dungeon_status_bar(0, 1.0)
+		event.assign_memory_stack(5)
+		event.clear_memory_stack(5)
+		event.start_background_file_loads_4(
 			"dungeon/sphida/c01_golf.gltf",
 			"dungeon/chara/c01b_miss.gltf",
 			"dungeon/sphida/gool_end.gltf",
@@ -661,61 +661,61 @@ local function helper_1af2c()
 		vm.wait(2)
 		at = 3
 		helper_479dc9e9()
-		event.LoadMotion(5, "dungeon/sphida/c01_golf.gltf", "info", 0)
-		event.LoadMotion(5, "dungeon/chara/c01b_miss.gltf", "info", 0)
-		tex_bank = event.SphidaGetTexb() or tex_bank
-		event.LoadChara(5, "dungeon/sphida/gool_end.gltf", "info", 12)
-		event.CharaActive(0, 12)
-		var1 = event.SndLoadSound_3(5, "snd2/mon/en_900.sound.json") or var1
-		event.CreateSwordEffect(5, 64, 16)
-		event.SwordEffectColor(128, 128, 128, 80, 128, 128, 128, 80)
-		event.EsmInitialize(5, 1)
-		event.EsmLoadBasePack("足水パシャ", "dungeon/sphida/mizu_eff.gltf")
-		event.EsmInitFix(5)
-		event.EohSyncChara(0, 1)
-		event.EohSetShow(0, 1)
-		event.EohSyncChara(0, 2)
-		event.EohSetShow(0, 0)
-		event.CharaActive(0, 13)
-		event.CharaActive(0, 14)
-		event.SetCrossfade(15)
-		event.SphidaResetPowgage()
+		event.load_character_motion_pack(5, "dungeon/sphida/c01_golf.gltf", "info", 0)
+		event.load_character_motion_pack(5, "dungeon/chara/c01b_miss.gltf", "info", 0)
+		tex_bank = event.get_sphida_texture_bank() or tex_bank
+		event.load_character(5, "dungeon/sphida/gool_end.gltf", "info", 12)
+		event.set_character_active(0, 12)
+		var1 = event.load_sound_effect_file_3(5, "snd2/mon/en_900.sound.json") or var1
+		event.create_sword_afterimage(5, 64, 16)
+		event.set_sword_afterimage_color(128, 128, 128, 80, 128, 128, 128, 80)
+		event.initialize_effect_manager(5, 1)
+		event.load_effect_base_pack("足水パシャ", "dungeon/sphida/mizu_eff.gltf")
+		event.create_effect_work_buffer(5)
+		event.attach_object_handle_to_character(0, 1)
+		event.set_object_handle_visible(0, 1)
+		event.attach_object_handle_to_character(0, 2)
+		event.set_object_handle_visible(0, 0)
+		event.set_character_active(0, 13)
+		event.set_character_active(0, 14)
+		event.start_crossfade(15)
+		event.reset_sphida_power_gauge()
 		do
-			local out1, out2, out3 = event.SphidaGetBallPos()
+			local out1, out2, out3 = event.get_sphida_ball_position()
 			pos_x = out1 or pos_x
 			pos_y = out2 or pos_y
 			pos_z = out3 or pos_z
 		end
 		var2, var3, var4, var6 = helper_cc4413ca(var2, var3, var4, var6)
 		helper_1a7fd8eb(var6)
-		event.SphidaSetStatusFlag(1)
+		event.set_sphida_status_panel_visible(1)
 		var11 = 12.5
-		event.SphidaCalcCarry(vm.f32(var11 * vm.f32(3.1415927)) / 180.0)
+		event.set_sphida_carry_angle(vm.f32(var11 * vm.f32(3.1415927)) / 180.0)
 		var12, var13, level = helper_39ab7f1f(var12, var13, level)
-		event.SphidaSetPowgageSafeLevel(level)
+		event.set_sphida_power_gauge_safe_level(level)
 		do
-			local out1, out2, out3 = event.ZeroVector()
+			local out1, out2, out3 = event.zero_vector()
 			var15 = out1 or var15
 			var16 = out2 or var16
 			var17 = out3 or var17
 		end
 		while true do
-			event.SphidaSetMinimapFlag(0)
-			event.SphidaSetMmLineFlag(0)
+			event.set_sphida_minimap_scroll_enabled(0)
+			event.set_sphida_minimap_shot_line_visible(0)
 			at = 4
 			local t0: s32
 			t0, var6, var11 = helper_47b9f5b8(var6, var11, tex_bank)
 			if t0 ~= 0 then
-				event.SphidaSetMinimapFlag(0)
-				event.SphidaSetMmLineFlag(0)
-				event.SphidaSetBallPos(pos_x, pos_y, pos_z)
-				event.SetCharaPos(8, pos_x, pos_y, pos_z)
-				event.SetCharaPos(9, pos_x, pos_y, pos_z)
+				event.set_sphida_minimap_scroll_enabled(0)
+				event.set_sphida_minimap_shot_line_visible(0)
+				event.set_sphida_ball_position(pos_x, pos_y, pos_z)
+				event.set_character_position(8, pos_x, pos_y, pos_z)
+				event.set_character_position(9, pos_x, pos_y, pos_z)
 				at = 5
 				return helper_dbb2323a(0)
 			end
-			event.SphidaSetMinimapFlag(0)
-			event.SphidaSetMmLineFlag(0)
+			event.set_sphida_minimap_scroll_enabled(0)
+			event.set_sphida_minimap_shot_line_visible(0)
 			at = 6
 			local t1: s32
 			t1, var12, var6, var16, var15, level = helper_b1b0c1a6(var12, tex_bank, var6, var16, var15, var1, level)
@@ -727,84 +727,84 @@ local function helper_1af2c()
 			end
 		end
 		do
-			local out1, out2, out3 = event.CopyVector(var2, var3, var4)
+			local out1, out2, out3 = event.copy_vector(var2, var3, var4)
 			var18 = out1 or var18
 			var19 = out2 or var19
 			var20 = out3 or var20
 		end
 		var21 = 0
 		if level ~= 1 and level ~= -1 and level ~= 4 then
-			event.SpriteSetType(0, 1)
-			event.SpriteSetDraw(0, 1)
-			event.SpriteSetPutsize(0, 10.8, 11.6)
-			event.SpriteSetPos(0, var2, var3 + 30.0, var4)
-			event.SpriteSetColor(0, 128, 128, 128, 0)
+			event.set_event_sprite_type(0, 1)
+			event.set_event_sprite_draw_pass(0, 1)
+			event.set_event_sprite_size(0, 10.8, 11.6)
+			event.set_event_sprite_position(0, var2, var3 + 30.0, var4)
+			event.set_event_sprite_color(0, 128, 128, 128, 0)
 			if level == 0 then
-				event.SpriteSetUvsize(0, 78, 198, 54, 58)
+				event.set_event_sprite_texture_rect(0, 78, 198, 54, 58)
 			end
 			if level == 2 or level == -2 then
-				event.SpriteSetUvsize(0, 186, 190, 70, 66)
+				event.set_event_sprite_texture_rect(0, 186, 190, 70, 66)
 			end
 			if level == 3 or level == -3 then
-				event.SpriteSetUvsize(0, 132, 198, 54, 58)
+				event.set_event_sprite_texture_rect(0, 132, 198, 54, 58)
 			end
-			event.EohSyncSprite(18, 0)
-			event.ObjsInit(18)
-			event.ObjsSyncObj(18, 18)
-			event.ObjsSetColor(18, 128, 128, 128, 128, 4)
-			event.ObjsColorDelay(18, 20)
-			event.ObjsSetColor(18, 128, 128, 128, 0, 6)
+			event.attach_object_handle_to_sprite(18, 0)
+			event.clear_object_sequence(18)
+			event.set_object_sequence_object(18, 18)
+			event.set_object_sequence_color(18, 128, 128, 128, 128, 4)
+			event.delay_object_sequence_color_track(18, 20)
+			event.set_object_sequence_color(18, 128, 128, 128, 0, 6)
 			at = 8
 			wait_frames(10)
 		end
 		if var12 <= vm.f32(0.3) then
-			event.SetMotion(0, "小ショット", 2)
+			event.set_character_motion(0, "小ショット", 2)
 			at = 9
 			wait_frames(25)
 			if level ~= 4 then
-				event.SndSePlay(var1, 3)
+				event.play_sound_effect(var1, 3)
 			end
 		elseif var12 <= vm.f32(0.6) then
-			event.SetMotion(0, "中ショット", 2)
+			event.set_character_motion(0, "中ショット", 2)
 			at = 10
 			wait_frames(34)
-			event.SndSePlay(var1, 2)
+			event.play_sound_effect(var1, 2)
 		else
-			event.SetMotion(0, "大ショット", 2)
+			event.set_character_motion(0, "大ショット", 2)
 			at = 11
 			wait_frames(39)
 			if level == 0 then
-				event.SndSePlay(var1, 12)
+				event.play_sound_effect(var1, 12)
 			else
-				event.SndSePlay(var1, 1)
+				event.play_sound_effect(var1, 1)
 			end
 		end
 		if level == 4 then
 			at = 12
 			wait_frames(50)
 			helper_c2ca38b7(var1)
-			event.SphidaSetBallPos(pos_x, pos_y, pos_z)
-			event.SetCharaPos(8, pos_x, pos_y, pos_z)
-			event.SetCharaPos(9, pos_x, pos_y, pos_z)
+			event.set_sphida_ball_position(pos_x, pos_y, pos_z)
+			event.set_character_position(8, pos_x, pos_y, pos_z)
+			event.set_character_position(9, pos_x, pos_y, pos_z)
 			at = 13
 			return helper_dbb2323a(0)
 		end
 		if level == 0 then
-			event.SpriteSetType(1, 0)
-			event.SpriteSetDraw(1, 1)
-			event.SpriteSetPos(1, 256, 278)
-			event.SpriteSetUvsize(1, 246, 104, 266, 42)
-			event.SpriteSetPutsize(1, 266, 42)
-			event.SpriteSetColor(1, 128, 128, 128, 0)
-			event.SpriteSetScale(1, 10, 10, 10)
-			event.EohSyncSprite(19, 1)
-			event.ObjsInit(19)
-			event.ObjsSyncObj(19, 19)
-			event.ObjsJump(19, 256, 138, 0, 3.6, 20)
-			event.ObjsSetScale(19, 1, 1, 1, 18)
-			event.ObjsSetColor(19, 128, 128, 128, 128, 12)
-			event.ObjsColorDelay(19, 30)
-			event.ObjsSetColor(19, 128, 128, 128, 0, 6)
+			event.set_event_sprite_type(1, 0)
+			event.set_event_sprite_draw_pass(1, 1)
+			event.set_event_sprite_position(1, 256, 278)
+			event.set_event_sprite_texture_rect(1, 246, 104, 266, 42)
+			event.set_event_sprite_size(1, 266, 42)
+			event.set_event_sprite_color(1, 128, 128, 128, 0)
+			event.set_event_sprite_scale(1, 10, 10, 10)
+			event.attach_object_handle_to_sprite(19, 1)
+			event.clear_object_sequence(19)
+			event.set_object_sequence_object(19, 19)
+			event.jump_object_sequence(19, 256, 138, 0, 3.6, 20)
+			event.set_object_sequence_scale(19, 1, 1, 1, 18)
+			event.set_object_sequence_color(19, 128, 128, 128, 128, 12)
+			event.delay_object_sequence_color_track(19, 30)
+			event.set_object_sequence_color(19, 128, 128, 128, 0, 6)
 		end
 		var12 = helper_dff48a5c(var12)
 		var11 = vm.f32(vm.f32(var11 * vm.f32(3.1415927)) / 180.0)
@@ -816,7 +816,7 @@ local function helper_1af2c()
 		var17 = vm.f32(vm.f32(vm.f32(-var24 * var13) * var15) * vm.f32(0.4))
 		var15 = vm.f32(vm.f32(vm.f32(-var22 * var13) * var15) * vm.f32(0.4))
 		do
-			local out1, out2, out3 = event.SphidaGetPinPos()
+			local out1, out2, out3 = event.get_sphida_pin_position()
 			pos_x_2 = out1 or pos_x_2
 			pos_y_2 = out2 or pos_y_2
 			pos_z_2 = out3 or pos_z_2
@@ -831,7 +831,7 @@ local function helper_1af2c()
 				var23 = vm.f32(var23 + vm.f32(vm.f32(-0.0098) * (var46 + 1)))
 				var24 = vm.f32(var24 * vm.f32(0.999))
 			else
-				var41 = event.ChkIntersectionPoint_9(
+				var41 = event.get_segment_collision_9(
 					12,
 					var2,
 					var3,
@@ -856,52 +856,52 @@ local function helper_1af2c()
 				end
 			end
 			do
-				local out1, out2, out3 = event.AddVector(var2, var3, var4, var22, var23, var24)
+				local out1, out2, out3 = event.add_vectors(var2, var3, var4, var22, var23, var24)
 				var2 = out1 or var2
 				var3 = out2 or var3
 				var4 = out3 or var4
 			end
 			if var16 ~= 0.0 then
-				var11 = event.GetRefAngle(var18, var19, var20, var2, var3, var4) or var11
+				var11 = event.get_direction_angle(var18, var19, var20, var2, var3, var4) or var11
 				var11 = vm.f32(var11 + var16)
-				var11 = event.AngleLimit(var11) or var11
+				var11 = event.wrap_angle(var11) or var11
 				var22 = vm.f32(var22 + vm.f32(vm.f32(vm.sin(var11) / 10.0) * var13))
 				var24 = vm.f32(var24 + vm.f32(vm.f32(vm.cos(var11) / 10.0) * var13))
 			end
-			var40 = event.DistVector(var15, 0.0, var17) or var40
+			var40 = event.get_vector_length(var15, 0.0, var17) or var40
 			if var40 > vm.f32(0.01) then
-				var25 = event.DistVector(var15, 0.0, var17) or var25
-				var11 = event.GetRefAngle(var18, var19, var20, var18 + var15, var19, var20 + var17) or var11
+				var25 = event.get_vector_length(var15, 0.0, var17) or var25
+				var11 = event.get_direction_angle(var18, var19, var20, var18 + var15, var19, var20 + var17) or var11
 				do
-					local out1, out2, out3 = event.GetCharaRot(8)
+					local out1, out2, out3 = event.get_character_rotation(8)
 					var5 = out1 or var5
 					var6 = out2 or var6
 					var7 = out3 or var7
 				end
-				event.SetCharaRot(8, var5, var11, var7)
-				event.AddCharaRot(8, var25 * 12.0, 0.0, 0.0)
-				event.SetCharaRot(9, var5, var11, var7)
-				event.AddCharaRot(9, var25 * 12.0, 0.0, 0.0)
+				event.set_character_rotation(8, var5, var11, var7)
+				event.offset_character_rotation(8, var25 * 12.0, 0.0, 0.0)
+				event.set_character_rotation(9, var5, var11, var7)
+				event.offset_character_rotation(9, var25 * 12.0, 0.0, 0.0)
 			else
-				var25 = event.DistVector(var22, 0.0, var24) or var25
-				var11 = event.GetRefAngle(var18, var19, var20, var2, var3, var4) or var11
+				var25 = event.get_vector_length(var22, 0.0, var24) or var25
+				var11 = event.get_direction_angle(var18, var19, var20, var2, var3, var4) or var11
 				do
-					local out1, out2, out3 = event.GetCharaRot(8)
+					local out1, out2, out3 = event.get_character_rotation(8)
 					var5 = out1 or var5
 					var6 = out2 or var6
 					var7 = out3 or var7
 				end
-				event.SetCharaRot(8, var5, var11, var7)
-				event.AddCharaRot(8, var25 / 10.0, 0.0, 0.0)
-				event.SetCharaRot(9, var5, var11, var7)
-				event.AddCharaRot(9, var25 / 10.0, 0.0, 0.0)
+				event.set_character_rotation(8, var5, var11, var7)
+				event.offset_character_rotation(8, var25 / 10.0, 0.0, 0.0)
+				event.set_character_rotation(9, var5, var11, var7)
+				event.offset_character_rotation(9, var25 / 10.0, 0.0, 0.0)
 			end
-			var25 = event.DistVector(var22, var23, var24) or var25
+			var25 = event.get_vector_length(var22, var23, var24) or var25
 			var39 = var25
-			var11 = event.GetRefAngle(var18, var19, var20, var2, var3, var4) or var11
+			var11 = event.get_direction_angle(var18, var19, var20, var2, var3, var4) or var11
 			var36 = vm.f32(vm.sin(vm.f32(var11 - vm.f32(1.5707964))) * 3.0)
 			var38 = vm.f32(vm.cos(vm.f32(var11 - vm.f32(1.5707964))) * 3.0)
-			event.SwordEffectAddPoint(
+			event.add_sword_afterimage_point(
 				var2 - var36,
 				var3,
 				var4 - var38,
@@ -910,26 +910,26 @@ local function helper_1af2c()
 				vm.f32(var4 + var38) + var38
 			)
 			do
-				local out1, out2, out3 = event.CopyVector(var22, var23, var24)
+				local out1, out2, out3 = event.copy_vector(var22, var23, var24)
 				var36 = out1 or var36
 				var37 = out2 or var37
 				var38 = out3 or var38
 			end
 			do
-				local out1, out2, out3 = event.NormalVector(var36, var37, var38)
+				local out1, out2, out3 = event.normalize_vector(var36, var37, var38)
 				var36 = out1 or var36
 				var37 = out2 or var37
 				var38 = out3 or var38
 			end
 			do
-				local out1, out2, out3 = event.ScaleVector(var36, var37, var38, 3.0)
+				local out1, out2, out3 = event.scale_vector(var36, var37, var38, 3.0)
 				var36 = out1 or var36
 				var37 = out2 or var37
 				var38 = out3 or var38
 			end
 			do
 				local out1, out2, out3, out4, out5 =
-					event.ChkIntersectionPoint_13(0, var18, var19, var20, var2 + var36, var3 + var37, var4 + var38, 0)
+					event.get_segment_collision_13(0, var18, var19, var20, var2 + var36, var3 + var37, var4 + var38, 0)
 				var30 = out1 or var30
 				var31 = out2 or var31
 				var32 = out3 or var32
@@ -937,16 +937,16 @@ local function helper_1af2c()
 				var43 = out5 or var43
 			end
 			if var41 >= 0 and (var43 == 1 or var43 == 7) then
-				event.EsmCreate("足水パシャ")
-				event.EsmSetVect1(var30, var31, var32)
+				event.create_effect("足水パシャ")
+				event.set_effect_first_vector(var30, var31, var32)
 				if var42 <= 0 then
-					event.SndSePlay(var1, 11)
+					event.play_sound_effect(var1, 11)
 					var42 = 20
 				end
 			end
 			do
 				local out1, out2, out3, out4, out5, out6, out7 =
-					event.ChkIntersectionPoint_15(12, var18, var19, var20, var2 + var36, var3 + var37, var4 + var38, 1)
+					event.get_segment_collision_15(12, var18, var19, var20, var2 + var36, var3 + var37, var4 + var38, 1)
 				var30 = out1 or var30
 				var31 = out2 or var31
 				var32 = out3 or var32
@@ -958,19 +958,19 @@ local function helper_1af2c()
 			if var41 < 0 then
 				if var3 >= 400.0 and var23 > 0.0 then
 					do
-						local out1, out2, out3 = event.CopyVector(var2, var3, var4)
+						local out1, out2, out3 = event.copy_vector(var2, var3, var4)
 						var30 = out1 or var30
 						var31 = out2 or var31
 						var32 = out3 or var32
 					end
 					do
-						local out1, out2, out3 = event.CopyVector(var22, -var23, var24)
+						local out1, out2, out3 = event.copy_vector(var22, -var23, var24)
 						var33 = out1 or var33
 						var34 = out2 or var34
 						var35 = out3 or var35
 					end
 					do
-						local out1, out2, out3 = event.NormalVector(var33, var34, var35)
+						local out1, out2, out3 = event.normalize_vector(var33, var34, var35)
 						var33 = out1 or var33
 						var34 = out2 or var34
 						var35 = out3 or var35
@@ -984,47 +984,47 @@ local function helper_1af2c()
 					helper_79d90c82()
 				end
 				if var42 <= 0 then
-					event.SndSePlay(var1, 6)
+					event.play_sound_effect(var1, 6)
 					var42 = 10
 				end
 				do
-					local out1, out2, out3 = event.CopyVector(-var22, -var23, -var24)
+					local out1, out2, out3 = event.copy_vector(-var22, -var23, -var24)
 					var22 = out1 or var22
 					var23 = out2 or var23
 					var24 = out3 or var24
 				end
 				do
-					local out1, out2, out3 = event.NormalVector(var22, var23, var24)
+					local out1, out2, out3 = event.normalize_vector(var22, var23, var24)
 					var22 = out1 or var22
 					var23 = out2 or var23
 					var24 = out3 or var24
 				end
 				do
-					local out1, out2, out3 = event.ScaleVector(var22, var23, var24, 3.0)
+					local out1, out2, out3 = event.scale_vector(var22, var23, var24, 3.0)
 					var22 = out1 or var22
 					var23 = out2 or var23
 					var24 = out3 or var24
 				end
 				do
-					local out1, out2, out3 = event.AddVector(var30, var31, var32, var22, var23, var24)
+					local out1, out2, out3 = event.add_vectors(var30, var31, var32, var22, var23, var24)
 					var30 = out1 or var30
 					var31 = out2 or var31
 					var32 = out3 or var32
 				end
 				do
-					local out1, out2, out3 = event.SubVector(var18, var19, var20, var30, var31, var32)
+					local out1, out2, out3 = event.subtract_vectors(var18, var19, var20, var30, var31, var32)
 					var18 = out1 or var18
 					var19 = out2 or var19
 					var20 = out3 or var20
 				end
-				var40 = event.DistVector(var18, var19, var20) or var40
+				var40 = event.get_vector_length(var18, var19, var20) or var40
 				var40 = vm.f32(var39 - var40)
 				if var40 <= 0.0 then
 					break
 				else
 					var39 = var40
 					do
-						local out1, out2, out3 = event.CopyVector(-var22, -var23, -var24)
+						local out1, out2, out3 = event.copy_vector(-var22, -var23, -var24)
 						var22 = out1 or var22
 						var23 = out2 or var23
 						var24 = out3 or var24
@@ -1053,49 +1053,49 @@ local function helper_1af2c()
 					var23 = vm.f32(vm.f32(vm.f32(var34 * var25) * vm.f32(0.58)) + var23)
 					var24 = vm.f32(vm.f32(vm.f32(var35 * var25) * vm.f32(0.9)) + var24)
 					do
-						local out1, out2, out3 = event.CopyVector(var30, var31, var32)
+						local out1, out2, out3 = event.copy_vector(var30, var31, var32)
 						var18 = out1 or var18
 						var19 = out2 or var19
 						var20 = out3 or var20
 					end
 					do
-						local out1, out2, out3 = event.CopyVector(var22, var23, var24)
+						local out1, out2, out3 = event.copy_vector(var22, var23, var24)
 						var36 = out1 or var36
 						var37 = out2 or var37
 						var38 = out3 or var38
 					end
 					do
-						local out1, out2, out3 = event.NormalVector(var36, var37, var38)
+						local out1, out2, out3 = event.normalize_vector(var36, var37, var38)
 						var36 = out1 or var36
 						var37 = out2 or var37
 						var38 = out3 or var38
 					end
 					do
-						local out1, out2, out3 = event.ScaleVector(var36, var37, var38, 3.0)
+						local out1, out2, out3 = event.scale_vector(var36, var37, var38, 3.0)
 						var36 = out1 or var36
 						var37 = out2 or var37
 						var38 = out3 or var38
 					end
 					do
-						local out1, out2, out3 = event.ScaleVector(var33, var34, var35, var40)
+						local out1, out2, out3 = event.scale_vector(var33, var34, var35, var40)
 						var33 = out1 or var33
 						var34 = out2 or var34
 						var35 = out3 or var35
 					end
 					do
-						local out1, out2, out3 = event.CopyVector(var30, var31, var32)
+						local out1, out2, out3 = event.copy_vector(var30, var31, var32)
 						var2 = out1 or var2
 						var3 = out2 or var3
 						var4 = out3 or var4
 					end
 					do
-						local out1, out2, out3 = event.AddVector(var2, var3, var4, var33, var34, var35)
+						local out1, out2, out3 = event.add_vectors(var2, var3, var4, var33, var34, var35)
 						var2 = out1 or var2
 						var3 = out2 or var3
 						var4 = out3 or var4
 					end
 					do
-						local out1, out2, out3, out4, out5, out6, out7 = event.ChkIntersectionPoint_15(
+						local out1, out2, out3, out4, out5, out6, out7 = event.get_segment_collision_15(
 							12,
 							var18,
 							var19,
@@ -1117,7 +1117,7 @@ local function helper_1af2c()
 			end
 			do
 				local out1, out2, out3, out4, out5, out6, out7, out8 =
-					event.ChkIntersectionPoint_16(12, var2, var3, var4, var2, var3 - 3.0, var4, 1)
+					event.get_segment_collision_16(12, var2, var3, var4, var2, var3 - 3.0, var4, 1)
 				var30 = out1 or var30
 				var31 = out2 or var31
 				var32 = out3 or var32
@@ -1130,7 +1130,7 @@ local function helper_1af2c()
 			if var41 >= 0 then
 				var16 = 0.0
 				var3 = vm.f32(var31 + 3.0)
-				var40 = event.DistVector(var22, 0.0, var24) or var40
+				var40 = event.get_vector_length(var22, 0.0, var24) or var40
 				if var40 < vm.f32(2.4) or var23 >= -1.0 and var23 <= 0.0 then
 					var23 = 0.0
 					level = 1
@@ -1146,11 +1146,11 @@ local function helper_1af2c()
 						helper_79d90c82()
 					end
 					if var42 <= 0 then
-						event.SndSePlay(var1, 5)
+						event.play_sound_effect(var1, 5)
 						var42 = 10
 					end
 				end
-				var40 = event.DistVector(var15, 0.0, var17) or var40
+				var40 = event.get_vector_length(var15, 0.0, var17) or var40
 				if var23 == 0.0 and var25 < vm.f32(1.6) and var40 < vm.f32(0.4) then
 					if not (var43 == 6) then
 						break
@@ -1166,14 +1166,14 @@ local function helper_1af2c()
 				var29 = 1
 				break
 			else
-				var44 = event.SphidaGetPinCol() or var44
-				var45 = event.SphidaGetBallCol() or var45
+				var44 = event.get_sphida_pin_color() or var44
+				var45 = event.get_sphida_ball_color() or var45
 				x = vm.f32(pos_x_2 - var2)
 				y = vm.f32(pos_y_2 - var3)
 				z = vm.f32(pos_z_2 - var4)
-				var47 = event.DistVector(x, y, z) or var47
+				var47 = event.get_vector_length(x, y, z) or var47
 				if var45 ~= var44 then
-					var51 = event.LinePointDist(var18, var19, var20, var2, var3, var4, pos_x_2, pos_y_2, pos_z_2)
+					var51 = event.get_point_to_segment_distance(var18, var19, var20, var2, var3, var4, pos_x_2, pos_y_2, pos_z_2)
 						or var51
 					if var51 >= 0.0 and var51 <= 30.0 then
 						var21 = 1
@@ -1182,19 +1182,19 @@ local function helper_1af2c()
 					if var47 ~= 0.0 then
 						if var47 <= 120.0 then
 							do
-								local out1, out2, out3 = event.ScaleVector(x, y, z, vm.fdiv(vm.f32(0.6), var47))
+								local out1, out2, out3 = event.scale_vector(x, y, z, vm.fdiv(vm.f32(0.6), var47))
 								x = out1 or x
 								y = out2 or y
 								z = out3 or z
 							end
 							do
-								local out1, out2, out3 = event.AddVector(var2, var3, var4, x, y, z)
+								local out1, out2, out3 = event.add_vectors(var2, var3, var4, x, y, z)
 								var2 = out1 or var2
 								var3 = out2 or var3
 								var4 = out3 or var4
 							end
 							do
-								local out1, out2, out3 = event.AddVector(var22, var23, var24, x, y, z)
+								local out1, out2, out3 = event.add_vectors(var22, var23, var24, x, y, z)
 								var22 = out1 or var22
 								var23 = out2 or var23
 								var24 = out3 or var24
@@ -1207,59 +1207,59 @@ local function helper_1af2c()
 				elseif var47 ~= 0.0 then
 					if var47 <= 60.0 then
 						do
-							local out1, out2, out3 = event.ScaleVector(x, y, z, vm.fdiv(1.0, var47))
+							local out1, out2, out3 = event.scale_vector(x, y, z, vm.fdiv(1.0, var47))
 							x = out1 or x
 							y = out2 or y
 							z = out3 or z
 						end
 						do
-							local out1, out2, out3 = event.SubVector(var2, var3, var4, x, y, z)
+							local out1, out2, out3 = event.subtract_vectors(var2, var3, var4, x, y, z)
 							var2 = out1 or var2
 							var3 = out2 or var3
 							var4 = out3 or var4
 						end
 						do
-							local out1, out2, out3 = event.SubVector(var22, var23, var24, x, y, z)
+							local out1, out2, out3 = event.subtract_vectors(var22, var23, var24, x, y, z)
 							var22 = out1 or var22
 							var23 = out2 or var23
 							var24 = out3 or var24
 						end
 					end
 				end
-				event.SetCharaPos(8, var2, var3, var4)
-				event.SetCharaPos(9, var2, var3, var4)
+				event.set_character_position(8, var2, var3, var4)
+				event.set_character_position(9, var2, var3, var4)
 				do
-					local out1, out2, out3 = event.CopyVector(var2, var3, var4)
+					local out1, out2, out3 = event.copy_vector(var2, var3, var4)
 					var18 = out1 or var18
 					var19 = out2 or var19
 					var20 = out3 or var20
 				end
 				if var3 <= -70.0 then
-					event.SetFcameraFollowFlag(0)
+					event.set_follow_camera_following(0)
 					if var29 >= 30 then
 						if var29 >= 50 then
 							break
 						end
 					else
-						event.SetCameraRef(var2, var3, var4)
+						event.set_camera_look_at(var2, var3, var4)
 					end
 					var29 = var29 + 1
 				elseif var46 >= 20 then
-					event.CtrlcMoveRange(20.0, 30.0, 60.0, 200.0)
-					event.SetCameraSpeed(8.0)
-					event.SetFcameraFollowOfs(0.0, 0.0, 0.0)
-					event.SetFcameraFollow(
+					event.set_camera_control_range(20.0, 30.0, 60.0, 200.0)
+					event.set_camera_speed(8.0)
+					event.set_follow_camera_offset(0.0, 0.0, 0.0)
+					event.set_follow_camera_target(
 						vm.f32(var2 + var22) + var22,
 						vm.f32(var3 + var23) + var23,
 						vm.f32(var4 + var24) + var24
 					)
 					do
-						local out1, out2, out3 = event.GetCameraPos()
+						local out1, out2, out3 = event.get_camera_position()
 						pos_x_3 = out1 or pos_x_3
 						pos_y_3 = out2 or pos_y_3
 						pos_z_3 = out3 or pos_z_3
 					end
-					yaw = event.GetRefAngle(
+					yaw = event.get_direction_angle(
 						vm.f32(var2 + var22) + var22,
 						vm.f32(var3 + var23) + var23,
 						vm.f32(var4 + var24) + var24,
@@ -1267,11 +1267,11 @@ local function helper_1af2c()
 						pos_y_3,
 						pos_z_3
 					) or yaw
-					event.CtrlcSetRotate(yaw)
-					event.CtrlcMoveCamera(8)
-					event.CtrlcStep()
+					event.set_camera_control_rotation(yaw)
+					event.move_camera_control_with_pad(8)
+					event.step_camera_control()
 				end
-				event.SphidaSetBallPos(var2, var3, var4)
+				event.set_sphida_ball_position(var2, var3, var4)
 				at = 14
 				vm.wait(14)
 				if var42 > 0 then
@@ -1283,119 +1283,119 @@ local function helper_1af2c()
 				var46 = var46 + 1
 			end
 		end
-		event.SetCharaPos(8, var2, var3, var4)
-		event.SetCharaPos(9, var2, var3, var4)
+		event.set_character_position(8, var2, var3, var4)
+		event.set_character_position(9, var2, var3, var4)
 		at = 15
 		vm.wait(15)
-		event.SphidaSetStatusFlag(0)
-		event.EohSyncChara(0, 0)
-		event.ObjsInit(0)
-		event.ObjsSyncObj(0, 0)
+		event.set_sphida_status_panel_visible(0)
+		event.attach_object_handle_to_character(0, 0)
+		event.clear_object_sequence(0)
+		event.set_object_sequence_object(0, 0)
 		if var29 == 0 then
-			event.SphidaSetBallPos(var2, var3, var4)
+			event.set_sphida_ball_position(var2, var3, var4)
 			if var21 == 1 then
-				event.CharaActive(0, 0)
-				event.CharaActive(0, 8)
-				event.CharaActive(0, 9)
-				event.CharaActive(1, 12)
-				event.SetCharaPos(12, pos_x_2, pos_y_2, pos_z_2)
-				event.SetMotion(12, "発動", 6)
-				event.SndSePlay(var1, 17)
+				event.set_character_active(0, 0)
+				event.set_character_active(0, 8)
+				event.set_character_active(0, 9)
+				event.set_character_active(1, 12)
+				event.set_character_position(12, pos_x_2, pos_y_2, pos_z_2)
+				event.set_character_motion(12, "発動", 6)
+				event.play_sound_effect(var1, 17)
 				var46 = 0
 				while var46 < 2 do
-					event.SetCameraCtrl(0)
-					event.SetFcameraFollowFlag(1)
-					event.SetFcameraFollowA(pos_x_2, pos_y_2, pos_z_2)
-					event.SetCameraSpeed(12.0)
-					event.SetFcameraFollowOfs(0.0, 0.0, 0.0)
-					event.SetFcameraHeight(0.0)
-					event.SetFcameraDist(100.0)
-					event.FcameraStep(1)
+					event.set_camera_control_enabled(0)
+					event.set_follow_camera_following(1)
+					event.set_follow_camera_target_alternate(pos_x_2, pos_y_2, pos_z_2)
+					event.set_camera_speed(12.0)
+					event.set_follow_camera_offset(0.0, 0.0, 0.0)
+					event.set_follow_camera_height(0.0)
+					event.set_follow_camera_distance(100.0)
+					event.step_follow_camera(1)
 					var46 = var46 + 1
 					at = 16
 					vm.wait(16)
 				end
-				event.CharaActive(0, 10)
+				event.set_character_active(0, 10)
 				do
-					local out1, out2, out3 = event.SphidaGetPinPos()
+					local out1, out2, out3 = event.get_sphida_pin_position()
 					pos_x_2 = out1 or pos_x_2
 					pos_y_2 = out2 or pos_y_2
 					pos_z_2 = out3 or pos_z_2
 				end
 				var46 = 0
 				while var46 < 100 do
-					event.SetCameraCtrl(0)
-					event.SetFcameraFollowFlag(1)
-					event.SetFcameraFollowA(pos_x_2, pos_y_2, pos_z_2)
-					event.SetCameraSpeed(12.0)
-					event.SetFcameraFollowOfs(0.0, 0.0, 0.0)
-					event.SetFcameraHeight(0.0)
-					event.SetFcameraDist(100.0)
-					event.FcameraStep(1)
+					event.set_camera_control_enabled(0)
+					event.set_follow_camera_following(1)
+					event.set_follow_camera_target_alternate(pos_x_2, pos_y_2, pos_z_2)
+					event.set_camera_speed(12.0)
+					event.set_follow_camera_offset(0.0, 0.0, 0.0)
+					event.set_follow_camera_height(0.0)
+					event.set_follow_camera_distance(100.0)
+					event.step_follow_camera(1)
 					var46 = var46 + 1
 					at = 17
 					vm.wait(17)
 				end
-				event.CharaActive(0, 11)
-				var44 = event.DngGetStageId() or var44
-				var45 = event.DngGetFloorId() or var45
-				var41 = event.GetFloorInfo(var44, var45, 4) or var41
+				event.set_character_active(0, 11)
+				var44 = event.get_dungeon_stage_id() or var44
+				var45 = event.get_dungeon_floor() or var45
+				var41 = event.get_dungeon_floor_info(var44, var45, 4) or var41
 				do
-					local out1, out2 = event.SphidaGetPrize(var41)
+					local out1, out2 = event.get_sphida_prize(var41)
 					var42 = out1 or var42
 					var43 = out2 or var43
 				end
 				var41 = vm.i32(var41 + 1)
-				event.SetFloorInfo(var44, var45, 4, var41)
+				event.set_dungeon_floor_info(var44, var45, 4, var41)
 				at = 18
 				wait_frames(54)
 				at = 19
 				wait_frames(30)
-				event.DeleteChara(8)
-				event.DeleteChara(9)
-				event.DeleteChara(10)
-				event.DeleteChara(11)
-				event.SphidaSetPlayFlag(0)
-				event.SetFadeOut(30)
+				event.delete_character(8)
+				event.delete_character(9)
+				event.delete_character(10)
+				event.delete_character(11)
+				event.set_sphida_playing(0)
+				event.fade_out_screen(30)
 				at = 20
 				wait_frames(30)
-				event.PlayBgm(0)
-				event.CmrsReleaseObj()
-				event.SpriteSetDraw(0, 0)
+				event.play_music(0)
+				event.release_camera_sequence_follow_object()
+				event.set_event_sprite_draw_pass(0, 0)
 			end
 		else
-			event.SndSePlay(var1, 18)
-			event.SetFcameraFollowFlag(0)
-			event.SetCameraCtrl(0)
-			event.CmrsInit()
-			event.CmrsSyncObj(0, 0.0, 15.0, 0.0, 0.0, 0.0, 80.0, "", 1)
-			event.ObjsSetMotion(0, "だめだめ", 6)
-			event.ObjsNormalDrive(0)
-			event.ObjsNextMotion(0, "立ち", 4)
-			event.ObjsResetDaPosition(0)
-			event.SpriteInit(0)
-			event.SpriteSetType(0, 0)
-			event.SpriteSetTexture(0, "sphida_bar", tex_bank)
-			event.SpriteSetUvsize(0, 334, 54, 178, 34)
-			event.SpriteSetPos(0, 256, -25)
-			event.SpriteSetPutsize(0, 160, 50)
-			event.SpriteSetColor(0, 128, 128, 128, 128)
-			event.SpriteSetDraw(0, 1)
-			event.EohSyncSprite(1, 0)
-			event.ObjsInit(1)
-			event.ObjsSyncObj(1, 1)
-			event.ObjsJump(1, 256.0, 208.0, 0.0, 1.2, 16)
-			event.ObjsJump(1, 256.0, 208.0, 0.0, 2.0, 12)
-			event.ObjsJump(1, 256.0, 208.0, 0.0, 1.5, 8)
+			event.play_sound_effect(var1, 18)
+			event.set_follow_camera_following(0)
+			event.set_camera_control_enabled(0)
+			event.clear_camera_sequence()
+			event.set_camera_sequence_follow_object(0, 0.0, 15.0, 0.0, 0.0, 0.0, 80.0, "", 1)
+			event.set_object_sequence_motion(0, "だめだめ", 6)
+			event.set_object_sequence_normal_drive(0)
+			event.queue_object_sequence_next_motion(0, "立ち", 4)
+			event.reset_object_sequence_dynamic_animation(0)
+			event.reset_event_sprite(0)
+			event.set_event_sprite_type(0, 0)
+			event.set_event_sprite_texture(0, "sphida_bar", tex_bank)
+			event.set_event_sprite_texture_rect(0, 334, 54, 178, 34)
+			event.set_event_sprite_position(0, 256, -25)
+			event.set_event_sprite_size(0, 160, 50)
+			event.set_event_sprite_color(0, 128, 128, 128, 128)
+			event.set_event_sprite_draw_pass(0, 1)
+			event.attach_object_handle_to_sprite(1, 0)
+			event.clear_object_sequence(1)
+			event.set_object_sequence_object(1, 1)
+			event.jump_object_sequence(1, 256.0, 208.0, 0.0, 1.2, 16)
+			event.jump_object_sequence(1, 256.0, 208.0, 0.0, 2.0, 12)
+			event.jump_object_sequence(1, 256.0, 208.0, 0.0, 1.5, 8)
 			at = 21
 			wait_objects(0)
 			at = 22
 			wait_frames(20)
-			event.SpriteSetDraw(0, 0)
-			event.SphidaSetBallPos(pos_x, pos_y, pos_z)
-			event.SetCharaPos(8, pos_x, pos_y, pos_z)
-			event.SetCharaPos(9, pos_x, pos_y, pos_z)
-			event.CmrsReleaseObj()
+			event.set_event_sprite_draw_pass(0, 0)
+			event.set_sphida_ball_position(pos_x, pos_y, pos_z)
+			event.set_character_position(8, pos_x, pos_y, pos_z)
+			event.set_character_position(9, pos_x, pos_y, pos_z)
+			event.release_camera_sequence_follow_object()
 		end
 		if var21 == 1 then
 			helper_c2ca38b7(-1)
@@ -1517,79 +1517,79 @@ local function helper_32adc()
 	local var1: any = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.Initialize()
-		event.Initialize()
-		event.SetMesWindowMode(0, 7)
-		event.AssignStack(5)
-		event.ClearStack(5)
-		var0 = event.SndLoadSound_2(3809) or var0
-		event.CharaActive(0, 0)
-		event.LoadMotion(5, "dungeon/chara/c02a_miss.gltf", "info", 13)
-		event.LoadMotion(5, "event/e300/e315/e315_monica.gltf", "info", 13)
-		event.EohSyncChara(1, 13)
-		event.ObjsInit(1)
-		event.ObjsSyncObj(1, 1)
-		event.EohSetTexAnim(1, 0)
-		event.EohSetTexAnim(1, 1, "デフォルト顔")
-		event.EohSetTexAnim(1, 1, "通常目パチ")
-		event.CmrsInit()
-		event.CmrsSetPos(67.57, 63.38, 1149.74)
-		event.CmrsSetRef(67.85, 63.66, 1179.99)
-		event.SetFadeIn(30)
+		event.initialize_event()
+		event.initialize_event()
+		event.set_message_window_mode(0, 7)
+		event.assign_memory_stack(5)
+		event.clear_memory_stack(5)
+		var0 = event.load_sound_effect_file_2(3809) or var0
+		event.set_character_active(0, 0)
+		event.load_character_motion_pack(5, "dungeon/chara/c02a_miss.gltf", "info", 13)
+		event.load_character_motion_pack(5, "event/e300/e315/e315_monica.gltf", "info", 13)
+		event.attach_object_handle_to_character(1, 13)
+		event.clear_object_sequence(1)
+		event.set_object_sequence_object(1, 1)
+		event.set_object_handle_texture_animation(1, 0)
+		event.set_object_handle_texture_animation(1, 1, "デフォルト顔")
+		event.set_object_handle_texture_animation(1, 1, "通常目パチ")
+		event.clear_camera_sequence()
+		event.set_camera_sequence_position(67.57, 63.38, 1149.74)
+		event.set_camera_sequence_look_at(67.85, 63.66, 1179.99)
+		event.fade_in_screen(30)
 		at = 1
 		wait_frames(30)
-		event.SndSePlay(var0, 5)
-		event.ObjsSetMotion(1, "だめだめ", 2)
-		event.ObjsNextMotion(1, "立ち", 4)
-		event.SetPakuAnim(1, "通常口パク")
-		event.StreamOpen3(1, 3140170)
+		event.play_sound_effect(var0, 5)
+		event.set_object_sequence_motion(1, "だめだめ", 2)
+		event.queue_object_sequence_next_motion(1, "立ち", 4)
+		event.set_mouth_texture_animations(1, "通常口パク")
+		event.open_voice_stream_wave(1, 3140170)
 		at = 2
 		helper_9cbdc640(1)
-		event.MesMake_2(0, "Oh, schade.\nM[UNI00f6]chtest du es noch mal versuchen?")
+		event.open_message_window_2(0, "Oh, schade.\nM[UNI00f6]chtest du es noch mal versuchen?")
 		open_message(0, -1, 8, 0, 0)
-		event.StreamPlay(1)
+		event.play_voice_stream(1)
 		at = 3
 		helper_5ac4b36d(0)
 		close_message(0)
-		event.StreamClose(1)
-		event.SetMesPos(0, 0)
-		event.ResetPakuAnim()
-		event.SetMesWindowMode(0, 1)
-		event.SetMesShippo(0, 0)
-		event.MesMake_2(0, "Ja\nNein")
+		event.close_voice_stream(1)
+		event.set_message_bubble_screen_slot(0, 0)
+		event.reset_mouth_texture_animations()
+		event.set_message_window_mode(0, 1)
+		event.set_message_bubble_tail(0, 0)
+		event.open_message_window_2(0, "Ja\nNein")
 		open_message(0, -1, 5, 0, 0)
 		at = 4
 		var1 = helper_39af59c5(0, 2, 0, 1)
-		event.SetMesPos(0, 0)
-		event.SetMesWindowMode(0, 7)
-		event.SetMesShippo(0, 1)
+		event.set_message_bubble_screen_slot(0, 0)
+		event.set_message_window_mode(0, 7)
+		event.set_message_bubble_tail(0, 1)
 		if var1 == 0 then
-			event.DelExtMotion(13)
-			event.CharaActive(1, 0)
+			event.delete_character_extension_packs(13)
+			event.set_character_active(1, 0)
 			return 1
 		else
-			event.ObjsSetMotion(1, "貸しなさい", 2)
-			event.ObjsNextMotion(1, "貸しなさいＬ", 4)
-			event.SetPakuAnim(1, "通常口パク")
-			event.StreamOpen3(1, 3150010)
+			event.set_object_sequence_motion(1, "貸しなさい", 2)
+			event.queue_object_sequence_next_motion(1, "貸しなさいＬ", 4)
+			event.set_mouth_texture_animations(1, "通常口パク")
+			event.open_voice_stream_wave(1, 3150010)
 			at = 5
 			helper_9cbdc640(1)
-			event.MesMake_2(0, "Du bist nutzlos, Max.\nLass mich mal.")
+			event.open_message_window_2(0, "Du bist nutzlos, Max.\nLass mich mal.")
 			open_message(0, -1, 8, 0, 0)
-			event.StreamPlay(1)
+			event.play_voice_stream(1)
 			at = 6
 			helper_5ac4b36d(0)
 			close_message(0)
-			event.StreamClose(1)
-			event.SetMesPos(0, 0)
-			event.ResetPakuAnim()
+			event.close_voice_stream(1)
+			event.set_message_bubble_screen_slot(0, 0)
+			event.reset_mouth_texture_animations()
 			at = 7
 			wait_objects(1)
-			event.SetFadeOut(30)
+			event.fade_out_screen(30)
 			at = 8
 			wait_frames(30)
-			event.CharaActive(1, 0)
-			event.DelExtMotion(13)
+			event.set_character_active(1, 0)
+			event.delete_character_extension_packs(13)
 			return 0
 		end
 	end, function(received: { any })
@@ -1647,17 +1647,17 @@ function script.event_500()
 	local argc: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		flag = event.GetFlag(314) or flag
+		flag = event.get_save_flag(314) or flag
 		if flag == 0 then
-			argc = event.GetItemHaveNum(9) or argc
+			argc = event.get_owned_item_count(9) or argc
 			if argc >= 1 then
-				event.SetMotion(0, "立ち")
-				event.SetFadeOut(30)
+				event.set_character_motion(0, "立ち")
+				event.fade_out_screen(30)
 				at = 1
 				wait_frames(30)
 				at = 2
 				helper_2f708()
-				event.SetFadeIn(30)
+				event.fade_in_screen(30)
 				at = 3
 				wait_frames(30)
 				at = 4
@@ -1672,8 +1672,8 @@ function script.event_500()
 		end)() ~= 0 then
 			at = 7
 			helper_779b62a3()
-			event.AddItem(10)
-			event.AddItem(363)
+			event.add_inventory_item(10)
+			event.add_inventory_item(363)
 			at = 8
 			helper_dcf91359(10)
 			at = 9
@@ -1682,7 +1682,7 @@ function script.event_500()
 		end
 		at = 10
 		vm.wait(10)
-		event.Finish()
+		event.finish_event()
 		return
 	end, function(received: { any })
 		if at <= 9 then
@@ -1693,14 +1693,14 @@ function script.event_500()
 				at = 2
 				helper_2f708()
 				return vm.continue_with(function()
-					event.SetFadeIn(30)
+					event.fade_in_screen(30)
 					at = 3
 					wait_frames(30)
 					at = 4
 					helper_44098()
 					at = 10
 					vm.wait(10)
-					event.Finish()
+					event.finish_event()
 					return
 				end)
 			end
@@ -1720,8 +1720,8 @@ function script.event_500()
 				at = 7
 				helper_779b62a3()
 				return vm.continue_with(function()
-					event.AddItem(10)
-					event.AddItem(363)
+					event.add_inventory_item(10)
+					event.add_inventory_item(363)
 					at = 8
 					helper_dcf91359(10)
 					at = 9
@@ -1752,49 +1752,49 @@ end
 
 --- Event 510, which map data, a script or the engine runs by number.
 function script.event_510()
-	event.Initialize()
+	event.initialize_event()
 	vm.wait(1)
-	event.SetMotion(0, "立ち")
-	event.FuncPointShow("", "branch", 0)
-	event.AddItem(9)
+	event.set_character_motion(0, "立ち")
+	event.set_function_point_enabled("", "branch", 0)
+	event.add_inventory_item(9)
 	helper_e787350a(9, 1)
-	event.CharaActive(0, 15)
+	event.set_character_active(0, 15)
 	helper_a87eb945(1)
-	event.Finish()
+	event.finish_event()
 end
 
 --- Event 520, which map data, a script or the engine runs by number.
 function script.event_520()
 	local active_chr_no: s32 = 0
 	local var1: any = 0
-	event.Initialize()
+	event.initialize_event()
 	vm.wait(1)
-	event.ActchrSetDefMotion(0)
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	event.reset_action_character_motion(0)
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no == 2 or active_chr_no == 3 then
-		event.SetMesWindowMode(0, 1)
-		event.SetMesDrawspeed(0, 1)
+		event.set_message_window_mode(0, 1)
+		event.set_message_draw_speed(0, 1)
 		if active_chr_no == 2 then
 			helper_75684dd8(0, 20, 5, 256, 208)
 		else
 			helper_75684dd8(0, 21, 5, 256, 208)
 		end
-		event.Finish()
+		event.finish_event()
 		return
 	end
-	event.SetMesQuestionGyou(0, 0)
-	event.SetMesWindowMode(0, 5)
-	event.SetMesDrawspeed(0, 1)
+	event.set_message_selection_top_line(0, 0)
+	event.set_message_window_mode(0, 5)
+	event.set_message_draw_speed(0, 1)
 	var1 = helper_bac0e30d(0, 10, 8, 256, 208, 2, 1)
-	event.SetMesWindowMode(0, 1)
-	event.SetMesDrawspeed(0, 0)
+	event.set_message_window_mode(0, 1)
+	event.set_message_draw_speed(0, 0)
 	if var1 == 0 then
-		event.SetFadeOut(30)
+		event.fade_out_screen(30)
 		wait_frames(30)
 		helper_69d65e1a()
 		return
 	end
-	event.Finish()
+	event.finish_event()
 end
 
 --- Event 1200, which map data, a script or the engine runs by number.
@@ -1813,8 +1813,8 @@ function script.sphida_shot()
 		if var0 == 1 then
 			at = 2
 			helper_4e5d2821()
-			event.AddItem(11)
-			event.AddItem(363)
+			event.add_inventory_item(11)
+			event.add_inventory_item(363)
 			at = 3
 			helper_dcf91359(11)
 			at = 4
@@ -1822,14 +1822,14 @@ function script.sphida_shot()
 			return
 		end
 		if var0 == 2 then
-			argc = event.GetLocalCnt(0) or argc
+			argc = event.get_local_event_counter(0) or argc
 			argc = vm.i32(argc + 1)
-			event.SetLocalCnt(0, argc)
+			event.set_local_event_counter(0, argc)
 			if argc >= 10 then
 				at = 5
 				helper_3a9fbd88()
-				event.AddItem(10)
-				event.AddItem(363)
+				event.add_inventory_item(10)
+				event.add_inventory_item(363)
 				at = 6
 				helper_dcf91359(10)
 				at = 7
@@ -1841,33 +1841,33 @@ function script.sphida_shot()
 			end)() == 0 then
 				at = 9
 				helper_e7afa9ca()
-				event.AddItem(10)
-				event.AddItem(363)
+				event.add_inventory_item(10)
+				event.add_inventory_item(363)
 				at = 10
 				helper_dcf91359(10)
 				at = 11
 				helper_69d65e1a()
 				return
 			else
-				event.CharaActive(0)
-				event.SetCharaPos(0, -25.0, 62.7, 1285.3)
-				event.SetCharaRot(0, 0.0, 3.14, 0.0)
-				event.SetMotion(0, "立ち", 4)
-				event.CharaNormalDrive(0)
-				event.CharaResetDa(0)
-				event.SphidaSetPlayFlag(1)
-				event.SphidaSetParCount(3)
-				event.SphidaSetBallPos(0.0, 65.57, 1305.04)
-				event.SphidaSetBallCol(0)
-				event.SphidaSetLastChallenge(0)
-				event.SetCharaPos(8, 0.0, 65.57, 1305.04)
-				event.CharaActive(0, 8)
-				event.SetCharaPos(9, 0.0, 65.57, 1305.04)
-				event.CharaActive(1, 9)
-				event.SetCameraRef(-25.0, 92.7, 1285.3)
-				event.SetCameraPos(-25.0, 102.7, 1385.3)
-				event.ResetCamera(0)
-				event.Finish()
+				event.set_character_active(0)
+				event.set_character_position(0, -25.0, 62.7, 1285.3)
+				event.set_character_rotation(0, 0.0, 3.14, 0.0)
+				event.set_character_motion(0, "立ち", 4)
+				event.update_character_motion(0)
+				event.reset_character_cloth_and_hair(0)
+				event.set_sphida_playing(1)
+				event.set_sphida_par(3)
+				event.set_sphida_ball_position(0.0, 65.57, 1305.04)
+				event.set_sphida_ball_color(0)
+				event.set_sphida_last_challenge(0)
+				event.set_character_position(8, 0.0, 65.57, 1305.04)
+				event.set_character_active(0, 8)
+				event.set_character_position(9, 0.0, 65.57, 1305.04)
+				event.set_character_active(1, 9)
+				event.set_camera_look_at(-25.0, 92.7, 1285.3)
+				event.set_camera_position(-25.0, 102.7, 1385.3)
+				event.reset_follow_camera(0)
+				event.finish_event()
 			end
 		end
 		return
@@ -1880,8 +1880,8 @@ function script.sphida_shot()
 				at = 2
 				helper_4e5d2821()
 				return vm.continue_with(function()
-					event.AddItem(11)
-					event.AddItem(363)
+					event.add_inventory_item(11)
+					event.add_inventory_item(363)
 					at = 3
 					helper_dcf91359(11)
 					at = 4
@@ -1923,8 +1923,8 @@ function script.sphida_shot()
 				at = 9
 				helper_e7afa9ca()
 				return vm.continue_with(function()
-					event.AddItem(10)
-					event.AddItem(363)
+					event.add_inventory_item(10)
+					event.add_inventory_item(363)
 					at = 10
 					helper_dcf91359(10)
 					at = 11
@@ -1957,29 +1957,29 @@ function script.sphida_near_ball()
 	local var2: f32 = 0
 	local var3: f32 = 0
 	local debug_flag: s32 = 0
-	event.Initialize()
-	event.SetMotion(0, "立ち")
-	event.SetMesWindowMode(0, 5)
-	event.SetMesQuestionGyou(0, 0)
+	event.initialize_event()
+	event.set_character_motion(0, "立ち")
+	event.set_message_window_mode(0, 5)
+	event.set_message_selection_top_line(0, 0)
 	var0 = helper_bac0e30d(0, 2004, 8, 256, 208, 2, 0)
 	if var0 == 0 then
 		do
-			local out1, out2, out3 = event.GetCharaPos(0)
+			local out1, out2, out3 = event.get_character_position(0)
 			var1 = out1 or var1
 			var2 = out2 or var2
 			var3 = out3 or var3
 		end
-		event.SphidaSetBallPos(var1, var2 + 3.0, var3)
-		event.SetCharaPos(8, var1, var2 + 3.0, var3)
-		event.SetCharaPos(9, var1, var2 + 3.0, var3)
-		debug_flag = event.GetDebugFlag() or debug_flag
+		event.set_sphida_ball_position(var1, var2 + 3.0, var3)
+		event.set_character_position(8, var1, var2 + 3.0, var3)
+		event.set_character_position(9, var1, var2 + 3.0, var3)
+		debug_flag = event.get_debug_flag() or debug_flag
 		if debug_flag == 0 then
 			helper_c2ca38b7(-1)
 		end
-		event.SetCrossfade(15)
+		event.start_crossfade(15)
 	end
 	vm.wait(2)
-	event.Finish()
+	event.finish_event()
 end
 
 --- The Sphida event run when the menu button is pressed near the ball with fewer than two shots of par left.
@@ -1988,63 +1988,63 @@ function script.sphida_near_ball_last()
 	local var1: f32 = 0
 	local var2: f32 = 0
 	local var3: f32 = 0
-	event.Initialize()
+	event.initialize_event()
 	helper_ce85b54c()
-	event.SetMesWindowMode(0, 4)
-	event.MesMake_2(0, "Das ist das letzte Mal, dass du\ndie Kugel zu dir holen kannst.")
+	event.set_message_window_mode(0, 4)
+	event.open_message_window_2(0, "Das ist das letzte Mal, dass du\ndie Kugel zu dir holen kannst.")
 	helper_75684dd8(0, -1, 8, 0, 0)
-	event.SetMesWindowMode(0, 5)
-	event.SetMesQuestionGyou(0, 0)
-	event.MesMake_2(0, "Die Kugel zu dir holen?")
+	event.set_message_window_mode(0, 5)
+	event.set_message_selection_top_line(0, 0)
+	event.open_message_window_2(0, "Die Kugel zu dir holen?")
 	var0 = helper_bac0e30d(0, -1, 8, 0, 0, 2, 1)
 	if var0 == 0 then
 		do
-			local out1, out2, out3 = event.GetCharaPos(0)
+			local out1, out2, out3 = event.get_character_position(0)
 			var1 = out1 or var1
 			var2 = out2 or var2
 			var3 = out3 or var3
 		end
-		event.SphidaSetBallPos(var1, var2 + 3.0, var3)
-		event.SetCharaPos(8, var1, var2 + 3.0, var3)
-		event.SetCharaPos(9, var1, var2 + 3.0, var3)
-		event.SphidaSetLastChallenge(1)
-		event.SetCrossfade(15)
+		event.set_sphida_ball_position(var1, var2 + 3.0, var3)
+		event.set_character_position(8, var1, var2 + 3.0, var3)
+		event.set_character_position(9, var1, var2 + 3.0, var3)
+		event.set_sphida_last_challenge(1)
+		event.start_crossfade(15)
 	end
 	vm.wait(3)
-	event.Finish()
+	event.finish_event()
 end
 
 --- Event 13080, which map data, a script or the engine runs by number.
 function script.event_13080()
 	event_99()
-	event.SetFlag(300, 1)
-	event.SetFlag(320, 0)
+	event.set_save_flag(300, 1)
+	event.set_save_flag(320, 0)
 	default_event()
 end
 
 --- Event 13120, which map data, a script or the engine runs by number.
 function script.event_13120()
 	event_99()
-	event.SetFlag(300, 1)
-	event.SetFlag(320, 1)
-	event.SetFlag(312, 0)
-	event.SetFlag(314, 0)
-	event.SetFlag(315, 0)
-	event.SetFlag(316, 0)
-	event.SetFlag(317, 0)
+	event.set_save_flag(300, 1)
+	event.set_save_flag(320, 1)
+	event.set_save_flag(312, 0)
+	event.set_save_flag(314, 0)
+	event.set_save_flag(315, 0)
+	event.set_save_flag(316, 0)
+	event.set_save_flag(317, 0)
 	default_event()
 end
 
 --- Event 13170, which map data, a script or the engine runs by number.
 function script.event_13170()
 	event_99()
-	event.SetStatusbarShow(0, 1.0)
-	event.AssignStack(4)
-	event.ClearStack(4)
-	event.LoadChara(4, "chara/c02_base.gltf", "info", 13)
-	event.LoadEquip(4, 1, 4, "info", 13)
-	event.LoadEquip(4, 1, 3, "info", 13)
-	event.LoadEquip(4, 1, 2, "info", 13, 14)
+	event.show_dungeon_status_bar(0, 1.0)
+	event.assign_memory_stack(4)
+	event.clear_memory_stack(4)
+	event.load_character(4, "chara/c02_base.gltf", "info", 13)
+	event.load_equipment_model(4, 1, 4, "info", 13)
+	event.load_equipment_model(4, 1, 3, "info", 13)
+	event.load_equipment_model(4, 1, 2, "info", 13, 14)
 	helper_dcf91359(10)
 end
 

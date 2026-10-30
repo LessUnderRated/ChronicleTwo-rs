@@ -49,14 +49,14 @@ local function helper_b540e6c8(chara_no: s32, arg1: s32)
 	local var18: s32 = 0
 	local active_chr_no: s32 = 0
 	local var20: any = 0
-	event.SetMesPreset(0, 0)
-	event.SetMesShippo(0, 1)
-	var2 = event.GetChapter() or var2
-	var3 = event.GetEventData_2(14) or var3
-	event.GetNowMapNo()
-	now_sub_map_no = event.GetNowSubmapNo() or now_sub_map_no
-	event.CtrlcStay()
-	event.SetAi(0, chara_no)
+	event.apply_message_window_preset(0, 0)
+	event.set_message_bubble_tail(0, 1)
+	var2 = event.get_chapter() or var2
+	var3 = event.get_triggered_event_data_2(14) or var3
+	event.get_current_map()
+	now_sub_map_no = event.get_current_submap() or now_sub_map_no
+	event.stop_camera_control_movement()
+	event.set_villager_ai_enabled(0, chara_no)
 	if var3 == 3 then
 		helper_6f2bfb5f(chara_no, arg1)
 	end
@@ -64,43 +64,43 @@ local function helper_b540e6c8(chara_no: s32, arg1: s32)
 		helper_747b4a80(chara_no, arg1)
 	end
 	if var3 == 4 then
-		flag = event.GetFlag(104) or flag
+		flag = event.get_save_flag(104) or flag
 		if flag == 0 then
-			event.MesMake_2(0, "Fammi far compere\nIndaga per uno scoop")
+			event.open_message_window_2(0, "Fammi far compere\nIndaga per uno scoop")
 			var7 = helper_f0757175(chara_no, -1, 2, 0, 0, 0)
 			if var7 < 0 then
-				event.SetAi(1, chara_no)
+				event.set_villager_ai_enabled(1, chara_no)
 				return
 			end
 			if var7 == 1 then
 				if helper_a41a9c8b(0) ~= 0 then
-					event.SetFadeOut(25)
+					event.fade_out_screen(25)
 					wait_frames(30)
-					event.GotoMenu(6, 33)
+					event.open_event_menu(6, 33)
 					vm.wait(6)
-					event.SetFadeIn(30)
+					event.fade_in_screen(30)
 				end
-				event.SetAi(1, chara_no)
+				event.set_villager_ai_enabled(1, chara_no)
 				return
 			else
 				helper_536094dc()
 			end
 		else
-			event.MesMake_2(0, "Benvenuto!\nIndaga per uno scoop")
+			event.open_message_window_2(0, "Benvenuto!\nIndaga per uno scoop")
 			var8 = helper_f0757175(chara_no, -1, 2, 0, 0, 0)
 			if var8 < 0 then
-				event.SetAi(1, chara_no)
+				event.set_villager_ai_enabled(1, chara_no)
 				return
 			end
 			if var8 == 1 then
 				if helper_a41a9c8b(0) ~= 0 then
-					event.SetFadeOut(25)
+					event.fade_out_screen(25)
 					wait_frames(30)
-					event.GotoMenu(6, 33)
+					event.open_event_menu(6, 33)
 					vm.wait(11)
-					event.SetFadeIn(30)
+					event.fade_in_screen(30)
 				end
-				event.SetAi(1, chara_no)
+				event.set_villager_ai_enabled(1, chara_no)
 				return
 			else
 				helper_20c00eaf(chara_no, arg1)
@@ -120,19 +120,19 @@ local function helper_b540e6c8(chara_no: s32, arg1: s32)
 		helper_a4d8dd70(chara_no, arg1)
 	end
 	if var3 == 12 then
-		var9 = event.GetQuestEtc(0, 0) or var9
-		var10 = event.GetQuestEtc(0, 8) or var10
+		var9 = event.get_quest_request_status(0, 0) or var9
+		var10 = event.get_quest_request_status(0, 8) or var10
 		if var9 == 2 and var10 ~= 2 then
-			event.SetMotion(arg1, "立ち")
-			event.MesMake_2(0, "Salve\nBenvenuto!")
+			event.set_character_motion(arg1, "立ち")
+			event.open_message_window_2(0, "Salve\nBenvenuto!")
 			var11 = helper_ac02d4a5(0, -1, 5, 256, 208, 2, 1)
 			if var11 < 0 then
-				event.SetAi(1, chara_no)
+				event.set_villager_ai_enabled(1, chara_no)
 				return
 			end
 			if var11 == 1 then
 				helper_399942cd(chara_no, arg1)
-				event.SetAi(1, chara_no)
+				event.set_villager_ai_enabled(1, chara_no)
 				return
 			end
 		end
@@ -146,19 +146,19 @@ local function helper_b540e6c8(chara_no: s32, arg1: s32)
 		helper_32d0a967(chara_no, arg1)
 	end
 	if var3 == 15 then
-		var12 = event.GetQuestEtc(0, 0) or var12
-		var13 = event.GetQuestEtc(0, 10) or var13
+		var12 = event.get_quest_request_status(0, 0) or var12
+		var13 = event.get_quest_request_status(0, 10) or var13
 		if var12 == 2 and var13 ~= 2 then
-			event.SetMotion(arg1, "立ち")
-			event.MesMake_2(0, "Salve\nBenvenuto!")
+			event.set_character_motion(arg1, "立ち")
+			event.open_message_window_2(0, "Salve\nBenvenuto!")
 			var14 = helper_ac02d4a5(0, -1, 5, 256, 208, 2, 1)
 			if var14 < 0 then
-				event.SetAi(1, chara_no)
+				event.set_villager_ai_enabled(1, chara_no)
 				return
 			end
 			if var14 == 1 then
 				helper_7215de68(chara_no, arg1)
-				event.SetAi(1, chara_no)
+				event.set_villager_ai_enabled(1, chara_no)
 				return
 			end
 		end
@@ -175,19 +175,19 @@ local function helper_b540e6c8(chara_no: s32, arg1: s32)
 		helper_a051c35b(chara_no, arg1)
 	end
 	if var3 == 18 then
-		var15 = event.GetQuestEtc(0, 0) or var15
-		var16 = event.GetQuestEtc(0, 13) or var16
+		var15 = event.get_quest_request_status(0, 0) or var15
+		var16 = event.get_quest_request_status(0, 13) or var16
 		if var15 == 2 and var16 ~= 2 then
-			event.SetMotion(arg1, "立ち")
-			event.MesMake_2(0, "Salve\nBenvenuto!")
+			event.set_character_motion(arg1, "立ち")
+			event.open_message_window_2(0, "Salve\nBenvenuto!")
 			var17 = helper_ac02d4a5(0, -1, 5, 256, 208, 2, 1)
 			if var17 < 0 then
-				event.SetAi(1, chara_no)
+				event.set_villager_ai_enabled(1, chara_no)
 				return
 			end
 			if var17 == 1 then
 				helper_f3ec808f(chara_no, arg1)
-				event.SetAi(1, chara_no)
+				event.set_villager_ai_enabled(1, chara_no)
 				return
 			end
 		end
@@ -216,30 +216,30 @@ local function helper_b540e6c8(chara_no: s32, arg1: s32)
 		helper_938dbe57(chara_no, arg1)
 	end
 	if var3 == 33 then
-		var18 = event.GetQuestEtc(0, 8) or var18
-		active_chr_no = event.GetActiveChrNo() or active_chr_no
+		var18 = event.get_quest_request_status(0, 8) or var18
+		active_chr_no = event.get_playable_character() or active_chr_no
 		if var18 == 1 and active_chr_no == 0 then
-			event.SetMotion(arg1, "立ち")
-			event.MesMake_2(0, "Fammi far compere\nSalve")
+			event.set_character_motion(arg1, "立ち")
+			event.open_message_window_2(0, "Fammi far compere\nSalve")
 			var20 = helper_ac02d4a5(0, -1, 5, 256, 208, 2, 1)
 			if var20 < 0 then
-				event.SetAi(1, chara_no)
+				event.set_villager_ai_enabled(1, chara_no)
 				return
 			end
 			if var20 == 1 then
 				helper_fce95934(chara_no, arg1)
-				event.SetAi(1, chara_no)
+				event.set_villager_ai_enabled(1, chara_no)
 				return
 			end
 		end
 		helper_536094dc()
 	end
 	if var3 == 1 then
-		event.SetMesPreset(0, 0)
+		event.apply_message_window_preset(0, 0)
 		if var2 ~= 8 then
-			event.MesMake_2(0, "Ultimamente faccio fatica\na vedere le cose piccole.<page>Mmmh... sto\ninvecchiando...")
+			event.open_message_window_2(0, "Ultimamente faccio fatica\na vedere le cose piccole.<page>Mmmh... sto\ninvecchiando...")
 		else
-			event.MesMake_2(
+			event.open_message_window_2(
 				0,
 				"Vedere la Ferrovia Carbonero\noperativa su tutto il continente\n[UNI00e8] il sogno mio e di Need.<page>Possiamo contare su di te, vero?"
 			)
@@ -247,11 +247,11 @@ local function helper_b540e6c8(chara_no: s32, arg1: s32)
 		helper_70e4ac93(chara_no, -1, 0, 0)
 	end
 	if var3 == 2 then
-		event.SetMesPreset(0, 0)
+		event.apply_message_window_preset(0, 0)
 		if var2 ~= 8 then
-			event.MesMake_2(0, "Se non tengo le mani\ncontinuamente occupate,\nvado fuori di testa!")
+			event.open_message_window_2(0, "Se non tengo le mani\ncontinuamente occupate,\nvado fuori di testa!")
 		else
-			event.MesMake_2(
+			event.open_message_window_2(
 				0,
 				"Se trovano la Zelmite sar[UNI00f2]\nproprio impegnato. Gi[UNI00e0]!\nScavare, scavare e solo scavare!!!"
 			)
@@ -259,36 +259,36 @@ local function helper_b540e6c8(chara_no: s32, arg1: s32)
 		helper_70e4ac93(chara_no, -1, 0, 0)
 	end
 	if var3 == 6 then
-		event.SetMesPreset(0, 0)
+		event.apply_message_window_preset(0, 0)
 		if var2 ~= 8 then
-			event.MesMake_2(0, "Sai, in questi giorni, ho\nle penne piene di pulci:\nprudono terribilmente!")
+			event.open_message_window_2(0, "Sai, in questi giorni, ho\nle penne piene di pulci:\nprudono terribilmente!")
 		else
-			event.MesMake_2(0, "Va bene passare il tempo\ncercando Zelmite, ma vedi di\nnon stancarti troppo, ragazzo!")
+			event.open_message_window_2(0, "Va bene passare il tempo\ncercando Zelmite, ma vedi di\nnon stancarti troppo, ragazzo!")
 		end
 		helper_70e4ac93(chara_no, -1, 0, 0)
 	end
 	if var3 == 13 then
-		event.SetMesPreset(0, 0)
+		event.apply_message_window_preset(0, 0)
 		if var2 ~= 8 then
-			event.MesMake_2(
+			event.open_message_window_2(
 				0,
 				"Che profumo la polvere da sparo!\nSono nato per questo lavoro!<page>Certo, il mio capo [UNI00e8] un terribile\ncapoccione e all'antica.\nMa... pazienza!"
 			)
 		else
-			event.MesMake_2(0, "Ti piace proprio\nl'avventura, eh?")
+			event.open_message_window_2(0, "Ti piace proprio\nl'avventura, eh?")
 		end
 		helper_70e4ac93(chara_no, -1, 0, 0)
 	end
 	if var3 == 22 then
-		event.SetMesPreset(0, 0)
+		event.apply_message_window_preset(0, 0)
 		if var2 ~= 8 then
-			event.MesMake_2(0, "A parte il fatto di essere nata\nda un quadro, non sono differente\nda chiunque altro.")
+			event.open_message_window_2(0, "A parte il fatto di essere nata\nda un quadro, non sono differente\nda chiunque altro.")
 		else
-			event.MesMake_2(0, "Ho un brutto presentimento sulla\nMiniera di Zelmite. Stai all'erta!")
+			event.open_message_window_2(0, "Ho un brutto presentimento sulla\nMiniera di Zelmite. Stai all'erta!")
 		end
 		helper_70e4ac93(chara_no, -1, 0, 0)
 	end
-	event.SetAi(1, chara_no)
+	event.set_villager_ai_enabled(1, chara_no)
 end
 
 return helper_b540e6c8

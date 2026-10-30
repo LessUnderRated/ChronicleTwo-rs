@@ -9,11 +9,11 @@ local function helper_81af0537(arg0: s32, arg1: f32, arg2: f32)
 	local var5: f32 = 0
 	local var6: f32 = 0
 	do
-		local out1, _, out3 = event.GetCharaPos(arg0)
+		local out1, _, out3 = event.get_character_position(arg0)
 		var3 = out1 or var3
 		var5 = out3 or var5
 	end
-	var6 = event.GetRotLookPos(arg1 - var3, arg2 - var5) or var6
+	var6 = event.get_look_angle(arg1 - var3, arg2 - var5) or var6
 	helper_c2b5f8fb(arg0, var6)
 end
 

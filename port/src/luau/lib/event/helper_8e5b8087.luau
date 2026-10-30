@@ -10,7 +10,7 @@ local function helper_8e5b8087(arg0: s32, arg1: f32, arg2: f32, arg3: s32)
 		arg2 = vm.f32(0.01)
 	end
 	for var4 = 0, arg3 - 1 do
-		get_now_frame_wait = event.GetMotNowWait(arg0) or get_now_frame_wait
+		get_now_frame_wait = event.get_character_motion_wait(arg0) or get_now_frame_wait
 		if get_now_frame_wait < vm.f32(arg1 + arg2) and get_now_frame_wait > vm.f32(arg1 - arg2) then
 			return
 		end

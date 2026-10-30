@@ -7,7 +7,7 @@ local vm = require("@lib/vm")
 local function wait_camera()
 	local var0: s32 = 0
 	while true do
-		var0 = event.CmrsCheck() or var0
+		var0 = event.is_camera_sequence_running() or var0
 		if var0 == 0 then
 			break
 		else

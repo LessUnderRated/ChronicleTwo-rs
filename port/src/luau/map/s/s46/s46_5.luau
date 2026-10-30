@@ -29,31 +29,31 @@ local function helper_e3c4(arg0: s32)
 	local loud: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.TrgPakuAnim(1)
-		event.TrgPakuMotion(0)
+		event.trigger_mouth_texture_animation(1)
+		event.trigger_mouth_motion(0)
 		var2 = 0
 		var6 = 0
-		argc_2 = event.StreamGetStatus(1) or argc_2
+		argc_2 = event.get_voice_stream_state(1) or argc_2
 		loud = 0
 		while true do
-			get_now_frame_wait = event.GetMotNowWait(32) or get_now_frame_wait
+			get_now_frame_wait = event.get_character_motion_wait(32) or get_now_frame_wait
 			if get_now_frame_wait < vm.f32(0.01) then
-				event.ObjsTexAnime(0, 0, "パクパク")
-				event.ObjsTexAnime(0, 1, "パクパク")
+				event.set_object_sequence_texture_animation(0, 0, "パクパク")
+				event.set_object_sequence_texture_animation(0, 1, "パクパク")
 			end
 			argc_2 = argc
-			argc = event.StreamGetStatus(1) or argc
+			argc = event.get_voice_stream_state(1) or argc
 			if argc_2 ~= 0 and argc == 0 then
-				event.TrgPakuMotion(2)
+				event.trigger_mouth_motion(2)
 				var2 = 2
 			end
 			var7 = loud
-			loud = event.StreamSilentCheck(1) or loud
+			loud = event.is_voice_stream_audible(1) or loud
 			if var7 == 0 and loud == 1 then
-				event.TrgPakuAnim(1)
+				event.trigger_mouth_texture_animation(1)
 			end
 			if var7 == 1 and loud == 0 then
-				event.TrgPakuAnim(0)
+				event.trigger_mouth_texture_animation(0)
 			end
 			local t0: s32
 			t0, var2 = helper_57c93eff(arg0, var2)
@@ -63,9 +63,9 @@ local function helper_e3c4(arg0: s32)
 				break
 			else
 				if global0 == 137 then
-					event.ObjsTexAnime(0, 0)
-					event.ObjsTexAnime(0, 1, "デフォルト顔")
-					event.ObjsTexAnime(0, 1, "通常目パチ")
+					event.set_object_sequence_texture_animation(0, 0)
+					event.set_object_sequence_texture_animation(0, 1, "デフォルト顔")
+					event.set_object_sequence_texture_animation(0, 1, "通常目パチ")
 				end
 				at = 1
 				vm.wait(1)
@@ -74,12 +74,12 @@ local function helper_e3c4(arg0: s32)
 			end
 		end
 		if var2 == 0 then
-			event.TrgPakuMotion(2)
+			event.trigger_mouth_motion(2)
 		end
-		event.ResetPakuMotion()
-		event.TrgPakuAnim(0)
-		event.ResetPakuAnim()
-		event.StreamStop(1)
+		event.reset_mouth_motions()
+		event.trigger_mouth_texture_animation(0)
+		event.reset_mouth_texture_animations()
+		event.stop_voice_stream(1)
 		return
 	end, function(received: { any })
 		if at <= 1 then
@@ -115,9 +115,9 @@ local function helper_ec6c(arg0: s32)
 	local stream_open_state_2: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.StreamOpen3(1, arg0)
+		event.open_voice_stream_wave(1, arg0)
 		while true do
-			stream_open_state = event.StreamOpenCheck() or stream_open_state
+			stream_open_state = event.get_voice_stream_open_state() or stream_open_state
 			if stream_open_state == 0 then
 				break
 			else
@@ -125,9 +125,9 @@ local function helper_ec6c(arg0: s32)
 				vm.wait(1)
 			end
 		end
-		event.StreamStandby(1)
+		event.ready_voice_stream(1)
 		while true do
-			stream_open_state_2 = event.StreamOpenCheck() or stream_open_state_2
+			stream_open_state_2 = event.get_voice_stream_open_state() or stream_open_state_2
 			if stream_open_state_2 == 0 then
 				break
 			else
@@ -135,13 +135,13 @@ local function helper_ec6c(arg0: s32)
 				vm.wait(2)
 			end
 		end
-		event.MesMake_2(0, arg0)
+		event.open_message_window_2(0, arg0)
 		open_message(0, -1, 8, 0, 0)
-		event.StreamPlay(1)
+		event.play_voice_stream(1)
 		at = 3
 		helper_e3c4(0)
 		close_message(0)
-		event.StreamClose(1)
+		event.close_voice_stream(1)
 		return
 	end, function(received: { any })
 		if at <= 3 then
@@ -168,78 +168,78 @@ local function helper_f7e8()
 	local time: f32 = 0
 	local at: number = 0
 	vm.section(function()
-		event.Initialize()
+		event.initialize_event()
 		helper_696c0345()
 		global0 = 0
-		event.StopBgm(0)
+		event.stop_music(0)
 		at = 1
 		wait_frames(4)
-		event.LoadBgm(58)
-		event.PlayBgm(0)
-		time = event.GetTime() or time
-		event.SetTime(12.0)
-		event.SetTimeStepEnable(0)
-		event.InitDramaScene()
-		event.SetFadeIn(30)
-		event.ObjsTexAnime(0, 0)
-		event.ObjsTexAnime(0, 1, "デフォルト顔")
-		event.ObjsTexAnime(0, 1, "通常目パチ")
-		event.ObjsTexAnime(1, 0)
-		event.ObjsTexAnime(1, 1, "目パチ")
-		event.CharaActive(1, 32)
-		event.CharaActive(1, 33)
-		event.CharaActive(1, 34)
-		event.CharaActive(1, 35)
-		event.SetReference(33, "pie", 34)
-		event.SetReference(33, "pie", 35)
-		event.CmrsSetPos(-22.48, 31.6, -71.45)
-		event.CmrsSetRef(74.99, 21.39, -133.6)
-		event.ObjsSetPos(0, 71.93, 0.0, -137.17)
-		event.ObjsSetRot(0, 0.0, -3.12, 0.0)
-		event.ObjsSetPos(1, -32.7, 0.0, -81.53)
-		event.ObjsSetRot(1, 0.0, 1.92, 0.0)
-		event.ObjsSetMotion(0, "座り", 4)
-		event.ObjsMotionDelay(0, 90)
-		event.ObjsSetMotion(0, "左を見る", 6)
-		event.ObjsNextMotion(0, "左を見るL", 0)
-		event.ObjsSetMotion(1, "ポテトパイ歩き", 4)
-		event.ObjsMove(1, 29.44, 0.0, -115.61, 120)
+		event.load_music(58)
+		event.play_music(0)
+		time = event.get_scene_time_of_day() or time
+		event.set_time_of_day(12.0)
+		event.set_time_of_day_advancing(0)
+		event.enable_drama_skip()
+		event.fade_in_screen(30)
+		event.set_object_sequence_texture_animation(0, 0)
+		event.set_object_sequence_texture_animation(0, 1, "デフォルト顔")
+		event.set_object_sequence_texture_animation(0, 1, "通常目パチ")
+		event.set_object_sequence_texture_animation(1, 0)
+		event.set_object_sequence_texture_animation(1, 1, "目パチ")
+		event.set_character_active(1, 32)
+		event.set_character_active(1, 33)
+		event.set_character_active(1, 34)
+		event.set_character_active(1, 35)
+		event.attach_character_to_frame(33, "pie", 34)
+		event.attach_character_to_frame(33, "pie", 35)
+		event.set_camera_sequence_position(-22.48, 31.6, -71.45)
+		event.set_camera_sequence_look_at(74.99, 21.39, -133.6)
+		event.set_object_sequence_position(0, 71.93, 0.0, -137.17)
+		event.set_object_sequence_rotation(0, 0.0, -3.12, 0.0)
+		event.set_object_sequence_position(1, -32.7, 0.0, -81.53)
+		event.set_object_sequence_rotation(1, 0.0, 1.92, 0.0)
+		event.set_object_sequence_motion(0, "座り", 4)
+		event.delay_object_sequence_motion_track(0, 90)
+		event.set_object_sequence_motion(0, "左を見る", 6)
+		event.queue_object_sequence_next_motion(0, "左を見るL", 0)
+		event.set_object_sequence_motion(1, "ポテトパイ歩き", 4)
+		event.move_object_sequence(1, 29.44, 0.0, -115.61, 120)
 		at = 2
 		wait_frames(120)
-		event.DelReference(34)
-		event.DelReference(35)
-		event.CharaActive(0, 33)
-		event.CharaActive(1, 36)
-		event.SetReference(32, "pie", 36)
-		event.CmrsSetPos(15.46, 33.35, -97.19)
-		event.CmrsSetRef(39.19, 15.77, -110.22)
-		event.ObjsSetPos(0, 45.12, 0.0, -113.39)
-		event.ObjsSetRot(0, 0.0, -1.08, 0.0)
-		event.ObjsSetMotion(0, "喜ぶ", 6)
-		event.ObjsNextMotion(0, "喜ぶL", 0)
+		event.detach_character_from_frame(34)
+		event.detach_character_from_frame(35)
+		event.set_character_active(0, 33)
+		event.set_character_active(1, 36)
+		event.attach_character_to_frame(32, "pie", 36)
+		event.set_camera_sequence_position(15.46, 33.35, -97.19)
+		event.set_camera_sequence_look_at(39.19, 15.77, -110.22)
+		event.set_object_sequence_position(0, 45.12, 0.0, -113.39)
+		event.set_object_sequence_rotation(0, 0.0, -1.08, 0.0)
+		event.set_object_sequence_motion(0, "喜ぶ", 6)
+		event.queue_object_sequence_next_motion(0, "喜ぶL", 0)
 		at = 3
 		wait_frames(60)
-		event.CharaActive(1, 33)
-		event.CmrsSetPos(25.57, 23.79, -65.13)
-		event.CmrsSetRef(36.95, 20.17, -110.66)
-		event.ObjsSetPos(0, 45.12, 0.0, -113.39)
-		event.ObjsSetRot(0, 0.0, -1.08, 0.0)
-		event.ObjsSetPos(1, 28.93, 0.0, -101.8)
-		event.ObjsSetRot(1, 0.0, 2.04, 0.0)
-		event.ObjsTexAnime(0, 1, "パクパク")
-		event.ObjsSetMotion(0, "食べる", 6)
-		event.ObjsNextMotion(0, "エイナ見立ち", 6)
-		event.ObjsNextMotion(0, "食べる", 6)
-		event.ObjsNextMotion(0, "エイナ見立ち", 4)
-		event.ObjsSetMotion(1, "ユリス見立ち", 4)
+		event.set_character_active(1, 33)
+		event.set_camera_sequence_position(25.57, 23.79, -65.13)
+		event.set_camera_sequence_look_at(36.95, 20.17, -110.66)
+		event.set_object_sequence_position(0, 45.12, 0.0, -113.39)
+		event.set_object_sequence_rotation(0, 0.0, -1.08, 0.0)
+		event.set_object_sequence_position(1, 28.93, 0.0, -101.8)
+		event.set_object_sequence_rotation(1, 0.0, 2.04, 0.0)
+		event.set_object_sequence_texture_animation(0, 1, "パクパク")
+		event.set_object_sequence_motion(0, "食べる", 6)
+		event.queue_object_sequence_next_motion(0, "エイナ見立ち", 6)
+		event.queue_object_sequence_next_motion(0, "食べる", 6)
+		event.queue_object_sequence_next_motion(0, "エイナ見立ち", 4)
+		event.set_object_sequence_motion(1, "ユリス見立ち", 4)
 		at = 4
 		helper_ec6c(2090590)
 		at = 5
 		helper_ec6c(2090593)
 		at = 6
 		helper_ec6c(2090595)
-		event.FadeOutBgm(30)
-		event.SetFadeOut(30)
+		event.fade_out_music(30)
+		event.fade_out_screen(30)
 		at = 7
 		wait_frames(30)
 	end, function(received: { any }): boolean
@@ -263,12 +263,12 @@ local function helper_f7e8()
 		end
 		return true
 	end)
-	event.CancelDramaScene()
+	event.cancel_drama_scene_skip()
 	helper_2e67f92b()
-	event.StopBgm(0)
-	event.SetTimeStepEnable(1)
-	event.SetTime(time)
-	event.SetFadeIn(30)
+	event.stop_music(0)
+	event.set_time_of_day_advancing(1)
+	event.set_time_of_day(time)
+	event.fade_in_screen(30)
 end
 
 local script: { [any]: (...any) -> ...any } = {}
@@ -282,23 +282,23 @@ script.key_open = helper_83e6dd8e
 --- Event 501, which map data, a script or the engine runs by number.
 function script.event_501()
 	helper_f7e8()
-	event.BgmPlayCancel()
-	event.MapJump_3(-1, "g01i07", 502)
+	event.skip_next_music_play()
+	event.jump_to_map_3(-1, "g01i07", 502)
 	vm.wait(2)
 end
 
 --- Event 510, which map data, a script or the engine runs by number.
 function script.event_510()
 	helper_732ddd37()
-	event.LoadDungeonMapFile("d03f01", "d03f01", 6)
-	event.LoadScript("d03/d03.stb", 500)
+	event.load_dungeon_map("d03f01", "d03f01", 6)
+	event.load_event_script("d03/d03.stb", 500)
 end
 
 --- Event 520, which map data, a script or the engine runs by number.
 function script.event_520()
 	helper_83e6dd8e()
-	event.LoadDungeonMapFile("d04f02", "d04f02", 40)
-	event.LoadScript("d04/d04.stb", 500)
+	event.load_dungeon_map("d04f02", "d04f02", 40)
+	event.load_event_script("d04/d04.stb", 500)
 end
 
 --- Event 600, which map data, a script or the engine runs by number.

@@ -75,29 +75,29 @@ end
 --- Event 600, which map data, a script or the engine runs by number.
 function script.event_600()
 	helper_393ea807()
-	event.BgmLoadCancel()
-	event.MapJump_3(-1, "f30", 601)
+	event.skip_next_music_load()
+	event.jump_to_map_3(-1, "f30", 601)
 end
 
 --- Event 601, which map data, a script or the engine runs by number.
 function script.event_601()
 	helper_574aec8b()
-	event.BgmLoadCancel()
-	event.MapJump_3(-1, "f30", 602)
+	event.skip_next_music_load()
+	event.jump_to_map_3(-1, "f30", 602)
 end
 
 --- Event 602, which map data, a script or the engine runs by number.
 function script.event_602()
 	helper_aca6764d()
-	event.BgmLoadCancel()
-	event.MapJump_3(-1, "f30", 603)
+	event.skip_next_music_load()
+	event.jump_to_map_3(-1, "f30", 603)
 end
 
 --- Event 603, which map data, a script or the engine runs by number.
 function script.event_603()
 	helper_0dadb783()
-	event.BgmLoadCancel()
-	event.MapJump_3(-1, "f30", 604)
+	event.skip_next_music_load()
+	event.jump_to_map_3(-1, "f30", 604)
 end
 
 return script

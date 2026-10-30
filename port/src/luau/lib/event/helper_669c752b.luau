@@ -3,10 +3,10 @@
 
 --- Helper function.
 local function helper_669c752b()
-	event.DeleteChara(32)
-	event.DeleteChara(33)
-	event.DeleteChara(34)
-	event.CharaActive(1, 0)
+	event.delete_character(32)
+	event.delete_character(33)
+	event.delete_character(34)
+	event.set_character_active(1, 0)
 end
 
 return helper_669c752b

@@ -25,64 +25,64 @@ function script.default_event() end
 
 --- The event the town walk runs when the square button is pressed, after reloading the map script.
 function script.key_open()
-	event.Initialize()
+	event.initialize_event()
 	vm.wait(1)
-	event.CmrsSetPos(0.0, 1000.0, -100.0)
-	event.CmrsSetRef(0.0, 1000.0, 0.0)
-	event.AssignStack(5)
-	event.ClearStack(5)
-	event.EsmInitialize(5)
-	event.EsmLoadBase("Ｅ７３２光雨")
-	event.EsmInitFix(5)
-	event.EsmCreate("Ｅ７３２光雨")
-	event.EsmSetVect1(0.0, 1000.0, 0.0)
-	event.EsmSetVect2(100.0, 100.0, 100.0)
-	event.EsmSetValue(0, 240)
+	event.set_camera_sequence_position(0.0, 1000.0, -100.0)
+	event.set_camera_sequence_look_at(0.0, 1000.0, 0.0)
+	event.assign_memory_stack(5)
+	event.clear_memory_stack(5)
+	event.initialize_effect_manager(5)
+	event.load_effect_base("Ｅ７３２光雨")
+	event.create_effect_work_buffer(5)
+	event.create_effect("Ｅ７３２光雨")
+	event.set_effect_first_vector(0.0, 1000.0, 0.0)
+	event.set_effect_second_vector(100.0, 100.0, 100.0)
+	event.set_effect_value(0, 240)
 	vm.wait(2)
 	helper_c956b4a2(64)
-	event.EsmClear()
-	event.Finish()
+	event.clear_effect_manager()
+	event.finish_event()
 end
 
 --- Event 500, which map data, a script or the engine runs by number.
 function script.event_500()
 	helper_1e6f252b()
-	event.MapJump_3(-1, "s70", 530)
+	event.jump_to_map_3(-1, "s70", 530)
 	vm.wait(2)
 end
 
 --- Event 600, which map data, a script or the engine runs by number.
 function script.event_600()
 	helper_01056549()
-	event.MapJump_3(-1, "s30", 620)
+	event.jump_to_map_3(-1, "s30", 620)
 	vm.wait(2)
 end
 
 --- Event 610, which map data, a script or the engine runs by number.
 function script.event_610()
 	helper_b17402aa()
-	event.MapJump_3(-1, "s66", 610)
+	event.jump_to_map_3(-1, "s66", 610)
 	vm.wait(2)
 end
 
 --- Event 620, which map data, a script or the engine runs by number.
 function script.event_620()
 	helper_67ecfdb4()
-	event.MapJump_3(-1, "s66", 620)
+	event.jump_to_map_3(-1, "s66", 620)
 	vm.wait(2)
 end
 
 --- Event 630, which map data, a script or the engine runs by number.
 function script.event_630()
 	helper_42ffc870()
-	event.MapJump_3(-1, "s66", 630)
+	event.jump_to_map_3(-1, "s66", 630)
 	vm.wait(2)
 end
 
 --- Event 640, which map data, a script or the engine runs by number.
 function script.event_640()
 	helper_4e42f7c7()
-	event.MapJump_3(-1, "s66", 650)
+	event.jump_to_map_3(-1, "s66", 650)
 	vm.wait(2)
 end
 

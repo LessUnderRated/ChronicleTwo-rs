@@ -7,7 +7,7 @@ local set_window_mode = require("@lib/event/set_window_mode")
 
 --- Helper function.
 local function helper_afbdd04b(arg0: s32)
-	event.SetMesPreset(2, 4)
+	event.apply_message_window_preset(2, 4)
 	set_window_mode(2, 8)
 	open_message(2, vm.i32(1010 + arg0), 4, 0, 0)
 end

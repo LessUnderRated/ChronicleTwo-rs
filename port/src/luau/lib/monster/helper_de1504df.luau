@@ -17,7 +17,7 @@ local function helper_de1504df(arg0: f32, arg1: f32, arg2: f32, arg3: f32, angle
 	if angle <= vm.f32(-3.1415927) then
 		angle = vm.f32(angle + vm.f32(6.2831855))
 	end
-	var9 = monster.GetHigh2(arg0, arg1, arg2) or var9
+	var9 = monster.get_height_above_ground_at(arg0, arg1, arg2) or var9
 	arg1 = vm.f32(arg1 - vm.f32(arg1 - var9))
 	if var9 < 0.0 then
 		print("high=", vm.float(var9), "-------------------\n")
@@ -28,7 +28,7 @@ local function helper_de1504df(arg0: f32, arg1: f32, arg2: f32, arg3: f32, angle
 		return -2
 	end
 	var11 = helper_33b3650b(var11)
-	var10 = monster.FlyingSearchArea(arg3 + var11, angle) or var10
+	var10 = monster.get_flying_clear_distance(arg3 + var11, angle) or var10
 	if var10 < vm.f32(arg3 + var11) then
 		return -1
 	end

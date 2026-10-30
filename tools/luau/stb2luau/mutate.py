@@ -248,14 +248,14 @@ def _resolve(
     text: str, name: str, start: int, name_end: int, args: list[tuple[int, int]], kind_catalog: dict
 ) -> Call | None:
     """The call's signature, as the runtime picks it, and how each input is read; None for a command not catalogued."""
-    if name == "Ext":
+    if name == api.EXT_NAME:
         # The command number is not mutated; the others are marshalled as an unknown type and read as the handler of an
         # accepted arity reads them, or not at all.
         number = text[args[0][0] : args[0][1]] if args else ""
         no = int(number) if number.isdigit() else None
         reads = harness._ext_reads(kind_catalog).get(no, {}).get(len(args) - 1, "x" * (len(args) - 1))
         return Call(name, start, name_end, args, "x" + reads, "1" * len(args), None, None)
-    match = re.fullmatch(r"(\w+?)(Int|Float)?(?:_(\d+)(v)?)?", name)
+    match = re.fullmatch(r"(\w+?)(_int|_float)?(?:_(\d+)(v)?)?", name)
     base, suffix, argc, values = match.group(1), match.group(2), match.group(3), match.group(4)
     command = next((entry for entry in kind_catalog["commands"] if entry["luau"] == base), None)
     if command is None:
@@ -287,7 +287,7 @@ def _resolve(
     # The unsuffixed name marshals the catalogued type, which the other variant replaces.
     current = suffix or (api.VARIANTS.get(params[tagged]["type"]) if tagged is not None else None)
     if current is not None:
-        variant = base + ("Float" if current == "Int" else "Int") + (f"_{argc}" if argc is not None else "")
+        variant = base + (api.VARIANTS["f32"] if current == api.VARIANTS["s32"] else api.VARIANTS["s32"]) + (f"_{argc}" if argc is not None else "")
     return Call(name, start, name_end, args, reads, integers, tagged, variant)
 
 

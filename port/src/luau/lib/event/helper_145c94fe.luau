@@ -60,14 +60,14 @@ local function helper_145c94fe(chara_no: s32, arg1: s32)
 	local var18: any = 0
 	local at: number = 0
 	return vm.guard(function()
-		event.SetMesPreset(0, 0)
-		event.SetMesShippo(0, 1)
-		var2 = event.GetChapter() or var2
-		var3 = event.GetEventData_2(14) or var3
-		event.GetNowMapNo()
-		now_sub_map_no = event.GetNowSubmapNo() or now_sub_map_no
-		event.CtrlcStay()
-		event.SetAi(0, chara_no)
+		event.apply_message_window_preset(0, 0)
+		event.set_message_bubble_tail(0, 1)
+		var2 = event.get_chapter() or var2
+		var3 = event.get_triggered_event_data_2(14) or var3
+		event.get_current_map()
+		now_sub_map_no = event.get_current_submap() or now_sub_map_no
+		event.stop_camera_control_movement()
+		event.set_villager_ai_enabled(0, chara_no)
 		if var3 == 3 then
 			at = 1
 			helper_9635ea34(chara_no, arg1)
@@ -77,7 +77,7 @@ local function helper_145c94fe(chara_no: s32, arg1: s32)
 			helper_d2e2f515(chara_no, arg1)
 		end
 		if var3 == 4 then
-			flag = event.GetFlag(104) or flag
+			flag = event.get_save_flag(104) or flag
 			if flag == 0 then
 				at = 3
 				helper_52d29060()
@@ -103,21 +103,21 @@ local function helper_145c94fe(chara_no: s32, arg1: s32)
 			helper_6ec29fcc(chara_no, arg1)
 		end
 		if var3 == 12 then
-			var7 = event.GetQuestEtc(0, 0) or var7
-			var8 = event.GetQuestEtc(0, 8) or var8
+			var7 = event.get_quest_request_status(0, 0) or var7
+			var8 = event.get_quest_request_status(0, 8) or var8
 			if var7 == 2 and var8 ~= 2 then
-				event.SetMotion(arg1, "立ち")
-				event.MesMake_2(0, "こんにちは。\n仲間になってよ！")
+				event.set_character_motion(arg1, "立ち")
+				event.open_message_window_2(0, "こんにちは。\n仲間になってよ！")
 				at = 9
 				var9 = helper_bac0e30d(0, -1, 5, 256, 208, 2, 1)
 				if var9 < 0 then
-					event.SetAi(1, chara_no)
+					event.set_villager_ai_enabled(1, chara_no)
 					return
 				end
 				if var9 == 1 then
 					at = 10
 					helper_c06765bb(chara_no, arg1)
-					event.SetAi(1, chara_no)
+					event.set_villager_ai_enabled(1, chara_no)
 					return
 				end
 			end
@@ -134,21 +134,21 @@ local function helper_145c94fe(chara_no: s32, arg1: s32)
 			helper_c09a5ddc(chara_no, arg1)
 		end
 		if var3 == 15 then
-			var10 = event.GetQuestEtc(0, 0) or var10
-			var11 = event.GetQuestEtc(0, 10) or var11
+			var10 = event.get_quest_request_status(0, 0) or var10
+			var11 = event.get_quest_request_status(0, 10) or var11
 			if var10 == 2 and var11 ~= 2 then
-				event.SetMotion(arg1, "立ち")
-				event.MesMake_2(0, "こんにちは。\n仲間になってよ！")
+				event.set_character_motion(arg1, "立ち")
+				event.open_message_window_2(0, "こんにちは。\n仲間になってよ！")
 				at = 14
 				var12 = helper_bac0e30d(0, -1, 5, 256, 208, 2, 1)
 				if var12 < 0 then
-					event.SetAi(1, chara_no)
+					event.set_villager_ai_enabled(1, chara_no)
 					return
 				end
 				if var12 == 1 then
 					at = 15
 					helper_35ac2bde(chara_no, arg1)
-					event.SetAi(1, chara_no)
+					event.set_villager_ai_enabled(1, chara_no)
 					return
 				end
 			end
@@ -169,21 +169,21 @@ local function helper_145c94fe(chara_no: s32, arg1: s32)
 			helper_20fe9833(chara_no, arg1)
 		end
 		if var3 == 18 then
-			var13 = event.GetQuestEtc(0, 0) or var13
-			var14 = event.GetQuestEtc(0, 13) or var14
+			var13 = event.get_quest_request_status(0, 0) or var13
+			var14 = event.get_quest_request_status(0, 13) or var14
 			if var13 == 2 and var14 ~= 2 then
-				event.SetMotion(arg1, "立ち")
-				event.MesMake_2(0, "こんにちは。\n仲間になってよ！")
+				event.set_character_motion(arg1, "立ち")
+				event.open_message_window_2(0, "こんにちは。\n仲間になってよ！")
 				at = 20
 				var15 = helper_bac0e30d(0, -1, 5, 256, 208, 2, 1)
 				if var15 < 0 then
-					event.SetAi(1, chara_no)
+					event.set_villager_ai_enabled(1, chara_no)
 					return
 				end
 				if var15 == 1 then
 					at = 21
 					helper_f6fb599a(chara_no, arg1)
-					event.SetAi(1, chara_no)
+					event.set_villager_ai_enabled(1, chara_no)
 					return
 				end
 			end
@@ -220,21 +220,21 @@ local function helper_145c94fe(chara_no: s32, arg1: s32)
 			helper_eec107f7(chara_no, arg1)
 		end
 		if var3 == 33 then
-			var16 = event.GetQuestEtc(0, 8) or var16
-			active_chr_no = event.GetActiveChrNo() or active_chr_no
+			var16 = event.get_quest_request_status(0, 8) or var16
+			active_chr_no = event.get_playable_character() or active_chr_no
 			if var16 == 1 and active_chr_no == 0 then
-				event.SetMotion(arg1, "立ち")
-				event.MesMake_2(0, "買い物させて\nこんにちは")
+				event.set_character_motion(arg1, "立ち")
+				event.open_message_window_2(0, "買い物させて\nこんにちは")
 				at = 30
 				var18 = helper_bac0e30d(0, -1, 5, 256, 208, 2, 1)
 				if var18 < 0 then
-					event.SetAi(1, chara_no)
+					event.set_villager_ai_enabled(1, chara_no)
 					return
 				end
 				if var18 == 1 then
 					at = 31
 					helper_8a39abce(chara_no, arg1)
-					event.SetAi(1, chara_no)
+					event.set_villager_ai_enabled(1, chara_no)
 					return
 				end
 			end
@@ -242,14 +242,14 @@ local function helper_145c94fe(chara_no: s32, arg1: s32)
 			helper_52d29060()
 		end
 		if var3 == 1 then
-			event.SetMesPreset(0, 0)
+			event.apply_message_window_preset(0, 0)
 			if var2 ~= 8 then
-				event.MesMake_2(
+				event.open_message_window_2(
 					0,
 					"最近は細かい部品が\n見えにくくてのぅ。<page>わしも、もうろく\nしたのかのぅ・・・"
 				)
 			else
-				event.MesMake_2(
+				event.open_message_window_2(
 					0,
 					"バース鉄道が大陸全土に\n行き渡ることは、わしとニードの\n夢なのじゃ。協力頼むぞ。"
 				)
@@ -258,11 +258,11 @@ local function helper_145c94fe(chara_no: s32, arg1: s32)
 			helper_1c04a0eb(chara_no, -1, 0, 0)
 		end
 		if var3 == 2 then
-			event.SetMesPreset(0, 0)
+			event.apply_message_window_preset(0, 0)
 			if var2 ~= 8 then
-				event.MesMake_2(0, "オレは常に身体を\n動かしてないと\nイライラするんだ。")
+				event.open_message_window_2(0, "オレは常に身体を\n動かしてないと\nイライラするんだ。")
 			else
-				event.MesMake_2(
+				event.open_message_window_2(
 					0,
 					"ゼルマイトが発見されたら\nオレも忙しくなるな。そうなったら、\n掘って掘って堀りまくるぜい！！"
 				)
@@ -271,11 +271,11 @@ local function helper_145c94fe(chara_no: s32, arg1: s32)
 			helper_1c04a0eb(chara_no, -1, 0, 0)
 		end
 		if var3 == 6 then
-			event.SetMesPreset(0, 0)
+			event.apply_message_window_preset(0, 0)
 			if var2 ~= 8 then
-				event.MesMake_2(0, "この時期、羽毛に虫がついてな、\nかゆくてかなわんよ。")
+				event.open_message_window_2(0, "この時期、羽毛に虫がついてな、\nかゆくてかなわんよ。")
 			else
-				event.MesMake_2(
+				event.open_message_window_2(
 					0,
 					"ゼルマイト探しもいいが\nはりきりすぎて体を壊さんようにな。"
 				)
@@ -284,27 +284,27 @@ local function helper_145c94fe(chara_no: s32, arg1: s32)
 			helper_1c04a0eb(chara_no, -1, 0, 0)
 		end
 		if var3 == 13 then
-			event.SetMesPreset(0, 0)
+			event.apply_message_window_preset(0, 0)
 			if var2 ~= 8 then
-				event.MesMake_2(
+				event.open_message_window_2(
 					0,
 					"俺は、火薬の匂いが大好きなんだ。\nだから、今の仕事は天職だと思ってる。<page>親方は、頭が固くて古臭くて、\n頑固でわからずやだけどな。"
 				)
 			else
-				event.MesMake_2(0, "おまえ、ホントに冒険が好きだよなぁ。")
+				event.open_message_window_2(0, "おまえ、ホントに冒険が好きだよなぁ。")
 			end
 			at = 36
 			helper_1c04a0eb(chara_no, -1, 0, 0)
 		end
 		if var3 == 22 then
-			event.SetMesPreset(0, 0)
+			event.apply_message_window_preset(0, 0)
 			if var2 ~= 8 then
-				event.MesMake_2(
+				event.open_message_window_2(
 					0,
 					"絵から出て来たって言っても、\nそれ以外は普通の人と変わらないのよ。"
 				)
 			else
-				event.MesMake_2(
+				event.open_message_window_2(
 					0,
 					"ゼルマイト鉱山から、何か恐ろしい気を\n感じるの。気をつけてね。"
 				)
@@ -312,7 +312,7 @@ local function helper_145c94fe(chara_no: s32, arg1: s32)
 			at = 37
 			helper_1c04a0eb(chara_no, -1, 0, 0)
 		end
-		event.SetAi(1, chara_no)
+		event.set_villager_ai_enabled(1, chara_no)
 		return
 	end, function(received: { any })
 		if at <= 9 then

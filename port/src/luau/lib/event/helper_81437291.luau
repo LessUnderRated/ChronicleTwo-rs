@@ -3,18 +3,18 @@
 
 --- Helper function.
 local function helper_81437291()
-	event.DelExtMotion(0)
-	event.DeleteChara(25)
-	event.DeleteChara(26)
-	event.DeleteChara(27)
-	event.DeleteChara(28)
-	event.DeleteChara(29)
-	event.DeleteChara(30)
-	event.DeleteChara(15)
-	event.DeleteChara(16)
-	event.DeleteChara(24)
-	event.DeleteChara(8)
-	event.MapJump_3(-1, "i03h05", 500)
+	event.delete_character_extension_packs(0)
+	event.delete_character(25)
+	event.delete_character(26)
+	event.delete_character(27)
+	event.delete_character(28)
+	event.delete_character(29)
+	event.delete_character(30)
+	event.delete_character(15)
+	event.delete_character(16)
+	event.delete_character(24)
+	event.delete_character(8)
+	event.jump_to_map_3(-1, "i03h05", 500)
 end
 
 return helper_81437291

@@ -14,30 +14,30 @@ local function helper_5ac4b36d(arg0: s32)
 	local var6: s32 = 0
 	local var7: s32 = 0
 	local loud: s32 = 0
-	var1 = event.GetSavedataEtc(5) or var1
-	event.TrgPakuAnim(1)
-	event.TrgPakuMotion(0)
+	var1 = event.get_save_data_value(5) or var1
+	event.trigger_mouth_texture_animation(1)
+	event.trigger_mouth_motion(0)
 	var2 = 0
 	var6 = 0
-	argc_2 = event.StreamGetStatus(1) or argc_2
+	argc_2 = event.get_voice_stream_state(1) or argc_2
 	loud = 0
 	while true do
 		argc_2 = argc
-		argc = event.StreamGetStatus(1) or argc
+		argc = event.get_voice_stream_state(1) or argc
 		if argc_2 ~= 0 and argc == 0 then
-			event.TrgPakuMotion(2)
+			event.trigger_mouth_motion(2)
 			var2 = 2
 			if var1 ~= 0 then
 				break
 			end
 		end
 		var7 = loud
-		loud = event.StreamSilentCheck(1) or loud
+		loud = event.is_voice_stream_audible(1) or loud
 		if var7 == 0 and loud == 1 then
-			event.TrgPakuAnim(1)
+			event.trigger_mouth_texture_animation(1)
 		end
 		if var7 == 1 and loud == 0 then
-			event.TrgPakuAnim(0)
+			event.trigger_mouth_texture_animation(0)
 		end
 		local t0: s32
 		t0, var2 = helper_57c93eff(arg0, var2)
@@ -51,12 +51,12 @@ local function helper_5ac4b36d(arg0: s32)
 		end
 	end
 	if var2 == 0 then
-		event.TrgPakuMotion(2)
+		event.trigger_mouth_motion(2)
 	end
-	event.ResetPakuMotion()
-	event.TrgPakuAnim(0)
-	event.ResetPakuAnim()
-	event.StreamStop(1)
+	event.reset_mouth_motions()
+	event.trigger_mouth_texture_animation(0)
+	event.reset_mouth_texture_animations()
+	event.stop_voice_stream(1)
 end
 
 return helper_5ac4b36d

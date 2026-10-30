@@ -8,16 +8,16 @@ local helper_72fec261 = require("@lib/monster/helper_72fec261")
 --- Helper function.
 local function helper_0799d76b()
 	local var0: f32 = 0
-	monster.SetMos("攻撃１", -1, 2)
+	monster.set_motion("攻撃１", -1, 2)
 	helper_72fec261(vm.f32(0.6), -1.0)
-	var0 = monster.GetTargetDist() or var0
+	var0 = monster.get_target_distance() or var0
 	if var0 < 70.0 then
-		monster.SetMos("攻撃１", -1, 0)
+		monster.set_motion("攻撃１", -1, 0)
 		helper_72fec261(vm.f32(0.6), -1.0)
 	end
-	var0 = monster.GetTargetDist() or var0
+	var0 = monster.get_target_distance() or var0
 	if var0 < 70.0 then
-		monster.SetMos("攻撃１", -1, 0)
+		monster.set_motion("攻撃１", -1, 0)
 		helper_72fec261(vm.f32(0.6), -1.0)
 	end
 	helper_56d63eae()

@@ -57,15 +57,15 @@ local function helper_20230(arg0: s32, arg1: s32)
 	elseif arg1 == 3 then
 		argc = 13
 	else
-		argc = event.GetLocalCnt(arg0) or argc
+		argc = event.get_local_event_counter(arg0) or argc
 	end
-	now_party_chara_id = event.GetNowPartyChara() or now_party_chara_id
+	now_party_chara_id = event.get_party_npc() or now_party_chara_id
 	if argc == now_party_chara_id then
 		return
 	end
-	event.SetMotion(0, "立ち")
-	event.Initialize()
-	event.SetMesPreset(1, 0)
+	event.set_character_motion(0, "立ち")
+	event.initialize_event()
+	event.apply_message_window_preset(1, 0)
 	var4 = 0
 	if argc == 10 or argc == 18 then
 		var4 = 8
@@ -82,80 +82,80 @@ local function helper_20230(arg0: s32, arg1: s32)
 	if argc == 9 or argc == 11 or argc == 13 then
 		var4 = 40
 	end
-	event.SetMesEtc(1, 4, 30, 60, 144, -1)
-	event.SetMesEtc(1, 9, 20 + var4, 16)
-	event.EyeViewDrawOnOff(1)
+	event.set_message_window_option(1, 4, 30, 60, 144, -1)
+	event.set_message_window_option(1, 9, 20 + var4, 16)
+	event.set_eye_view_map_parts(1)
 	if arg1 ~= 0 then
-		event.EohSyncChara(0, arg0)
+		event.attach_object_handle_to_character(0, arg0)
 		do
-			local out1, out2, out3 = event.EohGetPos(0)
+			local out1, out2, out3 = event.get_object_handle_position(0)
 			var5 = out1 or var5
 			var6 = out2 or var6
 			var7 = out3 or var7
 		end
 		do
-			local _, out2, _ = event.EohGetRot(0)
+			local _, out2, _ = event.get_object_handle_rotation(0)
 			var9 = out2 or var9
 		end
 	else
-		var11 = event.GetNpcTrainEtc(1, argc) or var11
+		var11 = event.get_villager_training_value(1, argc) or var11
 		do
-			local out1, out2, out3, out4 = event.GetTrainNpcPos(var11)
+			local out1, out2, out3, out4 = event.get_train_seat_position(var11)
 			var5 = out1 or var5
 			var6 = out2 or var6
 			var7 = out3 or var7
 			var9 = out4 or var9
 		end
-		event.EohSyncChara(0, arg0)
-		event.EohSetPos(0, var5, var6, var7)
-		event.EohSetRot(0, 0.0, var9, 0.0)
-		event.SetMotion(arg0, "立ち", 4)
+		event.attach_object_handle_to_character(0, arg0)
+		event.set_object_handle_position(0, var5, var6, var7)
+		event.set_object_handle_rotation(0, 0.0, var9, 0.0)
+		event.set_character_motion(arg0, "立ち", 4)
 	end
 	pos_x = vm.f32(vm.sin(var9) * 75.0)
 	pos_x = vm.f32(pos_x + var5)
 	pos_y = vm.f32(var6 + 45.0)
 	pos_z = vm.f32(vm.cos(var9) * 75.0)
 	pos_z = vm.f32(pos_z + var7)
-	event.SetCameraPos(pos_x, pos_y, pos_z)
+	event.set_camera_position(pos_x, pos_y, pos_z)
 	pos_x_2 = var5
 	pos_y_2 = vm.f32(var6 + 30.0)
 	pos_z_2 = var7
-	event.SetCameraRef(pos_x_2, pos_y_2, pos_z_2)
+	event.set_camera_look_at(pos_x_2, pos_y_2, pos_z_2)
 	pos_x_3 = vm.f32(vm.sin(var9) * 30.0)
 	pos_x_3 = vm.f32(pos_x_3 + var5)
 	pos_y_3 = var6
 	pos_z_3 = vm.f32(vm.cos(var9) * 30.0)
 	pos_z_3 = vm.f32(pos_z_3 + var7)
-	event.SetCharaPos(0, pos_x_3, pos_y_3, pos_z_3)
+	event.set_character_position(0, pos_x_3, pos_y_3, pos_z_3)
 	rot_x_2 = 0
 	rot_y = vm.f32(var9 + vm.f32(3.1415927))
 	if rot_y > vm.f32(3.1415927) then
 		rot_y = vm.f32(rot_y - vm.f32(6.2831855))
 	end
 	rot_z_2 = 0
-	event.SetCharaRot(0, rot_x_2, rot_y, rot_z_2)
+	event.set_character_rotation(0, rot_x_2, rot_y, rot_z_2)
 	vm.wait(1)
-	event.SetCrossfade(10)
+	event.start_crossfade(10)
 	var24 = 0
 	while true do
 		set_window_mode(3, 1)
-		var26 = event.GetChapter() or var26
+		var26 = event.get_chapter() or var26
 		if var26 ~= 8 then
-			var25 = event.GetPartyCharaMesNo_3(argc, 2) or var25
+			var25 = event.get_npc_message_number_3(argc, 2) or var25
 		else
 			helper_1505ebf3(3, argc)
 			var25 = -1
 		end
-		event.SetMesDrawspeed(3, 0, 0)
+		event.set_message_draw_speed(3, 0, 0)
 		open_message(3, var25, 3, 256, 208)
 		set_window_mode(1, 8)
-		event.SetMesDrawspeed(1, 0, 0)
-		var27 = event.GetPartyCharaMesNo_3(argc, 0) or var27
-		event.SetMesItemDirect(1, 1, var27)
+		event.set_message_draw_speed(1, 0, 0)
+		var27 = event.get_npc_message_number_3(argc, 0) or var27
+		event.set_message_item_system_message(1, 1, var27)
 		open_message(1, 1, 1, 0, 0)
 		set_window_mode(2, 2)
 		do
-			local out1, out2 = event.GetPartyCharaMesNo_4(argc, 4)
+			local out1, out2 = event.get_npc_message_number_4(argc, 4)
 			var25 = out1 or var25
 			var28 = out2 or var28
 		end
@@ -163,59 +163,59 @@ local function helper_20230(arg0: s32, arg1: s32)
 			var25 = 30
 		end
 		if var28 == 4 then
-			event.SetMesItemDirect(2, 1, var25)
+			event.set_message_item_system_message(2, 1, var25)
 			var25 = 31
 		end
 		if var28 == 5 then
-			event.SetMesItemDirect(2, 1, var25)
-			event.SetMesItemDirect(2, 2, vm.i32(var25 + 1))
+			event.set_message_item_system_message(2, 1, var25)
+			event.set_message_item_system_message(2, 2, vm.i32(var25 + 1))
 			var25 = 32
 		end
 		var24 = helper_bac0e30d(2, var25, 7, 0, 0, var28, vm.i32(var28 - 1))
 		close_message(3)
 		if var24 == 0 then
 			if now_party_chara_id ~= 26 then
-				event.SetFadeOut(25)
+				event.fade_out_screen(25)
 				helper_888ab2a3(30)
 				if arg1 == 0 then
-					event.CharaActive(0, arg0)
-					argc_2 = event.GetLocalCnt2(now_party_chara_id) or argc_2
+					event.set_character_active(0, arg0)
+					argc_2 = event.find_local_event_counter(now_party_chara_id) or argc_2
 					if 0 <= argc_2 then
-						event.CharaActive(argc_2)
+						event.set_character_active(argc_2)
 					end
 				end
-				event.SetNpcStatus(argc, 1)
-				event.GotoSelectParty()
+				event.set_npc_party_status(argc, 1)
+				event.open_party_select_menu()
 				vm.wait(4)
 				helper_452267a4(arg0, arg1)
-				event.SetFadeIn(30)
+				event.fade_in_screen(30)
 				return
 			end
 			set_window_mode(3, 8)
-			event.SetMesDrawspeed(3, 0, 0)
-			event.MesMake_2(
+			event.set_message_draw_speed(3, 0, 0)
+			event.open_message_window_2(
 				3,
 				"[(!)]今は連れて行けない。リンを\n   岬灯台に連れて行くのが先だ！"
 			)
 			show_message(3, -1, 9, 0, 0)
-			event.SetMesDrawspeed(3, 0, 0.6)
+			event.set_message_draw_speed(3, 0, 0.6)
 		end
 		if var24 == 1 then
 			set_window_mode(3, 8)
-			event.SetMesDrawspeed(3, 0, 0)
-			var25 = event.GetPartyCharaMesNo_3(argc, 3) or var25
+			event.set_message_draw_speed(3, 0, 0)
+			var25 = event.get_npc_message_number_3(argc, 3) or var25
 			show_message(3, var25, 9, 0, 0)
-			event.SetMesDrawspeed(3, 0, 0.6)
+			event.set_message_draw_speed(3, 0, 0.6)
 		end
 		if 3 < var28 then
 			if var28 == 5 then
 				if var24 == 2 then
 					if argc == 1 then
-						event.SetSavedataEtc(2)
-						event.MesMake_2(3, "よし、これで\n修理完了じゃ！")
+						event.set_save_data_value(2)
+						event.open_message_window_2(3, "よし、これで\n修理完了じゃ！")
 						show_message(3, -1, 3, 256, 208)
 						helper_452267a4(arg0, arg1)
-						event.SetCrossfade(10)
+						event.start_crossfade(10)
 					end
 					if not (argc == 4) then
 						break
@@ -308,18 +308,18 @@ local function helper_20230(arg0: s32, arg1: s32)
 					end
 					if argc == 9 then
 						helper_c0869c7f()
-						event.SetMesDrawspeed(3, 0.6, 0.6)
+						event.set_message_draw_speed(3, 0.6, 0.6)
 						show_message(3, -1, 3, 256, 208)
 						helper_452267a4(arg0, arg1)
-						event.SetCrossfade(10)
+						event.start_crossfade(10)
 					end
 					if argc == 14 then
-						event.SetFadeOut(25)
+						event.fade_out_screen(25)
 						helper_888ab2a3(30)
-						event.GotoMenu(25)
+						event.open_event_menu(25)
 						vm.wait(35)
 						helper_452267a4(arg0, arg1)
-						event.SetFadeIn(30)
+						event.fade_in_screen(30)
 					end
 					return
 				end
@@ -340,7 +340,7 @@ local function helper_20230(arg0: s32, arg1: s32)
 		end
 	end
 	helper_452267a4(arg0, arg1)
-	event.SetCrossfade(10)
+	event.start_crossfade(10)
 end
 
 local script: { [any]: (...any) -> ...any } = {}
@@ -351,14 +351,14 @@ function script.setup() end
 --- The event the engine runs on entering a town or interior, jumping to a map and leaving it, and the one an omitted event number means.
 function script.default_event()
 	helper_1ef0d4b2()
-	event.Initialize()
+	event.initialize_event()
 	print("##IN_START_EVENT################################\n")
 	helper_db8bc11a()
-	event.SetMotion(0, "立ち")
-	event.SetMesPreset(1, 3)
-	event.ResetCamera(1)
-	event.SetFadeIn(30)
-	event.Finish()
+	event.set_character_motion(0, "立ち")
+	event.apply_message_window_preset(1, 3)
+	event.reset_follow_camera(1)
+	event.fade_in_screen(30)
+	event.finish_event()
 end
 
 --- The event the town walk runs when the square button is pressed, after reloading the map script.
@@ -371,16 +371,16 @@ function script.event_200()
 	local var1: s32 = 0
 	print("--------------------------event200-------------------------\n")
 	helper_3300e99f(vm.f32(-1.5707964))
-	var0 = event.GetSndId(2) or var0
+	var0 = event.get_sound_id(2) or var0
 	var1 = helper_df4094fb(1)
 	if var1 ~= 0 then
-		event.SetMotion(0, "立ち")
-		event.SndSePlay(var0, 94)
-		event.SetFadeOut(30)
+		event.set_character_motion(0, "立ち")
+		event.play_sound_effect(var0, 94)
+		event.fade_out_screen(30)
 		helper_888ab2a3(30)
-		event.SetCnt(15, 1)
+		event.set_save_counter(15, 1)
 		helper_94e331d8()
-		event.StopBgm(0)
+		event.stop_music(0)
 		helper_5be5f988()
 	else
 		helper_2ddb5a7a()
@@ -393,16 +393,16 @@ function script.event_201()
 	local var1: s32 = 0
 	print("--------------------------event201-------------------------\n")
 	helper_3300e99f(vm.f32(1.5707964))
-	var0 = event.GetSndId(2) or var0
+	var0 = event.get_sound_id(2) or var0
 	var1 = helper_df4094fb(0)
 	if var1 ~= 0 then
-		event.SetMotion(0, "立ち")
-		event.SndSePlay(var0, 94)
-		event.SetFadeOut(30)
+		event.set_character_motion(0, "立ち")
+		event.play_sound_effect(var0, 94)
+		event.fade_out_screen(30)
 		helper_888ab2a3(30)
-		event.SetCnt(15, 0)
+		event.set_save_counter(15, 0)
 		helper_94e331d8()
-		event.StopBgm(0)
+		event.stop_music(0)
 		helper_5be5f988()
 	else
 		helper_2ddb5a7a()
@@ -415,28 +415,28 @@ function script.event_202()
 	local var1: s32 = 0
 	print("--------------------------event202-------------------------\n")
 	helper_3300e99f(0.0)
-	event.SetMotion(0, "立ち")
-	var0 = event.GetSndId(2) or var0
-	event.SndSePlay(var0, 94)
-	event.SetFadeOut(30)
+	event.set_character_motion(0, "立ち")
+	var0 = event.get_sound_id(2) or var0
+	event.play_sound_effect(var0, 94)
+	event.fade_out_screen(30)
 	helper_888ab2a3(30)
 	helper_94e331d8()
-	var1 = event.GetCnt(0) or var1
+	var1 = event.get_save_counter(0) or var1
 	if var1 == 1 then
-		event.SetCnt(0, 0)
-		event.SetCharaPos(0, 0.0, -22.4, -207.0)
-		event.SetCharaRot(0, 0.0, 0.0, 0.0)
-		event.MapJump_2(-1, "s37")
+		event.set_save_counter(0, 0)
+		event.set_character_position(0, 0.0, -22.4, -207.0)
+		event.set_character_rotation(0, 0.0, 0.0, 0.0)
+		event.jump_to_map_2(-1, "s37")
 	else
 		var1 = vm.i32(var1 - 1)
-		event.SetCnt(0, var1)
+		event.set_save_counter(0, var1)
 		helper_db8bc11a()
-		event.SetCharaPos(0, 0.0, -14.0, -235.0)
-		event.SetCharaRot(0, 0.0, 0.0, 0.0)
-		event.Initialize()
-		event.MesClose(1)
-		event.SetFadeIn(30)
-		event.Finish()
+		event.set_character_position(0, 0.0, -14.0, -235.0)
+		event.set_character_rotation(0, 0.0, 0.0, 0.0)
+		event.initialize_event()
+		event.close_message_window(1)
+		event.fade_in_screen(30)
+		event.finish_event()
 	end
 end
 
@@ -446,24 +446,24 @@ function script.event_203()
 	local var1: s32 = 0
 	print("--------------------------event203-------------------------\n")
 	helper_3300e99f(vm.f32(3.1415927))
-	event.SetMotion(0, "立ち")
-	var0 = event.GetSndId(2) or var0
-	var1 = event.GetCnt(0) or var1
+	event.set_character_motion(0, "立ち")
+	var0 = event.get_sound_id(2) or var0
+	var1 = event.get_save_counter(0) or var1
 	if var1 ~= 3 then
-		event.SetMotion(0, "立ち")
-		event.SndSePlay(var0, 94)
-		event.SetFadeOut(30)
+		event.set_character_motion(0, "立ち")
+		event.play_sound_effect(var0, 94)
+		event.fade_out_screen(30)
 		helper_888ab2a3(30)
 		helper_94e331d8()
 		var1 = vm.i32(var1 + 1)
-		event.SetCnt(0, var1)
+		event.set_save_counter(0, var1)
 		helper_db8bc11a()
-		event.SetCharaPos(0, 0.0, -14.0, 235.0)
-		event.SetCharaRot(0, 0.0, 3.1415927, 0.0)
-		event.Initialize()
-		event.MesClose(1)
-		event.SetFadeIn(30)
-		event.Finish()
+		event.set_character_position(0, 0.0, -14.0, 235.0)
+		event.set_character_rotation(0, 0.0, 3.1415927, 0.0)
+		event.initialize_event()
+		event.close_message_window(1)
+		event.fade_in_screen(30)
+		event.finish_event()
 	else
 		helper_2ddb5a7a()
 	end
@@ -473,8 +473,8 @@ end
 function script.event_1000()
 	local var0: s32 = 0
 	local argc: s32 = 0
-	var0 = event.GetEventData_2(13) or var0
-	argc = event.GetLocalCnt(var0) or argc
+	var0 = event.get_triggered_event_data_2(13) or var0
+	argc = event.get_local_event_counter(var0) or argc
 	if argc == 34 then
 		helper_52d29060()
 	else

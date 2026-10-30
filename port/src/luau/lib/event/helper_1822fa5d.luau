@@ -10,12 +10,12 @@ local helper_ce3ec26c = require("@lib/event/helper_ce3ec26c")
 local function helper_1822fa5d(arg0: s32, arg1: s32)
 	local flag: s32 = 0
 	local var3: s32 = 0
-	flag = event.GetFlag(314) or flag
+	flag = event.get_save_flag(314) or flag
 	if flag == 0 then
 		helper_21912dd8(arg0, arg1)
 		return
 	end
-	var3 = event.GetQuestEtc(0, 17) or var3
+	var3 = event.get_quest_request_status(0, 17) or var3
 	if var3 == 0 then
 		helper_cb6dec7b(arg0, arg1)
 		return

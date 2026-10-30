@@ -7,9 +7,9 @@ local helper_72fec261 = require("@lib/monster/helper_72fec261")
 
 --- Helper function.
 local function helper_edcb05de()
-	monster.SetMos("攻撃１", -1, 2)
+	monster.set_motion("攻撃１", -1, 2)
 	helper_72fec261(vm.f32(0.55), -1.0)
-	monster.SetMos("攻撃２", -1, 2)
+	monster.set_motion("攻撃２", -1, 2)
 	helper_56d63eae()
 end
 

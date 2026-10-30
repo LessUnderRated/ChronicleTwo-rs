@@ -4,10 +4,10 @@
 --- Helper function.
 local function helper_7d755610()
 	for var0 = 0, 17 do
-		event.DeleteChara(8 + var0)
+		event.delete_character(8 + var0)
 	end
-	event.AssignStack(4)
-	event.ClearStack(4)
+	event.assign_memory_stack(4)
+	event.clear_memory_stack(4)
 end
 
 return helper_7d755610

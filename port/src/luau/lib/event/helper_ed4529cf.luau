@@ -3,10 +3,10 @@
 
 --- Helper function.
 local function helper_ed4529cf()
-	event.CharaActive(0, 9)
-	event.CharaActive(0, 10)
-	event.CharaActive(0, 11)
-	event.CharaActive(0, 12)
+	event.set_character_active(0, 9)
+	event.set_character_active(0, 10)
+	event.set_character_active(0, 11)
+	event.set_character_active(0, 12)
 end
 
 return helper_ed4529cf

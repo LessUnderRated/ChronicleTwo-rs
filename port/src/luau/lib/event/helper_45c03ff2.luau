@@ -5,8 +5,8 @@ local helper_70e4ac93 = require("@lib/event/helper_70e4ac93")
 
 --- Helper function.
 local function helper_45c03ff2(arg0: s32, arg1: any)
-	event.SetMesPreset(0, 0)
-	event.MesMake_2(
+	event.apply_message_window_preset(0, 0)
+	event.open_message_window_2(
 		0,
 		"Le magasin est ferm[UNI00e9]. Tu dois donc\naller au magasin de mon p[UNI00e8]re. Cherche<page>les citrouilles, tu ne peux pas les\nrater. C'est en haut de la colline."
 	)

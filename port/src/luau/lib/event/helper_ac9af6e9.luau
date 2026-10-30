@@ -10,7 +10,7 @@ local function helper_ac9af6e9(arg0: s32, arg1: s32, arg2: s32, arg3: s32)
 	if arg3 <= 0 then
 		return
 	end
-	event.SetMesPreset(1, 4)
+	event.apply_message_window_preset(1, 4)
 	set_window_mode(1, 4)
 	var4 = -1
 	if arg0 == 0 then
@@ -36,9 +36,9 @@ local function helper_ac9af6e9(arg0: s32, arg1: s32, arg2: s32, arg3: s32)
 	if var4 == -1 then
 		return
 	end
-	event.SetMesValue(1, 1, arg1)
-	event.SetMesItem(1, 1, arg2)
-	event.SetMesValue(1, 2, arg3)
+	event.set_message_number(1, 1, arg1)
+	event.set_message_item_name(1, 1, arg2)
+	event.set_message_number(1, 2, arg3)
 	show_message(1, var4, 8, 0, 0)
 end
 

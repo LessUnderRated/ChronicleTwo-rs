@@ -21,14 +21,14 @@ function script.setup() end
 --- The event the engine runs on entering a town or interior, jumping to a map and leaving it, and the one an omitted event number means.
 function script.default_event()
 	helper_1ef0d4b2()
-	event.Initialize()
+	event.initialize_event()
 	print("##IN_START_EVENT################################\n")
 	helper_db8bc11a()
-	event.SetMotion(0, "立ち")
-	event.SetMesPreset(1, 3)
-	event.ResetCamera(1)
-	event.SetFadeIn(30)
-	event.Finish()
+	event.set_character_motion(0, "立ち")
+	event.apply_message_window_preset(1, 3)
+	event.reset_follow_camera(1)
+	event.fade_in_screen(30)
+	event.finish_event()
 end
 
 --- The event the town walk runs when the square button is pressed, after reloading the map script.
@@ -41,16 +41,16 @@ function script.event_200()
 	local var1: s32 = 0
 	print("--------------------------event200-------------------------\n")
 	helper_3300e99f(vm.f32(-1.5707964))
-	var0 = event.GetSndId(2) or var0
+	var0 = event.get_sound_id(2) or var0
 	var1 = helper_df4094fb(1)
 	if var1 ~= 0 then
-		event.SetMotion(0, "立ち")
-		event.SndSePlay(var0, 94)
-		event.SetFadeOut(30)
+		event.set_character_motion(0, "立ち")
+		event.play_sound_effect(var0, 94)
+		event.fade_out_screen(30)
 		wait_frames(30)
-		event.SetCnt(15, 1)
+		event.set_save_counter(15, 1)
 		helper_94e331d8()
-		event.StopBgm(0)
+		event.stop_music(0)
 		helper_5be5f988()
 	else
 		helper_2ddb5a7a()
@@ -63,16 +63,16 @@ function script.event_201()
 	local var1: s32 = 0
 	print("--------------------------event201-------------------------\n")
 	helper_3300e99f(vm.f32(1.5707964))
-	var0 = event.GetSndId(2) or var0
+	var0 = event.get_sound_id(2) or var0
 	var1 = helper_df4094fb(0)
 	if var1 ~= 0 then
-		event.SetMotion(0, "立ち")
-		event.SndSePlay(var0, 94)
-		event.SetFadeOut(30)
+		event.set_character_motion(0, "立ち")
+		event.play_sound_effect(var0, 94)
+		event.fade_out_screen(30)
 		wait_frames(30)
-		event.SetCnt(15, 0)
+		event.set_save_counter(15, 0)
 		helper_94e331d8()
-		event.StopBgm(0)
+		event.stop_music(0)
 		helper_5be5f988()
 	else
 		helper_2ddb5a7a()
@@ -85,28 +85,28 @@ function script.event_202()
 	local var1: s32 = 0
 	print("--------------------------event202-------------------------\n")
 	helper_3300e99f(0.0)
-	event.SetMotion(0, "立ち")
-	var0 = event.GetSndId(2) or var0
-	event.SndSePlay(var0, 94)
-	event.SetFadeOut(30)
+	event.set_character_motion(0, "立ち")
+	var0 = event.get_sound_id(2) or var0
+	event.play_sound_effect(var0, 94)
+	event.fade_out_screen(30)
 	wait_frames(30)
 	helper_94e331d8()
-	var1 = event.GetCnt(0) or var1
+	var1 = event.get_save_counter(0) or var1
 	if var1 == 1 then
-		event.SetCnt(0, 0)
-		event.SetCharaPos(0, 0.0, -22.4, -207.0)
-		event.SetCharaRot(0, 0.0, 0.0, 0.0)
-		event.MapJump_2(-1, "s37")
+		event.set_save_counter(0, 0)
+		event.set_character_position(0, 0.0, -22.4, -207.0)
+		event.set_character_rotation(0, 0.0, 0.0, 0.0)
+		event.jump_to_map_2(-1, "s37")
 	else
 		var1 = vm.i32(var1 - 1)
-		event.SetCnt(0, var1)
+		event.set_save_counter(0, var1)
 		helper_db8bc11a()
-		event.SetCharaPos(0, 0.0, -14.0, -235.0)
-		event.SetCharaRot(0, 0.0, 0.0, 0.0)
-		event.Initialize()
-		event.MesClose(1)
-		event.SetFadeIn(30)
-		event.Finish()
+		event.set_character_position(0, 0.0, -14.0, -235.0)
+		event.set_character_rotation(0, 0.0, 0.0, 0.0)
+		event.initialize_event()
+		event.close_message_window(1)
+		event.fade_in_screen(30)
+		event.finish_event()
 	end
 end
 
@@ -116,24 +116,24 @@ function script.event_203()
 	local var1: s32 = 0
 	print("--------------------------event203-------------------------\n")
 	helper_3300e99f(vm.f32(3.1415927))
-	event.SetMotion(0, "立ち")
-	var0 = event.GetSndId(2) or var0
-	var1 = event.GetCnt(0) or var1
+	event.set_character_motion(0, "立ち")
+	var0 = event.get_sound_id(2) or var0
+	var1 = event.get_save_counter(0) or var1
 	if var1 ~= 3 then
-		event.SetMotion(0, "立ち")
-		event.SndSePlay(var0, 94)
-		event.SetFadeOut(30)
+		event.set_character_motion(0, "立ち")
+		event.play_sound_effect(var0, 94)
+		event.fade_out_screen(30)
 		wait_frames(30)
 		helper_94e331d8()
 		var1 = vm.i32(var1 + 1)
-		event.SetCnt(0, var1)
+		event.set_save_counter(0, var1)
 		helper_db8bc11a()
-		event.SetCharaPos(0, 0.0, -14.0, 235.0)
-		event.SetCharaRot(0, 0.0, 3.1415927, 0.0)
-		event.Initialize()
-		event.MesClose(1)
-		event.SetFadeIn(30)
-		event.Finish()
+		event.set_character_position(0, 0.0, -14.0, 235.0)
+		event.set_character_rotation(0, 0.0, 3.1415927, 0.0)
+		event.initialize_event()
+		event.close_message_window(1)
+		event.fade_in_screen(30)
+		event.finish_event()
 	else
 		helper_2ddb5a7a()
 	end
@@ -143,12 +143,12 @@ end
 function script.event_1000()
 	local var0: s32 = 0
 	local argc: s32 = 0
-	var0 = event.GetEventData_2(13) or var0
-	argc = event.GetLocalCnt(var0) or argc
+	var0 = event.get_triggered_event_data_2(13) or var0
+	argc = event.get_local_event_counter(var0) or argc
 	if argc == 34 then
-		event.SetMesEtc(1, 10, 0)
+		event.set_message_window_option(1, 10, 0)
 		helper_ed536579()
-		event.SetMesEtc(1, 10, 128)
+		event.set_message_window_option(1, 10, 128)
 	else
 		helper_b390c073(var0, 0)
 	end

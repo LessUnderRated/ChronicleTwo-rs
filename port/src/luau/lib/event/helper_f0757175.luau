@@ -17,7 +17,7 @@ local function helper_f0757175(arg0: s32, arg1: s32, arg2: s32, arg3: s32, arg4:
 	return vm.guard(function()
 		at = 1
 		var6 = helper_c8484b43(arg0, arg4, arg5)
-		player_chara = event.GetControlChrid() or player_chara
+		player_chara = event.get_player_character_slot() or player_chara
 		at = 2
 		var8 = helper_c8ef5bf1(0, arg1, arg0, player_chara, arg2, arg3)
 		at = 3

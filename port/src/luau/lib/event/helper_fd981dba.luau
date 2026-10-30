@@ -3,19 +3,19 @@
 
 --- Helper function.
 local function helper_fd981dba()
-	event.SndInitPort(5)
-	event.SndInitPort(8)
-	event.SndInitPort(1)
-	event.DelExtMotion(0)
-	event.DeleteChara(25)
-	event.DeleteChara(26)
-	event.DeleteChara(27)
-	event.DeleteChara(28)
-	event.DeleteChara(29)
-	event.DeleteChara(30)
-	event.DeleteChara(24)
-	event.DeleteChara(8)
-	event.SetBitCtrl(1, 0)
+	event.initialize_sound_port(5)
+	event.initialize_sound_port(8)
+	event.initialize_sound_port(1)
+	event.delete_character_extension_packs(0)
+	event.delete_character(25)
+	event.delete_character(26)
+	event.delete_character(27)
+	event.delete_character(28)
+	event.delete_character(29)
+	event.delete_character(30)
+	event.delete_character(24)
+	event.delete_character(8)
+	event.set_save_control_bits(1, 0)
 end
 
 return helper_fd981dba

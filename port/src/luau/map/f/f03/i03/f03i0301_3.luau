@@ -23,27 +23,27 @@ function script.default_event()
 	local flag_3: s32 = 0
 	local flag_4: s32 = 0
 	helper_daeaeed0()
-	flag = event.GetFlag(400) or flag
-	flag_2 = event.GetFlag(408) or flag_2
+	flag = event.get_save_flag(400) or flag
+	flag_2 = event.get_save_flag(408) or flag_2
 	if flag == 1 then
 		if flag_2 == 0 then
-			flag_3 = event.GetFlag(414) or flag_3
+			flag_3 = event.get_save_flag(414) or flag_3
 			if flag_3 == 0 then
 				helper_57a574ab()
 				return
 			end
 		else
-			flag_4 = event.GetFlag(412) or flag_4
+			flag_4 = event.get_save_flag(412) or flag_4
 			if flag_4 == 0 then
-				event.AddItem(360)
+				event.add_inventory_item(360)
 				helper_f2d7de86()
 				return
 			end
 		end
 	end
 	helper_9dafbc83(0.0, vm.f32(69.1), -200.0, vm.f32(-1.57))
-	event.ResetCamera(1, 3.14, 10)
-	event.SetFadeIn(30)
+	event.reset_follow_camera(1, 3.14, 10)
+	event.fade_in_screen(30)
 end
 
 --- The event the town walk runs when the square button is pressed, after reloading the map script.
@@ -53,19 +53,19 @@ script.key_open = helper_f2d7de86
 function script.event_400()
 	local var0: s32 = 0
 	helper_3300e99f(vm.f32(3.1415927))
-	event.SetMotion(0, "立ち")
-	var0 = event.GetSndId(2) or var0
-	event.SndSePlay(var0, 94)
-	event.SetFadeOut(30)
+	event.set_character_motion(0, "立ち")
+	var0 = event.get_sound_id(2) or var0
+	event.play_sound_effect(var0, 94)
+	event.fade_out_screen(30)
 	wait_frames(30)
-	event.MapJump_2(-1, "f03")
+	event.jump_to_map_2(-1, "f03")
 	vm.wait(3)
 end
 
 --- Event 504, which map data, a script or the engine runs by number.
 function script.event_504()
 	helper_daeaeed0()
-	event.AddItem(154)
+	event.add_inventory_item(154)
 	helper_9923d5d6()
 end
 
@@ -74,14 +74,14 @@ script.event_1000 = helper_421a3242
 
 --- Event 14120, which map data, a script or the engine runs by number.
 function script.event_14120()
-	event.SetFlag(408, 1)
+	event.set_save_flag(408, 1)
 	helper_daeaeed0()
 	helper_f2d7de86()
 end
 
 --- Event 14140, which map data, a script or the engine runs by number.
 function script.event_14140()
-	event.SetFlag(408, 0)
+	event.set_save_flag(408, 0)
 	helper_daeaeed0()
 	helper_57a574ab()
 end

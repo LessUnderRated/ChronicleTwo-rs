@@ -3,8 +3,8 @@
 
 --- Helper function.
 local function helper_86e93423()
-	event.SetAi(0, 24)
-	event.CharaActive(0, 24)
+	event.set_villager_ai_enabled(0, 24)
+	event.set_character_active(0, 24)
 end
 
 return helper_86e93423

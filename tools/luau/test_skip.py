@@ -160,18 +160,18 @@ class EventSkipTextTest(unittest.TestCase):
         self.assertNotIn("vm.section", text)
 
     def test_discarded_output_keeps_its_return_slot(self):
-        # GetMenuEtc(in, out, out): no site passes a value as the second output, so the constant there is discarded and
+        # get_menu_value(in, out, out): no site passes a value as the second output, so the constant there is discarded and
         # the local in the first output is kept.
         body = [
             ("push", 564), ("push", 6), ("LOAD_ADDR", 0, LOCAL), ("push", 0), ("EXT", 4),
             *SINK, ("LOAD", 0, LOCAL), ("EXT", 2), ("push", 0), ("RET",),
         ]
         text = emit_event({"main": (1, 0, body)})
-        self.assertIn("local out1, _ = event.GetMenuEtc_3(6)", text)
+        self.assertIn("local out1, _ = event.get_menu_value_3(6)", text)
 
     def test_value_passed_as_an_output_reaches_the_handler(self):
-        # GetMenuEtc(2, 322, &size) reads the fish number where other sub-commands write an output, and
-        # JoinPartyMember(1, 1) adds the member where a reference would ask whether it is one: both get the value.
+        # get_menu_value(2, 322, &size) reads the fish number where other sub-commands write an output, and
+        # set_party_member(1, 1) adds the member where a reference would ask whether it is one: both get the value.
         body = [
             ("push", 564), ("push", 2), ("push", 322), ("LOAD_ADDR", 0, LOCAL), ("EXT", 4),
             *SINK, ("LOAD", 0, LOCAL), ("EXT", 2),
@@ -180,8 +180,8 @@ class EventSkipTextTest(unittest.TestCase):
         ]
         functions = {"main": (1, 0, body)}
         text = emit_event(functions)
-        self.assertIn("event.GetMenuEtc(2, 322)", text)
-        self.assertIn("event.JoinPartyMember(1, 1)", text)
+        self.assertIn("event.get_menu_value(2, 322)", text)
+        self.assertIn("event.set_party_member(1, 1)", text)
         self.assertNotIn("discarded", text)
         if harness.HOST.exists():
             row = event_differential(functions)
@@ -189,14 +189,14 @@ class EventSkipTextTest(unittest.TestCase):
             self.assertGreater(row.passed, 0)
 
     def test_item_written_after_the_call_is_read_after_the_wait(self):
-        # GotoUseItem keeps the reference; the use item menu writes the chosen item when it exits, while the script waits.
+        # open_use_item_menu keeps the reference; the use item menu writes the chosen item when it exits, while the script waits.
         body = [
             ("push", 31), ("LOAD_ADDR", 0, LOCAL), ("push", 353), ("EXT", 3), ("WAIT",),
             *SINK, ("LOAD", 0, LOCAL), ("EXT", 2), ("push", 0), ("RET",),
         ]
         functions = {"main": (1, 0, body)}
         text = emit_event(functions)
-        self.assertIn("\tevent.GotoUseItem(353)\n\tvm.wait(1)\n\titem = vmhost.used_item() or item\n", text)
+        self.assertIn("\tevent.open_use_item_menu(353)\n\tvm.wait(1)\n\titem = vmhost.used_item() or item\n", text)
         if harness.HOST.exists():
             row = event_differential(functions)
             self.assertEqual((row.failed, row.lines), (0, []))

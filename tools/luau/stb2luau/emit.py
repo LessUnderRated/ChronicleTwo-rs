@@ -617,7 +617,7 @@ def _collect(
                 continue
             command = mod.commands.get(stmt.command)
             signature = next((s for s in command["signatures"] if s["argc"] == len(stmt.args)), None) if command else None
-            if signature is not None and len(signature["params"]) == len(stmt.args) and not plan.name.endswith(".Ext"):
+            if signature is not None and len(signature["params"]) == len(stmt.args) and not plan.name.endswith(f".{api.EXT_NAME}"):
                 for param, arg in zip(signature["params"], stmt.args):
                     if param["dir"] == "in" and isinstance(arg, ir.Var) and arg.slot[0] == "local":
                         usage.in_names.setdefault(arg.slot, set()).add(param["name"])
@@ -987,7 +987,7 @@ class _Module:
         if command is None:
             message = f"command {stmt.command} is not registered by {self.kind_name} scripts"
             return _Plan(
-                f"{self.namespace}.Ext",
+                f"{self.namespace}.{api.EXT_NAME}",
                 [number, *args],
                 [],
                 [],
@@ -998,7 +998,7 @@ class _Module:
         signature = next((s for s in command["signatures"] if s["argc"] == len(args)), None)
         if signature is None or len(signature["params"]) != len(args):
             return _Plan(
-                f"{self.namespace}.Ext",
+                f"{self.namespace}.{api.EXT_NAME}",
                 [number, *args],
                 [],
                 [],
@@ -1080,7 +1080,7 @@ class _Module:
         if signature.get("handler_rejects"):
             # The typed entry point does not fit the arguments these scripts pass, so the raw command is used.
             return _Plan(
-                f"{self.namespace}.Ext",
+                f"{self.namespace}.{api.EXT_NAME}",
                 [number, *args],
                 [],
                 [],

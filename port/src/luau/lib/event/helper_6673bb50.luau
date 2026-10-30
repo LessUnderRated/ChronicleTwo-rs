@@ -26,47 +26,47 @@ local function helper_6673bb50()
 	vm.section(function()
 		at = 1
 		vm.entry(1)
-		event.Initialize()
-		event.SetStatusbarShow(0, 1.0)
-		var0 = event.SndLoadSound_2(3803) or var0
-		active_chr_no = event.GetActiveChrNo() or active_chr_no
-		event.AssignStack(4)
-		event.ClearStack(4)
-		event.LoadChara(4, "event/d03/p00_26a.gltf", "info", 8)
-		event.CharaActive(8)
-		event.EohSyncChara(1, 8)
-		event.ObjsInit(1)
-		event.ObjsSyncObj(1, 1)
-		event.AssignStack(5)
-		event.ClearStack(5)
+		event.initialize_event()
+		event.show_dungeon_status_bar(0, 1.0)
+		var0 = event.load_sound_effect_file_2(3803) or var0
+		active_chr_no = event.get_playable_character() or active_chr_no
+		event.assign_memory_stack(4)
+		event.clear_memory_stack(4)
+		event.load_character(4, "event/d03/p00_26a.gltf", "info", 8)
+		event.set_character_active(8)
+		event.attach_object_handle_to_character(1, 8)
+		event.clear_object_sequence(1)
+		event.set_object_sequence_object(1, 1)
+		event.assign_memory_stack(5)
+		event.clear_memory_stack(5)
 		if active_chr_no == 0 then
-			event.LoadMotion(5, "event/dng_inout/c01d03gkey.gltf", "info", 0)
+			event.load_character_motion_pack(5, "event/dng_inout/c01d03gkey.gltf", "info", 0)
 		else
-			event.LoadMotion(5, "event/dng_inout/c02d03gkey.gltf", "info", 0)
+			event.load_character_motion_pack(5, "event/dng_inout/c02d03gkey.gltf", "info", 0)
 		end
-		event.CharaActive(0, 0)
-		event.EohSyncChara(0, 0)
-		event.ObjsInit(0)
-		event.ObjsSyncObj(0, 0)
-		event.EohSyncChara(2, 1)
-		event.EohSyncChara(3, 2)
-		event.EohSetShow(2, 0)
-		event.EohSetShow(3, 0)
-		event.EohSetPos(0, -230.0, 62.1, 1210.0)
-		event.EohSetRot(0, 0.0, 3.14, 0.0)
-		event.EohSetMotion(0, "立ち", 4)
-		event.EohSetPos(1, -150.0, 230.0, 1600.0)
-		event.EohSetRot(1, 0.0, 3.14, 0.0)
-		event.EohSetMotion(1, "飛び", 4)
-		event.ObjsSePlay(1, var0, 1)
-		event.ObjsSeDelay(1, 34)
-		event.ObjsSePlay(1, var0, 1)
-		event.InitDramaScene()
-		event.CmrsInit()
-		event.CmrsSetPos(254.65, 473.72, 1588.47)
-		event.CmrsSetRef(-219.14, 62.76, 1197.82)
-		event.SndSePlay(var0, 0)
-		event.SetFadeIn(30)
+		event.set_character_active(0, 0)
+		event.attach_object_handle_to_character(0, 0)
+		event.clear_object_sequence(0)
+		event.set_object_sequence_object(0, 0)
+		event.attach_object_handle_to_character(2, 1)
+		event.attach_object_handle_to_character(3, 2)
+		event.set_object_handle_visible(2, 0)
+		event.set_object_handle_visible(3, 0)
+		event.set_object_handle_position(0, -230.0, 62.1, 1210.0)
+		event.set_object_handle_rotation(0, 0.0, 3.14, 0.0)
+		event.set_object_handle_motion(0, "立ち", 4)
+		event.set_object_handle_position(1, -150.0, 230.0, 1600.0)
+		event.set_object_handle_rotation(1, 0.0, 3.14, 0.0)
+		event.set_object_handle_motion(1, "飛び", 4)
+		event.play_object_sequence_sound(1, var0, 1)
+		event.delay_object_sequence_sound_track(1, 34)
+		event.play_object_sequence_sound(1, var0, 1)
+		event.enable_drama_skip()
+		event.clear_camera_sequence()
+		event.set_camera_sequence_position(254.65, 473.72, 1588.47)
+		event.set_camera_sequence_look_at(-219.14, 62.76, 1197.82)
+		event.play_sound_effect(var0, 0)
+		event.fade_in_screen(30)
 		x = -150.0
 		y = 230.0
 		z = 1600.0
@@ -79,37 +79,37 @@ local function helper_6673bb50()
 		var11 = 0
 		while var11 < 60 do
 			do
-				local out1, out2, out3 = event.AddVector(x, y, z, x_2, y_2, z_2)
+				local out1, out2, out3 = event.add_vectors(x, y, z, x_2, y_2, z_2)
 				x = out1 or x
 				y = out2 or y
 				z = out3 or z
 			end
 			do
-				local out1, out2, out3 = event.AddVector(x_2, y_2, z_2, operand_x, operand_y, operand_z)
+				local out1, out2, out3 = event.add_vectors(x_2, y_2, z_2, operand_x, operand_y, operand_z)
 				x_2 = out1 or x_2
 				y_2 = out2 or y_2
 				z_2 = out3 or z_2
 			end
-			event.EohSetPos(1, x, y, z)
+			event.set_object_handle_position(1, x, y, z)
 			var11 = var11 + 1
 			at = 2
 			vm.wait(2)
 		end
-		event.CharaActive(0, 8)
-		event.CmrsSetPos(-195.61, 36.44, 1206.2)
-		event.CmrsSetRef(-227.63, 40.13, 1199.12)
-		event.CharaActive(1, 0)
-		event.ObjsMove(0, -230.0, 32.1, 1200.0, 10)
-		event.ObjsSetMotion(0, "d03着地", 6)
-		event.ObjsNextMotion(0, "立ち", 4)
+		event.set_character_active(0, 8)
+		event.set_camera_sequence_position(-195.61, 36.44, 1206.2)
+		event.set_camera_sequence_look_at(-227.63, 40.13, 1199.12)
+		event.set_character_active(1, 0)
+		event.move_object_sequence(0, -230.0, 32.1, 1200.0, 10)
+		event.set_object_sequence_motion(0, "d03着地", 6)
+		event.queue_object_sequence_next_motion(0, "立ち", 4)
 		at = 3
 		wait_frames(8)
-		var12 = event.GetSndId(1) or var12
-		event.SndSePlay(var12, 3)
-		event.SndSePlay(var12, 2)
+		var12 = event.get_sound_id(1) or var12
+		event.play_sound_effect(var12, 3)
+		event.play_sound_effect(var12, 2)
 		at = 4
 		wait_objects(0)
-		event.SetFadeOut(30)
+		event.fade_out_screen(30)
 		at = 5
 		wait_frames(30)
 	end, function(received: { any }): boolean
@@ -140,25 +140,25 @@ local function helper_6673bb50()
 	end)
 	at = 6
 	vm.entry(6)
-	event.CancelDramaScene()
-	event.SndSeStop(var0, 0)
-	event.DelExtMotion(0)
-	event.SetStatusbarShow(1, 1.0)
-	event.EohSetShow(2, 1)
-	event.EohSetShow(3, 1)
-	event.CharaActive(1, 0)
-	event.CharaActive(1, 8)
-	event.SetCharaPos(8, -316.71, 71.94, 806.78)
-	event.SetCharaRot(8, 0.0, 2.06, 0.0)
-	event.SetMotion(8, "立ち", 4)
-	event.SetCharaPos(0, -230.0, 32.1, 1200.0)
-	event.SetCharaRot(0, 0.0, 3.14, 0.0)
-	event.SetMotion(0, "立ち", 4)
-	event.SetCameraRef(-230.0, 62.1, 1200.0)
-	event.SetCameraPos(-230.0, 72.1, 1300.0)
-	event.ResetCamera(0)
-	event.SetFadeIn(30)
-	event.Finish()
+	event.cancel_drama_scene_skip()
+	event.stop_sound_effect(var0, 0)
+	event.delete_character_extension_packs(0)
+	event.show_dungeon_status_bar(1, 1.0)
+	event.set_object_handle_visible(2, 1)
+	event.set_object_handle_visible(3, 1)
+	event.set_character_active(1, 0)
+	event.set_character_active(1, 8)
+	event.set_character_position(8, -316.71, 71.94, 806.78)
+	event.set_character_rotation(8, 0.0, 2.06, 0.0)
+	event.set_character_motion(8, "立ち", 4)
+	event.set_character_position(0, -230.0, 32.1, 1200.0)
+	event.set_character_rotation(0, 0.0, 3.14, 0.0)
+	event.set_character_motion(0, "立ち", 4)
+	event.set_camera_look_at(-230.0, 62.1, 1200.0)
+	event.set_camera_position(-230.0, 72.1, 1300.0)
+	event.reset_follow_camera(0)
+	event.fade_in_screen(30)
+	event.finish_event()
 end
 
 return helper_6673bb50

@@ -30,38 +30,38 @@ local function helper_86f3f24c(arg0: f32, arg1: f32, arg2: s32)
 	return vm.guard(function()
 		var4 = 60
 		var5 = 76
-		event.EohSyncChara(0, 0)
-		event.ObjsInit(0)
-		event.ObjsSyncObj(0, 0)
+		event.attach_object_handle_to_character(0, 0)
+		event.clear_object_sequence(0)
+		event.set_object_sequence_object(0, 0)
 		do
-			local out1, out2, out3 = event.GetCharaPos(0)
+			local out1, out2, out3 = event.get_character_position(0)
 			var6 = out1 or var6
 			var7 = out2 or var7
 			var8 = out3 or var8
 		end
-		event.SetFcameraFollowFlag(1)
-		event.SetCameraCtrl(1)
-		event.CtrlcSetRotCancel(43)
-		event.SetCameraSpeed(6.0)
-		event.SetFcameraFollowOfs(0.0, 0.0, 0.0)
-		event.SetFcameraFollow(var6, var7 + 20.0, var8)
-		event.SetFcameraHeight(0.0)
-		event.SetFcameraDist(100.0)
-		event.CtrlcMoveRange(10.0, 30.0, 80.0, 120.0)
+		event.set_follow_camera_following(1)
+		event.set_camera_control_enabled(1)
+		event.set_camera_rotation_cancel_mask(43)
+		event.set_camera_speed(6.0)
+		event.set_follow_camera_offset(0.0, 0.0, 0.0)
+		event.set_follow_camera_target(var6, var7 + 20.0, var8)
+		event.set_follow_camera_height(0.0)
+		event.set_follow_camera_distance(100.0)
+		event.set_camera_control_range(10.0, 30.0, 80.0, 120.0)
 		while true do
 			do
-				local out1, out2 = event.GetApad_2()
+				local out1, out2 = event.get_analog_sticks_2()
 				var14 = out1 or var14
 				var15 = out2 or var15
 			end
 			do
-				local out1, out2, out3 = event.GetCharaPos(0)
+				local out1, out2, out3 = event.get_character_position(0)
 				var16 = out1 or var16
 				var17 = out2 or var17
 				var18 = out3 or var18
 			end
 			do
-				local out1, out2, out3 = event.GetCharaRot(0)
+				local out1, out2, out3 = event.get_character_rotation(0)
 				var10 = out1 or var10
 				var11 = out2 or var11
 				var12 = out3 or var12
@@ -81,18 +81,18 @@ local function helper_86f3f24c(arg0: f32, arg1: f32, arg2: s32)
 					var14 = 0.0
 				end
 			end
-			event.SetCharaRot(0, var10, var11, var12)
+			event.set_character_rotation(0, var10, var11, var12)
 			if var4 <= 0 then
-				event.SetMotion(0, "待機")
+				event.set_character_motion(0, "待機")
 				var5 = 76
 				var4 = 400
 			else
 				if var14 ~= 0.0 then
-					event.SetMotion(0, "かまえバタバタ")
+					event.set_character_motion(0, "かまえバタバタ")
 					var4 = 200
 					var5 = 0
 				elseif var5 <= 0 then
-					event.SetMotion(0, "かまえ")
+					event.set_character_motion(0, "かまえ")
 				else
 					var5 = var5 - 1
 				end
@@ -108,15 +108,15 @@ local function helper_86f3f24c(arg0: f32, arg1: f32, arg2: s32)
 			end
 			arg0 = var11
 			arg1 = var13
-			event.SphidaCalcCarry(vm.f32(arg1 * vm.f32(3.1415927)) / 180.0)
+			event.set_sphida_carry_angle(vm.f32(arg1 * vm.f32(3.1415927)) / 180.0)
 			angle = vm.f32(arg0 - vm.f32(3.1415927))
-			angle = event.AngleLimit(angle) or angle
-			event.CtrlcSetRotate(angle)
-			event.CtrlcMoveCamera(0)
-			event.CtrlcStep()
+			angle = event.wrap_angle(angle) or angle
+			event.set_camera_control_rotation(angle)
+			event.move_camera_control_with_pad(0)
+			event.step_camera_control()
 			helper_a61953d0(arg0, arg1, arg2)
 			if helper_581cb30c(0) ~= 0 then
-				event.SetMotion(0, "かまえ")
+				event.set_character_motion(0, "かまえ")
 				var3 = 0
 				break
 			elseif helper_581cb30c(1) ~= 0 then

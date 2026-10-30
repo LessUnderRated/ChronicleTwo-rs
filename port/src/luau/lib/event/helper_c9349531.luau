@@ -22,92 +22,92 @@ local function helper_c9349531(
 	local var11: f32 = 0
 	local at: number = 0
 	vm.section(function()
-		event.SetFadeOut(0)
+		event.fade_out_screen(0)
 		at = 1
 		vm.wait(1)
-		event.Initialize()
-		event.InitDramaScene()
-		var4 = event.SndLoadSound_3(8, "snd2/sp/sp_031.sound.json") or var4
-		event.AssignStack(5)
-		event.ClearStack(5)
-		angle = event.AngleLimit(angle) or angle
-		event.SetWorldCoord(world_coord_pos, world_coord_pos_2, world_coord_pos_3, world_coord_rot)
-		active_chr_no = event.GetActiveChrNo() or active_chr_no
+		event.initialize_event()
+		event.enable_drama_skip()
+		var4 = event.load_sound_effect_file_3(8, "snd2/sp/sp_031.sound.json") or var4
+		event.assign_memory_stack(5)
+		event.clear_memory_stack(5)
+		angle = event.wrap_angle(angle) or angle
+		event.set_event_world_coordinate(world_coord_pos, world_coord_pos_2, world_coord_pos_3, world_coord_rot)
+		active_chr_no = event.get_playable_character() or active_chr_no
 		if active_chr_no == 0 then
-			event.LoadMotion(5, "dungeon/chara/mints_01in.gltf", "info", 0)
+			event.load_character_motion_pack(5, "dungeon/chara/mints_01in.gltf", "info", 0)
 		end
 		if active_chr_no == 1 then
-			event.LoadMotion(5, "dungeon/chara/monica_01in.gltf", "info", 0)
+			event.load_character_motion_pack(5, "dungeon/chara/monica_01in.gltf", "info", 0)
 		end
-		event.EohSyncChara(0, 0)
-		event.ObjsInit(0)
-		event.ObjsSyncObj(0, 0)
-		event.ObjsSetPos(0, 116.96, 18.76, 19.22)
-		event.ObjsSetRot(0, 0.0, -1.96, 0.0)
-		event.ObjsSeDelay(0, 1)
-		event.ObjsResetDaPosition(0)
-		event.EohSetFootSoundId(0, 3)
-		event.CmrsInit()
-		event.CmrsSetPos(186.89, 58.05, -1.19)
-		event.CmrsSetRef(50.97, 32.07, 20.9)
-		event.CmrsFadeInit()
-		event.CmrsFadeIn(30)
+		event.attach_object_handle_to_character(0, 0)
+		event.clear_object_sequence(0)
+		event.set_object_sequence_object(0, 0)
+		event.set_object_sequence_position(0, 116.96, 18.76, 19.22)
+		event.set_object_sequence_rotation(0, 0.0, -1.96, 0.0)
+		event.delay_object_sequence_sound_track(0, 1)
+		event.reset_object_sequence_dynamic_animation(0)
+		event.set_object_handle_footstep_sound(0, 3)
+		event.clear_camera_sequence()
+		event.set_camera_sequence_position(186.89, 58.05, -1.19)
+		event.set_camera_sequence_look_at(50.97, 32.07, 20.9)
+		event.mark_camera_sequence_fade_track()
+		event.fade_in_camera_sequence(30)
 		if active_chr_no == 0 then
-			event.CmrsMove2(137.93, 48.95, 6.77, 50.97, 32.07, 20.9, 160, 2, 0.4)
-			event.ObjsMove(0, 23.61, 18.53, -17.13, 140)
-			event.ObjsSetMotion(0, "丸太歩き", 4)
-			event.ObjsRotDelay(0, 130)
-			event.ObjsRotation(0, 0.0, -1.0, 0.0, 10)
+			event.move_camera_sequence_eased(137.93, 48.95, 6.77, 50.97, 32.07, 20.9, 160, 2, 0.4)
+			event.move_object_sequence(0, 23.61, 18.53, -17.13, 140)
+			event.set_object_sequence_motion(0, "丸太歩き", 4)
+			event.delay_object_sequence_rotation_track(0, 130)
+			event.rotate_object_sequence(0, 0.0, -1.0, 0.0, 10)
 			at = 2
 			wait_objects(0)
-			event.ObjsSetMotion(0, "ジャンプ", 2)
-			event.ObjsNextMotion(0, "ジャンプ中", 6, 0.3)
-			event.ObjsNextMotion(0, "着地", 6)
+			event.set_object_sequence_motion(0, "ジャンプ", 2)
+			event.queue_object_sequence_next_motion(0, "ジャンプ中", 6, 0.3)
+			event.queue_object_sequence_next_motion(0, "着地", 6)
 		else
-			event.CmrsMove2(137.93, 48.95, 6.77, 50.97, 32.07, 20.9, 100, 2, 0.4)
-			event.ObjsMove(0, 23.61, 18.53, -17.13, 60)
-			event.ObjsSetMotion(0, "丸太歩き", 4)
-			event.ObjsRotDelay(0, 50)
-			event.ObjsRotation(0, 0.0, -1.0, 0.0, 10)
+			event.move_camera_sequence_eased(137.93, 48.95, 6.77, 50.97, 32.07, 20.9, 100, 2, 0.4)
+			event.move_object_sequence(0, 23.61, 18.53, -17.13, 60)
+			event.set_object_sequence_motion(0, "丸太歩き", 4)
+			event.delay_object_sequence_rotation_track(0, 50)
+			event.rotate_object_sequence(0, 0.0, -1.0, 0.0, 10)
 			at = 3
 			wait_objects(0)
-			event.ObjsSetMotion(0, "ジャンプ", 2)
-			event.ObjsNextMotion(0, "ジャンプ中", 6, 0.2)
-			event.ObjsNextMotion(0, "着地", 6)
+			event.set_object_sequence_motion(0, "ジャンプ", 2)
+			event.queue_object_sequence_next_motion(0, "ジャンプ中", 6, 0.2)
+			event.queue_object_sequence_next_motion(0, "着地", 6)
 		end
-		event.EohSetFootSoundId(0, 16)
+		event.set_object_handle_footstep_sound(0, 16)
 		at = 4
 		wait_frames(14)
-		event.SndSePlay(var4, 2)
-		event.ObjsJump(0, -85.0, 0.0, 50.0, -0.25, 30)
-		event.ObjsRotDelay(0, 10)
-		event.ObjsRotation(0, 0.0, -1.57, 0.0, 20)
+		event.play_sound_effect(var4, 2)
+		event.jump_object_sequence(0, -85.0, 0.0, 50.0, -0.25, 30)
+		event.delay_object_sequence_rotation_track(0, 10)
+		event.rotate_object_sequence(0, 0.0, -1.57, 0.0, 20)
 		at = 5
 		wait_frames(16)
 		at = 6
 		wait_objects(0)
-		event.SndSePlay(var4, 4)
+		event.play_sound_effect(var4, 4)
 		at = 7
 		wait_frames(30)
-		event.ObjsSetMotion(0, "歩き")
-		event.ObjsMove(0, -170.0, 0.0, 50.0, 50)
+		event.set_object_sequence_motion(0, "歩き")
+		event.move_object_sequence(0, -170.0, 0.0, 50.0, 50)
 		at = 8
 		wait_camera()
-		event.SetCrossfade(30)
+		event.start_crossfade(30)
 		do
-			local _, out2, _ = event.EohGetRot(0)
+			local _, out2, _ = event.get_object_handle_rotation(0)
 			var11 = out2 or var11
 		end
-		event.CmrsSetRef(-170.0, 30.0, 50.0)
+		event.set_camera_sequence_look_at(-170.0, 30.0, 50.0)
 		var11 = vm.f32(var11 - vm.f32(3.1415927))
-		var11 = event.AngleLimit(var11) or var11
-		event.CmrsSetAhd(var11, 5.0, 100.0)
+		var11 = event.wrap_angle(var11) or var11
+		event.set_camera_sequence_angle_height_distance(var11, 5.0, 100.0)
 		at = 9
 		wait_objects(0)
-		event.ObjsSetMotion(0, "立ち")
+		event.set_object_sequence_motion(0, "立ち")
 		at = 10
 		wait_frames(15)
-		event.CancelDramaScene()
+		event.cancel_drama_scene_skip()
 	end, function(received: { any }): boolean
 		if at <= 1 then
 			helper_238b5abc(0)
@@ -141,16 +141,16 @@ local function helper_c9349531(
 	end)
 	at = 11
 	vm.entry(11)
-	event.SetFadeIn(0)
-	event.ObjsInit(0)
-	event.EohSetMotion(0, "立ち")
-	event.EohSetPos(0, -170.0, 0.0, 50.0)
-	event.EohSetRot(0, 0.0, -1.57, 0.0)
-	event.EohResetDaPosition(0)
-	event.SetCameraRef(-170.0, 30.0, 50.0)
-	event.SetCameraPos(-70.0, 35.0, 50.0)
-	event.ResetCamera(0)
-	event.DelExtMotion(0)
+	event.fade_in_screen(0)
+	event.clear_object_sequence(0)
+	event.set_object_handle_motion(0, "立ち")
+	event.set_object_handle_position(0, -170.0, 0.0, 50.0)
+	event.set_object_handle_rotation(0, 0.0, -1.57, 0.0)
+	event.reset_object_handle_dynamic_animation(0)
+	event.set_camera_look_at(-170.0, 30.0, 50.0)
+	event.set_camera_position(-70.0, 35.0, 50.0)
+	event.reset_follow_camera(0)
+	event.delete_character_extension_packs(0)
 end
 
 return helper_c9349531

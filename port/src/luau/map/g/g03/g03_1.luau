@@ -31,9 +31,9 @@ local function helper_1aac4()
 	local var4: f32 = 0
 	local var5: f32 = 0
 	local var6: s32 = 0
-	event.Initialize()
+	event.initialize_event()
 	do
-		local out1, out2, out3 = event.GetCharaPos(0)
+		local out1, out2, out3 = event.get_character_position(0)
 		var0 = out1 or var0
 		var1 = out2 or var1
 		var2 = out3 or var2
@@ -41,29 +41,29 @@ local function helper_1aac4()
 	var3 = vm.f32(vm.f32(vm.sin(vm.f32(-1.39)) * 30.0) + var0)
 	var4 = var1
 	var5 = vm.f32(vm.f32(vm.cos(vm.f32(-1.39)) * 30.0) + var2)
-	event.EohSyncChara(0, 0)
-	event.ObjsInit(0)
-	event.ObjsSyncObj(0, 0)
-	event.ObjsMove(0, var3, var4, var5, 30, 1)
-	event.ObjsReference(0, var3, var4, var5, 10)
-	event.ObjsSetMotion(0, "歩き")
+	event.attach_object_handle_to_character(0, 0)
+	event.clear_object_sequence(0)
+	event.set_object_sequence_object(0, 0)
+	event.move_object_sequence(0, var3, var4, var5, 30, 1)
+	event.turn_object_sequence_toward(0, var3, var4, var5, 10)
+	event.set_object_sequence_motion(0, "歩き")
 	var6 = 0
 	while var6 < 30 do
 		do
-			local out1, out2, out3 = event.GetCharaPos(0)
+			local out1, out2, out3 = event.get_character_position(0)
 			var0 = out1 or var0
 			var1 = out2 or var1
 			var2 = out3 or var2
 		end
 		var1 = vm.f32(var1 + 30.0)
-		event.SetCameraRef(var0, var1, var2)
+		event.set_camera_look_at(var0, var1, var2)
 		var6 = var6 + 1
 		vm.wait(1)
 	end
-	event.ObjsSetMotion(0, "立ち")
-	event.SetMesWindowMode(0, 1)
-	event.SetMesShippo(0, 0)
-	event.MesMake_2(0, "What was that crying sound just\nnow? Let's start looking in the\ncave first, all right?")
+	event.set_object_sequence_motion(0, "立ち")
+	event.set_message_window_mode(0, 1)
+	event.set_message_bubble_tail(0, 0)
+	event.open_message_window_2(0, "What was that crying sound just\nnow? Let's start looking in the\ncave first, all right?")
 	show_message(0, -1, 5, 256, 208)
 end
 
@@ -89,13 +89,13 @@ function script.default_event()
 	local at: number = 0
 	return vm.guard(function()
 		helper_3e566142()
-		mc_load = event.CheckMcLoad() or mc_load
+		mc_load = event.take_memory_card_load_state() or mc_load
 		if mc_load == 1 then
 			helper_9dafbc83(vm.f32(1832.4), vm.f32(-5.2), vm.f32(-406.6), vm.f32(-1.16))
-			event.ResetCamera(1, 0.0, 10.0)
+			event.reset_follow_camera(1, 0.0, 10.0)
 		else
-			old_map_no = event.GetOldMapNo() or old_map_no
-			var2 = event.GetMapType(old_map_no) or var2
+			old_map_no = event.get_previous_map() or old_map_no
+			var2 = event.get_map_type(old_map_no) or var2
 			print("old_map = ", old_map_no, "\n")
 			print("old_map_type = ", var2, "\n")
 			if var2 ~= -1 then
@@ -106,8 +106,8 @@ function script.default_event()
 					var3 = 0
 					if old_map_no == 82 then
 						helper_9dafbc83(-140.0, 165.0, 1865.0, vm.f32(2.28))
-						event.ResetCamera(1, 0.0, 10.0)
-						event.SetFadeIn(30)
+						event.reset_follow_camera(1, 0.0, 10.0)
+						event.fade_in_screen(30)
 						var3 = 1
 					end
 					if old_map_no == 75 then
@@ -115,11 +115,11 @@ function script.default_event()
 						helper_379e93c0()
 						var3 = 1
 					end
-					old_sub_map_no = event.GetOldSubmapNo() or old_sub_map_no
-					var5 = event.GetMapType(old_sub_map_no) or var5
+					old_sub_map_no = event.get_previous_submap() or old_sub_map_no
+					var5 = event.get_map_type(old_sub_map_no) or var5
 					if var3 == 0 and not (old_map_no == 2 and var5 == 2) then
-						flag = event.GetFlag(402) or flag
-						flag_2 = event.GetFlag(360) or flag_2
+						flag = event.get_save_flag(402) or flag
+						flag_2 = event.get_save_flag(360) or flag_2
 						if flag == 0 and flag_2 == 1 then
 							at = 3
 							helper_683d6a71()
@@ -131,7 +131,7 @@ function script.default_event()
 				end
 			else
 				print("------  <START EVENT> OLD MAP ERR   ------\n")
-				get_old_interior_map_no = event.GetOldInteriorMapNo() or get_old_interior_map_no
+				get_old_interior_map_no = event.get_previous_interior_map() or get_old_interior_map_no
 				if 0 <= get_old_interior_map_no then
 				else
 					at = 5
@@ -189,15 +189,15 @@ function script.event_201()
 	local var7: s32 = 0
 	local flag_4: s32 = 0
 	local flag_5: s32 = 0
-	flag = event.GetFlag(404) or flag
+	flag = event.get_save_flag(404) or flag
 	if flag == 0 then
 		helper_1aac4()
 	elseif helper_0befff3d() ~= 0 then
-		event.DngSetStageId(3)
-		event.GotoMenu(3, 3)
+		event.set_dungeon_stage_id(3)
+		event.open_event_menu(3, 3)
 		vm.wait(3)
 		do
-			local _, out2, out3, _ = event.GetMenuParam_4()
+			local _, out2, out3, _ = event.get_menu_results_4()
 			var2 = out2 or var2
 			var3 = out3 or var3
 		end
@@ -206,25 +206,25 @@ function script.event_201()
 			return
 		end
 		if var3 == 20 then
-			flag_2 = event.GetFlag(438) or flag_2
-			flag_3 = event.GetFlag(444) or flag_3
+			flag_2 = event.get_save_flag(438) or flag_2
+			flag_3 = event.get_save_flag(444) or flag_3
 			if flag_2 == 1 and flag_3 == 0 then
-				event.GotoDng(3, var3, 1010)
+				event.go_to_dungeon(3, var3, 1010)
 			else
 				var2 = 3
 				var3 = 20
-				var7 = event.GetFloorInfo(var2, var3, 7) or var7
+				var7 = event.get_dungeon_floor_info(var2, var3, 7) or var7
 				var7 = vm.i32(var7 + 1)
-				event.SetFloorInfo(var2, var3, 7, var7)
-				event.MapJump_3(-1, "d04b01", 100)
+				event.set_dungeon_floor_info(var2, var3, 7, var7)
+				event.jump_to_map_3(-1, "d04b01", 100)
 			end
 		else
-			flag_4 = event.GetFlag(406) or flag_4
-			flag_5 = event.GetFlag(424) or flag_5
+			flag_4 = event.get_save_flag(406) or flag_4
+			flag_5 = event.get_save_flag(424) or flag_5
 			if var3 == 2 and flag_4 == 0 or var3 == 17 and flag_5 == 0 or var3 == 19 then
-				event.BgmLoadCancel()
+				event.skip_next_music_load()
 			end
-			event.GotoDng(3, var3, 1010)
+			event.go_to_dungeon(3, var3, 1010)
 		end
 	end
 end
@@ -233,25 +233,25 @@ end
 function script.event_202()
 	local flag: s32 = 0
 	if helper_f20e2c61() ~= 0 then
-		flag = event.GetFlag(404) or flag
+		flag = event.get_save_flag(404) or flag
 		if flag == 0 then
-			event.BgmLoadCancel()
+			event.skip_next_music_load()
 		end
-		event.MapJump_2(-1, "s27")
+		event.jump_to_map_2(-1, "s27")
 	end
 end
 
 --- Event 203, which map data, a script or the engine runs by number.
 function script.event_203()
 	if helper_ca212701() ~= 0 then
-		event.MapJump_2(-1, "s09")
+		event.jump_to_map_2(-1, "s09")
 	end
 end
 
 --- Event 300, which map data, a script or the engine runs by number.
 function script.event_300()
 	helper_cfd1b805(vm.f32(-136.7), 165.0, vm.f32(1866.8), 0.0)
-	event.MapJump_2(-1, "f03")
+	event.jump_to_map_2(-1, "f03")
 	vm.wait(2)
 end
 
@@ -272,40 +272,40 @@ end
 --- Event 510, which map data, a script or the engine runs by number.
 function script.event_510()
 	helper_3e566142()
-	event.Initialize()
+	event.initialize_event()
 	vm.wait(1)
-	event.SetCharaPos(0, 1425.7, 0.0, 1034.8)
-	event.SetCharaRot(0, 0.0, -2.37, 0.0)
-	event.SetMotion(0, "立ち", 4)
-	event.CharaNormalDrive(0)
-	event.CharaResetDa(0)
-	event.ResetCamera(1, 3.14, 10.0)
-	event.SetFadeIn(30)
+	event.set_character_position(0, 1425.7, 0.0, 1034.8)
+	event.set_character_rotation(0, 0.0, -2.37, 0.0)
+	event.set_character_motion(0, "立ち", 4)
+	event.update_character_motion(0)
+	event.reset_character_cloth_and_hair(0)
+	event.reset_follow_camera(1, 3.14, 10.0)
+	event.fade_in_screen(30)
 end
 
 --- Event 520, which map data, a script or the engine runs by number.
 function script.event_520()
 	local var0: s32 = 0
 	helper_3e566142()
-	event.Initialize()
+	event.initialize_event()
 	vm.wait(1)
-	event.SetCharaPos(0, -140.0, 165.0, 1800.0)
-	event.SetCharaRot(0, 0.0, 0.0, 0.0)
-	event.SetMotion(0, "立ち", 4)
-	event.CharaNormalDrive(0)
-	event.CharaResetDa(0)
-	event.ResetCamera(1, 3.14, 10.0)
-	event.SetFadeIn(30)
+	event.set_character_position(0, -140.0, 165.0, 1800.0)
+	event.set_character_rotation(0, 0.0, 0.0, 0.0)
+	event.set_character_motion(0, "立ち", 4)
+	event.update_character_motion(0)
+	event.reset_character_cloth_and_hair(0)
+	event.reset_follow_camera(1, 3.14, 10.0)
+	event.fade_in_screen(30)
 	var0 = helper_6be25ed2()
 	if var0 == 0 then
-		event.SetMesPreset(0, 4)
-		event.SetMesWindowMode(0, 4)
-		event.MesMake_2(
+		event.apply_message_window_preset(0, 4)
+		event.set_message_window_mode(0, 4)
+		event.open_message_window_2(
 			0,
 			"[(!)]Satisfy the Georama conditions and revive\n   Luna Lab's Central Lab so the game can advance."
 		)
 		show_message(0, -1, 8, 0, 0)
-		event.SetMesPreset(0, 0)
+		event.apply_message_window_preset(0, 0)
 	end
 	helper_5bdac642(1)
 end

@@ -14,7 +14,7 @@ local function helper_366e5299()
 	local at: number = 0
 	return vm.guard(function()
 		do
-			local out1, out2 = event.GetMenuEtc_3(6)
+			local out1, out2 = event.get_menu_value_3(6)
 			var0 = out1 or var0
 			var1 = out2 or var1
 		end
@@ -23,13 +23,13 @@ local function helper_366e5299()
 		end
 		if var1 == 1 then
 			set_window_mode(3, 1)
-			event.MesMake_2(3, "もっとスクープを撮って来ないと\n賞品はやれないぜ。")
+			event.open_message_window_2(3, "もっとスクープを撮って来ないと\n賞品はやれないぜ。")
 			at = 1
 			show_message(3, -1, 3, 256, 208)
 		end
 		if var1 == 2 then
 			set_window_mode(3, 1)
-			event.MesMake_2(
+			event.open_message_window_2(
 				3,
 				"ネタかスクープの数によって、\nオマエの写真家レベルが決まる。<page>レベルが上がれば、ごほうびの\nアイテムも増えるぞ。"
 			)

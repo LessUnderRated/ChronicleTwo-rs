@@ -13,9 +13,9 @@ local function helper_c0195a7d()
 	return vm.guard(function()
 		at = 1
 		vm.entry(1)
-		flag = event.GetFlag(508) or flag
+		flag = event.get_save_flag(508) or flag
 		if helper_7fed7304() ~= 0 and flag == 0 then
-			event.AddItem(372, 1)
+			event.add_inventory_item(372, 1)
 			at = 2
 			helper_39715509()
 			return 1

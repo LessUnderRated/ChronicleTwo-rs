@@ -5,11 +5,11 @@ local helper_20ea05b8 = require("@lib/monster/helper_20ea05b8")
 
 --- Helper function.
 local function helper_d375874f()
-	monster.SetAttrib(32, 0)
-	monster.ResetMove()
-	monster.SetShrowEnd()
+	monster.set_monster_attributes(32, 0)
+	monster.stop_moving()
+	monster.end_throw()
 	helper_20ea05b8(10)
-	monster.ResetMotion()
+	monster.reset_motion()
 end
 
 return helper_d375874f

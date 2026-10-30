@@ -45,15 +45,15 @@ local function helper_3048()
 	helper_1adea708(500.0)
 	helper_6911bbcd(80.0)
 	helper_5a759074(0)
-	monster.VPush2(5, 0)
-	monster.VPush2(11, 150)
-	monster.VPush2(12, 0)
-	boss = monster.GetBossFlag() or boss
+	monster.set_secondary_variable(5, 0)
+	monster.set_secondary_variable(11, 150)
+	monster.set_secondary_variable(12, 0)
+	boss = monster.is_boss() or boss
 	if boss == 0 then
-		monster.GetPos_3()
-		monster.SetClipDist(35.0)
+		monster.get_position_3()
+		monster.set_clip_distance(35.0)
 	else
-		monster.SetClipDist(999999.0)
+		monster.set_clip_distance(999999.0)
 	end
 end
 
@@ -62,22 +62,22 @@ local function helper_137ec()
 	local argc: s32 = 0
 	local var3: f32 = 0
 	local var4: f32 = 0
-	argc = monster.GetRnd(100) or argc
+	argc = monster.get_random(100) or argc
 	if argc < 50 then
-		argc = monster.GetRnd(100) or argc
-		var3 = monster.GetRndf(30.0) or var3
-		var4 = monster.GetRndf(30.0) or var4
+		argc = monster.get_random(100) or argc
+		var3 = monster.get_random_whole_number(30.0) or var3
+		var4 = monster.get_random_whole_number(30.0) or var4
 		var4 = vm.f32(var4 + 80.0)
 		if argc < 50 then
 			var3 = vm.f32(-var3 - 30.0)
 		else
 			var3 = vm.f32(var3 + 30.0)
 		end
-		monster.SetMos("歩き", -1, 0)
+		monster.set_motion("歩き", -1, 0)
 		local _ = helper_bfbcfc9f(1.75, vm.f32(4.8), var3, var4, 30.0, 30)
 		helper_83e135e0(vm.f32(4.8))
 	else
-		monster.SetMos("立ち", -1, 0)
+		monster.set_motion("立ち", -1, 0)
 		helper_e62edeb2(30.0, 45.0, 30)
 	end
 end
@@ -85,14 +85,14 @@ end
 --- Helper function.
 local function helper_160a0()
 	local argc: s32 = 0
-	argc = monster.GetRnd(100) or argc
+	argc = monster.get_random(100) or argc
 	if argc < 75 then
-		monster.SetMos("歩き", -1, 0)
+		monster.set_motion("歩き", -1, 0)
 		helper_e1c3e640(1.75, vm.f32(4.8), 80.0, 25)
 	else
-		argc = monster.GetRnd(100) or argc
+		argc = monster.get_random(100) or argc
 		if argc < 10 then
-			monster.SetMos("歩き", -1, 0)
+			monster.set_motion("歩き", -1, 0)
 			helper_97d8f861(1.75, vm.f32(4.8), 30.0, 180.0, 30.0, 80.0, 25)
 		end
 	end
@@ -100,45 +100,45 @@ end
 
 --- Helper function.
 local function helper_13074()
-	monster.ResetMotion()
-	monster.SetMos("攻撃２", -1, 6)
+	monster.reset_motion()
+	monster.set_motion("攻撃２", -1, 6)
 	helper_cbe4d8e2()
 end
 
 --- Helper function.
 local function helper_12f60()
-	monster.ResetMotion()
-	monster.SetMos("攻撃１", -1, 6)
+	monster.reset_motion()
+	monster.set_motion("攻撃１", -1, 6)
 	helper_cbe4d8e2()
 end
 
 --- Helper function.
 local function helper_15a68()
 	local argc: s32 = 0
-	argc = monster.GetRnd(100) or argc
+	argc = monster.get_random(100) or argc
 	if argc < 55 then
-		argc = monster.GetRnd(100) or argc
+		argc = monster.get_random(100) or argc
 		if argc < 30 then
-			monster.SetMos("歩き", -1, 0)
+			monster.set_motion("歩き", -1, 0)
 			helper_83e135e0(vm.f32(4.8))
-			monster.SetMos("走り", -1, 0)
+			monster.set_motion("走り", -1, 0)
 			helper_e1c3e640(6.0, vm.f32(4.8), 30.0, 30)
 			helper_83e135e0(vm.f32(4.8))
 			helper_13074()
-			monster.SetMos("立ち", -1, 0)
+			monster.set_motion("立ち", -1, 0)
 			helper_ee5b84d4(3)
 		else
-			monster.SetMos("歩き", -1, 0)
+			monster.set_motion("歩き", -1, 0)
 			helper_83e135e0(vm.f32(4.8))
-			monster.SetMos("走り", -1, 0)
+			monster.set_motion("走り", -1, 0)
 			helper_e1c3e640(6.0, vm.f32(4.8), 30.0, 30)
 			helper_83e135e0(vm.f32(4.8))
 			helper_12f60()
-			monster.SetMos("立ち", -1, 0)
+			monster.set_motion("立ち", -1, 0)
 			helper_ee5b84d4(3)
 		end
 	else
-		monster.SetMos("歩き", -1, 0)
+		monster.set_motion("歩き", -1, 0)
 		helper_e1c3e640(1.75, vm.f32(4.8), 30.0, 30)
 		helper_83e135e0(vm.f32(4.8))
 	end
@@ -146,18 +146,18 @@ end
 
 --- Helper function.
 local function helper_13678()
-	monster.SetMos("攻撃１", -1, 4)
+	monster.set_motion("攻撃１", -1, 4)
 	helper_ee5b84d4(helper_9df6409a(18))
-	monster.SetMos("攻撃２", -1, 2)
+	monster.set_motion("攻撃２", -1, 2)
 	helper_cbe4d8e2()
 end
 
 --- Helper function.
 local function helper_13188()
-	monster.ResetMotion()
-	monster.SetMos("攻撃１", -1, 6)
+	monster.reset_motion()
+	monster.set_motion("攻撃１", -1, 6)
 	helper_ee5b84d4(helper_9df6409a(22))
-	monster.SetMos("攻撃２", -1, 2)
+	monster.set_motion("攻撃２", -1, 2)
 	helper_cbe4d8e2()
 end
 
@@ -169,29 +169,29 @@ local function helper_12a44(move_speed: f32)
 	local var5: f32 = 0
 	local var7: f32 = 0
 	local pos_y_2: f32 = 0
-	monster.SetAttrib(32, 1)
-	var5 = monster.GetTargetDist() or var5
+	monster.set_monster_attributes(32, 1)
+	var5 = monster.get_target_distance() or var5
 	do
-		local out1, _, out3 = monster.GetTargetRot()
+		local out1, _, out3 = monster.get_target_rotation()
 		pos_x = out1 or pos_x
 		pos_z = out3 or pos_z
 	end
-	var7 = monster.GetRndf(10.0) or var7
+	var7 = monster.get_random_whole_number(10.0) or var7
 	var5 = vm.f32(var5 + vm.f32(30.0 + var7))
 	pos_x, var3, pos_z = helper_125e5305(0.0, var5, pos_x, var3, pos_z)
-	monster.ResetMotion()
-	monster.SetMos("ステップ後", -1, 6)
+	monster.reset_motion()
+	monster.set_motion("ステップ後", -1, 6)
 	helper_ee5b84d4(helper_9df6409a(6))
 	do
-		local _, out2, _ = monster.GetPos_3()
+		local _, out2, _ = monster.get_position_3()
 		pos_y_2 = out2 or pos_y_2
 	end
-	monster.SetNextPos(pos_x, pos_y_2, pos_z, move_speed, move_speed + 1.0)
+	monster.move_toward_position(pos_x, pos_y_2, pos_z, move_speed, move_speed + 1.0)
 	helper_ee5b84d4(helper_9df6409a(3))
-	monster.SetAttrib(32, 0)
+	monster.set_monster_attributes(32, 0)
 	helper_cbe4d8e2()
-	monster.ResetMove()
-	monster.SetMos("立ち", -1)
+	monster.stop_moving()
+	monster.set_motion("立ち", -1)
 end
 
 --- Helper function.
@@ -206,21 +206,21 @@ local function helper_1229c()
 	local var9: f32 = 0
 	local argc: s32 = 0
 	do
-		local out1, out2, out3 = monster.GetPos_3()
+		local out1, out2, out3 = monster.get_position_3()
 		pos_x = out1 or pos_x
 		pos_y = out2 or pos_y
 		pos_z = out3 or pos_z
 	end
 	do
-		local _, out2, _ = monster.GetRot()
+		local _, out2, _ = monster.get_rotation()
 		var4 = out2 or var4
 	end
-	argc = monster.GetRnd(100) or argc
+	argc = monster.get_random(100) or argc
 	if argc < 50 then
-		monster.SetMos("ステップ左", -1, 2)
+		monster.set_motion("ステップ左", -1, 2)
 		var4 = vm.f32(var4 + vm.f32(1.5707964))
 	else
-		monster.SetMos("ステップ右", -1, 2)
+		monster.set_motion("ステップ右", -1, 2)
 		var4 = vm.f32(var4 - vm.f32(1.5707964))
 	end
 	var9 = 100.0
@@ -228,81 +228,81 @@ local function helper_1229c()
 	target_2 = vm.f32(pos_y - 20.0)
 	target_3 = vm.f32(pos_z + vm.f32(vm.cos(var4) * var9))
 	helper_4a39d2ab(vm.f32(0.28), vm.f32(0.05))
-	monster.SetAttrib(32, 1)
-	monster.SetNextPos(target, target_2, target_3, 3.6, 3.6)
+	monster.set_monster_attributes(32, 1)
+	monster.move_toward_position(target, target_2, target_3, 3.6, 3.6)
 	helper_4a39d2ab(vm.f32(0.68), vm.f32(0.05))
-	monster.SetAttrib(32, 0)
-	monster.ResetMove()
+	monster.set_monster_attributes(32, 0)
+	monster.stop_moving()
 	helper_cbe4d8e2()
-	monster.SetMos("立ち", -1, 0)
+	monster.set_motion("立ち", -1, 0)
 end
 
 --- Helper function.
 local function helper_14c48()
 	local argc: s32 = 0
-	monster.GetMonsterLife()
-	argc = monster.GetRnd(100) or argc
+	monster.get_life()
+	argc = monster.get_random(100) or argc
 	if argc < 65 then
-		argc = monster.GetRnd(100) or argc
+		argc = monster.get_random(100) or argc
 		if argc < 80 then
-			argc = monster.GetRnd(100) or argc
+			argc = monster.get_random(100) or argc
 			if argc < 30 then
-				monster.SetMos("歩き", -1, 0)
+				monster.set_motion("歩き", -1, 0)
 				helper_e1c3e640(1.75, vm.f32(4.8), 30.0, 30)
 				helper_e8739558(vm.f32(4.8), 20.0, 15)
 				helper_13074()
-				monster.SetMos("立ち", -1, 0)
+				monster.set_motion("立ち", -1, 0)
 				helper_ee5b84d4(3)
 			else
-				argc = monster.GetRnd(100) or argc
+				argc = monster.get_random(100) or argc
 				if argc < 85 then
-					monster.SetMos("歩き", -1, 0)
+					monster.set_motion("歩き", -1, 0)
 					helper_e1c3e640(1.75, vm.f32(4.8), 30.0, 30)
 					helper_83e135e0(vm.f32(4.8))
 					helper_12f60()
-					monster.SetMos("立ち", -1, 0)
+					monster.set_motion("立ち", -1, 0)
 					helper_ee5b84d4(3)
 				else
-					monster.SetMos("歩き", -1, 0)
+					monster.set_motion("歩き", -1, 0)
 					helper_e1c3e640(1.75, vm.f32(4.8), 30.0, 30)
 					helper_83e135e0(vm.f32(4.8))
 					helper_13678()
-					monster.SetMos("立ち", -1, 0)
+					monster.set_motion("立ち", -1, 0)
 					helper_ee5b84d4(3)
 				end
 			end
 		else
-			monster.SetMos("歩き", -1, 0)
+			monster.set_motion("歩き", -1, 0)
 			helper_e1c3e640(1.75, vm.f32(4.8), 30.0, 30)
 			helper_83e135e0(vm.f32(4.8))
 			helper_13188()
-			monster.SetMos("立ち", -1, 0)
+			monster.set_motion("立ち", -1, 0)
 			helper_ee5b84d4(3)
 		end
 	else
-		argc = monster.GetRnd(100) or argc
+		argc = monster.get_random(100) or argc
 		if argc < 40 then
-			argc = monster.GetRnd(100) or argc
+			argc = monster.get_random(100) or argc
 			if argc < 60 then
-				monster.SetMos("歩き", -1, 0)
+				monster.set_motion("歩き", -1, 0)
 				helper_83e135e0(vm.f32(4.8))
 				helper_12a44(vm.f32(2.1000001))
-				argc = monster.GetRnd(100) or argc
+				argc = monster.get_random(100) or argc
 				if argc < 50 then
-					monster.SetMos("走り", -1, 0)
+					monster.set_motion("走り", -1, 0)
 					helper_e1c3e640(6.0, vm.f32(4.8), 30.0, 30)
 					helper_12f60()
 				end
 			else
-				monster.SetMos("歩き", -1, 0)
+				monster.set_motion("歩き", -1, 0)
 				helper_83e135e0(vm.f32(4.8))
 				helper_1229c()
-				monster.SetMos("歩き", -1, 0)
+				monster.set_motion("歩き", -1, 0)
 				helper_83e135e0(vm.f32(4.8))
-				monster.SetMos("立ち", -1, 0)
+				monster.set_motion("立ち", -1, 0)
 			end
 		else
-			monster.SetMos("歩き", -1, 0)
+			monster.set_motion("歩き", -1, 0)
 			helper_e1c3e640(1.75, vm.f32(4.8), 30.0, 30)
 			helper_83e135e0(vm.f32(4.8))
 		end
@@ -317,16 +317,16 @@ local function helper_16370()
 	while true do
 		helper_b9fff8e1()
 		helper_ade2dbe2()
-		var3 = monster.GetTargetDist() or var3
+		var3 = monster.get_target_distance() or var3
 		if var3 > 230.0 then
 			helper_b9fff8e1()
 			return
 		end
-		gekirin = vm.float_bits(monster.GetGekirin()) or gekirin
+		gekirin = vm.float_bits(monster.get_rage_hits_left()) or gekirin
 		if gekirin == 0 then
 			return
 		end
-		priority = monster.GetPriority() or priority
+		priority = monster.get_priority() or priority
 		if priority > 3 then
 			helper_137ec()
 			continue
@@ -344,9 +344,9 @@ end
 
 --- Helper function.
 local function helper_118d0()
-	monster.SetMos("走り", -1, 0)
+	monster.set_motion("走り", -1, 0)
 	helper_e1c3e640(6.0, vm.f32(4.8), 30.0, 180)
-	monster.SetMos("立ち", -1, 0)
+	monster.set_motion("立ち", -1, 0)
 end
 
 --- Helper function.
@@ -357,79 +357,79 @@ local function helper_13c6c()
 	local gekirin: s32 = 0
 	while true do
 		helper_b9fff8e1()
-		gekirin = vm.float_bits(monster.GetGekirin()) or gekirin
+		gekirin = vm.float_bits(monster.get_rage_hits_left()) or gekirin
 		if gekirin > 0 then
 			return
 		end
-		priority = monster.GetPriority() or priority
+		priority = monster.get_priority() or priority
 		if priority > 4 then
 			helper_137ec()
 			continue
 		end
 		if var3 < 80.0 then
-			argc = monster.GetRnd(100) or argc
+			argc = monster.get_random(100) or argc
 			if argc < 50 then
-				argc = monster.GetRnd(100) or argc
+				argc = monster.get_random(100) or argc
 				if argc < 30 then
-					monster.SetMos("歩き", -1, 0)
+					monster.set_motion("歩き", -1, 0)
 					helper_e1c3e640(1.75, vm.f32(4.8), 30.0, 30)
 					helper_e8739558(vm.f32(4.8), 20.0, 15)
 					helper_13074()
-					monster.SetMos("立ち", -1, 0)
+					monster.set_motion("立ち", -1, 0)
 					helper_ee5b84d4(2)
 				else
-					argc = monster.GetRnd(100) or argc
+					argc = monster.get_random(100) or argc
 					if argc < 85 then
-						monster.SetMos("歩き", -1, 0)
+						monster.set_motion("歩き", -1, 0)
 						helper_e1c3e640(1.75, vm.f32(4.8), 30.0, 30)
 						helper_83e135e0(vm.f32(4.8))
 						helper_12f60()
-						monster.SetMos("立ち", -1, 0)
+						monster.set_motion("立ち", -1, 0)
 						helper_ee5b84d4(2)
 					else
-						monster.SetMos("歩き", -1, 0)
+						monster.set_motion("歩き", -1, 0)
 						helper_e1c3e640(1.75, vm.f32(4.8), 30.0, 30)
 						helper_83e135e0(vm.f32(4.8))
 						helper_13678()
-						monster.SetMos("立ち", -1, 0)
+						monster.set_motion("立ち", -1, 0)
 						helper_ee5b84d4(2)
 					end
 				end
 			else
-				monster.SetMos("歩き", -1, 0)
+				monster.set_motion("歩き", -1, 0)
 				helper_e1c3e640(1.75, vm.f32(4.8), 30.0, 30)
 				helper_83e135e0(vm.f32(4.8))
 				helper_13188()
-				monster.SetMos("立ち", -1, 0)
+				monster.set_motion("立ち", -1, 0)
 				helper_ee5b84d4(2)
 			end
 		else
-			argc = monster.GetRnd(100) or argc
+			argc = monster.get_random(100) or argc
 			if argc < 70 then
-				argc = monster.GetRnd(100) or argc
+				argc = monster.get_random(100) or argc
 				if argc < 30 then
-					monster.SetMos("歩き", -1, 0)
+					monster.set_motion("歩き", -1, 0)
 					helper_83e135e0(vm.f32(4.8))
-					monster.SetMos("走り", -1, 0)
+					monster.set_motion("走り", -1, 0)
 					helper_e1c3e640(6.0, vm.f32(4.8), 30.0, 30)
 					helper_83e135e0(vm.f32(4.8))
 					helper_13074()
-					monster.SetMos("立ち", -1, 0)
+					monster.set_motion("立ち", -1, 0)
 					helper_ee5b84d4(3)
 				else
-					monster.SetMos("歩き", -1, 0)
+					monster.set_motion("歩き", -1, 0)
 					helper_83e135e0(vm.f32(4.8))
-					monster.SetMos("走り", -1, 0)
+					monster.set_motion("走り", -1, 0)
 					helper_e1c3e640(6.0, vm.f32(4.8), 30.0, 30)
 					helper_83e135e0(vm.f32(4.8))
 					helper_12f60()
-					monster.SetMos("立ち", -1, 0)
+					monster.set_motion("立ち", -1, 0)
 					helper_ee5b84d4(3)
 				end
 			else
-				monster.SetMos("走り", -1, 0)
+				monster.set_motion("走り", -1, 0)
 				helper_e1c3e640(6.0, vm.f32(4.8), 30.0, 90)
-				monster.SetMos("立ち", -1, 0)
+				monster.set_motion("立ち", -1, 0)
 			end
 		end
 	end
@@ -440,10 +440,10 @@ local function helper_187d8()
 	local var0: f32 = 0
 	local var1: f32 = 0
 	local gekirin: s32 = 0
-	gekirin = vm.float_bits(monster.GetGekirin()) or gekirin
+	gekirin = vm.float_bits(monster.get_rage_hits_left()) or gekirin
 	if gekirin > 0 then
 		helper_ade2dbe2()
-		var0 = monster.GetTargetDist() or var0
+		var0 = monster.get_target_distance() or var0
 		if helper_a25c5b2e() == 0 then
 			if var0 < 230.0 then
 				helper_16370()
@@ -475,21 +475,21 @@ function script.setup() end
 
 --- Sets the monster up when it is placed.
 function script.init()
-	monster.SetDmg2("Ｍ連撃１", 2.0, "攻撃１", 0.36, 0.5, 0, 1)
-	monster.SetDmg2("通常攻撃", 1.5, "攻撃２", 0.27, 0.5, 0)
-	monster.SetDmg2("通常攻撃", 2.0, "攻撃２", 0.27, 0.5, 1)
-	monster.SwEffect(0, "攻撃１", 0.25, 0.27, "dcol0", "dcol1", 77, 10, 30)
-	monster.SwEffect(0, "攻撃２", 0.3, 0.32, "dcol0", "dcol1", 77, 10, 30)
+	monster.register_damage_hit("Ｍ連撃１", 2.0, "攻撃１", 0.36, 0.5, 0, 1)
+	monster.register_damage_hit("通常攻撃", 1.5, "攻撃２", 0.27, 0.5, 0)
+	monster.register_damage_hit("通常攻撃", 2.0, "攻撃２", 0.27, 0.5, 1)
+	monster.add_sword_trail(0, "攻撃１", 0.25, 0.27, "dcol0", "dcol1", 77, 10, 30)
+	monster.add_sword_trail(0, "攻撃２", 0.3, 0.32, "dcol0", "dcol1", 77, 10, 30)
 	helper_3048()
 	helper_0a773d51(150)
 end
 
 --- Runs the monster's normal behaviour.
 function script.loop()
-	monster.SetIntFlag(1, 0)
-	monster.SetIntFlag(2, 0)
-	monster.SetActStatus(0)
-	monster.GetGekirin()
+	monster.set_mask_flags(1, 0)
+	monster.set_mask_flags(2, 0)
+	monster.set_action_status(0)
+	monster.get_rage_hits_left()
 	while true do
 		helper_b9fff8e1()
 		helper_187d8()
@@ -501,40 +501,40 @@ function script.on_status_hit()
 	local var0: s32 = 0
 	helper_5d37e9f4()
 	print("damage stop action-------------\n")
-	monster.SetMos("ダメージ", -1, 6)
-	monster.BlowStart(0.0, 0.0, 0)
+	monster.set_motion("ダメージ", -1, 6)
+	monster.start_knockback(0.0, 0.0, 0)
 	var0 = 1
 	while var0 ~= 0 do
-		var0 = monster.GetStsAttr(40) or var0
+		var0 = monster.get_status_ailments(40) or var0
 		helper_b9fff8e1()
 	end
-	monster.SetMos("立ち")
+	monster.set_motion("立ち")
 	helper_1ef0d4b2()
 end
 
 --- Reacts to a hit that staggers it.
 function script.on_damage()
 	helper_5d37e9f4()
-	monster.SetMos("ダメージ", -1, 6)
-	monster.BlowStart(4.0, 0.0, 3)
+	monster.set_motion("ダメージ", -1, 6)
+	monster.start_knockback(4.0, 0.0, 3)
 	helper_cbe4d8e2()
 	helper_ee5b84d4(12)
-	monster.SetMos("立ち")
+	monster.set_motion("立ち")
 	helper_1ef0d4b2()
 end
 
 --- Reacts to a hit that knocks it over.
 function script.on_knockdown()
 	helper_fd16d93e()
-	monster.SetMos("吹っ飛び", -1, 6)
-	monster.SetActStatus(1)
-	monster.BlowStart(3.0, 0.05, 20)
+	monster.set_motion("吹っ飛び", -1, 6)
+	monster.set_action_status(1)
+	monster.start_knockback(3.0, 0.05, 20)
 	helper_cbe4d8e2()
 	helper_ee5b84d4(45)
-	monster.SetActStatus(0)
-	monster.SetMos("起き上がり", -1, 6)
+	monster.set_action_status(0)
+	monster.set_motion("起き上がり", -1, 6)
 	helper_cbe4d8e2()
-	monster.SetMos("立ち")
+	monster.set_motion("立ち")
 	helper_6a21fe95()
 end
 
@@ -542,22 +542,22 @@ end
 function script.on_guard()
 	local argc: s32 = 0
 	helper_ab4b367a()
-	argc = monster.GetRnd(100) or argc
-	monster.ResetMotion()
-	monster.SetMos("ガードin", -1, 6)
+	argc = monster.get_random(100) or argc
+	monster.reset_motion()
+	monster.set_motion("ガードin", -1, 6)
 	helper_cbe4d8e2()
-	monster.SetMos("ガード", -1, 0)
-	monster.BlowStart(3.0, 0.0, 2)
+	monster.set_motion("ガード", -1, 0)
+	monster.start_knockback(3.0, 0.0, 2)
 	helper_ee5b84d4(8)
 	if argc < 30 then
 		helper_13074()
-		monster.SetMos("立ち", -1, 0)
+		monster.set_motion("立ち", -1, 0)
 		helper_ee5b84d4(3)
 	else
-		monster.SetMos("ガードout", -1, 2)
+		monster.set_motion("ガードout", -1, 2)
 		helper_cbe4d8e2()
 	end
-	monster.SetMos("立ち")
+	monster.set_motion("立ち")
 	helper_a551797e()
 end
 
@@ -565,16 +565,16 @@ end
 function script.on_dodge_1()
 	local argc: s32 = 0
 	helper_49610f43()
-	argc = monster.GetRnd(20) or argc
+	argc = monster.get_random(20) or argc
 	if argc < 20 then
-		monster.SetMos("歩き", -1, 0)
+		monster.set_motion("歩き", -1, 0)
 		helper_83e135e0(vm.f32(4.8))
 		helper_1229c()
-		monster.SetMos("歩き", -1, 0)
+		monster.set_motion("歩き", -1, 0)
 		helper_83e135e0(vm.f32(4.8))
-		monster.SetMos("立ち", -1, 0)
+		monster.set_motion("立ち", -1, 0)
 	else
-		monster.SetMos("ステップ後", -1, 0)
+		monster.set_motion("ステップ後", -1, 0)
 		helper_12a44(vm.f32(2.1000001))
 	end
 	helper_a551797e()
@@ -583,14 +583,14 @@ end
 --- Dodges the target's second kind of attack.
 function script.on_dodge_2()
 	helper_49610f43()
-	monster.SetMos("ガードin", -1, 6)
+	monster.set_motion("ガードin", -1, 6)
 	helper_cbe4d8e2()
-	monster.SetMos("ガード", -1, 0)
-	monster.BlowStart(3.0, 0.0, 2)
+	monster.set_motion("ガード", -1, 0)
+	monster.start_knockback(3.0, 0.0, 2)
 	helper_ee5b84d4(8)
-	monster.SetMos("ガードout", -1, 2)
+	monster.set_motion("ガードout", -1, 2)
 	helper_cbe4d8e2()
-	monster.SetMos("立ち")
+	monster.set_motion("立ち")
 	helper_a551797e()
 end
 
@@ -598,35 +598,35 @@ end
 function script.on_death()
 	local var0: f32 = 0
 	local argc: s32 = 0
-	argc = monster.GetRnd(100) or argc
+	argc = monster.get_random(100) or argc
 	if argc < 10 then
-		monster.ResetMove()
+		monster.stop_moving()
 		helper_442b9962()
-		monster.SetIntFlag(1, 1)
-		monster.SetIntFlag(2, 1)
-		monster.SetAttrib(32, 1)
-		monster.SetMos("死に", -1, 2)
+		monster.set_mask_flags(1, 1)
+		monster.set_mask_flags(2, 1)
+		monster.set_monster_attributes(32, 1)
+		monster.set_motion("死に", -1, 2)
 		helper_cbe4d8e2()
-		var0 = monster.GetRndf(0.3) or var0
+		var0 = monster.get_random_whole_number(0.3) or var0
 		var0 = vm.f32(var0 + vm.f32(0.2))
-		monster.SetMonsterLife(var0)
+		monster.set_life(var0)
 		helper_ee5b84d4(45)
-		monster.SetMos("起き上がり", -1, 2)
+		monster.set_motion("起き上がり", -1, 2)
 		helper_cbe4d8e2()
-		monster.SetIntFlag(1, 0)
-		monster.SetIntFlag(2, 0)
-		monster.SetAttrib(32, 0)
+		monster.set_mask_flags(1, 0)
+		monster.set_mask_flags(2, 0)
+		monster.set_monster_attributes(32, 0)
 		return
 	end
 	helper_02ce7891()
-	monster.SetMos("死に", -1, 6)
+	monster.set_motion("死に", -1, 6)
 	helper_56d63eae()
 	helper_193f5239()
 end
 
 --- Reacts to being caught by a frame that lifts it.
 function script.on_caught()
-	monster.SetMos("じたばた", -1, 4)
+	monster.set_motion("じたばた", -1, 4)
 	while true do
 		helper_b9fff8e1()
 	end
@@ -635,11 +635,11 @@ end
 --- Lands the monster after it has been thrown.
 function script.on_land()
 	helper_ba87ea88()
-	monster.ResetMove()
-	monster.SetShrowEnd()
+	monster.stop_moving()
+	monster.end_throw()
 	helper_ee5b84d4(10)
-	monster.ResetMotion()
-	monster.SetMos("起き上がり", -1, 6)
+	monster.reset_motion()
+	monster.set_motion("起き上がり", -1, 6)
 	helper_cbe4d8e2()
 	helper_b44b0a55()
 	return 1
@@ -648,9 +648,9 @@ end
 --- Stuns the monster.
 function script.on_stun()
 	helper_d30a9fa2()
-	monster.SetMos("吹っ飛び", -1, 6)
+	monster.set_motion("吹っ飛び", -1, 6)
 	helper_cbe4d8e2()
-	monster.SetMos("起き上がり", -1, 6)
+	monster.set_motion("起き上がり", -1, 6)
 	helper_cbe4d8e2()
 	helper_e05438b5()
 end

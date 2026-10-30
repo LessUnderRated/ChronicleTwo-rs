@@ -13,9 +13,9 @@ local function helper_89b88f27()
 	local player_chara: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		var0 = event.GetEventData_2(14) or var0
-		var1 = event.GetEventData_2(13) or var1
-		player_chara = event.GetControlChrid() or player_chara
+		var0 = event.get_triggered_event_data_2(14) or var0
+		var1 = event.get_triggered_event_data_2(13) or var1
+		player_chara = event.get_player_character_slot() or player_chara
 		if var0 <= 34 then
 			at = 1
 			helper_17bd8820(var1, player_chara)

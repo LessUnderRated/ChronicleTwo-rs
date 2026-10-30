@@ -10,11 +10,11 @@ local function helper_5a735084()
 	if helper_4a7d0940() == 0 then
 		return 0
 	end
-	flag = event.GetFlag(560) or flag
+	flag = event.get_save_flag(560) or flag
 	if flag ~= 0 then
 		return 0
 	end
-	var1 = event.CheckEnableCharaChange(1) or var1
+	var1 = event.get_character_change_state(1) or var1
 	if var1 == 0 then
 		return 0
 	end

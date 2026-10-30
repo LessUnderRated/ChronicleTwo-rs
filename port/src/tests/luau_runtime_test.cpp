@@ -728,7 +728,7 @@ TEST_F(LuauRuntime, NativeOutputsAreNilWhileSkipping) {
 
 TEST_F(LuauRuntime, NestedHelpersLoadNativeCommandsAndResumeInTheInstanceSandbox) {
     std::ofstream(root / "lib/boss_command.luau") << R"(
-local set_program = action.ProgSet
+local set_program = action.set_program_value
 return function(value) set_program(value) end
 )";
     std::ofstream(root / "lib/boss_setup.luau") << R"(
@@ -765,7 +765,7 @@ TEST_F(LuauRuntime, ItemMenuResultReachesTheScriptAfterTheMenuExits) {
     std::ofstream(root / "map" / "deferred_menu.luau") << R"(
 local script = {}
 function script.event_3()
-    event.GotoUseItem(376)
+    event.open_use_item_menu(376)
     coroutine.yield()
     return vmhost.used_item() or -1
 end
@@ -788,7 +788,7 @@ return script
 
 TEST_F(LuauRuntime, ItemMenuOfARetiredScriptWritesNothing) {
     std::ofstream(root / "map" / "cancelled_menu.luau") << R"(
-return { event_3 = function() event.GotoUseItem(376) coroutine.yield() end }
+return { event_3 = function() event.open_use_item_menu(376) coroutine.yield() end }
 )";
     std::ofstream(root / "map" / "used_item_probe.luau") << R"(
 return { event_3 = function() return vmhost.used_item() or -1 end }
@@ -835,9 +835,9 @@ TEST_F(LuauRuntime, RetiredArenaStorageDropsTheInstanceBeforeReadingItsPoisonedC
 TEST_F(LuauRuntime, NativeTextRemainsBoundedAcrossNestedCallsAndRetainedCopiesOutliveCallFrames) {
     {
         std::ofstream output(root / "facade" / "text_lifetime.luau");
-        output << "return {[200]=function() action.SetPallet(4,'outer');"
-                  "action.SetPallet(4,'replacement') end,"
-                  "[201]=function() action.Ext(200,'inner') end}";
+        output << "return {[200]=function() action.start_palette_flash(4,'outer');"
+                  "action.start_palette_flash(4,'replacement') end,"
+                  "[201]=function() action.call_command(200,'inner') end}";
     }
     static char key;
     auto       *storage = reinterpret_cast<u_long128 *>(ArenaBlock(&key, 1024 * sizeof(u_long128)));

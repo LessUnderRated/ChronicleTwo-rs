@@ -7,8 +7,8 @@ local interpolate = require("@lib/event/interpolate")
 
 --- Helper function.
 local function helper_2484(arg0: s32, arg1: s32)
-	event.Ext(800, 0, arg0, arg1) -- retail: command 800 is not registered
-	event.MesMake_2(0, arg1)
+	event.call_command(800, 0, arg0, arg1) -- retail: command 800 is not registered
+	event.open_message_window_2(0, arg1)
 	vm.wait(1)
 end
 
@@ -59,26 +59,26 @@ function script.default_event()
 	local var7: f32 = 0
 	local pos_x: f32 = 0
 	local pos_z: f32 = 0
-	event.Initialize()
+	event.initialize_event()
 	vm.wait(1)
 	var0 = 0.0
 	var1 = 300.0
 	while var0 <= var1 do
-		event.SetCameraPos(168.64, 58.93, -170.8)
-		event.SetCameraRef(134.38, 0.0, 16.4)
+		event.set_camera_position(168.64, 58.93, -170.8)
+		event.set_camera_look_at(134.38, 0.0, 16.4)
 		var0 = vm.f32(var0 + 1.0)
 		vm.wait(2)
 	end
-	event.AsqInit(0)
-	event.AsqSyncChara(0, 3)
-	event.AsqSetPos(0, 203.3, 0, -51.0)
-	event.AsqSetRot(0, 0.0)
-	event.AsqMotionPlay(0, "歩き")
-	event.AsqMotionTrg(0)
-	event.AsqRotRef(0, 71.9, 0, 58.4, 0.1)
-	event.AsqMove(0, 71.9, 0, 58.4, 100)
-	event.AsqMotionPlay(0, "立ち")
-	event.AsqMotionTrg(0)
+	event.asq_initialize(0)
+	event.asq_sync_character(0, 3)
+	event.asq_set_position(0, 203.3, 0, -51.0)
+	event.asq_set_rotation(0, 0.0)
+	event.asq_motion_play(0, "歩き")
+	event.asq_motion_trigger(0)
+	event.asq_rotate_toward_position(0, 71.9, 0, 58.4, 0.1)
+	event.asq_move(0, 71.9, 0, 58.4, 100)
+	event.asq_motion_play(0, "立ち")
+	event.asq_motion_trigger(0)
 	var2 = vm.f32(203.3)
 	var5 = vm.f32(71.9)
 	var3 = vm.f32(97.4)
@@ -91,7 +91,7 @@ function script.default_event()
 		pos_x = interpolate(var2, var5, var0, var1)
 		local _ = interpolate(var3, var6, var0, var1)
 		pos_z = interpolate(var4, var7, var0, var1)
-		event.SetCameraRef(pos_x, 0, pos_z)
+		event.set_camera_look_at(pos_x, 0, pos_z)
 		var0 = vm.f32(var0 + 1.0)
 		vm.wait(3)
 	end
@@ -100,13 +100,13 @@ end
 --- Event 200, which map data, a script or the engine runs by number.
 function script.event_200()
 	helper_888ab2a3(10)
-	event.GotoInterior(-1, "i01h01", 123)
+	event.go_to_interior_map(-1, "i01h01", 123)
 end
 
 --- Event 201, which map data, a script or the engine runs by number.
 function script.event_201()
 	helper_888ab2a3(10)
-	event.GotoInterior(-1, "i02h01", 123)
+	event.go_to_interior_map(-1, "i02h01", 123)
 end
 
 return script

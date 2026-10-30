@@ -25,70 +25,70 @@ local global1: s32 = 0
 --- Helper function.
 local function helper_19e04()
 	local active_chr_no: s32 = 0
-	event.SetMesWindowMode(0, 7)
-	event.SetStatusbarShow(0, 1.0)
-	event.AssignStack(5)
-	event.ClearStack(5)
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	event.set_message_window_mode(0, 7)
+	event.show_dungeon_status_bar(0, 1.0)
+	event.assign_memory_stack(5)
+	event.clear_memory_stack(5)
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no == 2 then
-		event.DngSetupMainUnit(0)
+		event.switch_dungeon_main_character(0)
 		active_chr_no = 0
 	end
 	if active_chr_no == 3 then
-		event.DngSetupMainUnit(1)
+		event.switch_dungeon_main_character(1)
 		active_chr_no = 1
 	end
 	if active_chr_no == 0 then
 		global0 = 0
 		global1 = 8
-		event.LoadMotion(5, "event/basic_evmot/mints_set.gltf", "info", global0)
-		event.LoadMotion(5, "event/e700/e732/e732_mints.gltf", "info", global0)
-		event.EohSyncChara(0, global0)
-		event.ObjsInit(0)
-		event.ObjsSyncObj(0, 0)
-		event.CharaActive(0, global0)
-		event.LoadChara(5, "chara/c02_base.gltf", "info", global1)
-		event.LoadEquip(5, 1, 1, "info", global1, 17)
-		event.LoadEquip(5, 1, 0, "info", global1, 18)
-		event.LoadEquip(5, 1, 4, "info", global1)
-		event.LoadEquip(5, 1, 3, "info", global1)
-		event.LoadEquip(5, 1, 2, "info", global1, 13)
-		event.LoadMotion(5, "event/basic_evmot/monica_set.gltf", "info", global1)
-		event.LoadMotion(5, "event/e700/e732/e732_monica.gltf", "info", global1)
-		event.EohSyncChara(1, global1)
-		event.ObjsInit(1)
-		event.ObjsSyncObj(1, 1)
-		event.CharaActive(0, global1)
-		event.CharaActive(1, 13)
+		event.load_character_motion_pack(5, "event/basic_evmot/mints_set.gltf", "info", global0)
+		event.load_character_motion_pack(5, "event/e700/e732/e732_mints.gltf", "info", global0)
+		event.attach_object_handle_to_character(0, global0)
+		event.clear_object_sequence(0)
+		event.set_object_sequence_object(0, 0)
+		event.set_character_active(0, global0)
+		event.load_character(5, "chara/c02_base.gltf", "info", global1)
+		event.load_equipment_model(5, 1, 1, "info", global1, 17)
+		event.load_equipment_model(5, 1, 0, "info", global1, 18)
+		event.load_equipment_model(5, 1, 4, "info", global1)
+		event.load_equipment_model(5, 1, 3, "info", global1)
+		event.load_equipment_model(5, 1, 2, "info", global1, 13)
+		event.load_character_motion_pack(5, "event/basic_evmot/monica_set.gltf", "info", global1)
+		event.load_character_motion_pack(5, "event/e700/e732/e732_monica.gltf", "info", global1)
+		event.attach_object_handle_to_character(1, global1)
+		event.clear_object_sequence(1)
+		event.set_object_sequence_object(1, 1)
+		event.set_character_active(0, global1)
+		event.set_character_active(1, 13)
 	end
 	if active_chr_no == 1 then
 		global0 = 8
 		global1 = 0
-		event.LoadChara(5, "chara/c01_base.gltf", "info", global0)
-		event.LoadEquip(5, 0, 1, "info", global0, 17)
-		event.LoadEquip(5, 0, 0, "info", global0, 18)
-		event.LoadEquip(5, 0, 4, "info", global0)
-		event.LoadEquip(5, 0, 3, "info", global0)
-		event.LoadEquip(5, 0, 2, "info", global0, 13)
-		event.LoadMotion(5, "event/basic_evmot/mints_set.gltf", "info", global0)
-		event.LoadMotion(5, "event/e700/e732/e732_mints.gltf", "info", global0)
-		event.EohSyncChara(0, global0)
-		event.ObjsInit(0)
-		event.ObjsSyncObj(0, 0)
-		event.CharaActive(0, global0)
-		event.CharaActive(1, 13)
-		event.LoadMotion(5, "event/basic_evmot/monica_set.gltf", "info", global1)
-		event.LoadMotion(5, "event/e700/e732/e732_monica.gltf", "info", global1)
-		event.EohSyncChara(1, global1)
-		event.ObjsInit(1)
-		event.ObjsSyncObj(1, 1)
-		event.CharaActive(0, global1)
+		event.load_character(5, "chara/c01_base.gltf", "info", global0)
+		event.load_equipment_model(5, 0, 1, "info", global0, 17)
+		event.load_equipment_model(5, 0, 0, "info", global0, 18)
+		event.load_equipment_model(5, 0, 4, "info", global0)
+		event.load_equipment_model(5, 0, 3, "info", global0)
+		event.load_equipment_model(5, 0, 2, "info", global0, 13)
+		event.load_character_motion_pack(5, "event/basic_evmot/mints_set.gltf", "info", global0)
+		event.load_character_motion_pack(5, "event/e700/e732/e732_mints.gltf", "info", global0)
+		event.attach_object_handle_to_character(0, global0)
+		event.clear_object_sequence(0)
+		event.set_object_sequence_object(0, 0)
+		event.set_character_active(0, global0)
+		event.set_character_active(1, 13)
+		event.load_character_motion_pack(5, "event/basic_evmot/monica_set.gltf", "info", global1)
+		event.load_character_motion_pack(5, "event/e700/e732/e732_monica.gltf", "info", global1)
+		event.attach_object_handle_to_character(1, global1)
+		event.clear_object_sequence(1)
+		event.set_object_sequence_object(1, 1)
+		event.set_character_active(0, global1)
 	end
-	event.EohSyncObj_2(6, "p06_d06b03-0")
-	event.EohSetShow(6, 0)
-	event.CharaActive(1, 17)
-	event.CharaActive(1, 18)
-	event.LoadMes(0, 5, "event/e700/e732/e732_1.txt")
+	event.attach_object_handle_to_map_part_2(6, "p06_d06b03-0")
+	event.set_object_handle_visible(6, 0)
+	event.set_character_active(1, 17)
+	event.set_character_active(1, 18)
+	event.load_message_file(0, 5, "event/e700/e732/e732_1.txt")
 end
 
 --- Helper function.
@@ -107,34 +107,34 @@ end
 --- Helper function.
 local function helper_19958()
 	local active_chr_no: s32 = 0
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no == 0 then
-		event.CharaActive(1, global0)
-		event.CharaActive(0, global1)
-		event.DelExtMotion(global0)
-		event.DelExtMotion(global1)
-		event.DeleteChara(global1)
-		event.DeleteChara(13)
-		event.DeleteChara(17)
-		event.DeleteChara(18)
+		event.set_character_active(1, global0)
+		event.set_character_active(0, global1)
+		event.delete_character_extension_packs(global0)
+		event.delete_character_extension_packs(global1)
+		event.delete_character(global1)
+		event.delete_character(13)
+		event.delete_character(17)
+		event.delete_character(18)
 	end
 	if active_chr_no == 1 then
-		event.CharaActive(1, global1)
-		event.CharaActive(0, global0)
-		event.DelExtMotion(global0)
-		event.DelExtMotion(global1)
-		event.DeleteChara(global0)
-		event.DeleteChara(13)
-		event.DeleteChara(17)
-		event.DeleteChara(18)
+		event.set_character_active(1, global1)
+		event.set_character_active(0, global0)
+		event.delete_character_extension_packs(global0)
+		event.delete_character_extension_packs(global1)
+		event.delete_character(global0)
+		event.delete_character(13)
+		event.delete_character(17)
+		event.delete_character(18)
 	end
-	event.EohSetShow(6, 1)
-	event.EohSyncChara(2, 1)
-	event.EohSetShow(2, 1)
-	event.EohSyncChara(3, 2)
-	event.EohSetShow(3, 1)
-	event.SetStatusbarShow(1, 1.0)
-	event.Finish()
+	event.set_object_handle_visible(6, 1)
+	event.attach_object_handle_to_character(2, 1)
+	event.set_object_handle_visible(2, 1)
+	event.attach_object_handle_to_character(3, 2)
+	event.set_object_handle_visible(3, 1)
+	event.show_dungeon_status_bar(1, 1.0)
+	event.finish_event()
 	vm.wait(1)
 end
 
@@ -143,136 +143,136 @@ local function helper_1ae20()
 	local projection: f32 = 0
 	local at: number = 0
 	vm.section(function()
-		event.SetFlag(732, 1)
-		event.Initialize()
-		event.SetMesWindowMode(0, 7)
-		event.StopBgm(0)
+		event.set_save_flag(732, 1)
+		event.initialize_event()
+		event.set_message_window_mode(0, 7)
+		event.stop_music(0)
 		at = 1
 		wait_frames(4)
-		event.LoadBgm(53)
-		event.PlayBgm(0)
-		event.LoadSound(7841)
+		event.load_music(53)
+		event.play_music(0)
+		event.load_map_sounds(7841)
 		helper_19e04()
-		projection = event.GetProjection() or projection
-		event.InitDramaScene()
-		event.EohSyncChara(2, 1)
-		event.EohSetShow(2, 0)
-		event.EohSyncChara(3, 2)
-		event.EohSetShow(3, 0)
-		event.CharaActive(0, 17)
-		event.CharaActive(0, 18)
-		event.ObjsTexAnime(0, 0)
-		event.ObjsTexAnime(0, 1, "デフォルト顔")
-		event.ObjsTexAnime(0, 1, "通常目パチ")
-		event.ObjsTexAnime(1, 0)
-		event.ObjsTexAnime(1, 1, "デフォルト顔")
-		event.ObjsTexAnime(1, 1, "通常目パチ")
-		event.CharaActive(1, global0)
-		event.CharaActive(1, global1)
-		event.CmrsSetPos(281.98, 20.1, 298.37)
-		event.CmrsSetRef(1436.08, 1324.63, 1446.43)
-		event.ObjsSetMotion(0, "上向くL", 4, -1.0, 1)
-		event.ObjsSetMotion(1, "上向くL", 4, -1.0, 1)
-		event.ObjsSetPos(0, 457.63, 0.0, 460.14)
-		event.ObjsSetRot(0, 0.0, 0.72, 0.0)
-		event.ObjsSetPos(1, 443.3, 0.0, 472.44)
-		event.ObjsSetRot(1, 0.0, 0.72, 0.0)
-		event.SetFadeIn(30)
+		projection = event.get_event_projection() or projection
+		event.enable_drama_skip()
+		event.attach_object_handle_to_character(2, 1)
+		event.set_object_handle_visible(2, 0)
+		event.attach_object_handle_to_character(3, 2)
+		event.set_object_handle_visible(3, 0)
+		event.set_character_active(0, 17)
+		event.set_character_active(0, 18)
+		event.set_object_sequence_texture_animation(0, 0)
+		event.set_object_sequence_texture_animation(0, 1, "デフォルト顔")
+		event.set_object_sequence_texture_animation(0, 1, "通常目パチ")
+		event.set_object_sequence_texture_animation(1, 0)
+		event.set_object_sequence_texture_animation(1, 1, "デフォルト顔")
+		event.set_object_sequence_texture_animation(1, 1, "通常目パチ")
+		event.set_character_active(1, global0)
+		event.set_character_active(1, global1)
+		event.set_camera_sequence_position(281.98, 20.1, 298.37)
+		event.set_camera_sequence_look_at(1436.08, 1324.63, 1446.43)
+		event.set_object_sequence_motion(0, "上向くL", 4, -1.0, 1)
+		event.set_object_sequence_motion(1, "上向くL", 4, -1.0, 1)
+		event.set_object_sequence_position(0, 457.63, 0.0, 460.14)
+		event.set_object_sequence_rotation(0, 0.0, 0.72, 0.0)
+		event.set_object_sequence_position(1, 443.3, 0.0, 472.44)
+		event.set_object_sequence_rotation(1, 0.0, 0.72, 0.0)
+		event.fade_in_screen(30)
 		at = 2
 		wait_frames(15)
-		event.CmrsInitPas()
-		event.CmrsSetPasFrm(200)
-		event.CmrsAddPas(281.98, 20.1, 298.37, 1436.08, 1324.63, 1446.43)
-		event.CmrsAddPas(281.98, 20.1, 298.37, 1436.08, 215.39, 1446.43)
-		event.CmrsStartPas()
+		event.clear_camera_sequence_path()
+		event.set_camera_sequence_path_frames(200)
+		event.add_camera_sequence_path_point(281.98, 20.1, 298.37, 1436.08, 1324.63, 1446.43)
+		event.add_camera_sequence_path_point(281.98, 20.1, 298.37, 1436.08, 215.39, 1446.43)
+		event.start_camera_sequence_path()
 		at = 3
 		wait_camera()
 		at = 4
 		wait_frames(30)
-		event.CmrsSetPos(520.35, 27.62, 447.72)
-		event.CmrsSetRef(443.3, 23.28, 472.44)
-		event.SetPakuAnim(1, "通常口パク")
+		event.set_camera_sequence_position(520.35, 27.62, 447.72)
+		event.set_camera_sequence_look_at(443.3, 23.28, 472.44)
+		event.set_mouth_texture_animations(1, "通常口パク")
 		at = 5
 		helper_1584c528(7320210, -1)
-		event.ResetPakuAnim()
+		event.reset_mouth_texture_animations()
 		at = 6
 		wait_frames(30)
-		event.SetPakuAnim(1, "通常口パク")
+		event.set_mouth_texture_animations(1, "通常口パク")
 		at = 7
 		helper_1584c528(7320215, -1)
-		event.ResetPakuAnim()
+		event.reset_mouth_texture_animations()
 		at = 8
 		wait_frames(30)
-		event.SetPakuAnim(1, "通常口パク")
+		event.set_mouth_texture_animations(1, "通常口パク")
 		at = 9
 		helper_1584c528(7320220, -1)
-		event.ResetPakuAnim()
+		event.reset_mouth_texture_animations()
 		at = 10
 		wait_frames(30)
-		event.CmrsSetPos(422.7, -0.4, 438.35)
-		event.CmrsSetRef(1436.08, 1232.78, 1446.43)
-		event.SetPakuAnim(0, "通常口パク")
+		event.set_camera_sequence_position(422.7, -0.4, 438.35)
+		event.set_camera_sequence_look_at(1436.08, 1232.78, 1446.43)
+		event.set_mouth_texture_animations(0, "通常口パク")
 		at = 11
 		helper_1584c528(7320230, -1)
-		event.ResetPakuAnim()
+		event.reset_mouth_texture_animations()
 		at = 12
 		wait_frames(30)
-		event.SetPakuAnim(0, "通常口パク")
+		event.set_mouth_texture_animations(0, "通常口パク")
 		at = 13
 		helper_1584c528(7320240, -1)
-		event.ResetPakuAnim()
+		event.reset_mouth_texture_animations()
 		at = 14
 		wait_frames(30)
-		event.ObjsSetMotion(0, "上→右", 6)
-		event.ObjsNextMotion(0, "右向くL", 4)
-		event.SetPakuAnim(0, "通常口パク")
+		event.set_object_sequence_motion(0, "上→右", 6)
+		event.queue_object_sequence_next_motion(0, "右向くL", 4)
+		event.set_mouth_texture_animations(0, "通常口パク")
 		at = 15
 		helper_1584c528(7320250, -1)
-		event.ResetPakuAnim()
+		event.reset_mouth_texture_animations()
 		at = 16
 		wait_objects(0)
 		at = 17
 		wait_frames(30)
-		event.SetProjection(projection)
-		event.CmrsSetPos(520.35, 27.62, 447.72)
-		event.CmrsSetRef(443.3, 23.28, 472.44)
-		event.SetPakuAnim(0, "通常口パク")
+		event.set_event_projection(projection)
+		event.set_camera_sequence_position(520.35, 27.62, 447.72)
+		event.set_camera_sequence_look_at(443.3, 23.28, 472.44)
+		event.set_mouth_texture_animations(0, "通常口パク")
 		at = 18
 		helper_1584c528(7320255, -1)
-		event.ResetPakuAnim()
+		event.reset_mouth_texture_animations()
 		at = 19
 		wait_frames(15)
-		event.ObjsSetMotion(1, "上から左", 6)
-		event.ObjsNextMotion(1, "左向くL", 4)
-		event.ObjsMotionDelay(1, 60)
-		event.ObjsSetMotion(1, "詩人ね", 6)
-		event.ObjsNextMotion(1, "詩人ねL", 4)
-		event.SetPakuAnim(1, "わらい口パク")
+		event.set_object_sequence_motion(1, "上から左", 6)
+		event.queue_object_sequence_next_motion(1, "左向くL", 4)
+		event.delay_object_sequence_motion_track(1, 60)
+		event.set_object_sequence_motion(1, "詩人ね", 6)
+		event.queue_object_sequence_next_motion(1, "詩人ねL", 4)
+		event.set_mouth_texture_animations(1, "わらい口パク")
 		at = 20
 		helper_1584c528(7320260, -1)
-		event.ResetPakuAnim()
+		event.reset_mouth_texture_animations()
 		at = 21
 		wait_objects(0)
 		at = 22
 		wait_objects(1)
-		event.ObjsTexAnime(0, 0)
-		event.ObjsTexAnime(0, 1, "デフォルト顔")
-		event.ObjsTexAnime(0, 1, "前向き～下向き")
-		event.ObjsSetMotion(0, "そうかな", 6)
-		event.ObjsNextMotion(0, "そうかなL", 4)
-		event.SetPakuAnim(0, "わらい口パク")
+		event.set_object_sequence_texture_animation(0, 0)
+		event.set_object_sequence_texture_animation(0, 1, "デフォルト顔")
+		event.set_object_sequence_texture_animation(0, 1, "前向き～下向き")
+		event.set_object_sequence_motion(0, "そうかな", 6)
+		event.queue_object_sequence_next_motion(0, "そうかなL", 4)
+		event.set_mouth_texture_animations(0, "わらい口パク")
 		at = 23
 		helper_1584c528(7320270, -1)
-		event.ResetPakuAnim()
+		event.reset_mouth_texture_animations()
 		at = 24
 		wait_objects(0)
 		at = 25
 		wait_frames(30)
-		event.SetProjection(projection)
-		event.ObjsSetMotion(0, "上向くL", 4, -1.0, 1)
-		event.ObjsSetMotion(1, "上向くL", 4, -1.0, 1)
-		event.CmrsSetPos(281.98, 20.1, 298.37)
-		event.CmrsSetRef(1436.08, 215.39, 1446.43)
+		event.set_event_projection(projection)
+		event.set_object_sequence_motion(0, "上向くL", 4, -1.0, 1)
+		event.set_object_sequence_motion(1, "上向くL", 4, -1.0, 1)
+		event.set_camera_sequence_position(281.98, 20.1, 298.37)
+		event.set_camera_sequence_look_at(1436.08, 215.39, 1446.43)
 		at = 26
 		helper_1584c528(7320280, -1)
 		at = 27
@@ -287,7 +287,7 @@ local function helper_1ae20()
 		wait_frames(30)
 		at = 32
 		helper_1584c528(7320295, -1)
-		event.CmrsMove2(281.98, 20.1, 298.37, 1436.08, 1963.82, 1446.43, 300, 0, 1.0)
+		event.move_camera_sequence_eased(281.98, 20.1, 298.37, 1436.08, 1963.82, 1446.43, 300, 0, 1.0)
 		at = 33
 		wait_frames(30)
 		at = 34
@@ -306,13 +306,13 @@ local function helper_1ae20()
 		helper_1584c528(7320330, -1)
 		at = 41
 		wait_frames(30)
-		event.ObjsTexAnime(0, 0)
-		event.ObjsTexAnime(0, 1, "デフォルト顔")
-		event.ObjsTexAnime(0, 1, "通常目パチ")
-		event.CmrsSetPos(539.13, 94.76, 524.34)
-		event.CmrsSetRef(457.63, 10.5, 460.14)
-		event.CmrsMove2(484.6, 41.24, 479.15, 471.35, 30.37, 469.8, 300, 2, 1.0)
-		event.SetCrossfade(30)
+		event.set_object_sequence_texture_animation(0, 0)
+		event.set_object_sequence_texture_animation(0, 1, "デフォルト顔")
+		event.set_object_sequence_texture_animation(0, 1, "通常目パチ")
+		event.set_camera_sequence_position(539.13, 94.76, 524.34)
+		event.set_camera_sequence_look_at(457.63, 10.5, 460.14)
+		event.move_camera_sequence_eased(484.6, 41.24, 479.15, 471.35, 30.37, 469.8, 300, 2, 1.0)
+		event.start_crossfade(30)
 		at = 42
 		helper_1584c528(7320340, -1)
 		at = 43
@@ -327,31 +327,31 @@ local function helper_1ae20()
 		wait_camera()
 		at = 48
 		wait_frames(30)
-		event.ObjsSetMotion(0, "帽子取る", 6)
-		event.ObjsNextMotion(0, "帽子取るL", 4)
+		event.set_object_sequence_motion(0, "帽子取る", 6)
+		event.queue_object_sequence_next_motion(0, "帽子取るL", 4)
 		at = 49
 		helper_1584c528(7320370, -1)
 		at = 50
 		wait_objects(0)
-		event.ObjsSetMotion(0, "ぶるぶる", 6)
-		event.ObjsNextMotion(0, "帽子取るL", 4)
+		event.set_object_sequence_motion(0, "ぶるぶる", 6)
+		event.queue_object_sequence_next_motion(0, "帽子取るL", 4)
 		at = 51
 		helper_1584c528(7320380, -1)
 		at = 52
 		wait_objects(0)
-		event.SetProjection(182.9)
-		event.CmrsInitPas()
-		event.CmrsSetPasFrm(240)
-		event.CmrsAddPas(422.7, 30.65, 438.35, 1436.08, 349.8, 1446.43)
-		event.CmrsAddPas(353.73, 30.65, 369.74, 1436.08, 349.8, 1446.43)
-		event.CmrsStartPas()
+		event.set_event_projection(182.9)
+		event.clear_camera_sequence_path()
+		event.set_camera_sequence_path_frames(240)
+		event.add_camera_sequence_path_point(422.7, 30.65, 438.35, 1436.08, 349.8, 1446.43)
+		event.add_camera_sequence_path_point(353.73, 30.65, 369.74, 1436.08, 349.8, 1446.43)
+		event.start_camera_sequence_path()
 		at = 53
 		wait_frames(180)
-		event.FadeOutBgm(60)
-		event.SetFadeOut(60)
+		event.fade_out_music(60)
+		event.fade_out_screen(60)
 		at = 54
 		wait_frames(60)
-		event.StopBgm(0)
+		event.stop_music(0)
 	end, function(received: { any }): boolean
 		if at <= 1 then
 			helper_22300000()
@@ -515,8 +515,8 @@ local function helper_1ae20()
 		end
 		return true
 	end)
-	event.CancelDramaScene()
-	event.SetProjection(projection)
+	event.cancel_drama_scene_skip()
+	event.set_event_projection(projection)
 	at = 55
 	helper_19958()
 end
@@ -534,35 +534,35 @@ function script.event_99() end
 function script.default_event()
 	local flag: s32 = 0
 	local active_chr_no: s32 = 0
-	event.Initialize()
-	flag = event.GetFlag(728) or flag
+	event.initialize_event()
+	flag = event.get_save_flag(728) or flag
 	if flag == 1 then
-		active_chr_no = event.GetActiveChrNo() or active_chr_no
+		active_chr_no = event.get_playable_character() or active_chr_no
 		if active_chr_no == 2 then
-			event.DngSetupMainUnit(0)
+			event.switch_dungeon_main_character(0)
 		end
 		if active_chr_no == 3 then
-			event.DngSetupMainUnit(1)
+			event.switch_dungeon_main_character(1)
 		end
-		event.SetStatusbarShow(0, 1.0)
+		event.show_dungeon_status_bar(0, 1.0)
 		helper_d42be94f()
-		event.SetStatusbarShow(1, 1.0)
-		event.LoadMonsterFile(621, 1)
-		event.LoadMonsterFile(622, 0)
-		event.AutoSetMonster(621, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
-		event.AutoSetMonster(622, -3.84976, 5016.45, 9390.18, 1.0471976, 0.0, 0.0)
-		event.Stopwatch(3, 350, 370, 1)
-		event.Stopwatch(2, 18000)
-		event.Stopwatch_1(0)
+		event.show_dungeon_status_bar(1, 1.0)
+		event.load_dungeon_monster(621, 1)
+		event.load_dungeon_monster(622, 0)
+		event.place_dungeon_monster(621, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+		event.place_dungeon_monster(622, -3.84976, 5016.45, 9390.18, 1.0471976, 0.0, 0.0)
+		event.control_stopwatch(3, 350, 370, 1)
+		event.control_stopwatch(2, 18000)
+		event.control_stopwatch_1(0)
 	end
-	event.SetCharaPos(0, 0.0, 0.0, -400.0)
-	event.SetCharaRot(0, 0.0, 0.0, 0.0)
-	event.SetCameraRef(0.0, 30.0, -400.0)
-	event.SetCameraPos(0.0, 40.0, -520.0)
-	event.ResetCamera(0)
+	event.set_character_position(0, 0.0, 0.0, -400.0)
+	event.set_character_rotation(0, 0.0, 0.0, 0.0)
+	event.set_camera_look_at(0.0, 30.0, -400.0)
+	event.set_camera_position(0.0, 40.0, -520.0)
+	event.reset_follow_camera(0)
 	vm.wait(2)
-	event.SetFadeIn(30)
-	event.Finish()
+	event.fade_in_screen(30)
+	event.finish_event()
 end
 
 --- The event the town walk runs when the square button is pressed, after reloading the map script.
@@ -577,47 +577,47 @@ function script.event_500()
 	local active_chr_no: s32 = 0
 	local active_chr_no_2: s32 = 0
 	print(">>>>>>>>>>>>>>>>>RUN 500\n")
-	event.Initialize()
-	event.ActchrSetDefMotion(0)
-	event.SetFadeOut(20)
+	event.initialize_event()
+	event.reset_action_character_motion(0)
+	event.fade_out_screen(20)
 	wait_frames(20)
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
+	active_chr_no = event.get_playable_character() or active_chr_no
 	if active_chr_no == 0 then
-		event.SetCharaCondition(0, 8, 1)
+		event.set_character_status(0, 8, 1)
 	end
 	if active_chr_no == 1 then
-		event.SetCharaCondition(1, 8, 1)
+		event.set_character_status(1, 8, 1)
 	end
-	event.DelMonster(-1)
-	event.SetFloorInfo(5, 27, 5, 2)
-	active_chr_no_2 = event.GetActiveChrNo() or active_chr_no_2
+	event.clear_event_battle_monsters(-1)
+	event.set_dungeon_floor_info(5, 27, 5, 2)
+	active_chr_no_2 = event.get_playable_character() or active_chr_no_2
 	if active_chr_no_2 == 2 then
-		event.DngSetupMainUnit(0)
+		event.switch_dungeon_main_character(0)
 	end
 	if active_chr_no_2 == 3 then
-		event.DngSetupMainUnit(1)
+		event.switch_dungeon_main_character(1)
 	end
-	event.GotoEdit(180, 500)
+	event.go_to_georama_edit(180, 500)
 end
 
 --- Event 510, which map data, a script or the engine runs by number.
 function script.event_510()
 	helper_1ae20()
-	event.SetSavedataEtc(0, 10)
+	event.set_save_data_value(0, 10)
 	vm.wait(2)
-	event.MapJump_3(-1, "s66", 520)
+	event.jump_to_map_3(-1, "s66", 520)
 end
 
 --- Event 550, which map data, a script or the engine runs by number.
 function script.event_550()
-	event.SetStatusbarShow(0, 1.0)
-	event.SetCharaShow(1, 0)
-	event.SetCharaShow(2, 0)
+	event.show_dungeon_status_bar(0, 1.0)
+	event.set_character_visible(1, 0)
+	event.set_character_visible(2, 0)
 	helper_6018b985()
-	event.BgmLoadCancel()
+	event.skip_next_music_load()
 	vm.wait(2)
-	event.LoadDungeonMapFile("d06b02")
-	event.LoadScript("d06b02/d06b02.stb", 100)
+	event.load_dungeon_map("d06b02")
+	event.load_event_script("d06b02/d06b02.stb", 100)
 end
 
 --- Event 1200, which map data, a script or the engine runs by number.
@@ -627,10 +627,10 @@ function script.event_1200()
 	local var2: s32 = 0
 	local at: number = 0
 	return vm.guard(function()
-		flag = event.GetFlag(728) or flag
-		flag_2 = event.GetFlag(732) or flag_2
+		flag = event.get_save_flag(728) or flag
+		flag_2 = event.get_save_flag(732) or flag_2
 		if flag ~= 0 and flag_2 == 0 then
-			var2 = vm.float_bits(event.GetRand(100)) or var2
+			var2 = vm.float_bits(event.get_random_number(100)) or var2
 			if var2 < 50 then
 				at = 1
 				helper_47084b1b(0, 8570060)
@@ -669,68 +669,68 @@ function script.event_1201()
 	local debug_flag: s32 = 0
 	local load_no: s32 = 0
 	local boss_map: s32 = 0
-	event.Initialize()
-	event.DngPause(15, 1)
+	event.initialize_event()
+	event.set_dungeon_pause_flags(15, 1)
 	var0 = 0
-	event.Initialize()
-	var1 = event.SndLoadSound_3(8, "snd2/sp/sp_052.sound.json") or var1
-	event.AssignStack(5)
-	event.ClearStack(5)
-	event.DngPause(16384, 1)
-	event.SndSePlay(var1, 0)
-	event.SpriteInit(0)
-	event.SpriteSetType(0, 0)
-	event.SpriteSetPos(0, 256, 208)
-	event.SpriteSetPutsize(0, 512, 416)
-	event.SpriteSetColor(0, 128, 128, 128, 0)
-	event.SpriteSetDraw(0, 0)
-	event.EohSyncSprite(0, 0)
-	event.ObjsInit(0)
-	event.ObjsSyncObj(0, 0)
-	event.SpriteSetDraw(0, 1)
-	event.ObjsSetColor(0, 128, 128, 128, 128, 90)
+	event.initialize_event()
+	var1 = event.load_sound_effect_file_3(8, "snd2/sp/sp_052.sound.json") or var1
+	event.assign_memory_stack(5)
+	event.clear_memory_stack(5)
+	event.set_dungeon_pause_flags(16384, 1)
+	event.play_sound_effect(var1, 0)
+	event.reset_event_sprite(0)
+	event.set_event_sprite_type(0, 0)
+	event.set_event_sprite_position(0, 256, 208)
+	event.set_event_sprite_size(0, 512, 416)
+	event.set_event_sprite_color(0, 128, 128, 128, 0)
+	event.set_event_sprite_draw_pass(0, 0)
+	event.attach_object_handle_to_sprite(0, 0)
+	event.clear_object_sequence(0)
+	event.set_object_sequence_object(0, 0)
+	event.set_event_sprite_draw_pass(0, 1)
+	event.set_object_sequence_color(0, 128, 128, 128, 128, 90)
 	wait_frames(90)
-	event.GetActiveBgmStatus(-1)
-	var2 = event.GetEventInfoSndid(4) or var2
-	argc = event.GetSeStatus(var2, 0) or argc
-	battle_bgm_vol = event.GetBtlBgmVol() or battle_bgm_vol
-	event.SndSeStop(var2, 0)
-	event.StopBgm(0)
-	active_chr_no = event.GetActiveChrNo() or active_chr_no
-	event.SetLoadbgFile_2("snd2/bgm/bg_060.sound.json", "textures/dungeon/image/gameover.json")
+	event.save_music_status(-1)
+	var2 = event.get_event_sound_bank(4) or var2
+	argc = event.get_sound_effect_status(var2, 0) or argc
+	battle_bgm_vol = event.get_battle_music_volume() or battle_bgm_vol
+	event.stop_sound_effect(var2, 0)
+	event.stop_music(0)
+	active_chr_no = event.get_playable_character() or active_chr_no
+	event.start_background_file_loads_2("snd2/bgm/bg_060.sound.json", "textures/dungeon/image/gameover.json")
 	wait_frames(30)
 	helper_479dc9e9()
-	event.LoadBgmPack(60)
-	event.PlayBgm(0)
+	event.load_music_pack(60)
+	event.play_music(0)
 	wait_frames(30)
-	event.DngPause(1, 1)
-	event.DngCollisionAllClr()
-	block = event.LoadImg_4(5, "textures/dungeon/image/gameover.json", 0) or block
-	event.SpriteInit(1)
-	event.SpriteSetType(1, 0)
-	event.SpriteSetTexture(1, "gameover1", block)
-	event.SpriteSetColor(1, 128, 128, 128, 128)
-	event.SpriteSetUvsize(1, 0, 0, 576, 128)
-	event.SpriteSetPutsize(1, 576, 128)
-	event.SpriteSetPos(1, -320, 208)
-	event.SpriteSetDraw(1, 1)
-	event.EohSyncSprite(1, 1)
-	event.ObjsInit(1)
-	event.ObjsSyncObj(1, 1)
-	event.ObjsMove(1, 288, 208, 0.0, 20)
+	event.set_dungeon_pause_flags(1, 1)
+	event.reset_dungeon_collision_primitives()
+	block = event.load_event_image_4(5, "textures/dungeon/image/gameover.json", 0) or block
+	event.reset_event_sprite(1)
+	event.set_event_sprite_type(1, 0)
+	event.set_event_sprite_texture(1, "gameover1", block)
+	event.set_event_sprite_color(1, 128, 128, 128, 128)
+	event.set_event_sprite_texture_rect(1, 0, 0, 576, 128)
+	event.set_event_sprite_size(1, 576, 128)
+	event.set_event_sprite_position(1, -320, 208)
+	event.set_event_sprite_draw_pass(1, 1)
+	event.attach_object_handle_to_sprite(1, 1)
+	event.clear_object_sequence(1)
+	event.set_object_sequence_object(1, 1)
+	event.move_object_sequence(1, 288, 208, 0.0, 20)
 	wait_frames(30)
-	event.SpriteInit(2)
-	event.SpriteSetType(2, 0)
-	event.SpriteSetTexture(2, "gameover1", block)
-	event.SpriteSetColor(2, 128, 128, 128, 0)
-	event.SpriteSetUvsize(2, 0, 128, 576, 64)
-	event.SpriteSetPutsize(2, 576, 64)
-	event.SpriteSetPos(2, 256, 208)
-	event.SpriteSetDraw(2, 1)
-	event.EohSyncSprite(2, 2)
-	event.ObjsInit(2)
-	event.ObjsSyncObj(2, 2)
-	event.ObjsSetColor(2, 128, 128, 128, 128, 120)
+	event.reset_event_sprite(2)
+	event.set_event_sprite_type(2, 0)
+	event.set_event_sprite_texture(2, "gameover1", block)
+	event.set_event_sprite_color(2, 128, 128, 128, 0)
+	event.set_event_sprite_texture_rect(2, 0, 128, 576, 64)
+	event.set_event_sprite_size(2, 576, 64)
+	event.set_event_sprite_position(2, 256, 208)
+	event.set_event_sprite_draw_pass(2, 1)
+	event.attach_object_handle_to_sprite(2, 2)
+	event.clear_object_sequence(2)
+	event.set_object_sequence_object(2, 2)
+	event.set_object_sequence_color(2, 128, 128, 128, 128, 120)
 	wait_frames(120)
 	while true do
 		if helper_581cb30c(0) ~= 0 then
@@ -739,59 +739,59 @@ function script.event_1201()
 			vm.wait(7)
 		end
 	end
-	debug_flag = event.GetDebugFlag() or debug_flag
+	debug_flag = event.get_debug_flag() or debug_flag
 	debug_flag = 0
 	if debug_flag == 1 then
-		event.DngDebugCommand(0)
-		event.ActchrSetDefMotion(0, 4)
+		event.run_dungeon_debug_command(0)
+		event.reset_action_character_motion(0, 4)
 	else
-		event.FadeOutBgm(30)
-		event.SetFadeOut(30)
+		event.fade_out_music(30)
+		event.fade_out_screen(30)
 		wait_frames(30)
 		if active_chr_no == 2 then
-			event.EsmClear()
+			event.clear_effect_manager()
 		end
-		event.StopBgm(0)
-		event.SpriteSetDraw(0, 0)
-		event.SpriteSetDraw(1, 0)
-		event.DelImg(0)
+		event.stop_music(0)
+		event.set_event_sprite_draw_pass(0, 0)
+		event.set_event_sprite_draw_pass(1, 0)
+		event.delete_event_image(0)
 		if var0 == 1 then
-			event.AddHpRate(1.0, 0)
-			event.AddWhp(0, 999)
-			event.AddWhp(1, 999)
-			event.DngRunEvent(-1)
-			event.DelMonster(-1)
-			event.DngPause(1, 0)
-			event.Finish()
+			event.add_hp_by_rate(1.0, 0)
+			event.add_battle_weapon_durability(0, 999)
+			event.add_battle_weapon_durability(1, 999)
+			event.run_dungeon_event(-1)
+			event.clear_event_battle_monsters(-1)
+			event.set_dungeon_pause_flags(1, 0)
+			event.finish_event()
 			return 1
 		else
-			event.SetExitFlag(1)
-			event.Finish()
+			event.set_scene_exit_flag(1)
+			event.finish_event()
 			return 0
 		end
 	end
-	event.StopBgm(0)
+	event.stop_music(0)
 	wait_frames(4)
-	load_no = event.GetBgmStatusNowNo() or load_no
-	event.LoadBgm(load_no)
-	event.SetActiveBgmStatus(-1)
-	event.SpriteSetDraw(0, 0)
-	event.SpriteSetDraw(1, 0)
-	event.DelImg(0)
-	boss_map = event.DngCheckBossMap() or boss_map
+	load_no = event.get_saved_music_number() or load_no
+	event.load_music(load_no)
+	event.restore_music_status(-1)
+	event.set_event_sprite_draw_pass(0, 0)
+	event.set_event_sprite_draw_pass(1, 0)
+	event.delete_event_image(0)
+	boss_map = event.is_dungeon_boss_floor() or boss_map
 	if boss_map ~= 1 then
 		if argc == 1 then
-			event.SndSePlay(var2, 0)
-			event.SndSetSeVol(var2, 0, battle_bgm_vol)
+			event.play_sound_effect(var2, 0)
+			event.set_sound_effect_volume(var2, 0, battle_bgm_vol)
 		end
 	end
-	event.SetCameraCtrl(1)
-	event.SetStatusbarShow(1, 1.0)
+	event.set_camera_control_enabled(1)
+	event.show_dungeon_status_bar(1, 1.0)
 	if debug_flag ~= 1 then
-		event.SetFadeIn(30)
+		event.fade_in_screen(30)
 	end
-	event.DngPause(16385, 0)
-	event.Finish()
+	event.set_dungeon_pause_flags(16385, 0)
+	event.finish_event()
 	return 0
 end
 

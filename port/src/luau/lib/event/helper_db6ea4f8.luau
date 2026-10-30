@@ -9,12 +9,12 @@ local helper_c4f7210b = require("@lib/event/helper_c4f7210b")
 --- Helper function.
 local function helper_db6ea4f8(arg0: s32, arg1: s32)
 	local var2: s32 = 0
-	var2 = event.GetQuestEtc(0, 0) or var2
+	var2 = event.get_quest_request_status(0, 0) or var2
 	if var2 ~= 2 then
 		helper_c4f7210b(arg0, arg1, 0)
 		return
 	end
-	var2 = event.GetQuestEtc(0, 13) or var2
+	var2 = event.get_quest_request_status(0, 13) or var2
 	if var2 == 0 then
 		helper_36e6ff8c(arg0, arg1)
 		return
