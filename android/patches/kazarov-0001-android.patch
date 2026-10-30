@@ -1,0 +1,192 @@
+diff --git a/cmake/KazarovRust.cmake b/cmake/KazarovRust.cmake
+index ab4ec57..a342465 100644
+--- a/cmake/KazarovRust.cmake
++++ b/cmake/KazarovRust.cmake
+@@ -17,8 +17,8 @@ set(CORROSION_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+ FetchContent_MakeAvailable(corrosion)
+ 
+ get_filename_component(KZ_RUST_MANIFEST "${CMAKE_CURRENT_LIST_DIR}/../Cargo.toml" ABSOLUTE)
+-if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+-    # The desktop setup window (eframe, rfd) does not target iOS, which extracts without it.
++if(CMAKE_SYSTEM_NAME STREQUAL "iOS" OR ANDROID)
++    # The desktop setup window (eframe, rfd) does not target iOS or Android, which extract without it.
+     corrosion_import_crate(MANIFEST_PATH ${KZ_RUST_MANIFEST} CRATES kazarov_core NO_DEFAULT_FEATURES)
+ else()
+     corrosion_import_crate(MANIFEST_PATH ${KZ_RUST_MANIFEST} CRATES kazarov_core)
+diff --git a/src/cpp/gfx/renderer.cpp b/src/cpp/gfx/renderer.cpp
+index e9f097a..fa8a05d 100644
+--- a/src/cpp/gfx/renderer.cpp
++++ b/src/cpp/gfx/renderer.cpp
+@@ -567,6 +567,17 @@ bool CreateSwapchain() {
+         extent.height = std::clamp(static_cast<uint32_t>(std::max(height, 0)),
+                                    capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
+     }
++#ifdef __ANDROID__
++    // The compositor turns the image (below), so it is the window's shape. Drivers disagree on whether
++    // currentExtent is the window's or the panel's own portrait size, so the window's own size decides.
++    {
++        int width = 0;
++        int height = 0;
++        if (SDL_GetWindowSizeInPixels(g.window, &width, &height) && width > 0 && height > 0) {
++            extent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
++        }
++    }
++#endif
+     if (extent.width == 0 || extent.height == 0) {
+         return false;
+     }
+diff --git a/src/cpp/platform/paths.cpp b/src/cpp/platform/paths.cpp
+index 54560d7..f8b37ff 100644
+--- a/src/cpp/platform/paths.cpp
++++ b/src/cpp/platform/paths.cpp
+@@ -146,7 +146,8 @@ fs::path PathsExecutable() {
+     if (size > 0 && size < path.size()) {
+         return fs::path(std::wstring_view(path.data(), size));
+     }
+-#elif defined(__linux__)
++#elif defined(__linux__) && !defined(__ANDROID__)
++    // On Android /proc/self/exe is the zygote's app_process; the game's argv[0] (below) names its root.
+     fs::path self = fs::read_symlink("/proc/self/exe", error);
+     if (!error) {
+         return self;
+diff --git a/src/rust/archive.rs b/src/rust/archive.rs
+index ccca81b..5a30056 100644
+--- a/src/rust/archive.rs
++++ b/src/rust/archive.rs
+@@ -533,7 +533,7 @@ impl SourceBytes {
+         let length = usize::try_from(file.metadata()?.len())
+             .map_err(|_| error("ISO exceeds addressable memory"))?;
+         phase.set_total(length as u64);
+-        if cfg!(any(target_os = "ios", kazarov_mapped_source)) {
++        if cfg!(any(target_os = "ios", target_os = "android", kazarov_mapped_source)) {
+             phase.inc(length as u64);
+             phase.add_bytes(length as u64);
+             return Ok(Self(Arc::new(SourceData::Mapped { file, length })));
+diff --git a/src/rust/configs.rs b/src/rust/configs.rs
+index 6d68b7a..b61e669 100644
+--- a/src/rust/configs.rs
++++ b/src/rust/configs.rs
+@@ -69,6 +69,10 @@ pub fn gameplay_documents(root: Option<&Path>) -> CoreResult<Vec<(&'static str,
+         return Ok(Vec::new());
+     }
+     let mut candidates = Vec::new();
++    // A host without an executable beside its files (an Android app) names the seed itself.
++    if let Some(seed) = std::env::var_os("KAZAROV_GAMEPLAY_SEED") {
++        candidates.push(PathBuf::from(seed));
++    }
+     if let Some(directory) = std::env::current_exe()?.parent() {
+         candidates.push(directory.join("assets/data.zip"));
+         candidates.push(directory.join("data.zip"));
+diff --git a/src/rust/core.rs b/src/rust/core.rs
+index ec2b738..6bc4fd5 100644
+--- a/src/rust/core.rs
++++ b/src/rust/core.rs
+@@ -349,7 +349,7 @@ fn system_available_memory() -> Option<u64> {
+     (unsafe { GlobalMemoryStatusEx(&mut status) } != 0).then_some(status.available_physical)
+ }
+ 
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "android"))]
+ fn system_available_memory() -> Option<u64> {
+     let pages = unsafe { libc::sysconf(libc::_SC_AVPHYS_PAGES) };
+     let page_size = unsafe { libc::sysconf(libc::_SC_PAGESIZE) };
+@@ -366,7 +366,7 @@ fn system_available_memory() -> Option<u64> {
+     (available > 0).then_some(available)
+ }
+ 
+-#[cfg(not(any(windows, target_os = "linux", target_os = "ios")))]
++#[cfg(not(any(windows, target_os = "linux", target_os = "android", target_os = "ios")))]
+ fn system_available_memory() -> Option<u64> {
+     None
+ }
+diff --git a/src/rust/spill.rs b/src/rust/spill.rs
+index 843d000..cfc279e 100644
+--- a/src/rust/spill.rs
++++ b/src/rust/spill.rs
+@@ -9,8 +9,8 @@ use std::borrow::Cow;
+ use std::fs::File;
+ use std::sync::{Mutex, OnceLock};
+ 
+-/// Whether waiting bytes go to the temporary file: on iOS, and where tests ask for the iOS source path.
+-const SPILL: bool = cfg!(any(target_os = "ios", kazarov_mapped_source));
++/// Whether waiting bytes go to the temporary file: on iOS and Android, and where tests ask for that source path.
++const SPILL: bool = cfg!(any(target_os = "ios", target_os = "android", kazarov_mapped_source));
+ 
+ pub(crate) enum SpilledBytes {
+     Memory(Vec<u8>),
+diff --git a/src/rust/zip_archive.rs b/src/rust/zip_archive.rs
+index e768ae1..0470ca6 100644
+--- a/src/rust/zip_archive.rs
++++ b/src/rust/zip_archive.rs
+@@ -212,7 +212,7 @@ impl Archive {
+     /// does not have to spare, so the disc image's mappings during verification or the game's arenas after
+     /// an extraction could no longer be placed.
+     pub fn open(path: &Path) -> CoreResult<Archive> {
+-        let map = !cfg!(any(target_os = "ios", kazarov_mapped_source));
++        let map = !cfg!(any(target_os = "ios", target_os = "android", kazarov_mapped_source));
+         let context = |error: CoreError| fail(format!("{}: {error}", path.display()));
+         let file = File::open(path).map_err(|e| context(e.into()))?;
+         let length = file.metadata().map_err(|e| context(e.into()))?.len();
+diff --git a/tools/ffmpeg/kz-ffmpeg b/tools/ffmpeg/kz-ffmpeg
+index b4a778e..3752359 100644
+--- a/tools/ffmpeg/kz-ffmpeg
++++ b/tools/ffmpeg/kz-ffmpeg
+@@ -7,6 +7,7 @@ The build provides lossless MPEG-2/ALAC MP4 extraction and MP4 playback through
+ static codec, format, resampling and scaling libraries plus the FFmpeg command.
+ The Linux image and macOS hosts use it; Windows takes BtbN's LGPL-shared bundle.
+ --target ios-arm64 cross-compiles the libraries for iOS on a macOS host, without the command.
++--target android-arm64 cross-compiles them for Android with the NDK in ANDROID_NDK_ROOT, also without it.
+ scripts/build/kz-ffmpeg launches this shared FFmpeg tool; the image uses it directly.
+ """
+ 
+@@ -58,8 +59,12 @@ CONFIGURE_FLAGS = [
+ GPL_FLAGS = ('--enable-gpl', '--enable-nonfree', '--enable-version3')
+ 
+ 
++ANDROID_API = 33
++MOBILE = ('ios-arm64', 'android-arm64')
++
++
+ def products(target):
+-    return LIBRARIES if target == 'ios-arm64' else LIBRARIES + ('bin/ffmpeg',)
++    return LIBRARIES if target in MOBILE else LIBRARIES + ('bin/ffmpeg',)
+ 
+ 
+ def ios_flags():
+@@ -71,11 +76,25 @@ def ios_flags():
+             f'--sysroot={sysroot}', f'--extra-cflags={target}', f'--extra-ldflags={target}']
+ 
+ 
++def android_flags():
++    # An app on Android runs no programs of its own either: the libraries go into its libmain.so.
++    ndk = os.environ.get('ANDROID_NDK_ROOT') or os.environ.get('ANDROID_NDK_HOME')
++    if not ndk:
++        sys.exit('kz-ffmpeg: --target android-arm64 needs ANDROID_NDK_ROOT')
++    prebuilt = next((Path(ndk) / 'toolchains/llvm/prebuilt').iterdir())
++    bin_dir = prebuilt / 'bin'
++    clang = bin_dir / f'aarch64-linux-android{ANDROID_API}-clang'
++    return ['--enable-cross-compile', '--target-os=android', '--arch=aarch64', f'--cc={clang}',
++            f'--cxx={clang}++', f'--ar={bin_dir / "llvm-ar"}', f'--nm={bin_dir / "llvm-nm"}',
++            f'--ranlib={bin_dir / "llvm-ranlib"}', f'--strip={bin_dir / "llvm-strip"}',
++            f'--sysroot={prebuilt / "sysroot"}']
++
++
+ def configure_flags(target=None):
+     flags = list(CONFIGURE_FLAGS)
+-    if target == 'ios-arm64':
++    if target in MOBILE:
+         flags.remove('--enable-ffmpeg')
+-        flags += ios_flags()
++        flags += ios_flags() if target == 'ios-arm64' else android_flags()
+     # configure aborts without nasm unless x86 assembly is disabled explicitly.
+     elif shutil.which('nasm') is None:
+         flags.append('--disable-x86asm')
+@@ -160,7 +179,7 @@ def configure_and_build(src, out, jobs, target):
+ def main():
+     parser = argparse.ArgumentParser(description=f'Build a minimal LGPL-only FFmpeg {VERSION} for the Kazarov image.')
+     parser.add_argument('--out', metavar='DIR')
+-    parser.add_argument('--target', choices=['ios-arm64'], help='cross-compile the libraries for this target')
++    parser.add_argument('--target', choices=list(MOBILE), help='cross-compile the libraries for this target')
+     parser.add_argument('--tarball', metavar='FILE')
+     parser.add_argument('--sha256', metavar='HEX')
+     parser.add_argument('--jobs', type=int, default=os.cpu_count() or 1, metavar='N')

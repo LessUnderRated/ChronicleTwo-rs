@@ -1,5 +1,5 @@
 # dc2data is a thin CLI over the Rust extractor and converter.
-include(${CMAKE_CURRENT_SOURCE_DIR}/../kazarov/cmake/KazarovRust.cmake)
+include(${KZ_ROOT}/cmake/KazarovRust.cmake)
 
 add_executable(dc2data ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)
 install(TARGETS dc2data RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

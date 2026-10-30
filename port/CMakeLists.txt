@@ -15,6 +15,12 @@ set(KZ_ROOT ${CMAKE_SOURCE_DIR}/tools/kazarov)
 if(NOT EXISTS ${KZ_ROOT}/include/kazarov/port.h)
     message(FATAL_ERROR "${KZ_ROOT} is empty: run git submodule update --init tools/kazarov")
 endif()
+if(ANDROID)
+    # android/patches applied to a copy of Kazarov in the build tree, which KZ_ROOT then names; and SDL,
+    # FFmpeg and the Rust target (docs/ANDROID.md).
+    include(${CMAKE_SOURCE_DIR}/android/kazarov.cmake)
+    include(${CMAKE_SOURCE_DIR}/android/native.cmake)
+endif()
 
 # One version source is shared by the publisher and native runtime.
 file(READ ${KZ_ROOT}/data_version.json KZ_DATA_VERSION_JSON)
@@ -39,7 +45,12 @@ file(CONFIGURE OUTPUT ${CMAKE_BINARY_DIR}/generated/include/icon/chronicletwo.hp
 
 include(${KZ_ROOT}/cmake/KazarovPort.cmake)
 
-option(CT_ENABLE_TRACY "Build Tracy support into the native port" ON)
+if(ANDROID)
+    set(ct_tracy_default OFF)
+else()
+    set(ct_tracy_default ON)
+endif()
+option(CT_ENABLE_TRACY "Build Tracy support into the native port" ${ct_tracy_default})
 if(CT_ENABLE_TRACY)
     include(FetchContent)
     FetchContent_Declare(tracy
@@ -265,6 +276,13 @@ target_compile_options(ct_options INTERFACE
 # arm64 clang fuses a*b+c into one rounding by default and x86-64 has no FMA in its baseline; off
 # everywhere so the game's arithmetic rounds the same on both.
 target_compile_options(ct_options INTERFACE -ffp-contract=off)
+if(ANDROID)
+    # The PS2's char is signed, as are x86's and Apple arm64's; Android's on arm64 is unsigned.
+    target_compile_options(ct_options INTERFACE -fsigned-char)
+    # The NDK builds with _FORTIFY_SOURCE=2, whose checked copies stop the process on the retail code's
+    # small overruns that every other platform lets pass (Chronicle's MakeMcIconSysInfo was one).
+    target_compile_options(ct_options INTERFACE -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0)
+endif()
 
 if(WIN32 AND (NOT MINGW OR NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang"))
     message(FATAL_ERROR "The Windows build requires clang/llvm-mingw")
@@ -339,6 +357,12 @@ if(WIN32)
     set(CT_LINK_OPTIONS -fuse-ld=lld -Wl,--gc-sections -Wl,--error-limit=0)
 elseif(APPLE)
     set(CT_LINK_OPTIONS -Wl,-dead_strip)
+elseif(ANDROID)
+    # libdarkchronicle.so, which SDLActivity loads and looks SDL_main up in; JNI_OnLoad registers the
+    # app's native methods (port/src/android). 16 KiB pages for Android 15 and later. -Bsymbolic: the
+    # game's own definitions of names bionic also has (rand, srand) win inside the library.
+    set(CT_LINK_OPTIONS -Wl,--gc-sections -Wl,--error-limit=0 -Wl,-z,max-page-size=16384 -Wl,-Bsymbolic
+        -Wl,--undefined=SDL_main -Wl,--undefined=JNI_OnLoad)
 else()
     set(CT_LINK_OPTIONS -fuse-ld=lld -pie -Wl,-z,separate-code -Wl,--gc-sections -Wl,--error-limit=0)
 endif()
@@ -363,9 +387,16 @@ function(ct_link_game target)
     endif()
 endfunction()
 
-add_executable(darkchronicle ${PORT_DIR}/main.cpp)
-set_target_properties(darkchronicle PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
-ct_link_game(darkchronicle)
+if(ANDROID)
+    add_library(darkchronicle SHARED ${PORT_DIR}/main.cpp)
+    set_target_properties(darkchronicle PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+    ct_link_game(darkchronicle)
+    target_link_libraries(darkchronicle PRIVATE android log)
+else()
+    add_executable(darkchronicle ${PORT_DIR}/main.cpp)
+    set_target_properties(darkchronicle PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+    ct_link_game(darkchronicle)
+endif()
 if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
     # iOS runs only applications: the executable goes inside darkchronicle.app with a generated Info.plist.
     set_target_properties(darkchronicle PROPERTIES
@@ -432,7 +463,12 @@ add_custom_target(ct_glyphs DEPENDS ${CT_GLYPH_COPIES})
 add_dependencies(darkchronicle ct_glyphs)
 install(DIRECTORY assets/glyphs/ DESTINATION ${CMAKE_INSTALL_BINDIR}/glyphs)
 
-option(CT_BUILD_TESTS "Build darkchronicle_tests" ON)
+if(ANDROID)
+    set(ct_tests_default OFF)
+else()
+    set(ct_tests_default ON)
+endif()
+option(CT_BUILD_TESTS "Build darkchronicle_tests" ${ct_tests_default})
 if(CT_BUILD_TESTS)
     add_subdirectory(src/tests)
 endif()

@@ -68,7 +68,7 @@ add_custom_target(ct_luau_prune
 # compiling the source when the module first runs (port/src/luau_bytecode.hpp). It is on for iOS, where the scripts run
 # interpreted and the compile would land mid-game on the device. luau-precompile is built for the build machine from
 # the same Luau sources, at CT_LUAU_PRECOMPILE_LEVEL (the game compiles at -O1; -O2 adds inlining and loop unrolling).
-if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+if(CMAKE_SYSTEM_NAME STREQUAL "iOS" OR ANDROID)
     set(ct_luau_precompile_default ON)
 else()
     set(ct_luau_precompile_default OFF)
