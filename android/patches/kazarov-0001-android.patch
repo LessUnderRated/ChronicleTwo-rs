@@ -49,6 +49,67 @@ index 54560d7..f8b37ff 100644
      fs::path self = fs::read_symlink("/proc/self/exe", error);
      if (!error) {
          return self;
+diff --git a/src/cpp/sce/eekernel_threads.cpp b/src/cpp/sce/eekernel_threads.cpp
+index 38578d9..b383740 100644
+--- a/src/cpp/sce/eekernel_threads.cpp
++++ b/src/cpp/sce/eekernel_threads.cpp
+@@ -82,6 +82,56 @@ _kz_fiber_trampoline:
+     bl _kz_fiber_entry
+     brk #0
+ )");
++#elif defined(__ANDROID__) && defined(__aarch64__)
++// Android's bionic has no <ucontext.h> functions at all (getcontext, makecontext, swapcontext), so it takes iOS's
++// switch, written here with ELF's symbol names. x18, Android's platform register, is left alone: the fibers all run
++// on one OS thread.
++#define KZ_ARM64_FIBERS 1
++extern "C" void kz_fiber_switch(void **save_sp, void *load_sp);
++extern "C" void kz_fiber_trampoline();
++asm(R"(
++    .text
++    .p2align 2
++    .globl kz_fiber_switch
++    .type kz_fiber_switch, %function
++kz_fiber_switch:
++    sub sp, sp, #0xa0
++    stp x19, x20, [sp, #0x00]
++    stp x21, x22, [sp, #0x10]
++    stp x23, x24, [sp, #0x20]
++    stp x25, x26, [sp, #0x30]
++    stp x27, x28, [sp, #0x40]
++    stp x29, x30, [sp, #0x50]
++    stp d8, d9, [sp, #0x60]
++    stp d10, d11, [sp, #0x70]
++    stp d12, d13, [sp, #0x80]
++    stp d14, d15, [sp, #0x90]
++    mov x2, sp
++    str x2, [x0]
++    mov sp, x1
++    ldp x19, x20, [sp, #0x00]
++    ldp x21, x22, [sp, #0x10]
++    ldp x23, x24, [sp, #0x20]
++    ldp x25, x26, [sp, #0x30]
++    ldp x27, x28, [sp, #0x40]
++    ldp x29, x30, [sp, #0x50]
++    ldp d8, d9, [sp, #0x60]
++    ldp d10, d11, [sp, #0x70]
++    ldp d12, d13, [sp, #0x80]
++    ldp d14, d15, [sp, #0x90]
++    add sp, sp, #0xa0
++    ret
++    .size kz_fiber_switch, .-kz_fiber_switch
++
++    .p2align 2
++    .globl kz_fiber_trampoline
++    .type kz_fiber_trampoline, %function
++kz_fiber_trampoline:
++    mov x29, xzr
++    bl kz_fiber_entry
++    brk #0
++    .size kz_fiber_trampoline, .-kz_fiber_trampoline
++)");
+ #else
+ #include <ucontext.h>
+ #endif
 diff --git a/src/rust/archive.rs b/src/rust/archive.rs
 index ccca81b..5a30056 100644
 --- a/src/rust/archive.rs

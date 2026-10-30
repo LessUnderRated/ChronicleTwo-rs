@@ -80,6 +80,12 @@ void FirstRunRequireData(const fs::path &root, bool headless) {
     if (!FirstRunDataMissing(root)) {
         return;
     }
+#ifdef SDL_PLATFORM_ANDROID
+    // The app's setup screen extracts the disc before it starts the game; without data there is nothing to show.
+    CT_LOG_ERROR(Main, "No current game data at {}", PathsDisplay(root));
+    LogFlush();
+    std::exit(kExitNoData);
+#endif
     const std::string text = FirstRunDataMessage(root);
     // The logger ends each line itself.
     CT_LOG_ERROR(Main, "{}", std::string_view(text).substr(0, text.ends_with('\n') ? text.size() - 1 : text.size()));

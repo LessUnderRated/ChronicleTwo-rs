@@ -43,6 +43,9 @@
 #ifdef SDL_PLATFORM_IOS
 #include "ios/bridge.hpp"
 #endif
+#ifdef SDL_PLATFORM_ANDROID
+#include "android/bridge.hpp"
+#endif
 #include "audio/sound_runtime.hpp"
 #include "platform/paths.hpp"
 #include "platform/settings.hpp"
@@ -472,6 +475,9 @@ int Run(int argc, const char **argv) {
     ClockSetTickRate(kConfigTickRateDefault);
     ClockSetUnbounded(options.headless);
     ClockAddPumpHook(PumpHost);
+#ifdef SDL_PLATFORM_ANDROID
+    ClockAddPumpHook(ct::android::Pump);
+#endif
     ClockSetTickCallback(dc2::timing::OnVerticalBlank);
     ConfigSetChangeHook(ApplyConfigChange);
 
@@ -529,6 +535,20 @@ static int IosMain(int argc, char **argv) {
         }
     }
     return Run(argc, const_cast<const char **>(argv));
+}
+#endif
+
+#ifdef SDL_PLATFORM_ANDROID
+// SDLActivity loads libdarkchronicle.so and calls SDL_main on a thread of its own (port/src/android).
+extern "C" __attribute__((visibility("default"))) int SDL_main(int, char **) {
+    const std::vector<std::string> args = ct::android::GameArguments();
+    std::vector<const char *>      argv;
+    argv.reserve(args.size() + 1);
+    for (const std::string &arg : args) {
+        argv.push_back(arg.c_str());
+    }
+    argv.push_back(nullptr);
+    return Run(static_cast<int>(args.size()), argv.data());
 }
 #endif
 

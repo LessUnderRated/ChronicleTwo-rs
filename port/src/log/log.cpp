@@ -1,5 +1,6 @@
 #include "log/log.hpp"
 
+#include <cstdlib>
 #include <quill/Backend.h>
 #include <quill/Frontend.h>
 #include <quill/UserClockSource.h>
@@ -207,7 +208,11 @@ private:
     // Quill reads no thread names on MinGW and says so in the name. An unnamed Linux thread carries the program's
     // name (cut to the kernel's 15 characters), inherited from the thread that started it, so its id is shown.
     static bool Named(std::string_view thread_name) {
-#ifdef __linux__
+#if defined(__ANDROID__)
+        // bionic has no program_invocation_short_name; getprogname is the same name.
+        return !thread_name.empty() && thread_name != "ThreadNameDisabled" &&
+               thread_name != std::string_view(getprogname()).substr(0, 15);
+#elif defined(__linux__)
         return !thread_name.empty() && thread_name != "ThreadNameDisabled" &&
                thread_name != std::string_view(program_invocation_short_name).substr(0, 15);
 #else
