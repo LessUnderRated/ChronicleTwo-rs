@@ -5,6 +5,7 @@
 #include "kazarov_bridge/rust/lib.h"
 
 #include <android/log.h>
+#include <fcntl.h>
 #include <jni.h>
 #include <unistd.h>
 
@@ -40,19 +41,37 @@ constexpr const char *kTag = "ChronicleTwo";
 std::atomic<bool>     g_paused{false};
 std::atomic<unsigned> g_speed{1};
 
-// The game's stdout and stderr, which Android discards, line by line into logcat.
-void RedirectStdio() {
+// stdout and stderr, which Android discards. stderr goes straight to logs/stderr.log in the game root: a Rust panic,
+// an allocation failure and a C++ terminate all write their last words there just before they abort, and a file
+// write is down before the abort, where a pipe's reader thread may never get to it. stdout goes to logcat.
+void RedirectStdio(const fs::path &root) {
     static bool started = false;
     if (started) {
         return;
     }
     started = true;
+    std::error_code error;
+    fs::create_directories(root / "logs", error);
+    const fs::path stderr_log = root / "logs" / "stderr.log";
+    // One run's worth, or a few: a file past 1 MiB starts again.
+    if (fs::file_size(stderr_log, error) > (1u << 20)) {
+        fs::remove(stderr_log, error);
+    }
+    const int log_fd = open(stderr_log.c_str(), O_WRONLY | O_CREAT | O_APPEND | O_CLOEXEC, 0644);
+    if (log_fd >= 0) {
+        dup2(log_fd, STDERR_FILENO);
+        close(log_fd);
+        std::setvbuf(stderr, nullptr, _IONBF, 0);
+        std::fprintf(stderr, "--- process %d\n", static_cast<int>(getpid()));
+    }
     int pipe_fds[2];
     if (pipe(pipe_fds) != 0) {
         return;
     }
     dup2(pipe_fds[1], STDOUT_FILENO);
-    dup2(pipe_fds[1], STDERR_FILENO);
+    if (log_fd < 0) {
+        dup2(pipe_fds[1], STDERR_FILENO);
+    }
     close(pipe_fds[1]);
     std::setvbuf(stdout, nullptr, _IOLBF, 0);
     std::thread([fd = pipe_fds[0]] {
@@ -115,8 +134,9 @@ jstring Java(JNIEnv *env, const std::string &text) { return env->NewStringUTF(te
 // ---- Native's methods (android/app/.../Native.java) ------------------------------------------------
 
 void JNICALL SetEnvironmentFor(JNIEnv *env, jclass, jstring root) {
-    RedirectStdio();
-    SetEnvironment(Utf8(env, root));
+    const fs::path game_root = Utf8(env, root);
+    RedirectStdio(game_root);
+    SetEnvironment(game_root);
 }
 
 jboolean JNICALL DataMissing(JNIEnv *env, jclass, jstring root) {
@@ -131,13 +151,16 @@ jstring JNICALL Extract(JNIEnv *env, jclass, jstring image, jstring root) {
     try {
         // Two jobs at most: the extractor's working set grows with each, and a phone's memory runs out first.
         const unsigned jobs = std::clamp(std::thread::hardware_concurrency(), 1u, 2u);
+        std::fprintf(stderr, "extract: %s into %s, %u jobs\n", source.c_str(), data.c_str(), jobs);
         kazarov::extract_tracked(source, data.string(), jobs);
+        std::fprintf(stderr, "extract: done\n");
         if (FirstRunDataMissing(data)) {
             return Java(env, "The extraction finished without current game data.");
         }
         return nullptr;
     } catch (const std::exception &error) {
         __android_log_print(ANDROID_LOG_ERROR, kTag, "extraction failed: %s", error.what());
+        std::fprintf(stderr, "extract: failed: %s\n", error.what());
         return Java(env, error.what());
     }
 }
@@ -146,7 +169,17 @@ jfloat JNICALL ExtractFraction(JNIEnv *, jclass) {
     return std::clamp(kazarov::extract_status().fraction, 0.0f, 1.0f);
 }
 
-jstring JNICALL ExtractStage(JNIEnv *env, jclass) { return Java(env, std::string(kazarov::extract_status().stage)); }
+// Polled by the setup screen; each new stage also goes to stderr.log, so a crash shows how far it got.
+jstring JNICALL ExtractStage(JNIEnv *env, jclass) {
+    static std::string last;
+    const auto         status = kazarov::extract_status();
+    std::string        stage(status.stage);
+    if (stage != last) {
+        last = stage;
+        std::fprintf(stderr, "extract: %3.0f%% %s\n", status.fraction * 100.0, stage.c_str());
+    }
+    return Java(env, stage);
+}
 
 void JNICALL SetTouch(JNIEnv *, jclass, jint buttons, jfloat lx, jfloat ly, jfloat rx, jfloat ry) {
     InputSetTouchOverlay({.buttons = static_cast<std::uint16_t>(buttons), .left_x = lx, .left_y = ly, .right_x = rx,
@@ -223,8 +256,8 @@ JNINativeMethod Method(const char *name, const char *signature, void *function) 
 } // namespace
 
 std::vector<std::string> GameArguments() {
-    RedirectStdio();
     const fs::path root = InternalRoot();
+    RedirectStdio(root);
     SetEnvironment(root);
     std::error_code error;
     fs::current_path(root, error);

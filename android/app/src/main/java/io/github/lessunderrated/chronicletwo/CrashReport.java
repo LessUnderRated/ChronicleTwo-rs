@@ -57,6 +57,38 @@ final class CrashReport {
         return found;
     }
 
+    /** The game's newest session log, which logs/stderr.log is not. */
+    private static File newestGameLog(Context context) {
+        File found = null;
+        File[] files = logDir(context).listFiles();
+        for (int i = 0; files != null && i < files.length; i++) {
+            File f = files[i];
+            if (f.isFile() && f.getName().endsWith(".log") && !f.getName().equals("stderr.log")
+                && (found == null || f.lastModified() > found.lastModified())) {
+                found = f;
+            }
+        }
+        return found;
+    }
+
+    /** The runs of printable text in binary data, one a line, as strings(1) gives them. */
+    private static String readable(String data) {
+        StringBuilder out = new StringBuilder();
+        StringBuilder run = new StringBuilder();
+        for (int i = 0; i <= data.length(); i++) {
+            char c = i < data.length() ? data.charAt(i) : 0;
+            if (c >= 0x20 && c < 0x7F) {
+                run.append(c);
+                continue;
+            }
+            if (run.length() >= 6) {
+                out.append(run).append('\n');
+            }
+            run.setLength(0);
+        }
+        return out.toString();
+    }
+
     private static boolean sOpened;
 
     /** Loads the game's library and records Java exceptions in logs/java-exception.txt. */
@@ -92,7 +124,7 @@ final class CrashReport {
             version = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName;
         } catch (Exception ignored) {
         }
-        return "Chronicle " + version + " on " + Build.MANUFACTURER + " " + Build.MODEL
+        return "Chronicle Two " + version + " on " + Build.MANUFACTURER + " " + Build.MODEL
             + " (" + Build.SOC_MANUFACTURER + " " + Build.SOC_MODEL + "), Android " + Build.VERSION.RELEASE
             + " (API " + Build.VERSION.SDK_INT + ")";
     }
@@ -134,6 +166,9 @@ final class CrashReport {
         report.append('\n');
         if (exit.getReason() == ApplicationExitInfo.REASON_ANR) {
             report.append("\n--- threads ---\n").append(tail(trace(exit), MAX_CHARS / 3));
+        } else if (exit.getReason() == ApplicationExitInfo.REASON_CRASH_NATIVE) {
+            // Android's tombstone of the crash, a protobuf: its text (the abort message, the frames' names) is enough.
+            report.append("\n--- tombstone ---\n").append(tail(readable(trace(exit)), MAX_CHARS / 3));
         }
         // What that run left, if it is from then: its crash report, a Java exception, and its log.
         long since = exit.getTimestamp() - 10 * 60 * 1000;
@@ -145,7 +180,11 @@ final class CrashReport {
         if (exception.isFile() && exception.lastModified() >= since) {
             report.append("\n--- java exception ---\n").append(tail(read(exception), MAX_CHARS / 4));
         }
-        File log = newest(logDir(context), ".log");
+        File stderr = new File(logDir(context), "stderr.log");
+        if (stderr.isFile() && stderr.lastModified() >= since) {
+            report.append("\n--- stderr ---\n").append(tail(read(stderr), MAX_CHARS / 4));
+        }
+        File log = newestGameLog(context);
         report.append("\n--- log ---\n").append(log == null ? "(none)" : tail(read(log), MAX_CHARS / 2));
         return report.toString();
     }
@@ -202,7 +241,7 @@ final class CrashReport {
             for (int n; (n = in.read(buffer)) > 0 && out.size() < (1 << 20); ) {
                 out.write(buffer, 0, n);
             }
-            return out.toString(StandardCharsets.UTF_8);
+            return out.toString(StandardCharsets.ISO_8859_1);
         } catch (IOException e) {
             return "";
         }
@@ -211,7 +250,7 @@ final class CrashReport {
     // ---- This run -----------------------------------------------------------------------------
 
     static String currentRun(Context context) {
-        File log = newest(logDir(context), ".log");
+        File log = newestGameLog(context);
         return device(context) + "\n\n--- log ---\n" + (log == null ? "(none)" : tail(read(log), MAX_CHARS));
     }
 
