@@ -471,8 +471,8 @@ class DifferentialTest(unittest.TestCase):
 
     def tagged_module(self, call):
         return (
-            'local script = {}\nscript.setup = function() end\n'
-            f'script[100] = function()\n    local x = 0.5\n    x = {call} or x\n    print(x)\n    return 0\nend\n'
+            'local vm = require("@lib/vm")\nlocal script = {}\nscript.setup = function() end\n'
+            f'script[100] = function()\n    local x = 0.5\n    x = {call} or x\n    print(vm.float(x))\n    return 0\nend\n'
             'return script\n'
         )
 

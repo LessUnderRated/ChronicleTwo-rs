@@ -15,7 +15,7 @@ function script.init() end
 --- Runs the effect from the frame it is created.
 function script.on_start()
 	local user_id: s32 = 0
-	local var7: s32 = 0
+	local index: s32 = 0
 	local var8: s32 = 0
 	local pos_x: f32 = 0
 	local pos_y: f32 = 0
@@ -26,7 +26,7 @@ function script.on_start()
 	user_id = effect.GetUserId() or user_id
 	effect.ChrCopyChara(2)
 	effect.ChrSetPos(250, 80, -1000)
-	var7 = 0
+	index = 0
 	var8 = 0
 	while true do
 		if vm.imod(var8, 15) == 0 then
@@ -42,12 +42,12 @@ function script.on_start()
 				yaw = out2 or yaw
 				var14 = out3 or var14
 			end
-			print("POS = ", pos_x, ",", pos_y, ",", pos_z, "\n")
-			print("ROT = ", var12, ",", yaw, ",", var14, "\n")
-			effect.ChrSetPos2(var7, pos_x, pos_y + 30.0, pos_z)
-			var7 = var7 + 1
-			if var7 >= 2 then
-				var7 = 0
+			print("POS = ", vm.float(pos_x), ",", vm.float(pos_y), ",", vm.float(pos_z), "\n")
+			print("ROT = ", vm.float(var12), ",", vm.float(yaw), ",", vm.float(var14), "\n")
+			effect.ChrSetPos2(index, pos_x, pos_y + 30.0, pos_z)
+			index = index + 1
+			if index >= 2 then
+				index = 0
 			end
 		end
 		var8 = vm.i32(var8 + 1)

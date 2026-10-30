@@ -200,7 +200,7 @@ local function helper_18a6c()
 	end
 	monster.ResetMotion()
 	monster.SetMos("攻撃１", -1, 6)
-	monster.GetTargetPos() -- retail: argument 1 is a value where the handler writes an output; the output is discarded; argument 2 is a value where the handler writes an output; the output is discarded; argument 3 is a value where the handler writes an output; the output is discarded
+	monster.GetTargetPos(var0, var1, var2)
 	var6 = helper_57bfae69(var0, var1, var2, var6)
 	helper_0b6e560f(var3, var4, var5, 12.0, 6.0, 5.0, 27)
 	helper_56d63eae()

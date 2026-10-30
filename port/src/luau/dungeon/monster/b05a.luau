@@ -17,8 +17,8 @@ local helper_d30a9fa2 = require("@lib/monster/helper_d30a9fa2")
 local helper_e05438b5 = require("@lib/monster/helper_e05438b5")
 
 --- Helper function.
-local function helper_1d54(arg0: s32)
-	monster.VPush(5, arg0)
+local function helper_1d54(value: s32)
+	monster.VPush(5, value)
 end
 
 --- Helper function.
@@ -31,13 +31,13 @@ local function helper_1df8(arg0: s32)
 end
 
 --- Helper function.
-local function helper_24e4(arg0: s32)
-	monster.VPush(2, arg0)
+local function helper_24e4(value: s32)
+	monster.VPush(2, value)
 end
 
 --- Helper function.
-local function helper_1f08(arg0: s32)
-	monster.VPush(1, arg0)
+local function helper_1f08(value: s32)
+	monster.VPush(1, value)
 end
 
 --- Helper function.
@@ -158,8 +158,8 @@ local function helper_12964()
 	local pos_x: f32 = 0
 	local pos_y: f32 = 0
 	local pos_z: f32 = 0
-	local var3: f32 = 0
-	local var5: f32 = 0
+	local vector: f32 = 0
+	local vector_3: f32 = 0
 	local var6: f32 = 0
 	monster.SetMos("攻撃１", -1, 6)
 	helper_287c(85)
@@ -171,36 +171,36 @@ local function helper_12964()
 	end
 	for var7 = 0, 4 do
 		var6 = vm.f32(vm.f32(1.2566371) * var7)
-		var3 = vm.f32(pos_x + vm.f32(vm.sin(var6) * 20.0))
-		var5 = vm.f32(pos_z + vm.f32(vm.cos(var6) * 20.0))
+		vector = vm.f32(pos_x + vm.f32(vm.sin(var6) * 20.0))
+		vector_3 = vm.f32(pos_z + vm.f32(vm.cos(var6) * 20.0))
 		monster.EsmCreate_1("砂煙")
-		monster.EsmSetVect1(-1, var3, 0.0, var5)
+		monster.EsmSetVect1(-1, vector, 0.0, vector_3)
 		vm.wait()
 	end
 	helper_29bc()
 end
 
 --- Helper function.
-local function helper_135f4(arg0: s32)
+local function helper_135f4(show: s32)
 	local var1: s32 = 0
 	var1 = helper_1df8(var1)
 	if var1 == 0 then
-		monster.SetMapobjShow("p01_boss", "boss-c0", arg0)
+		monster.SetMapobjShow("p01_boss", "boss-c0", show)
 	end
 	if var1 == 1 then
-		monster.SetMapobjShow("p01_boss", "boss-c1", arg0)
+		monster.SetMapobjShow("p01_boss", "boss-c1", show)
 	end
 	if var1 == 2 then
-		monster.SetMapobjShow("p01_boss", "boss-c2", arg0)
+		monster.SetMapobjShow("p01_boss", "boss-c2", show)
 	end
 	if var1 == 3 then
-		monster.SetMapobjShow("p01_boss", "boss-c3", arg0)
+		monster.SetMapobjShow("p01_boss", "boss-c3", show)
 	end
 	if var1 == 4 then
-		monster.SetMapobjShow("p01_boss", "boss-c4", arg0)
+		monster.SetMapobjShow("p01_boss", "boss-c4", show)
 	end
 	if var1 == 5 then
-		monster.SetMapobjShow("p01_boss", "boss-c5", arg0)
+		monster.SetMapobjShow("p01_boss", "boss-c5", show)
 	end
 end
 
@@ -264,10 +264,10 @@ local function helper_12f50()
 end
 
 --- Helper function.
-local function helper_2190(arg0: s32)
+local function helper_2190(value: s32)
 	local var1: s32 = 0
 	var1 = helper_1df8(var1)
-	monster.VPush(vm.i32(var1 + 20), arg0)
+	monster.VPush(vm.i32(var1 + 20), value)
 end
 
 --- Helper function.

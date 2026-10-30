@@ -11,14 +11,14 @@ local helper_f683d690 = require("@lib/monster/helper_f683d690")
 
 --- Helper function.
 local function helper_1f6c()
-	local var0: s32 = 0
+	local value: s32 = 0
 	local nearest_pos_x: f32 = 0
 	local nearest_pos_y: f32 = 0
 	local nearest_pos_z: f32 = 0
 	local nearest_dist: f32 = 0
 	local var5: f32 = 0
 	local var7: f32 = 0
-	var0 = 0
+	value = 0
 	do
 		local out1, out2, out3, out4 = monster.GetNearMonsPos()
 		nearest_pos_x = out1 or nearest_pos_x
@@ -27,13 +27,13 @@ local function helper_1f6c()
 		nearest_dist = out4 or nearest_dist
 	end
 	if nearest_dist ~= -1.0 and nearest_dist < 6.0 then
-		var0 = vm.i32(bit32.bor(var0, 8))
+		value = vm.i32(bit32.bor(value, 8))
 	end
 	if nearest_dist ~= -1.0 and nearest_dist < 100.0 then
-		var0 = vm.i32(bit32.bor(var0, 1))
+		value = vm.i32(bit32.bor(value, 1))
 	end
 	if nearest_dist ~= -1.0 and nearest_dist > 260.0 then
-		var0 = vm.i32(bit32.bor(var0, 2))
+		value = vm.i32(bit32.bor(value, 2))
 	end
 	do
 		local _, out2, _ = monster.GetRot()
@@ -41,9 +41,9 @@ local function helper_1f6c()
 	end
 	var5 = monster.GetRefAngle(nearest_pos_x, nearest_pos_y, nearest_pos_z) or var5
 	if helper_8971d3b6(var5, var7, vm.f32(0.2)) ~= 0 then
-		var0 = vm.i32(bit32.bor(var0, 4))
+		value = vm.i32(bit32.bor(value, 4))
 	end
-	monster.VPush(0, var0)
+	monster.VPush(0, value)
 end
 
 --- Helper function.

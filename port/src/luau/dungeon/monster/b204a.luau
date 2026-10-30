@@ -112,7 +112,7 @@ local function helper_5eac(arg0: f32)
 end
 
 --- Helper function.
-local function helper_7788(arg0: f32, arg1: f32, arg2: f32, arg3: s32)
+local function helper_7788(arg0: f32, rot_speed: f32, arg2: f32, arg3: s32)
 	local pos_x: f32 = 0
 	local pos_y: f32 = 0
 	local pos_z: f32 = 0
@@ -122,13 +122,13 @@ local function helper_7788(arg0: f32, arg1: f32, arg2: f32, arg3: s32)
 	local var16: f32 = 0
 	local var17: f32 = 0
 	local var18: s32 = 0
-	helper_5eac(arg1)
-	arg1 = helper_787df986(arg1)
-	if arg1 > vm.f32(3.1415927) then
-		arg1 = vm.f32(arg1 - vm.f32(6.2831855))
+	helper_5eac(rot_speed)
+	rot_speed = helper_787df986(rot_speed)
+	if rot_speed > vm.f32(3.1415927) then
+		rot_speed = vm.f32(rot_speed - vm.f32(6.2831855))
 	end
-	if arg1 <= vm.f32(-3.1415927) then
-		arg1 = vm.f32(arg1 + vm.f32(6.2831855))
+	if rot_speed <= vm.f32(-3.1415927) then
+		rot_speed = vm.f32(rot_speed + vm.f32(6.2831855))
 	end
 	var18 = 0
 	while var18 < arg3 do
@@ -139,7 +139,7 @@ local function helper_7788(arg0: f32, arg1: f32, arg2: f32, arg3: s32)
 			return
 		end
 		var14 = monster.GetTargetAngle() or var14
-		monster.SetNextRot(var14, arg1)
+		monster.SetNextRot(var14, rot_speed)
 		monster.GetTargetPos()
 		do
 			local out1, out2, out3 = monster.GetPos_3()

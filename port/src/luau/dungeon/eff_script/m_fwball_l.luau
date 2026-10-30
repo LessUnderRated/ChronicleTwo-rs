@@ -34,8 +34,8 @@ function script.on_start()
 	local value_3: s32 = 0
 	local var18: s32 = 0
 	local value_4: s32 = 0
-	local var20: f32 = 0
-	local var21: f32 = 0
+	local scale: f32 = 0
+	local scale_2: f32 = 0
 	local var22: f32 = 0
 	local var24: s32 = 0
 	local var25: f32 = 0
@@ -99,8 +99,8 @@ function script.on_start()
 	effect.ColprimSetDamage(value_4)
 	var18 = 0
 	while var18 < 60 do
-		var20 = vm.f32(vm.f32(value * vm.cos(0.0)) * var18)
-		var21 =
+		scale = vm.f32(vm.f32(value * vm.cos(0.0)) * var18)
+		scale_2 =
 			vm.f32(vm.f32(vm.f32(value * vm.sin(0.0)) * var18) - vm.f32(vm.f32(vm.f32(value_2 * var18) * var18) / 2))
 		do
 			local out1, out2, out3 = effect.CopyVector(var6, var7, var8)
@@ -109,14 +109,14 @@ function script.on_start()
 			var11 = out3 or var11
 		end
 		do
-			local out1, out2, out3 = effect.ScaleVector(var9, var22, var11, var20)
+			local out1, out2, out3 = effect.ScaleVector(var9, var22, var11, scale)
 			var9 = out1 or var9
 			var22 = out2 or var22
 			var11 = out3 or var11
 		end
 		var10 = 1.0
 		do
-			local out1, out2, out3 = effect.ScaleVector(var22, var10, vm.bits_float(var24) :: number, var21)
+			local out1, out2, out3 = effect.ScaleVector(var22, var10, vm.bits_float(var24) :: number, scale_2)
 			var22 = out1 or var22
 			var10 = out2 or var10
 			var24 = vm.float_bits(out3) or var24

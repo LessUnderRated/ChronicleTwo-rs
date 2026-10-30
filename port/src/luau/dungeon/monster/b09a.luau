@@ -110,12 +110,12 @@ local function helper_5cd0(arg0: f32)
 end
 
 --- Helper function.
-local function helper_c008(arg0: f32, arg1: s32)
+local function helper_c008(rot_speed: f32, arg1: s32)
 	local var2: f32 = 0
-	local _ = helper_787df986(arg0)
+	local _ = helper_787df986(rot_speed)
 	for var4 = 0, arg1 - 1 do
 		var2 = monster.GetTargetAngle() or var2
-		monster.SetNextRot(var2, arg0)
+		monster.SetNextRot(var2, rot_speed)
 		helper_1c04()
 	end
 	helper_442b9962()
@@ -203,19 +203,19 @@ local function helper_1330c()
 end
 
 --- Helper function.
-local function helper_6f8c(arg0: f32, arg1: f32, arg2: f32, arg3: s32)
+local function helper_6f8c(arg0: f32, rot_speed: f32, arg2: f32, arg3: s32)
 	local var4: f32 = 0
 	local var5: f32 = 0
 	local var6: f32 = 0
 	local var10: f32 = 0
 	local var11: f32 = 0
 	local var12: s32 = 0
-	arg1 = helper_787df986(arg1)
-	if arg1 > vm.f32(3.1415927) then
-		arg1 = vm.f32(arg1 - vm.f32(6.2831855))
+	rot_speed = helper_787df986(rot_speed)
+	if rot_speed > vm.f32(3.1415927) then
+		rot_speed = vm.f32(rot_speed - vm.f32(6.2831855))
 	end
-	if arg1 <= vm.f32(-3.1415927) then
-		arg1 = vm.f32(arg1 + vm.f32(6.2831855))
+	if rot_speed <= vm.f32(-3.1415927) then
+		rot_speed = vm.f32(rot_speed + vm.f32(6.2831855))
 	end
 	var12 = 0
 	while var12 < arg3 do
@@ -226,7 +226,7 @@ local function helper_6f8c(arg0: f32, arg1: f32, arg2: f32, arg3: s32)
 			return
 		end
 		var11 = monster.GetTargetAngle() or var11
-		monster.SetNextRot(var11, arg1)
+		monster.SetNextRot(var11, rot_speed)
 		do
 			local out1, out2, out3 = monster.GetTargetPos()
 			var4 = out1 or var4
@@ -383,7 +383,6 @@ local function helper_11e08()
 		var4 = out2 or var4
 	end
 	pos_x = vm.f32(pos_x + vm.f32(vm.sin(vm.f32(var4 + vm.f32(3.1415927))) * 200.0))
-	pos_y = pos_y
 	pos_z = vm.f32(pos_z + vm.f32(vm.cos(vm.f32(var4 + vm.f32(3.1415927))) * 200.0))
 	monster.SetMos("ステップ後", -1, 6)
 	helper_10660(helper_9df6409a(9))
@@ -423,7 +422,6 @@ local function helper_10aa4()
 			pos_z = out3 or pos_z
 		end
 		pos_x = vm.f32(pos_x + vm.f32(vm.sin(var4) * 200.0))
-		pos_y = pos_y
 		pos_z = vm.f32(pos_z + vm.f32(vm.cos(var4) * 200.0))
 	else
 		var8 = 0
@@ -471,7 +469,6 @@ local function helper_11438()
 			pos_z = out3 or pos_z
 		end
 		pos_x = vm.f32(pos_x + vm.f32(vm.sin(var4) * 200.0))
-		pos_y = pos_y
 		pos_z = vm.f32(pos_z + vm.f32(vm.cos(var4) * 200.0))
 	else
 		var8 = 0

@@ -44,8 +44,8 @@ function script.on_start()
 	local var29: f32 = 0
 	local var30: f32 = 0
 	local var31: s32 = 0
-	local var32: f32 = 0
-	local var33: f32 = 0
+	local scale: f32 = 0
+	local scale_2: f32 = 0
 	local var34: f32 = 0
 	do
 		local out1, out2, out3 = effect.GetWorkVect1()
@@ -113,8 +113,9 @@ function script.on_start()
 	var24 = vm.f32(1.0 - var22)
 	var26 = 0
 	while var26 < 60 do
-		var32 = vm.f32(vm.f32(work_vect2_x * var21) * var26)
-		var33 = vm.f32(vm.f32(vm.f32(work_vect2_x * var20) * var26) + vm.f32(vm.f32(vm.f32(-0.5 * var26) * var26) / 2))
+		scale = vm.f32(vm.f32(work_vect2_x * var21) * var26)
+		scale_2 =
+			vm.f32(vm.f32(vm.f32(work_vect2_x * var20) * var26) + vm.f32(vm.f32(vm.f32(-0.5 * var26) * var26) / 2))
 		do
 			local out1, out2, out3 = effect.CopyVector(var6, var7, var8)
 			var9 = out1 or var9
@@ -122,14 +123,14 @@ function script.on_start()
 			var11 = out3 or var11
 		end
 		do
-			local out1, out2, out3 = effect.ScaleVector(var9, var34, var11, var32)
+			local out1, out2, out3 = effect.ScaleVector(var9, var34, var11, scale)
 			var9 = out1 or var9
 			var34 = out2 or var34
 			var11 = out3 or var11
 		end
 		var10 = 1.0
 		do
-			local out1, out2, _ = effect.ScaleVector(var34, var10, 0, var33) -- retail: output 3 points past the frame, at the operand stack, so the value is lost
+			local out1, out2, _ = effect.ScaleVector(var34, var10, 0, scale_2) -- retail: output 3 points past the frame, at the operand stack, so the value is lost
 			var34 = out1 or var34
 			var10 = out2 or var10
 		end

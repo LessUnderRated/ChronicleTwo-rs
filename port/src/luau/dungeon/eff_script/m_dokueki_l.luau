@@ -31,7 +31,7 @@ function script.on_start()
 	local vector_z: f32 = 0
 	local var20: s32 = 0
 	local value: s32 = 0
-	local var22: f32 = 0
+	local scale: f32 = 0
 	local var23: f32 = 0
 	local var24: f32 = 0
 	local var25: f32 = 0
@@ -83,7 +83,7 @@ function script.on_start()
 	effect.ChrSetShow(1, 1, 0.1)
 	var1 = vm.f32(var1 - 1.0)
 	var23 = vm.f32(0.3)
-	var22 = 5.0
+	scale = 5.0
 	var20 = 0
 	while var20 < 100 do
 		if var20 == 5 then
@@ -98,7 +98,7 @@ function script.on_start()
 			var11 = out3 or var11
 		end
 		do
-			local out1, out2, out3 = effect.ScaleVector(var9, var10, var11, var22)
+			local out1, out2, out3 = effect.ScaleVector(var9, var10, var11, scale)
 			var9 = out1 or var9
 			var10 = out2 or var10
 			var11 = out3 or var11
@@ -107,7 +107,7 @@ function script.on_start()
 		if var10 > vm.f32(2.2) then
 			var23 = vm.f32(-0.65)
 		end
-		var22 = vm.f32(var22 - vm.f32(0.005))
+		scale = vm.f32(scale - vm.f32(0.005))
 		do
 			local out1, out2, out3 = effect.CopyVector(var0, var1, var2)
 			vector_x = out1 or vector_x

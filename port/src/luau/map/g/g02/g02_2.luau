@@ -1,0 +1,332 @@
+--!strict
+-- map/g/g02/g02_2.stb: event script, translated from the NTSC-timed bytecode by tools/luau/stb2luau.
+
+local vm = require("@lib/vm")
+local helper_0311340e = require("@lib/event/helper_0311340e")
+local helper_14414a8a = require("@lib/event/helper_14414a8a")
+local helper_2e69f380 = require("@lib/event/helper_2e69f380")
+local helper_45b56d46 = require("@lib/event/helper_45b56d46")
+local helper_47df9e39 = require("@lib/event/helper_47df9e39")
+local helper_58610e3d = require("@lib/event/helper_58610e3d")
+local helper_5d4cb629 = require("@lib/event/helper_5d4cb629")
+local helper_660198d9 = require("@lib/event/helper_660198d9")
+local helper_73f4575b = require("@lib/event/helper_73f4575b")
+local helper_7581838c = require("@lib/event/helper_7581838c")
+local helper_8476c032 = require("@lib/event/helper_8476c032")
+local helper_a409b6fa = require("@lib/event/helper_a409b6fa")
+local helper_a57b0158 = require("@lib/event/helper_a57b0158")
+local helper_e100ee29 = require("@lib/event/helper_e100ee29")
+local helper_ebc222ab = require("@lib/event/helper_ebc222ab")
+local helper_f57795f8 = require("@lib/event/helper_f57795f8")
+local show_message = require("@lib/event/show_message")
+
+--- Event 210, which map data, a script or the engine runs by number.
+local function event_210()
+	local var0: s32 = 0
+	local var1: f32 = 0
+	local var2: f32 = 0
+	local var3: f32 = 0
+	local var4: f32 = 0
+	event.Initialize()
+	helper_a57b0158()
+	var0 = event.GetSndId(2) or var0
+	event.SndSePlay(var0, 61)
+	do
+		local out1, out2, out3 = event.FuncPointGetPos("", "func3")
+		var1 = out1 or var1
+		var2 = out2 or var2
+		var3 = out3 or var3
+	end
+	var4 = event.FuncPointGetRot("", "func3") or var4
+	var4 = vm.f32(var4 - vm.f32(3.1415927))
+	var4 = event.AngleLimit(var4) or var4
+	event.SetCharaPos(0, var1, var2, var3)
+	event.SetCharaRot(0, 0.0, var4, 0.0)
+	event.SetMotion(0, "立ち", 4)
+	event.CharaResetDa(0)
+	event.ResetCamera(1, 0.0, 10.0)
+	event.SetFadeIn(30)
+end
+
+--- Helper function.
+local function helper_22884()
+	local var0: f32 = 0
+	local var1: f32 = 0
+	local var2: f32 = 0
+	local var3: f32 = 0
+	local var4: f32 = 0
+	local var5: f32 = 0
+	local var6: s32 = 0
+	local flag: s32 = 0
+	event.Initialize()
+	do
+		local out1, out2, out3 = event.GetCharaPos(0)
+		var0 = out1 or var0
+		var1 = out2 or var1
+		var2 = out3 or var2
+	end
+	var3 = vm.f32(vm.f32(vm.sin(vm.f32(-2.76)) * 30.0) + var0)
+	var4 = var1
+	var5 = vm.f32(vm.f32(vm.cos(vm.f32(-2.76)) * 30.0) + var2)
+	event.EohSyncChara(0, 0)
+	event.ObjsInit(0)
+	event.ObjsSyncObj(0, 0)
+	event.ObjsMove(0, var3, var4, var5, 30, 1)
+	event.ObjsReference(0, var3, var4, var5, 10)
+	event.ObjsSetMotion(0, "歩き")
+	var6 = 0
+	while var6 < 30 do
+		do
+			local out1, out2, out3 = event.GetCharaPos(0)
+			var0 = out1 or var0
+			var1 = out2 or var1
+			var2 = out3 or var2
+		end
+		var1 = vm.f32(var1 + 30.0)
+		event.SetCameraRef(var0, var1, var2)
+		var6 = var6 + 1
+		vm.wait(1)
+	end
+	event.ObjsSetMotion(0, "立ち")
+	event.SetMesWindowMode(0, 1)
+	event.SetMesShippo(0, 0)
+	flag = event.GetFlag(304) or flag
+	if flag == 0 then
+		event.MesMake_2(
+			0,
+			"Il y a peut-[UNI00ea]tre quelqu'un dans la\nderni[UNI00e8]re maison. Allons v[UNI00e9]rifier."
+		)
+	else
+		event.MesMake_2(0, "On n'a pas le temps.\nIl faut se d[UNI00e9]p[UNI00ea]cher d'aider Lin !")
+	end
+	show_message(0, -1, 5, 256, 208)
+end
+
+local script: { [any]: (...any) -> ...any } = {}
+
+--- Runs when the script is loaded, before any program.
+function script.setup() end
+
+--- Event 99, which map data, a script or the engine runs by number.
+script.event_99 = helper_a57b0158
+
+--- The event the engine runs on entering a town or interior, jumping to a map and leaving it, and the one an omitted event number means.
+function script.default_event()
+	local mc_load: s32 = 0
+	local old_map_no: s32 = 0
+	local var2: s32 = 0
+	local flag: s32 = 0
+	local flag_2: s32 = 0
+	local old_sub_map_no: s32 = 0
+	local at: number = 0
+	return vm.guard(function()
+		helper_a57b0158()
+		mc_load = event.CheckMcLoad() or mc_load
+		if mc_load == 1 then
+			event.SetCharaPos(0, 1989.0, 0.0, -198.0)
+			event.SetCharaRot(0, 0.0, -1.21, 0.0)
+			event.SetMotion(0, "立ち", 4)
+			event.CharaNormalDrive(0)
+			event.CharaResetDa(0)
+			event.ResetCamera(1, 3.14, 20.0)
+		else
+			old_map_no = event.GetOldMapNo() or old_map_no
+			var2 = event.GetMapType(old_map_no) or var2
+			if var2 ~= -1 then
+				if var2 == 7 or var2 == 8 then
+					at = 1
+					helper_47df9e39()
+				elseif old_map_no == 26 then
+					event.SetCameraPos(-741.9, 50.0, -592.0)
+					event.SetCameraRef(-741.9, 30.0, -712.0)
+					event.SetCharaPos(0, -741.9, 0.0, -712.0)
+					event.SetCharaRot(0, 0.0, 0.0, 0.0)
+					event.SetFadeIn(30)
+				else
+					flag = event.GetFlag(300) or flag
+					flag_2 = event.GetFlag(302) or flag_2
+					if flag == 1 and flag_2 == 0 then
+						at = 2
+						helper_2e69f380()
+					else
+						at = 3
+						helper_0311340e()
+					end
+				end
+			else
+				old_sub_map_no = event.GetOldSubmapNo() or old_sub_map_no
+				if old_sub_map_no == 100 then
+					event_210()
+				end
+				if old_sub_map_no == -1 then
+					event_210()
+				end
+				print("------  <START EVENT> OLD MAP ERR   ------\n")
+				print("--- OLD SUBMAP NO = ", old_sub_map_no, "\n")
+			end
+		end
+		at = 4
+		helper_5d4cb629(1)
+		return
+	end, function(received: { any })
+		if at <= 4 then
+			if at <= 1 then
+				at = 2
+				helper_2e69f380()
+				return vm.continue_with(function()
+					at = 4
+					helper_5d4cb629(1)
+					return
+				end)
+			end
+			if at <= 2 then
+				helper_8476c032()
+			end
+			if at <= 3 then
+				helper_a409b6fa()
+				helper_a409b6fa()
+				print("------  <START EVENT> OLD MAP ERR   ------\n")
+				print("--- OLD SUBMAP NO = ", old_sub_map_no, "\n")
+				helper_ebc222ab(1)
+			end
+			return 0
+		end
+		return nil
+	end)
+end
+
+--- The event the town walk runs when the square button is pressed, after reloading the map script.
+-- Defined empty, so the engine runs this instead of its default.
+function script.key_open() end
+
+--- Event 200, which map data, a script or the engine runs by number.
+function script.event_200()
+	local flag: s32 = 0
+	local flag_2: s32 = 0
+	local flag_3: s32 = 0
+	local flag_4: s32 = 0
+	local flag_5: s32 = 0
+	local flag_6: s32 = 0
+	local now_party_chara_id: s32 = 0
+	local at: number = 0
+	return vm.guard(function()
+		event.Initialize()
+		flag = event.GetFlag(300) or flag
+		flag_2 = event.GetFlag(304) or flag_2
+		flag_3 = event.GetFlag(306) or flag_3
+		flag_4 = event.GetFlag(324) or flag_4
+		flag_5 = event.GetFlag(328) or flag_5
+		flag_6 = event.GetFlag(330) or flag_6
+		if flag == 1 then
+			now_party_chara_id = event.GetNowPartyChara() or now_party_chara_id
+			if
+				flag_2 == 0
+				or flag_3 == 0 and now_party_chara_id == 6
+				or flag_4 == 1 and flag_5 == 0
+				or flag_4 == 1 and flag_6 == 0
+			then
+				if not (flag_4 == 1 and flag_5 == 0) then
+					event.BgmLoadCancel()
+				end
+				event.MapJump_3(-1, "g02i02", 100)
+				at = 1
+				vm.wait(1)
+				print("--- MAP_JUMP(g02i02) ---\n")
+				return
+			end
+		end
+		event.GotoInterior(-1, "g02i02", 100)
+		at = 2
+		vm.wait(2)
+		print("--- GOTO_INTERIOR(g02i02) ---\n")
+		return
+	end, function(received: { any })
+		if at <= 1 then
+			print("--- MAP_JUMP(g02i02) ---\n")
+			return 0
+		end
+		if at <= 2 then
+			print("--- GOTO_INTERIOR(g02i02) ---\n")
+			return 0
+		end
+		return nil
+	end)
+end
+
+script.event_210 = event_210
+
+--- Event 300, which map data, a script or the engine runs by number.
+function script.event_300()
+	helper_14414a8a(vm.f32(-743.2), 0.0, vm.f32(-708.9), vm.f32(-0.64))
+	event.MapJump_2(-1, "f02")
+	vm.wait(2)
+end
+
+--- The event run when the edit analysis found changes after a house door step or a Georama mode change.
+function script.edit_analyze_changed()
+	helper_5d4cb629(0)
+end
+
+--- Event 400, which map data, a script or the engine runs by number.
+script.event_400 = helper_f57795f8
+
+--- Event 500, which map data, a script or the engine runs by number.
+function script.event_500()
+	if helper_660198d9() ~= 0 then
+		event.MapJump_2(-1, "s04")
+	end
+end
+
+--- Event 501, which map data, a script or the engine runs by number.
+function script.event_501()
+	local flag: s32 = 0
+	local var3: s32 = 0
+	local flag_2: s32 = 0
+	local flag_3: s32 = 0
+	flag = event.GetFlag(306) or flag
+	if flag == 0 then
+		helper_22884()
+	elseif helper_7581838c() ~= 0 then
+		event.DngSetStageId(2)
+		event.GotoMenu(3, 2)
+		vm.wait(3)
+		do
+			local _, _, out3, _ = event.GetMenuParam_4()
+			var3 = out3 or var3
+		end
+		if var3 == 0 then
+			helper_47df9e39()
+		else
+			flag_2 = event.GetFlag(307) or flag_2
+			flag_3 = event.GetFlag(344) or flag_3
+			if var3 == 2 and flag_2 == 0 or var3 == 21 and flag_3 == 0 or var3 == 22 then
+				event.BgmLoadCancel()
+			end
+			event.GotoDng(2, var3, 1010)
+		end
+	end
+end
+
+--- Event 502, which map data, a script or the engine runs by number.
+function script.event_502()
+	helper_a57b0158()
+	helper_58610e3d()
+	helper_5d4cb629(1)
+end
+
+--- Event 503, which map data, a script or the engine runs by number.
+function script.event_503()
+	helper_a57b0158()
+	helper_45b56d46()
+end
+
+--- Event 1000, which map data, a script or the engine runs by number.
+function script.event_1000()
+	helper_73f4575b()
+	helper_e100ee29()
+end
+
+--- Event 13020, which map data, a script or the engine runs by number.
+script.event_13020 = helper_2e69f380
+
+return script

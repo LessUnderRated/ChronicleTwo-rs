@@ -49,7 +49,7 @@ function script.loop()
 	local var4: f32 = 0
 	local var5: f32 = 0
 	local var6: f32 = 0
-	local var7: f32 = 0
+	local scale: f32 = 0
 	local var9: f32 = 0
 	local var10: f32 = 0
 	local var11: f32 = 0
@@ -83,7 +83,7 @@ function script.loop()
 		var11 = out3 or var11
 	end
 	var6 = monster.GetDistVector2(var9, var10, var11, var0, var1, var2) or var6
-	var7 = vm.f32(vm.fdiv(var6, 9000))
+	scale = vm.f32(vm.fdiv(var6, 9000))
 	do
 		local out1, out2, out3 = monster.CopyVector(var9, var10, var11)
 		var3 = out1 or var3
@@ -103,7 +103,7 @@ function script.loop()
 		var5 = out3 or var5
 	end
 	do
-		local out1, out2, out3 = monster.ScaleVector(var3, var4, var5, var7)
+		local out1, out2, out3 = monster.ScaleVector(var3, var4, var5, scale)
 		var3 = out1 or var3
 		var4 = out2 or var4
 		var5 = out3 or var5

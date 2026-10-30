@@ -24,7 +24,7 @@ function script.on_start()
 	local value_4: f32 = 0
 	local value_5: f32 = 0
 	local value_6: s32 = 0
-	local var10: f32 = 0
+	local value_4_2: f32 = 0
 	local var11: s32 = 0
 	local var12: f32 = 0
 	do
@@ -68,18 +68,18 @@ function script.on_start()
 		var3 = var3 + 1
 	end
 	var11 = 0
-	var10 = 92.0
+	value_4_2 = 92.0
 	var12 = vm.f32(0.2)
 	var3 = 0
 	while var3 < 30 do
-		effect.SptSetColor(0, 128.0, 128.0, 128.0, var10, 4)
-		if var10 >= 92.0 then
+		effect.SptSetColor(0, 128.0, 128.0, 128.0, value_4_2, 4)
+		if value_4_2 >= 92.0 then
 			var11 = 1
 		end
 		if var11 == 0 then
-			var10 = vm.f32(var10 + vm.f32(51.2))
+			value_4_2 = vm.f32(value_4_2 + vm.f32(51.2))
 		else
-			var10 = vm.f32(var10 - 4.0)
+			value_4_2 = vm.f32(value_4_2 - 4.0)
 		end
 		effect.SptSetScale(0, var12, var12, 4)
 		var12 = vm.f32(var12 + vm.f32(0.2))

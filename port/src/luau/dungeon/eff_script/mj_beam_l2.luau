@@ -37,7 +37,7 @@ function script.on_start()
 	local value_2: s32 = 0
 	local handle: s32 = 0
 	local value_3: s32 = 0
-	local var34: f32 = 0
+	local scale: f32 = 0
 	local var36: f32 = 0
 	local var37: f32 = 0
 	local var38: f32 = 0
@@ -138,7 +138,7 @@ function script.on_start()
 			dir_y = out2 or dir_y
 			dir_z = out3 or dir_z
 		end
-		var34 = pos_y_2
+		scale = pos_y_2
 		do
 			local out1, out2, out3 = effect.CopyVector(dir_x, dir_y, dir_z)
 			var36 = out1 or var36
@@ -146,7 +146,7 @@ function script.on_start()
 			var38 = out3 or var38
 		end
 		do
-			local out1, out2, out3 = effect.ScaleVector(var36, var37, var38, var34)
+			local out1, out2, out3 = effect.ScaleVector(var36, var37, var38, scale)
 			var36 = out1 or var36
 			var37 = out2 or var37
 			var38 = out3 or var38

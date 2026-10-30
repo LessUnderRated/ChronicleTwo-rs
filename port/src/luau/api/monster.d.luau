@@ -31,12 +31,14 @@ declare monster: {
 	Atan2f: (y: f32, x: f32) -> f32?,
 	Atan2f_3: (y: f32, x: f32) -> f32?,
 	--- Accepts the test opcode without changing script state.
-	NdTest: (arg1: s32) -> s32?,
+	NdTest: ((arg1: s32) -> s32?) & ((arg1: s32, arg2: s32) -> ()),
 	NdTest_2: (arg1: s32) -> s32?,
+	NdTest_2v: (arg1: s32, arg2: s32) -> (),
 	--- Writes the length of a vector supplied by script arguments.
-	GetDistVector: ((arg1: f32) -> f32?) & ((vec: f32, vec_2: f32, vec_3: f32) -> f32?),
+	GetDistVector: ((arg1: f32) -> f32?) & ((arg1: f32, arg2: f32) -> ()) & ((vec: f32, vec_2: f32, vec_3: f32) -> f32?),
 	GetDistVector_2: (arg1: f32) -> f32?,
 	GetDistVector_4: (vec: f32, vec_2: f32, vec_3: f32) -> f32?,
+	GetDistVector_2v: (arg1: f32, arg2: f32) -> (),
 	--- Writes the distance between two positions supplied by script arguments.
 	GetDistVector2: (from: f32, from_2: f32, from_3: f32, to: f32, to_2: f32, to_3: f32) -> f32?,
 	GetDistVector2_7: (from: f32, from_2: f32, from_3: f32, to: f32, to_2: f32, to_3: f32) -> f32?,
@@ -91,12 +93,14 @@ declare monster: {
 	ResetCameraCtrlParam: () -> (),
 	ResetCameraCtrlParam_0: () -> (),
 	--- Writes a random integer below the requested range.
-	GetRnd: (() -> s32?) & ((range: s32) -> s32?),
+	GetRnd: (() -> s32?) & ((range: s32) -> s32?) & ((range: s32, arg2: s32) -> ()),
 	GetRnd_1: () -> s32?,
 	GetRnd_2: (range: s32) -> s32?,
+	GetRnd_2v: (range: s32, arg2: s32) -> (),
 	--- Writes a float holding a random integer below the requested range.
-	GetRndf: (range: f32) -> f32?,
+	GetRndf: ((range: f32) -> f32?) & ((range: f32, arg2: f32) -> ()),
 	GetRndf_2: (range: f32) -> f32?,
+	GetRndf_2v: (range: f32, arg2: f32) -> (),
 	--- Stores an integer or float in a monster-local or shared script variable.
 	VPush: (index: s32, value: s32) -> (),
 	VPush_2: (index: s32, value: s32) -> (),
@@ -279,14 +283,16 @@ declare monster: {
 	ResetMove: () -> (),
 	ResetMove_0: () -> (),
 	--- Writes the target position and optionally its distance from the monster.
-	GetTargetPos: () -> (f32?, f32?, f32?),
+	GetTargetPos: (() -> (f32?, f32?, f32?)) & ((arg1: f32, arg2: f32, arg3: f32) -> ()),
 	GetTargetPos_3: () -> (f32?, f32?, f32?),
+	GetTargetPos_3v: (arg1: f32, arg2: f32, arg3: f32) -> (),
 	--- Writes the distance from the active monster to its target.
 	GetTargetDist: () -> f32?,
 	GetTargetDist_1: () -> f32?,
 	--- Writes the horizontal angle from the active monster to its target.
-	GetTargetAngle: () -> f32?,
+	GetTargetAngle: (() -> f32?) & ((arg1: f32) -> ()),
 	GetTargetAngle_1: () -> f32?,
+	GetTargetAngle_1v: (arg1: f32) -> (),
 	--- Writes a point at a given angle and distance from the target.
 	GetTargetRefPos: (angle: f32, distance: f32) -> (f32?, f32?, f32?),
 	GetTargetRefPos_5: (angle: f32, distance: f32) -> (f32?, f32?, f32?),
@@ -300,11 +306,13 @@ declare monster: {
 	GetTargetRot: () -> (f32?, f32?, f32?),
 	GetTargetRot_3: () -> (f32?, f32?, f32?),
 	--- Writes the horizontal angle from the monster toward a script position.
-	GetRefAngle: (target: f32, target_2: f32, target_3: f32) -> f32?,
+	GetRefAngle: ((target: f32, target_2: f32, target_3: f32) -> f32?) & ((target: f32, target_2: f32, target_3: f32, arg4: f32) -> ()),
 	GetRefAngle_4: (target: f32, target_2: f32, target_3: f32) -> f32?,
+	GetRefAngle_4v: (target: f32, target_2: f32, target_3: f32, arg4: f32) -> (),
 	--- Writes zero when grounded or the monster height when airborne.
-	GetHigh: () -> f32?,
+	GetHigh: (() -> f32?) & ((arg1: f32) -> ()),
 	GetHigh_1: () -> f32?,
+	GetHigh_1v: (arg1: f32) -> (),
 	--- Writes the nearest other monster position and distance.
 	GetNearMonsPos: () -> (f32?, f32?, f32?, f32?),
 	GetNearMonsPos_4: () -> (f32?, f32?, f32?, f32?),
@@ -330,10 +338,11 @@ declare monster: {
 	GetActiveMonsDist: (id: s32) -> f32?,
 	GetActiveMonsDist_2: (id: s32) -> f32?,
 	--- Writes the yaw angle of a selected active monster.
-	GetActiveMonsAngle: ((id: s32) -> f32?) & ((arg1: string, arg2: s32, arg3: s32) -> ()),
+	GetActiveMonsAngle: ((id: s32) -> f32?) & ((id: s32, arg2: s32) -> ()) & ((arg1: string, arg2: s32, arg3: s32) -> ()),
 	GetActiveMonsAngle_1: (arg1: string) -> (),
 	GetActiveMonsAngle_2: (id: s32) -> f32?,
 	GetActiveMonsAngle_3: (arg1: string, arg2: s32, arg3: s32) -> (),
+	GetActiveMonsAngle_2v: (id: s32, arg2: s32) -> (),
 	--- Writes pitch and yaw from the monster toward a script position.
 	GetRefRot: (() -> s32?) & ((arg1: f32, arg2: f32, arg3: f32) -> (f32?, f32?, f32?)),
 	GetRefRot_1: () -> s32?,
@@ -476,9 +485,10 @@ declare monster: {
 	SetShrowEnd: () -> (),
 	SetShrowEnd_0: () -> (),
 	--- Writes the active monster attack value.
-	GetBaseAttack: () -> s32?,
+	GetBaseAttack: (() -> s32?) & ((arg1: s32) -> ()),
 	GetBaseAttack_0: () -> (),
 	GetBaseAttack_1: () -> s32?,
+	GetBaseAttack_1v: (arg1: s32) -> (),
 	--- Scales active monster defense from its table value.
 	SetDefRate: ((rate: f32) -> ()) & ((arg1: s32, arg2: s32) -> ()),
 	SetDefRate_1: (rate: f32) -> (),
@@ -554,10 +564,10 @@ declare monster: {
 	ResetMotion: () -> (),
 	ResetMotion_0: () -> (),
 	--- Starts a named monster motion with optional step and mode.
-	SetMos: ((arg1: string) -> ()) & ((arg1: string, arg2: s32) -> ()) & ((arg1: string, arg2: s32, arg3: s32) -> ()),
+	SetMos: ((arg1: string) -> ()) & ((arg1: string, arg2: s32) -> ()) & ((arg1: string?, arg2: s32, arg3: s32) -> ()),
 	SetMos_1: (arg1: string) -> (),
 	SetMos_2: (arg1: string, arg2: s32) -> (),
-	SetMos_3: (arg1: string, arg2: s32, arg3: s32) -> (),
+	SetMos_3: (arg1: string?, arg2: s32, arg3: s32) -> (),
 	--- Writes whether the current or named monster motion has finished.
 	CheckMosEnd: () -> s32?,
 	CheckMosEnd_1: () -> s32?,

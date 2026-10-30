@@ -55,6 +55,18 @@
      ]
     }
    }
+  },
+  "_SET_SPECIAL_SHOT": {
+   "signatures": {
+    "1": {
+     "params": [
+      {
+       "other_kind": "address"
+      }
+     ]
+    }
+   },
+   "notes": "Two scripts pass 0.0, which the handler reads as a null name: the object search finds nothing."
   }
  },
  "effect": {
@@ -374,14 +386,15 @@
    }
   },
   "_SET_MONSTER_LIFE": {
-   "notes": "An integer sets the life, a float sets it as a fraction of the maximum.",
+   "notes": "An integer sets the life, a float sets it as a fraction of the maximum. A string matches neither tag, so the handler does nothing.",
    "signatures": {
     "1": {
      "params": [
       {
        "name": "life",
        "type": "f32",
-       "tagged": true
+       "tagged": true,
+       "other_kind": "ignored"
       }
      ]
     }
@@ -726,6 +739,30 @@
      ]
     }
    }
+  },
+  "_SET_MOS": {
+   "signatures": {
+    "3": {
+     "params": [
+      {
+       "other_kind": "address"
+      }
+     ]
+    }
+   },
+   "notes": "b07a_atora_yellow passes -1 as the name, an address that names no motion: the motion stays and the step is set."
+  },
+  "_GET_ACTIVE_MONS_ANGLE": {
+   "signatures": {
+    "2": {
+     "params": [
+      {
+       "other_kind": "ignored"
+      }
+     ]
+    }
+   },
+   "notes": "e236a passes a motion name as the id; its address indexes no active monster, so the call is left out."
   }
  },
  "event": {
@@ -862,6 +899,238 @@
      ]
     }
    }
+  },
+  "_MES_MAKE": {
+   "notes": "Arg 2 is a message number (integer) or the message text (string), chosen by its slot's tag.",
+   "signatures": {
+    "2": {
+     "params": [
+      {},
+      {
+       "type": "unknown"
+      }
+     ],
+     "reviewed": true
+    },
+    "3": {
+     "params": [
+      {},
+      {
+       "type": "unknown"
+      }
+     ],
+     "reviewed": true
+    }
+   }
+  },
+  "_ESM_LOAD_BASE": {
+   "notes": "The argument is a base effect script number (integer) or its name (string), chosen by its slot's tag.",
+   "signatures": {
+    "1": {
+     "params": [
+      {
+       "type": "unknown"
+      }
+     ],
+     "reviewed": true
+    }
+   }
+  },
+  "_SET_LOADBG_FILE": {
+   "notes": "Each argument is a string, or an integer pair (item number and flag), chosen by the slot's tag.",
+   "signatures": {
+    "3": {
+     "params": [
+      {
+       "type": "unknown"
+      },
+      {
+       "type": "unknown"
+      },
+      {}
+     ],
+     "reviewed": true
+    }
+   }
+  },
+  "_EOH_SYNC_OBJ": {
+   "notes": "Arg 2 is a parts id (integer) or a parts name (string), chosen by its slot's tag.",
+   "signatures": {
+    "2": {
+     "params": [
+      {},
+      {
+       "type": "unknown"
+      }
+     ],
+     "reviewed": true
+    },
+    "3": {
+     "params": [
+      {},
+      {
+       "type": "unknown"
+      },
+      {}
+     ],
+     "reviewed": true
+    },
+    "4": {
+     "params": [
+      {},
+      {
+       "type": "unknown"
+      },
+      {},
+      {}
+     ],
+     "reviewed": true
+    }
+   }
+  },
+  "_SND_LOAD_SOUND": {
+   "notes": "The file is a default event sound number (integer) or a file name (string), chosen by its slot's tag.",
+   "signatures": {
+    "2": {
+     "params": [
+      {
+       "type": "unknown"
+      },
+      {}
+     ],
+     "reviewed": true
+    },
+    "3": {
+     "params": [
+      {},
+      {
+       "type": "unknown"
+      },
+      {}
+     ],
+     "reviewed": true
+    }
+   }
+  },
+  "_MAP_JUMP": {
+   "notes": "Arg 2 is a map number (integer) or a map name (string), chosen by its slot's tag.",
+   "signatures": {
+    "2": {
+     "params": [
+      {},
+      {
+       "type": "unknown"
+      }
+     ],
+     "reviewed": true
+    },
+    "3": {
+     "params": [
+      {},
+      {
+       "type": "unknown"
+      },
+      {}
+     ],
+     "reviewed": true
+    }
+   }
+  },
+  "_FUNC_POINT_SHOW": {
+   "notes": "Arg 1 is a parts number (integer) or a place name (string), chosen by its slot's tag.",
+   "signatures": {
+    "3": {
+     "params": [
+      {
+       "type": "unknown"
+      },
+      {},
+      {}
+     ],
+     "reviewed": true
+    }
+   }
+  },
+  "_EOH_SYNC_FUNCP": {
+   "notes": "Arg 2 is a parts number (integer) or a place name (string), chosen by its slot's tag.",
+   "signatures": {
+    "3": {
+     "params": [
+      {},
+      {
+       "type": "unknown"
+      },
+      {}
+     ],
+     "reviewed": true
+    }
+   }
+  },
+  "_GOTO_USE_ITEM": {
+   "notes": "The use item menu writes the chosen item through the reference when it exits, after the call returns.",
+   "signatures": {
+    "2": {
+     "params": [
+      {
+       "name": "item",
+       "deferred": true
+      }
+     ]
+    }
+   }
+  },
+  "_GOTO_USE_ITEM2": {
+   "notes": "The use item menu writes the chosen item through the reference when it exits, after the call returns.",
+   "signatures": {
+    "3": {
+     "params": [
+      {
+       "name": "item",
+       "deferred": true
+      }
+     ]
+    }
+   }
+  },
+  "_EOH_SET_TEX_ANIM": {
+   "signatures": {
+    "2": {
+     "params": [
+      {},
+      {
+       "other_kind": "accepted"
+      }
+     ]
+    }
+   },
+   "notes": "A string as argument 2 turns that texture animation on."
+  },
+  "_SET_MPCHARA_MOTION": {
+   "signatures": {
+    "3": {
+     "params": [
+      {
+       "name": "part",
+       "type": "s32",
+       "other_kind": "accepted"
+      }
+     ]
+    }
+   },
+   "notes": "The part is a placed part number or a part name."
+  },
+  "_OBJS_TEX_ANIME": {
+   "signatures": {
+    "2": {
+     "params": [
+      {},
+      {
+       "other_kind": "nonzero"
+      }
+     ]
+    }
+   },
+   "notes": "With two arguments the second is only tested for zero; a string's address is not zero."
   }
  },
  "event_arg": {}

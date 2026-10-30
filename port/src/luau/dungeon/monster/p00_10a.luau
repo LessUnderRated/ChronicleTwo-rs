@@ -12,22 +12,22 @@ local helper_c3e8ae39 = require("@lib/monster/helper_c3e8ae39")
 
 --- Helper function.
 local function helper_79dc()
-	local var0: s32 = 0
+	local value: s32 = 0
 	local var1: f32 = 0
 	local var2: f32 = 0
 	local var3: f32 = 0
 	local var4: f32 = 0
 	local var5: f32 = 0
-	var0 = 0
+	value = 0
 	var1 = monster.GetTargetDist() or var1
 	if var1 <= 50.0 then
-		var0 = vm.i32(bit32.bor(var0, 1))
+		value = vm.i32(bit32.bor(value, 1))
 	elseif var1 <= 240.0 then
-		var0 = vm.i32(bit32.bor(var0, 2))
+		value = vm.i32(bit32.bor(value, 2))
 	elseif var1 <= 760.0 then
-		var0 = vm.i32(bit32.bor(var0, 4))
+		value = vm.i32(bit32.bor(value, 4))
 	else
-		var0 = vm.i32(bit32.bor(var0, 8))
+		value = vm.i32(bit32.bor(value, 8))
 	end
 	do
 		local out1, out2, out3 = monster.GetTargetPos()
@@ -37,7 +37,7 @@ local function helper_79dc()
 	end
 	var5 = monster.GetDistVector(var2, var3, var4) or var5
 	if var5 >= 600.0 then
-		var0 = vm.i32(bit32.bor(var0, 4096))
+		value = vm.i32(bit32.bor(value, 4096))
 	end
 	do
 		local out1, out2, out3 = monster.GetPos_3()
@@ -47,33 +47,33 @@ local function helper_79dc()
 	end
 	var5 = monster.GetDistVector(var2, var3, var4) or var5
 	if var5 >= 600.0 then
-		var0 = vm.i32(bit32.bor(var0, 8192))
+		value = vm.i32(bit32.bor(value, 8192))
 	end
 	if var1 <= 240.0 then
-		var0 = vm.i32(bit32.bor(var0, 16))
+		value = vm.i32(bit32.bor(value, 16))
 	end
 	if helper_6eaf9360(0, 45.0) ~= 0 then
-		var0 = vm.i32(bit32.bor(var0, 32))
+		value = vm.i32(bit32.bor(value, 32))
 	end
 	if var1 <= 90.0 then
-		var0 = vm.i32(bit32.bor(var0, 64))
+		value = vm.i32(bit32.bor(value, 64))
 	end
 	if helper_6eaf9360(0, 80.0) ~= 0 then
-		var0 = vm.i32(bit32.bor(var0, 128))
+		value = vm.i32(bit32.bor(value, 128))
 	end
 	if var1 <= 4000.0 then
-		var0 = vm.i32(bit32.bor(var0, 256))
+		value = vm.i32(bit32.bor(value, 256))
 	end
 	if helper_6eaf9360(0, 60.0) ~= 0 then
-		var0 = vm.i32(bit32.bor(var0, 512))
+		value = vm.i32(bit32.bor(value, 512))
 	end
 	if var1 <= 4000.0 then
-		var0 = vm.i32(bit32.bor(var0, 1024))
+		value = vm.i32(bit32.bor(value, 1024))
 	end
 	if helper_6eaf9360(0, 360.0) ~= 0 then
-		var0 = vm.i32(bit32.bor(var0, 2048))
+		value = vm.i32(bit32.bor(value, 2048))
 	end
-	monster.VPush(0, var0)
+	monster.VPush(0, value)
 end
 
 --- Helper function.
@@ -293,18 +293,18 @@ local function helper_6b94()
 	local var0: f32 = 0
 	local var2: f32 = 0
 	local yaw: f32 = 0
-	local var4: f32 = 0
-	local var5: f32 = 0
-	local var6: f32 = 0
+	local x: f32 = 0
+	local y: f32 = 0
+	local z: f32 = 0
 	local pos_x: f32 = 0
 	local pos_y: f32 = 0
 	local pos_z: f32 = 0
 	local var10: f32 = 0
-	local var11: s32 = 0
+	local muteki_time: s32 = 0
 	local var12: s32 = 0
-	local var14: f32 = 0
-	local var15: f32 = 0
-	local var16: f32 = 0
+	local x_2: f32 = 0
+	local y_2: f32 = 0
+	local z_2: f32 = 0
 	local var17: f32 = 0
 	do
 		local out1, _, out3 = monster.GetTargetPos()
@@ -312,9 +312,9 @@ local function helper_6b94()
 		var2 = out3 or var2
 	end
 	yaw = monster.GetPosrefAngle(var0, 0.0, var2, 0.0, 0.0, 0.0) or yaw
-	var4 = vm.f32(vm.sin(yaw) * 400.0)
-	var5 = 0.0
-	var6 = vm.f32(vm.cos(yaw) * 400.0)
+	x = vm.f32(vm.sin(yaw) * 400.0)
+	y = 0.0
+	z = vm.f32(vm.cos(yaw) * 400.0)
 	monster.SetAttrib(32, 1)
 	monster.SetMos("ジャンプ上昇", -1, 2)
 	monster.SetAttrib(20, 1)
@@ -326,39 +326,39 @@ local function helper_6b94()
 		pos_z = out3 or pos_z
 	end
 	var10 = vm.f32(-0.7)
-	var11 = 50
-	monster.SetMuteki(var11)
+	muteki_time = 50
+	monster.SetMuteki(muteki_time)
 	var12 = 0
-	while var12 <= var11 do
+	while var12 <= muteki_time do
 		helper_82cb5588(vm.f32(0.06981317))
 		var17 = vm.f32(
 			vm.fdiv(
-				vm.f32(vm.f32(vm.f32(var5 - pos_y) * 2.0) - vm.f32(vm.f32(var10 * (var11 + 1)) * (var11 + 1))),
-				vm.f32((var11 + 1) * 2.0)
+				vm.f32(vm.f32(vm.f32(y - pos_y) * 2.0) - vm.f32(vm.f32(var10 * (muteki_time + 1)) * (muteki_time + 1))),
+				vm.f32((muteki_time + 1) * 2.0)
 			)
 		)
-		var15 = pos_y
+		y_2 = pos_y
 		for var13 = 0, var12 - 1 do
 			var17 = vm.f32(var17 + var10)
-			var15 = vm.f32(var15 + var17)
+			y_2 = vm.f32(y_2 + var17)
 		end
-		var14 = vm.f32(vm.f32(vm.fdiv(vm.f32(vm.f32(var4 - pos_x) * var12), var11)) + pos_x)
-		var16 = vm.f32(vm.f32(vm.fdiv(vm.f32(vm.f32(var6 - pos_z) * var12), var11)) + pos_z)
-		if var15 < var5 then
-			var15 = var5
+		x_2 = vm.f32(vm.f32(vm.fdiv(vm.f32(vm.f32(x - pos_x) * var12), muteki_time)) + pos_x)
+		z_2 = vm.f32(vm.f32(vm.fdiv(vm.f32(vm.f32(z - pos_z) * var12), muteki_time)) + pos_z)
+		if y_2 < y then
+			y_2 = y
 		end
-		monster.SetPos(var14, var15, var16)
+		monster.SetPos(x_2, y_2, z_2)
 		if var12 == 7 then
 			monster.SetMos("ジャンプＬ")
 		end
-		if var12 == var11 - 16 + 6 then
+		if var12 == muteki_time - 16 + 6 then
 			monster.SetMos("ジャンプ下降", -1, 2)
 		end
 		var12 = var12 + 1
 		vm.wait()
 	end
 	monster.CameraQuake(6.0, 20)
-	monster.SetPos(var4, var5, var6)
+	monster.SetPos(x, y, z)
 	helper_442b9962()
 	monster.SetAttrib(52, 0)
 	helper_56d63eae()
@@ -512,11 +512,11 @@ local function helper_1e60()
 	local var9: f32 = 0
 	local var10: f32 = 0
 	local var11: f32 = 0
-	local var12: s32 = 0
+	local muteki_time: s32 = 0
 	local var13: s32 = 0
-	local var15: f32 = 0
-	local var16: f32 = 0
-	local var17: f32 = 0
+	local x: f32 = 0
+	local y: f32 = 0
+	local z: f32 = 0
 	local var18: f32 = 0
 	local var19: f32 = 0
 	local var20: f32 = 0
@@ -559,31 +559,33 @@ local function helper_1e60()
 	var9 = vm.f32(var9 / 20.0)
 	var10 = vm.f32(var10 / 20.0)
 	var11 = vm.f32(-0.7)
-	var12 = 50
-	monster.SetMuteki(var12)
+	muteki_time = 50
+	monster.SetMuteki(muteki_time)
 	var13 = 0
-	while var13 <= var12 do
+	while var13 <= muteki_time do
 		var18 = vm.f32(
 			vm.fdiv(
-				vm.f32(vm.f32(vm.f32(var4 - pos_y) * 2.0) - vm.f32(vm.f32(var11 * (var12 + 1)) * (var12 + 1))),
-				vm.f32((var12 + 1) * 2.0)
+				vm.f32(
+					vm.f32(vm.f32(var4 - pos_y) * 2.0) - vm.f32(vm.f32(var11 * (muteki_time + 1)) * (muteki_time + 1))
+				),
+				vm.f32((muteki_time + 1) * 2.0)
 			)
 		)
-		var16 = pos_y
+		y = pos_y
 		for var14 = 0, var13 - 1 do
 			var18 = vm.f32(var18 + var11)
-			var16 = vm.f32(var16 + var18)
+			y = vm.f32(y + var18)
 		end
-		var15 = vm.f32(vm.f32(vm.fdiv(vm.f32(vm.f32(var3 - pos_x) * var13), var12)) + pos_x)
-		var17 = vm.f32(vm.f32(vm.fdiv(vm.f32(vm.f32(var5 - pos_z) * var13), var12)) + pos_z)
-		if var16 <= var4 then
-			var16 = var4
+		x = vm.f32(vm.f32(vm.fdiv(vm.f32(vm.f32(var3 - pos_x) * var13), muteki_time)) + pos_x)
+		z = vm.f32(vm.f32(vm.fdiv(vm.f32(vm.f32(var5 - pos_z) * var13), muteki_time)) + pos_z)
+		if y <= var4 then
+			y = var4
 		end
-		monster.SetPos(var15, var16, var17)
+		monster.SetPos(x, y, z)
 		if var13 == 7 then
 			monster.SetMos("ジャンプＬ")
 		end
-		if var13 == var12 - 16 + 6 then
+		if var13 == muteki_time - 16 + 6 then
 			monster.SetMos("ジャンプ下降", -1, 2)
 		end
 		if var13 >= 10 and var13 < 30 then
@@ -617,21 +619,21 @@ local function helper_3038()
 	local pos_x: f32 = 0
 	local pos_y: f32 = 0
 	local pos_z: f32 = 0
-	local var3: f32 = 0
-	local var4: f32 = 0
-	local var5: f32 = 0
+	local x: f32 = 0
+	local y: f32 = 0
+	local z: f32 = 0
 	local var6: f32 = 0
 	local var7: f32 = 0
 	local var8: f32 = 0
 	local var9: f32 = 0
 	local var10: s32 = 0
 	local var11: f32 = 0
-	local var12: s32 = 0
+	local muteki_time: s32 = 0
 	local var13: s32 = 0
 	local var14: s32 = 0
-	local var16: f32 = 0
-	local var17: f32 = 0
-	local var18: f32 = 0
+	local x_2: f32 = 0
+	local y_2: f32 = 0
+	local z_2: f32 = 0
 	local var19: f32 = 0
 	local var20: f32 = 0
 	local var21: f32 = 0
@@ -648,9 +650,9 @@ local function helper_3038()
 		pos_z = out3 or pos_z
 	end
 	var6 = monster.GetTargetAngle() or var6
-	var3 = vm.f32(vm.sin(var6) * 980.0)
-	var4 = 400.0
-	var5 = vm.f32(vm.cos(var6) * 980.0)
+	x = vm.f32(vm.sin(var6) * 980.0)
+	y = 400.0
+	z = vm.f32(vm.cos(var6) * 980.0)
 	do
 		local out1, out2, out3 = monster.GetRot()
 		var7 = out1 or var7
@@ -676,35 +678,35 @@ local function helper_3038()
 	monster.SetMos("ジャンプ上昇", -1, 2)
 	helper_c3e8ae39(17)
 	var11 = vm.f32(-0.7)
-	var12 = 50
-	monster.SetMuteki(var12)
+	muteki_time = 50
+	monster.SetMuteki(muteki_time)
 	var14 = 0
 	var13 = 0
-	while var13 <= var12 do
+	while var13 <= muteki_time do
 		var19 = vm.f32(
 			vm.fdiv(
-				vm.f32(vm.f32(vm.f32(var4 - pos_y) * 2.0) - vm.f32(vm.f32(var11 * (var12 + 1)) * (var12 + 1))),
-				vm.f32((var12 + 1) * 2.0)
+				vm.f32(vm.f32(vm.f32(y - pos_y) * 2.0) - vm.f32(vm.f32(var11 * (muteki_time + 1)) * (muteki_time + 1))),
+				vm.f32((muteki_time + 1) * 2.0)
 			)
 		)
-		var17 = pos_y
+		y_2 = pos_y
 		for var15 = 0, var13 - 1 do
 			var19 = vm.f32(var19 + var11)
-			var17 = vm.f32(var17 + var19)
+			y_2 = vm.f32(y_2 + var19)
 		end
-		var16 = vm.f32(vm.f32(vm.fdiv(vm.f32(vm.f32(var3 - pos_x) * var13), var12)) + pos_x)
-		var18 = vm.f32(vm.f32(vm.fdiv(vm.f32(vm.f32(var5 - pos_z) * var13), var12)) + pos_z)
-		if var17 > var4 then
+		x_2 = vm.f32(vm.f32(vm.fdiv(vm.f32(vm.f32(x - pos_x) * var13), muteki_time)) + pos_x)
+		z_2 = vm.f32(vm.f32(vm.fdiv(vm.f32(vm.f32(z - pos_z) * var13), muteki_time)) + pos_z)
+		if y_2 > y then
 			var14 = 1
 		end
-		if var14 == 1 and var17 < var4 then
-			var17 = var4
+		if var14 == 1 and y_2 < y then
+			y_2 = y
 		end
-		monster.SetPos(var16, var17, var18)
+		monster.SetPos(x_2, y_2, z_2)
 		if var13 == 7 then
 			monster.SetMos("ジャンプＬ")
 		end
-		if var13 == var12 - 16 then
+		if var13 == muteki_time - 16 then
 			monster.SetMos("ジャンプ下降", -1, 2)
 		end
 		if var13 >= 30 then
@@ -735,10 +737,10 @@ local function helper_3038()
 	helper_56d63eae()
 	monster.SetMos("歩き")
 	while true do
-		var3 = vm.f32(vm.sin(var6) * 980.0)
-		var4 = 400.0
-		var5 = vm.f32(vm.cos(var6) * 980.0)
-		monster.SetPos(var3, var4, var5)
+		x = vm.f32(vm.sin(var6) * 980.0)
+		y = 400.0
+		z = vm.f32(vm.cos(var6) * 980.0)
+		monster.SetPos(x, y, z)
 		if var10 == 1 then
 			angle_2 = vm.f32(var6 - vm.f32(1.5707964))
 			angle_2 = monster.AngleLimit(angle_2) or angle_2

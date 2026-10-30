@@ -7,8 +7,8 @@ local helper_1ef0d4b2 = require("@lib/monster/helper_1ef0d4b2")
 local helper_5d37e9f4 = require("@lib/monster/helper_5d37e9f4")
 
 --- Helper function.
-local function helper_2138(arg0: f32)
-	monster.VPushFloat(0, arg0)
+local function helper_2138(value: f32)
+	monster.VPushFloat(0, value)
 end
 
 --- Helper function.
@@ -63,27 +63,27 @@ end
 
 --- Helper function.
 local function helper_21dc()
-	local var0: f32 = 0
-	local var1: f32 = 0
-	local var2: f32 = 0
-	local var3: f32 = 0
-	local var4: f32 = 0
-	local var5: f32 = 0
+	local target: f32 = 0
+	local target_2: f32 = 0
+	local target_3: f32 = 0
+	local x: f32 = 0
+	local y: f32 = 0
+	local z: f32 = 0
 	local var6: f32 = 0
 	local var7: f32 = 0
 	local value: f32 = 0
 	local value_2: f32 = 0
 	local var12: f32 = 0
 	monster.GetActiveMonsLifef(-1)
-	var0 = 250.0
-	var1 = 0.0
-	var2 = 250.0
-	var7 = monster.GetRefAngle(var0, var1, var2) or var7
+	target = 250.0
+	target_2 = 0.0
+	target_3 = 250.0
+	var7 = monster.GetRefAngle(target, target_2, target_3) or var7
 	var6 = helper_2058(var6)
-	var3 = vm.f32(var0 + vm.f32(vm.sin(var6) * 180.0))
-	var4 = vm.f32(var1 + 105.0)
-	var5 = vm.f32(var2 + vm.f32(vm.cos(var6) * 180.0))
-	monster.SetPos(var3, var4, var5)
+	x = vm.f32(target + vm.f32(vm.sin(var6) * 180.0))
+	y = vm.f32(target_2 + 105.0)
+	z = vm.f32(target_3 + vm.f32(vm.cos(var6) * 180.0))
+	monster.SetPos(x, y, z)
 	monster.SetRot(0.0, var7, 0.0)
 	value_2 = monster.VPopFloat(1) or value_2
 	value = monster.VPopFloat(2) or value

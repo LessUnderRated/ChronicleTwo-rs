@@ -29,7 +29,7 @@ function script.on_start()
 	local var12: f32 = 0
 	local var13: f32 = 0
 	local var14: f32 = 0
-	local var16: f32 = 0
+	local scale: f32 = 0
 	local var17: f32 = 0
 	local var18: f32 = 0
 	local var19: f32 = 0
@@ -46,7 +46,7 @@ function script.on_start()
 	local value_6: s32 = 0
 	local value_7: s32 = 0
 	local var36: s32 = 0
-	var16 = 8.0
+	scale = 8.0
 	value_6 = 0
 	value_3 = 0
 	value_4 = 0.0
@@ -169,7 +169,7 @@ function script.on_start()
 			end
 		end
 		if var26 < 18 then
-			var16 = vm.f32(var16 + 1.0)
+			scale = vm.f32(scale + 1.0)
 			var17 = vm.f32(var12 - var0)
 			var18 = vm.f32(var13 - var1)
 			var19 = vm.f32(var14 - var2)
@@ -210,7 +210,7 @@ function script.on_start()
 				var11 = out3 or var11
 			end
 			do
-				local out1, out2, out3 = effect.ScaleVector(var9, var10, var11, var16)
+				local out1, out2, out3 = effect.ScaleVector(var9, var10, var11, scale)
 				var9 = out1 or var9
 				var10 = out2 or var10
 				var11 = out3 or var11
@@ -248,7 +248,7 @@ function script.on_start()
 					vector_y = out2 or vector_y
 					vector_z = out3 or vector_z
 				end
-				if var16 > 50.0 then
+				if scale > 50.0 then
 					break
 				else
 					vm.wait()

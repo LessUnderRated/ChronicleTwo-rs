@@ -20,7 +20,7 @@ function script.on_start()
 	local value: f32 = 0
 	local var4: f32 = 0
 	local value_2: f32 = 0
-	local var6: f32 = 0
+	local color_delta_4: f32 = 0
 	local value_3: f32 = 0
 	local color_w: f32 = 0
 	effect.SptAssignSprite_1(50)
@@ -46,20 +46,20 @@ function script.on_start()
 		effect.SptSetRotz(var0, value_2)
 		var0 = var0 + 1
 	end
-	var6 = 1.0
+	color_delta_4 = 1.0
 	var0 = 0
 	while var0 < 160 do
 		value_3 = effect.GetRand(0.04) or value_3
 		effect.SptAddRotz(0, value_3, 25)
 		value_3 = effect.GetRand(0.04) or value_3
 		effect.SptAddRotz(25, -value_3, 25)
-		effect.SptAddColor(0, 0.0, 0.0, 0.0, var6, 50)
+		effect.SptAddColor(0, 0.0, 0.0, 0.0, color_delta_4, 50)
 		do
 			local _, _, _, out4 = effect.SptGetColor(0)
 			color_w = out4 or color_w
 		end
 		if color_w > 80.0 then
-			var6 = -var6
+			color_delta_4 = -color_delta_4
 		end
 		if vm.imod(var0, 12) == 0 then
 			effect.EsCreate_1("ラフレシア花粉サブ")

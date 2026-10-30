@@ -48,7 +48,7 @@ local function helper_1ba0()
 end
 
 --- Helper function.
-local function helper_d5ac(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: f32, arg5: f32, arg6: any)
+local function helper_d5ac(arg0: f32, arg1: f32, arg2: f32, scale: f32, arg4: f32, arg5: f32, arg6: any)
 	local var7: f32 = 0
 	local var8: f32 = 0
 	local var9: f32 = 0
@@ -68,7 +68,7 @@ local function helper_d5ac(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: f32
 		var9 = out3 or var9
 	end
 	var19 = helper_57b569a8(var19)
-	print("ground=", var19, "---------------\n")
+	print("ground=", vm.float(var19), "---------------\n")
 	arg1 = vm.f32(var19 + arg5)
 	do
 		local out1, out2, out3 = monster.CopyVector(arg0, arg1, arg2)
@@ -89,7 +89,7 @@ local function helper_d5ac(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: f32
 		var15 = out3 or var15
 	end
 	do
-		local out1, out2, out3 = monster.ScaleVector(var13, var14, var15, arg3)
+		local out1, out2, out3 = monster.ScaleVector(var13, var14, var15, scale)
 		var13 = out1 or var13
 		var14 = out2 or var14
 		var15 = out3 or var15
@@ -110,11 +110,11 @@ local function helper_d5ac(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: f32
 			var14 = 0.0
 		end
 		var20 = monster.GetDistVector2(var7, var8, var9, arg0, arg1, arg2) or var20
-		if var20 < vm.f32(arg3 + arg4) then
+		if var20 < vm.f32(scale + arg4) then
 			print("hit1------------------\n")
 			return 1
 		end
-		var24 = helper_de1504df(var7, var8, var9, arg3, var11)
+		var24 = helper_de1504df(var7, var8, var9, scale, var11)
 		if var24 ~= 0 then
 			print("hit2------------------\n")
 			return var24
@@ -167,13 +167,13 @@ end
 
 --- Helper function.
 local function helper_fec8(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: f32, arg5: f32, arg6: s32)
-	local var7: f32 = 0
-	local var8: f32 = 0
-	local var9: f32 = 0
+	local target: f32 = 0
+	local target_2: f32 = 0
+	local target_3: f32 = 0
 	local var18: s32 = 0
 	print("FLMTargetAroundMove---------------\n")
-	var7, var8, var9 = helper_125e5305(arg2, arg3, var7, var8, var9)
-	arg2 = monster.GetRefAngle(var7, var8, var9) or arg2
+	target, target_2, target_3 = helper_125e5305(arg2, arg3, target, target_2, target_3)
+	arg2 = monster.GetRefAngle(target, target_2, target_3) or arg2
 	if arg2 > vm.f32(3.1415927) then
 		arg2 = vm.f32(arg2 - vm.f32(6.2831855))
 	end
@@ -182,7 +182,7 @@ local function helper_fec8(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: f32
 	end
 	helper_595cbf61(helper_28452e16(arg2), arg1)
 	helper_442b9962()
-	var18 = helper_d5ac(var7, var8, var9, arg0, arg4, arg5, arg6)
+	var18 = helper_d5ac(target, target_2, target_3, arg0, arg4, arg5, arg6)
 	return var18
 end
 
@@ -213,7 +213,7 @@ local function helper_16a14()
 end
 
 --- Helper function.
-local function helper_e1f8(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: s32)
+local function helper_e1f8(scale: f32, arg1: f32, arg2: f32, arg3: f32, arg4: s32)
 	local var5: f32 = 0
 	local var6: f32 = 0
 	local var7: f32 = 0
@@ -271,7 +271,7 @@ local function helper_e1f8(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: s32
 		var16 = out3 or var16
 	end
 	do
-		local out1, out2, out3 = monster.ScaleVector(var14, var15, var16, arg0)
+		local out1, out2, out3 = monster.ScaleVector(var14, var15, var16, scale)
 		var14 = out1 or var14
 		var15 = out2 or var15
 		var16 = out3 or var16
@@ -293,10 +293,10 @@ local function helper_e1f8(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: s32
 			var15 = 0.0
 		end
 		var18 = monster.GetDistVector2(var8, var9, var10, var5, var6, var7) or var18
-		if var18 < vm.f32(arg0 + arg2) then
+		if var18 < vm.f32(scale + arg2) then
 			return
 		end
-		var23 = helper_de1504df(var8, var9, var10, arg0, var12)
+		var23 = helper_de1504df(var8, var9, var10, scale, var12)
 		if var23 ~= 0 then
 			print("hit------------------\n")
 			return
@@ -320,7 +320,7 @@ local function helper_19700()
 		if argc < 50 then
 			monster.SetMos("歩き", -1, 0)
 			var1 = monster.GetTargetDist() or var1
-			monster.GetRndf(360.0) -- retail: argument 2 is a value where the handler writes an output; the output is discarded
+			monster.GetRndf(360.0, var0)
 			helper_fec8(1.75, vm.f32(4.8), var0, var1, 50.0, 50.0, 50)
 			monster.SetMos("立ち", -1, 0)
 		else
@@ -403,7 +403,6 @@ local function helper_17ef0()
 		var9 = vm.f32(var9 + vm.f32(6.2831855))
 	end
 	pos_x = vm.f32(pos_x + vm.f32(vm.sin(var9) * 150.0))
-	pos_y = pos_y
 	pos_z = vm.f32(pos_z + vm.f32(vm.cos(var9) * 150.0))
 	monster.SetMos("攻撃１out", -1, 6)
 	helper_d5ac(pos_x, pos_y, pos_z, vm.f32(2.1000001), vm.f32(16.666666), 50.0, 30)
@@ -510,16 +509,15 @@ local function helper_102c0(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: f3
 		pos_z = out3 or pos_z
 	end
 	pos_x = vm.f32(pos_x + vm.f32(vm.sin(vm.f32(arg2 * vm.f32(0.017453292))) * arg3))
-	pos_y = pos_y
 	pos_z = vm.f32(pos_z + vm.f32(vm.cos(vm.f32(arg2 * vm.f32(0.017453292))) * arg3))
 	local _ = helper_d5ac(pos_x, pos_y, pos_z, arg1, arg4, arg5, arg6)
 end
 
 --- Helper function.
 local function helper_10b20(
-	arg0: f32,
-	arg1: f32,
-	arg2: f32,
+	target: f32,
+	target_2: f32,
+	target_3: f32,
 	arg3: f32,
 	arg4: f32,
 	arg5: f32,
@@ -528,13 +526,13 @@ local function helper_10b20(
 	arg8: f32,
 	arg9: s32
 )
-	local var10: f32 = 0
-	local var11: f32 = 0
-	local var12: f32 = 0
+	local target_4: f32 = 0
+	local target_2_2: f32 = 0
+	local target_3_2: f32 = 0
 	local var17: f32 = 0
 	local var18: f32 = 0
 	var17 = vm.f32(arg6 * vm.f32(0.017453292))
-	var18 = monster.GetRefAngle(arg0, arg1, arg2) or var18
+	var18 = monster.GetRefAngle(target, target_2, target_3) or var18
 	var18 = vm.f32(var18 - vm.f32(3.1415927))
 	var18 = vm.f32(var18 + var17)
 	if var18 > vm.f32(3.1415927) then
@@ -543,13 +541,13 @@ local function helper_10b20(
 	if var18 <= vm.f32(-3.1415927) then
 		var18 = vm.f32(var18 + vm.f32(6.2831855))
 	end
-	var10 = vm.f32(arg0 + vm.f32(arg5 * vm.sin(var18)))
-	var11 = 0.0
-	var12 = vm.f32(arg2 + vm.f32(arg5 * vm.cos(var18)))
-	arg6 = monster.GetRefAngle(var10, var11, var12) or arg6
+	target_4 = vm.f32(target + vm.f32(arg5 * vm.sin(var18)))
+	target_2_2 = 0.0
+	target_3_2 = vm.f32(target_3 + vm.f32(arg5 * vm.cos(var18)))
+	arg6 = monster.GetRefAngle(target_4, target_2_2, target_3_2) or arg6
 	helper_595cbf61(helper_28452e16(arg6), arg4)
 	helper_442b9962()
-	local _ = helper_d5ac(var10, var11, var12, arg3, arg7, arg8, arg9)
+	local _ = helper_d5ac(target_4, target_2_2, target_3_2, arg3, arg7, arg8, arg9)
 end
 
 --- Helper function.
@@ -572,13 +570,12 @@ local function helper_10684(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: f3
 		pos_z = out3 or pos_z
 	end
 	pos_x = vm.f32(pos_x + vm.f32(vm.sin(arg1) * arg2))
-	pos_y = pos_y
 	pos_z = vm.f32(pos_z + vm.f32(vm.cos(arg1) * arg2))
 	local _ = helper_d5ac(pos_x, pos_y, pos_z, arg0, arg3, arg4, arg5)
 end
 
 --- Helper function.
-local function helper_f9fc(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: f32, arg5: f32, arg6: f32, arg7: s32)
+local function helper_f9fc(arg0: f32, arg1: f32, arg2: f32, range: f32, range_2: f32, arg5: f32, arg6: f32, arg7: s32)
 	local pos_x: f32 = 0
 	local pos_y: f32 = 0
 	local pos_z: f32 = 0
@@ -586,8 +583,8 @@ local function helper_f9fc(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: f32
 	local var15: f32 = 0
 	local var16: f32 = 0
 	print("FLMRandomMove---------------\n")
-	var15 = monster.GetRndf(arg4) or var15
-	var16 = monster.GetRndf(arg3) or var16
+	var15 = monster.GetRndf(range_2) or var15
+	var16 = monster.GetRndf(range) or var16
 	var15 = vm.f32(var15 + arg2)
 	helper_595cbf61(var16, arg1)
 	helper_442b9962()
@@ -602,7 +599,6 @@ local function helper_f9fc(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: f32
 		var12 = out2 or var12
 	end
 	pos_x = vm.f32(pos_x + vm.f32(vm.sin(var12) * var15))
-	pos_y = pos_y
 	pos_z = vm.f32(pos_z + vm.f32(vm.cos(var12) * var15))
 	local _ = helper_d5ac(pos_x, pos_y, pos_z, arg0, arg5, arg6, arg7)
 end
@@ -713,7 +709,7 @@ local function helper_13a08()
 					return
 				end
 			end
-			monster.GetRnd(100) -- retail: argument 2 is a value where the handler writes an output; the output is discarded
+			monster.GetRnd(100, argc)
 			return
 		end
 	end

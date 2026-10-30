@@ -4,7 +4,7 @@
 local vm = require("@lib/vm")
 
 --- Helper function.
-local function helper_244(arg0: s32, arg1: f32, arg2: f32, arg3: f32, arg4: f32, arg5: f32)
+local function helper_244(arg0: s32, arg1: f32, arg2: f32, arg3: f32, arg4: f32, range: f32)
 	local var6: f32 = 0
 	local var7: f32 = 0
 	local var8: f32 = 0
@@ -15,7 +15,7 @@ local function helper_244(arg0: s32, arg1: f32, arg2: f32, arg3: f32, arg4: f32,
 	local value_2: f32 = 0
 	local value_3: f32 = 0
 	local value_4: f32 = 0
-	value = effect.GetRand(arg5) or value
+	value = effect.GetRand(range) or value
 	value_2 = effect.GetRand(360.0) or value_2
 	value_3 = effect.GetRand(0.01) or value_3
 	value_4 = effect.GetRand(1.0) or value_4
@@ -36,7 +36,7 @@ local function helper_244(arg0: s32, arg1: f32, arg2: f32, arg3: f32, arg4: f32,
 end
 
 --- Helper function.
-local function helper_888(arg0: s32, arg1: f32, arg2: f32, arg3: f32, arg4: f32, arg5: f32)
+local function helper_888(arg0: s32, arg1: f32, arg2: f32, arg3: f32, arg4: f32, range: f32)
 	local var6: f32 = 0
 	local var7: f32 = 0
 	local var8: f32 = 0
@@ -48,7 +48,7 @@ local function helper_888(arg0: s32, arg1: f32, arg2: f32, arg3: f32, arg4: f32,
 	local value_2: f32 = 0
 	local value_3: f32 = 0
 	local value_4: f32 = 0
-	value = effect.GetRand(arg5) or value
+	value = effect.GetRand(range) or value
 	value_2 = effect.GetRand(360.0) or value_2
 	value_3 = effect.GetRand(0.01) or value_3
 	value_4 = effect.GetRand(1.0) or value_4

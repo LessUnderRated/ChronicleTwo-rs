@@ -42,7 +42,6 @@
 #include "platform/vfs.hpp"
 #include "runscript.hpp"
 #include "script_text.hpp"
-#include "script_timing.hpp"
 #include "scriptinterpreter.hpp"
 #include "texture_source.hpp"
 
@@ -98,52 +97,6 @@ void WriteBytes(const fs::path &path, const std::vector<unsigned char> &bytes) {
     fs::create_directories(path.parent_path());
     std::ofstream out(path, std::ios::binary);
     out.write(reinterpret_cast<const char *>(bytes.data()), static_cast<std::streamsize>(bytes.size()));
-}
-
-/**
- * Builds a timing-valid Spanish map script with the retail strings anchored for translation.
- */
-std::vector<unsigned char> SpanishMapScript(std::string_view key) {
-    constexpr std::size_t      code = 0x40;
-    constexpr std::size_t      first = code + 0x38;
-    std::vector<unsigned char> bytes(0x50000);
-    const auto                 put = [&](std::size_t offset, std::int32_t value) {
-        std::memcpy(bytes.data() + offset, &value, sizeof(value));
-    };
-    std::memcpy(bytes.data(), "SB2", 4);
-    put(4, code);
-    put(8, code);
-    put(12, 0x20);
-    put(code, first - code);
-    put(code + 8, 2);
-    std::size_t instruction = first;
-    for (int conversion = 0; conversion < 5; ++conversion) {
-        const std::array<vmcode_t, 8> recipe{
-            {
-             {.op = RS_OP_LOAD_ADDR, .arg1 = 0, .arg2 = RS_ADDR_LOCAL},
-             {.op = RS_OP_LOAD, .arg1 = conversion == 4 ? 1 : 0, .arg2 = RS_ADDR_LOCAL},
-             {.op = RS_OP_PUSH_CONST, .arg1 = RS_CONST_INT, .arg2 = 50},
-             {.op = RS_OP_MUL},
-             {.op = RS_OP_PUSH_CONST, .arg1 = RS_CONST_INT, .arg2 = 60},
-             {.op = RS_OP_DIV},
-             {.op = RS_OP_STORE},
-             {.op = RS_OP_POP},
-             }
-        };
-        std::memcpy(bytes.data() + instruction, recipe.data(), sizeof(recipe));
-        instruction += sizeof(recipe);
-    }
-    put(instruction, RS_OP_END);
-    for (const auto &line : script_text::Find(key)) {
-        const auto string_offset = bytes.size();
-        bytes.insert(bytes.end(), line.retail, line.retail + std::strlen(line.retail) + 1);
-        put(line.push, RS_OP_PUSH_CONST);
-        put(line.push + 4, RS_CONST_STR);
-        put(line.push + 8, static_cast<std::int32_t>(string_offset - code));
-    }
-    // Put appended translations in a sector the raw file does not write.
-    bytes.resize((bytes.size() + 2047) / 2048 * 2048);
-    return bytes;
 }
 
 /**
@@ -358,48 +311,6 @@ TEST_F(DataRead, PaddedLoadForgetsMotionSetBeyondTheReservation) {
     character_motion::Clear();
 }
 
-TEST_F(DataRead, ExpandedSpanishScriptForgetsMotionBeyondTheRawFileSector) {
-    constexpr std::string_view path = "map/s/s17/s17_5.stb";
-    auto                       script = SpanishMapScript(path);
-    const auto                 timing = script_timing::Apply(path, script.data(), script.size(), {.write = false});
-    ASSERT_TRUE(timing.ok) << timing.error;
-    WriteBytes(root / path, script);
-    DataReadIndex(root);
-
-    const auto extra = script_text::Extra(path);
-    ASSERT_GT(extra, sizeof(Mot_List));
-    const auto  capacity = script.size() + extra + 4096;
-    static char arena_key;
-    auto       *destination = reinterpret_cast<u_long128 *>(ArenaBlock(&arena_key, capacity));
-    mgCMemory   arena;
-    arena.stSetBuffer(destination, static_cast<int>(capacity / sizeof(u_long128)));
-    arena.Alloc(static_cast<int>(script.size() / sizeof(u_long128)));
-    constexpr int list_quadwords = static_cast<int>((sizeof(Mot_List) + 15) / 16);
-    const auto   *storage = reinterpret_cast<const std::byte *>(arena.stGetTop());
-    auto         *channel = ::new (arena.Alloc(list_quadwords)) Mot_List{.frame = -1};
-    arena.Alloc(static_cast<int>((extra + 15) / 16));
-    auto          *anchor = ::new (arena.Alloc(list_quadwords)) Mot_List{.frame = -1};
-    tagMOTION_TYPE motion{};
-    motion.motion_list = anchor;
-    character_motion::Clear();
-    character_motion::Register(anchor, {
-                                           {.name = "idle", .duration = 10, .base = 0, .head = channel}
-    },
-                               {storage, reinterpret_cast<const std::byte *>(arena.stGetTop())});
-    std::array<std::byte, sizeof(Mot_List)> kept{};
-    std::memcpy(kept.data(), anchor, kept.size());
-
-    arena.stReset();
-    int               size = 0;
-    const std::string name(path);
-    ASSERT_EQ(Load(name.c_str(), dc2::memory::RemainingBytes(arena), &size), 1);
-    EXPECT_EQ(size, static_cast<int>(script.size() + extra));
-    EXPECT_NE(channel->frame, -1);
-    ASSERT_EQ(std::memcmp(reinterpret_cast<const std::byte *>(anchor), kept.data(), kept.size()), 0);
-    EXPECT_TRUE(character_motion::Actions(motion).empty());
-    character_motion::Clear();
-}
-
 TEST_F(DataRead, DatapacksOverrideIndexedFilesWithReplacementSizesAndSparseFallback) {
     const auto first = base / "datapacks" / "First pack";
     const auto last = base / "datapacks" / "Last pack";
@@ -538,27 +449,6 @@ TEST_F(DataRead, BoundedLoadRejectsOversizedAssetBeforeWritingAndReadsValidAsset
                             [](u8 value) { return value == 0; }));
     EXPECT_EQ(bytes[DATAREAD_SECTOR_SIZE], 0xA5);
     EXPECT_EQ(bytes[DATAREAD_SECTOR_SIZE + 1], 0xA5);
-}
-
-TEST_F(DataRead, BoundedLoadAccountsForScriptExpansionBeyondSectorPadding) {
-    constexpr std::string_view path = "map/s/s17/s17_5.stb";
-    auto                       script = SpanishMapScript(path);
-    const auto                 timing = script_timing::Apply(path, script.data(), script.size(), {.write = false});
-    ASSERT_TRUE(timing.ok) << timing.error;
-    WriteBytes(root / path, script);
-    DataReadIndex(root);
-    const auto extra = script_text::Extra(path);
-    ASSERT_GT(extra, 0u);
-    std::vector<u8> bytes(script.size() + extra + 2, 0xA5);
-    std::string     name(path);
-    int             size = 99;
-    EXPECT_EQ(LoadFile2(name.data(), std::span<u8>(bytes.data(), script.size()), &size, LOAD_FILE_READ), 0);
-    EXPECT_EQ(size, 0);
-    EXPECT_TRUE(std::all_of(bytes.begin(), bytes.end(), [](u8 value) { return value == 0xA5; }));
-    ASSERT_EQ(LoadFile2(name.data(), std::span<u8>(bytes.data(), script.size() + extra), &size, LOAD_FILE_READ), 1);
-    EXPECT_LE(size, static_cast<int>(script.size() + extra));
-    EXPECT_EQ(bytes[script.size() + extra], 0xA5);
-    EXPECT_EQ(bytes[script.size() + extra + 1], 0xA5);
 }
 
 TEST_F(DataRead, BoundedBackgroundLoadCopiesBeforePollingWithoutTouchingSentinel) {
@@ -765,38 +655,6 @@ TEST_F(DataRead, FileCacheRecordsTheShrunkenSpanishEventTextLength) {
     EXPECT_EQ(size, static_cast<int>(expected.size()));
     EXPECT_EQ(DataReadBufferSize(Buffer()), expected.size());
     EXPECT_EQ(std::memcmp(Buffer(), expected.data(), expected.size()), 0);
-}
-
-TEST_F(DataRead, FileCacheRecordsActualLengthWhenSpanishScriptTextDoesNotMatch) {
-    constexpr std::string_view path = "map/s/s17/s17_5.stb";
-    auto                       script = SpanishMapScript(path);
-    const auto                &line = script_text::Find(path).back();
-    std::int32_t               relative = 0;
-    std::memcpy(&relative, script.data() + line.push + 8, sizeof(relative));
-    script[0x40 + static_cast<std::size_t>(relative)] = 'X';
-    const auto timing = script_timing::Apply(path, script.data(), script.size(), {.write = false});
-    ASSERT_TRUE(timing.ok) << timing.error;
-    WriteBytes(root / path, script);
-    DataReadIndex(root);
-    std::vector<u_long128> cache((script.size() + script_text::Extra(path) + 4095) / sizeof(u_long128));
-    std::vector<u_long128> destination(cache.size());
-
-    CacheReset reset;
-
-    InitFileCache(reset.Bind(cache), FILE_CACHE_UP);
-    StartReadBG();
-    std::string name(path);
-    int         capacity = 0;
-    ASSERT_EQ(LoadFile2(name.data(), std::span<u8>{}, &capacity, LOAD_FILE_SIZE), 1);
-    ASSERT_GT(capacity, static_cast<int>(script.size()));
-    ASSERT_EQ(LoadFileCacheBG(name.data()), 1);
-    int cached_size = 0;
-    ASSERT_NE(SearchFileCache(name.data(), &cached_size), nullptr);
-    EXPECT_EQ(cached_size, static_cast<int>(script.size()));
-    int size = 0;
-    ASSERT_EQ(Load(name.data(), std::span(reinterpret_cast<u8 *>(destination.data()), std::span(destination).size_bytes()), &size), 1);
-    EXPECT_EQ(size, static_cast<int>(script.size()));
-    EXPECT_EQ(DataReadBufferSize(destination.data()), script.size());
 }
 
 TEST_F(DataRead, WriteToHost0LandsUnderTheSaveRoot) {

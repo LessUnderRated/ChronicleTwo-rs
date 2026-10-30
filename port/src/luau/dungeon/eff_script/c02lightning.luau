@@ -33,16 +33,16 @@ function script.on_start()
 	local var20: f32 = 0
 	local var21: f32 = 0
 	local value_2: f32 = 0
-	local var23: f32 = 0
-	local var24: f32 = 0
-	local var25: f32 = 0
+	local vector_x_2: f32 = 0
+	local vector_y_2: f32 = 0
+	local vector_z_2: f32 = 0
 	local var26: s32 = 0
 	local var27: f32 = 0
 	local var28: f32 = 0
 	local var29: f32 = 0
-	local vector_x_2: f32 = 0
-	local vector_y_2: f32 = 0
-	local vector_z_2: f32 = 0
+	local vector_x_3: f32 = 0
+	local vector_y_3: f32 = 0
+	local vector_z_3: f32 = 0
 	local value_3: f32 = 0
 	local value_4: f32 = 0
 	local value_5: f32 = 0
@@ -51,7 +51,7 @@ function script.on_start()
 	local var38: s32 = 0
 	local value_6: s32 = 0
 	local var40: s32 = 0
-	local var41: f32 = 0
+	local scale: f32 = 0
 	local var42: f32 = 0
 	local var43: f32 = 0
 	local var45: s32 = 0
@@ -88,9 +88,9 @@ function script.on_start()
 	value_2 = vm.f32(value_2 - vm.f32(1.0471976))
 	var3 = vm.f32(var3 + value_2)
 	var3 = effect.AngleLimit(var3) or var3
-	var23 = vm.f32(vm.f32(vm.sin(var3) * 30.0) + pos_x)
-	var24 = vm.f32(40.0 + pos_y)
-	var25 = vm.f32(vm.f32(vm.cos(var3) * 30.0) + pos_z)
+	vector_x_2 = vm.f32(vm.f32(vm.sin(var3) * 30.0) + pos_x)
+	vector_y_2 = vm.f32(40.0 + pos_y)
+	vector_z_2 = vm.f32(vm.f32(vm.cos(var3) * 30.0) + pos_z)
 	var3 = effect.ScnGetChrRot_2(user_id) or var3
 	var26 = effect.SptAssignSprite_2(40) or var26
 	if var26 == 0 then
@@ -108,7 +108,7 @@ function script.on_start()
 	var36 = 0
 	while var36 < 10 do
 		do
-			local out1, out2, out3 = effect.CopyVector(var23, var24, var25)
+			local out1, out2, out3 = effect.CopyVector(vector_x_2, vector_y_2, vector_z_2)
 			var19 = out1 or var19
 			var20 = out2 or var20
 			var21 = out3 or var21
@@ -139,9 +139,9 @@ function script.on_start()
 		end
 		do
 			local out1, out2, out3 = effect.CopyVector(var10, var11, var12)
-			vector_x_2 = out1 or vector_x_2
-			vector_y_2 = out2 or vector_y_2
-			vector_z_2 = out3 or vector_z_2
+			vector_x_3 = out1 or vector_x_3
+			vector_y_3 = out2 or vector_y_3
+			vector_z_3 = out3 or vector_z_3
 		end
 		do
 			local out1, out2, out3 = effect.CopyVector(vector_x, vector_y, vector_z)
@@ -161,9 +161,9 @@ function script.on_start()
 			var28 = out2 or var28
 			var29 = out3 or var29
 		end
-		effect.SptSetPos(0, vector_x_2, vector_y_2, vector_z_2)
+		effect.SptSetPos(0, vector_x_3, vector_y_3, vector_z_3)
 		effect.SptSetColor(0, 128.0, 128.0, 128.0, 128.0)
-		effect.SptVanSetPos(var37, vector_x_2, vector_y_2, vector_z_2, var27, var28, var29, 0.0, 0.0, 0.0, 4)
+		effect.SptVanSetPos(var37, vector_x_3, vector_y_3, vector_z_3, var27, var28, var29, 0.0, 0.0, 0.0, 4)
 		effect.SptSetColor(var37, 128.0, 128.0, 128.0, 64.0, 4)
 		effect.SptColorConv(var37, 128.0, 128.0, 128.0, -64.0, 6.0, 4)
 		effect.SptSetBlinking(var37, 0.0, 0.0, 0.0, 64.0, 1.5707964, 4)
@@ -214,7 +214,7 @@ function script.on_start()
 			vm.wait()
 		end
 	end
-	var41 = 1.0
+	scale = 1.0
 	var3 = effect.GetRefRot_7(var10, var11, var12, pos_x_2, pos_y_2, pos_z_2) or var3
 	do
 		local out1, out2, out3 = effect.GetRefRot_9(var10, var11, var12, pos_x_2, pos_y_2, pos_z_2)
@@ -238,7 +238,7 @@ function script.on_start()
 		var21 = out3 or var21
 	end
 	do
-		local out1, out2, out3 = effect.ScaleVector(var19, var20, var21, var41)
+		local out1, out2, out3 = effect.ScaleVector(var19, var20, var21, scale)
 		var19 = out1 or var19
 		var20 = out2 or var20
 		var21 = out3 or var21
@@ -291,20 +291,20 @@ function script.on_start()
 			var21 = out3 or var21
 		end
 		do
-			local out1, out2, out3 = effect.ScaleVector(var19, var20, var21, var41)
+			local out1, out2, out3 = effect.ScaleVector(var19, var20, var21, scale)
 			var19 = out1 or var19
 			var20 = out2 or var20
 			var21 = out3 or var21
 		end
-		var41 = vm.f32(var41 * 2.0)
-		if var41 > 16.0 then
-			var41 = 16.0
+		scale = vm.f32(scale * 2.0)
+		if scale > 16.0 then
+			scale = 16.0
 		end
 		do
 			local out1, out2, out3 = effect.CopyVector(var10, var11, var12)
-			vector_x_2 = out1 or vector_x_2
-			vector_y_2 = out2 or vector_y_2
-			vector_z_2 = out3 or vector_z_2
+			vector_x_3 = out1 or vector_x_3
+			vector_y_3 = out2 or vector_y_3
+			vector_z_3 = out3 or vector_z_3
 		end
 		do
 			local out1, out2, out3 = effect.CopyVector(vector_x, vector_y, vector_z)
@@ -324,9 +324,9 @@ function script.on_start()
 			var28 = out2 or var28
 			var29 = out3 or var29
 		end
-		effect.SptVanSetPos(0, vector_x_2, vector_y_2, vector_z_2, -var27, -var28, -var29, 0.0, 0.0, 0.0, 1)
+		effect.SptVanSetPos(0, vector_x_3, vector_y_3, vector_z_3, -var27, -var28, -var29, 0.0, 0.0, 0.0, 1)
 		effect.SptSetColor(0, 128.0, 128.0, 128.0, 128.0, 1)
-		effect.SptVanSetPos(var37, vector_x_2, vector_y_2, vector_z_2, var27, var28, var29, 0.0, 0.0, 0.0, 4)
+		effect.SptVanSetPos(var37, vector_x_3, vector_y_3, vector_z_3, var27, var28, var29, 0.0, 0.0, 0.0, 4)
 		effect.SptSetColor(var37, 128.0, 128.0, 128.0, 64.0, 4)
 		effect.SptColorConv(var37, 128.0, 128.0, 128.0, -64.0, 6.0, 4)
 		effect.SptSetBlinking(var37, 0.0, 0.0, 0.0, 64.0, 1.5707964, 4)

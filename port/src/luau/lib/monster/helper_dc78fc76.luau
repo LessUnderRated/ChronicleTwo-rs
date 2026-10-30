@@ -9,7 +9,7 @@ local helper_7863d8b6 = require("@lib/monster/helper_7863d8b6")
 local helper_787df986 = require("@lib/monster/helper_787df986")
 
 --- Helper function.
-local function helper_dc78fc76(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: f32, arg5: f32, arg6: s32)
+local function helper_dc78fc76(arg0: f32, arg1: f32, arg2: f32, range: f32, range_2: f32, arg5: f32, arg6: s32)
 	local pos_y: f32 = 0
 	local var11: f32 = 0
 	local pos_x_2: f32 = 0
@@ -18,9 +18,9 @@ local function helper_dc78fc76(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4:
 	local var20: f32 = 0
 	local var21: f32 = 0
 	local var22: f32 = 0
-	arg3 = helper_787df986(arg3)
-	var19 = monster.GetRndf(arg4) or var19
-	var20 = monster.GetRndf(arg3) or var20
+	range = helper_787df986(range)
+	var19 = monster.GetRndf(range_2) or var19
+	var20 = monster.GetRndf(range) or var20
 	do
 		local out1, _, out3 = monster.GetPos_3()
 		pos_x_2 = out1 or pos_x_2

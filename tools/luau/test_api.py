@@ -93,6 +93,12 @@ declare cmath: {{
 \tsinf: (x: number) -> number,
 \tcosf: (x: number) -> number,
 }}
+-- Machine state the host owns: whether the running script is skipping, the skip end, and the item the use item menu wrote.
+declare vmhost: {{
+\tskipping: () -> boolean,
+\tskip_end: () -> boolean,
+\tused_item: () -> number?,
+}}
 """
 
 

@@ -171,7 +171,7 @@ local function helper_1311c()
 	local var7: f32 = 0
 	local var8: f32 = 0
 	local var9: f32 = 0
-	local var10: s32 = 0
+	local value: s32 = 0
 	local attack: s32 = 0
 	attack = monster.GetBaseAttack_1() or attack
 	monster.SetMos("構え歩き", -1, 0)
@@ -193,9 +193,9 @@ local function helper_1311c()
 		var8 = out3 or var8
 	end
 	pos_y = 0.0
-	var10 = 0
+	value = 0
 	monster.GetRnd(100)
-	var10 = 1
+	value = 1
 	var9 = monster.GetRndf(0.25) or var9
 	var9 = vm.f32(var9 + vm.f32(0.2))
 	monster.EsmCreate_1("グリＳＷＦ")
@@ -206,7 +206,7 @@ local function helper_1311c()
 	monster.EsmSetVect2(-1, var6, var7, var8)
 	monster.EsmSetValue(-1, 0, attack)
 	monster.EsmSetValueFloat(-1, 1, var9)
-	monster.EsmSetValue(-1, 2, var10)
+	monster.EsmSetValue(-1, 2, value)
 	monster.EsmSetValue(-1, 3, 0)
 	monster.EsmSetValueFloat(-1, 4, -1.5707964)
 	helper_754712d9(vm.f32(4.2), helper_9df6409a(24))
@@ -223,9 +223,9 @@ local function helper_1311c()
 		var8 = out3 or var8
 	end
 	pos_y = 0.0
-	var10 = 0
+	value = 0
 	monster.GetRnd(100)
-	var10 = 1
+	value = 1
 	var9 = monster.GetRndf(0.25) or var9
 	var9 = vm.f32(var9 + vm.f32(0.2))
 	monster.EsmCreate_1("グリＳＷＦ")
@@ -236,7 +236,7 @@ local function helper_1311c()
 	monster.EsmSetVect2(-1, var6, var7, var8)
 	monster.EsmSetValue(-1, 0, attack)
 	monster.EsmSetValueFloat(-1, 1, var9)
-	monster.EsmSetValue(-1, 2, var10)
+	monster.EsmSetValue(-1, 2, value)
 	monster.EsmSetValue(-1, 3, 0)
 	monster.EsmSetValueFloat(-1, 4, 1.5707964)
 	helper_56d63eae()
@@ -363,7 +363,6 @@ local function helper_11738()
 		var4 = out2 or var4
 	end
 	pos_x = vm.f32(pos_x + vm.f32(vm.sin(vm.f32(var4 + vm.f32(3.1415927))) * 200.0))
-	pos_y = pos_y
 	pos_z = vm.f32(pos_z + vm.f32(vm.cos(vm.f32(var4 + vm.f32(3.1415927))) * 200.0))
 	monster.SetMos("ステップ後", -1, 6)
 	helper_c3e8ae39(helper_9df6409a(9))
@@ -403,7 +402,6 @@ local function helper_103c8()
 			pos_z = out3 or pos_z
 		end
 		pos_x = vm.f32(pos_x + vm.f32(vm.sin(var4) * 200.0))
-		pos_y = pos_y
 		pos_z = vm.f32(pos_z + vm.f32(vm.cos(var4) * 200.0))
 	else
 		var8 = 0
@@ -451,7 +449,6 @@ local function helper_10d68()
 			pos_z = out3 or pos_z
 		end
 		pos_x = vm.f32(pos_x + vm.f32(vm.sin(var4) * 200.0))
-		pos_y = pos_y
 		pos_z = vm.f32(pos_z + vm.f32(vm.cos(var4) * 200.0))
 	else
 		var8 = 0
@@ -495,7 +492,7 @@ local function helper_14934()
 	elseif var0 < 110.0 then
 		helper_11738()
 	else
-		monster.GetTargetAngle() -- retail: argument 1 is a value where the handler writes an output; the output is discarded
+		monster.GetTargetAngle(var1)
 		if var1 < 0.0 then
 			helper_103c8()
 		else

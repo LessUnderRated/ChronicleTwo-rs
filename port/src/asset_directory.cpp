@@ -133,14 +133,13 @@ File *Store(const std::string &key, const fs::path &relative, std::string_view b
 }
 
 /**
- * Reads a selected asset, recording its logical lookup path and byte extent. A script member with a Luau module reads
- * as the handle naming it.
+ * Reads a selected asset, recording its logical lookup path and byte extent. A script member reads as the handle
+ * naming its Luau module, and is missing without one.
  */
 File *Read(fs::path relative, std::string_view kind = {}) {
     if (Key(relative.extension().generic_string()) == ".stb") {
-        if (const auto module = luau_runtime::ModuleForScript(vfs::FoldKey(relative.generic_string()))) {
-            return Store("luau:" + Key(relative.generic_string()), relative, luau_runtime::MakeHandle(*module));
-        }
+        const auto module = luau_runtime::ModuleForScript(vfs::FoldKey(relative.generic_string()));
+        return module ? Store("luau:" + Key(relative.generic_string()), relative, luau_runtime::MakeHandle(*module)) : nullptr;
     }
     auto candidates = Key(relative.extension().generic_string()) == ".json" ? datapacks::GameplayCandidates(relative) : datapacks::Candidates(relative);
     if (candidates.empty()) {

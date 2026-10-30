@@ -117,7 +117,7 @@ local function helper_ff67a99d()
 					return
 				end
 			end
-			monster.GetRnd(100) -- retail: argument 2 is a value where the handler writes an output; the output is discarded
+			monster.GetRnd(100, argc)
 			return
 		end
 	end

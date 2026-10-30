@@ -13,7 +13,7 @@ function script.on_start()
 	local user_id: s32 = 0
 	local target_id: s32 = 0
 	local value: f32 = 0
-	local var3: f32 = 0
+	local scale: f32 = 0
 	local rot_y: f32 = 0
 	local pos_x: f32 = 0
 	local pos_y: f32 = 0
@@ -54,7 +54,7 @@ function script.on_start()
 	target_id = effect.GetTargetId() or target_id
 	value = effect.GetValueFloat(0) or value
 	value = 0.0
-	var3 = vm.f32(8.0 + vm.f32(4.0 * value))
+	scale = vm.f32(8.0 + vm.f32(4.0 * value))
 	do
 		local out1, out2, out3 = effect.ScnGetChrPos(user_id)
 		pos_x = out1 or pos_x
@@ -113,7 +113,7 @@ function script.on_start()
 			var19 = out3 or var19
 		end
 		do
-			local out1, out2, out3 = effect.ScaleVector(var17, var18, var19, var3)
+			local out1, out2, out3 = effect.ScaleVector(var17, var18, var19, scale)
 			var17 = out1 or var17
 			var18 = out2 or var18
 			var19 = out3 or var19
@@ -132,7 +132,7 @@ function script.on_start()
 			var19 = out3 or var19
 		end
 		do
-			local out1, out2, out3 = effect.ScaleVector(var17, var18, var19, var3)
+			local out1, out2, out3 = effect.ScaleVector(var17, var18, var19, scale)
 			var17 = out1 or var17
 			var18 = out2 or var18
 			var19 = out3 or var19
@@ -199,7 +199,7 @@ function script.on_start()
 			var19 = out3 or var19
 		end
 		do
-			local out1, out2, out3 = effect.ScaleVector(var17, var18, var19, var3)
+			local out1, out2, out3 = effect.ScaleVector(var17, var18, var19, scale)
 			var17 = out1 or var17
 			var18 = out2 or var18
 			var19 = out3 or var19

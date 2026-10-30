@@ -501,13 +501,10 @@ five PAL languages with the translation's wording plus both, for example
 The PAL disc's Spanish script for the map where Max learns Spheda
 (`map/s/s17/s17_5.stb`) is a byte-for-byte copy of the Italian one, so its
 Spheda tutorial, prompts and dialogue read in Italian. `port/src/script_text.cpp`
-gives those 19 strings Spanish text when the script is read from the data index
-(`ResolveFile` in `port/src/platform/dataread.cpp`), after the NTSC timing conversion. Each
-line is anchored on its push instruction and the Italian text it must find there;
-a script that does not show every line is left unchanged with a warning. A text
-that fits is written over the Italian one, a longer one is appended after the
-script, so the file reads 1 KB or so longer and size queries report the same.
-The wording keeps the PAL Spanish names (Esfera, Esfeda, Bastón Multiusos, Ayuda).
+gives those 19 strings Spanish text when the script is translated to Luau
+(`tools/luau/script_text.json`). Each line is anchored on its push instruction and
+the Italian text it must find there; the transpiler refuses a script that does not
+show every line. The wording keeps the PAL Spanish names (Esfera, Esfeda, Bastón Multiusos, Ayuda).
 
 The Spanish text of the Spheda lesson that follows (`event/e300/e314/e314_5.txt`)
 says there is nothing more to remember right before the colour rules, and has a
@@ -519,7 +516,7 @@ The Spanish jump gate menus in Gundorada (`map/f/f04/f04_5.stb` and
 `map/s/s30/s30_5.stb`) put East and West on one line, "Puerta de salto Este --
 Oeste", so they show one destination fewer than the script offers: the last
 choice is blank and the ones after North lead one destination further than they
-say. The same file gives the three menus the English menu's lines, with East and
+say. The transpiler gives the three menus the English menu's lines, with East and
 West apart and the time gate named "Puerta del tiempo".
 
 ### darkchronicle
@@ -555,7 +552,6 @@ Environment, with the `DC2` prefix that `GameSetIdentity` sets:
 - `DC2_AUDIO_TRACE`: any value other than empty or `0` traces the audio calls on stderr.
 - `DC2_LOG=SPEC`: the log level, as `--log-level` takes it; `--log-level` outranks it, and it outranks `config.json`. An invalid value is logged and ignored.
 - `DC2_LOG_FILE=0`: no session log file, whatever `log.file` says.
-- `DC2_SCRIPT_VM=interpreter`: run every script on the retail interpreter, including those with a Luau module ([PORT_LUAU.md](PORT_LUAU.md)).
 - `DC2_CRASH_TEST=MODE[:early]`: as `--crash-test` (see "Test hooks"); the option outranks it.
 - `DC2_VULKAN_VALIDATION`: has no effect. `main` ORs its presence into `gfx::RendererConfig::validation`, which is already on in a Debug build, and a Release build never requests the layer.
 - `DC2_RENDER_SCALE`: pixels per PS2 line of the render targets (`gfx::RendererConfig::render_scale`), up to 8; `0`, the default, derives it from the window height over 480.
@@ -648,7 +644,7 @@ Fixtures and extracted game data stay outside the repository.
 2b. `CrashInit` installs the crash handlers and starts the crash report writer; runs with `--headless`, `--frames` or `--input` never show a crash dialog (see [CRASH_REPORTS.md](CRASH_REPORTS.md)). `--crash-test` (or `DC2_CRASH_TEST`) is parsed here.
 3. `ConfigLoad` reads `config.json` from the save root's parent directory (see "config.json"). `LogAttachFile` then applies its `log` section and opens `<save root>/../logs/darkchronicle-<session>.log`, which starts with every line logged since `LogInit`. `CrashSetBundleRoot` then puts crash bundles under `<save root>/crashes/<session>/`, and an early `--crash-test` fires.
 4. `FirstRunRequireData` checks the data root and opens setup when extraction is needed, or exits with status 3 in headless mode; on iOS it shows the launcher every time (see "Game data and first run").
-4a. `InitCDFile` indexes the data root, printing `dataread: indexed N files under <dir>`. NTSC script validation runs before the window, renderer, audio and clock. Incompatible scripts are named in the log and startup exits with status 5; desktop runs also show an error dialog.
+4a. `InitCDFile` indexes the data root, printing `dataread: indexed N files under <dir>`.
 5. The window opens, or the offscreen surface with `--headless`. A windowed run then shows the notice of a crash in an earlier session, if there is one not yet shown. Input initialises, and the input script is installed.
 6. The renderer starts (`gfx::RendererInit`) with a logical size of 512x480 at a 4:3 display aspect. It builds every pipeline, uses `<save root>/pipeline_cache.bin` as its pipeline cache, and prints `compiling shaders n/total` as it goes.
 7. `AudioInit(options.headless)` selects device-driven or tick-driven mixer ownership (see "Audio"). `AudioShutdown` is registered with `atexit`.
@@ -666,7 +662,7 @@ Each arena's high-water mark is tracked, and `MainLoop` logs `mg_memory: <name> 
 
 ### MainLoop
 
-`port/src/platform/mainloop.cpp` retains the retail boot and mode-dispatch order. Native changes include pointer-width alignment; mapped arenas and native-sized sub-game storage; retained static helpers through link-name bridges; writable file paths; and arena high-water reporting. `InitCDFile` runs from `main` before NTSC script validation and renderer startup.
+`port/src/platform/mainloop.cpp` retains the retail boot and mode-dispatch order. Native changes include pointer-width alignment; mapped arenas and native-sized sub-game storage; retained static helpers through link-name bridges; writable file paths; and arena high-water reporting. `InitCDFile` runs from `main` before renderer startup.
 
 Launch hooks prepare an explicit scene jump and give requested items on arrival. Jumps skip the ordinary boot logo and select English. `game.skip_intro` keeps the language select but drops the boot logo's fades, the copyright notice and the Level-5 logo movie. Configured debug mode or a jump unlocks debug controls; the one-controller modifier, developer-menu chord and capture/resume handling are native additions. Mode changes cut interpolation, and the final frame border follows the live visible extent rather than fixed retail screen edges. Ordinary launches preserve the retail scene route and default debug gate.
 
@@ -1534,14 +1530,14 @@ The reason for this design: the retail thread loops (`GamePadStep`, `NowLoadingL
 
 ### Disc scripts under the NTSC timing
 
-The PAL scripts (`.stb`) hold the NTSC frame counts and convert them while they run. `port/src/script_timing.cpp` removes those conversions when a script is read from the data index (`ResolveFile` in `port/src/platform/dataread.cpp`), so every loader and the file cache get the converted bytes.
+The PAL scripts (`.stb`) hold the NTSC frame counts and convert them while they run. The transpiler (`tools/luau/stb2luau/timing.py`) removes those conversions before it translates a script, so the Luau modules hold the NTSC counts.
 
-- Event and map scripts count fields: the shared event helpers scale their counts by `* 50 / 60`, and some loop bounds and cues are written as `(N * 50) / 60`. Monster scripts count game frames through a `conv(n) = ftoi(itof(n) / 30.0f * 25.0f)` helper, and a few scripts divide by 30 and multiply by 25 in integers. Each conversion becomes opcode-22 no-ops, which `CRunScript::exe()` steps over, so the value reaches its consumer unchanged; the converter keeps its `FTOI`.
+- Event and map scripts count fields: the shared event helpers scale their counts by `* 50 / 60`, and some loop bounds and cues are written as `(N * 50) / 60`. Monster scripts count game frames through a `conv(n) = ftoi(itof(n) / 30.0f * 25.0f)` helper, and a few scripts divide by 30 and multiply by 25 in integers. Each conversion becomes opcode-22 no-ops, so the value reaches its consumer unchanged; the converter keeps its `FTOI`.
 - The lip-sync helper's cue assignment, which PAL derives from the already scaled timeout, is removed whole.
 - A few literals PAL retuned by hand (a jump in d03, a turn in s03, an object delay and wait in m06b, the backpack scene in i01h01b, one turn in e221a) are anchored: the instruction sequence must occur once and hold the PAL value before the NTSC value is written. The same anchors cover the language copies `_1` to `_5`.
 - Max's and Monica's motion-ratio windows (`mainchr/c01.stb`, `c02.stb`, 8 bounds) take their NTSC values.
 - Matching only looks at decoded instructions inside the script's functions (the program table, CALL targets and unreferenced function blocks), never at raw bytes. Every recipe is validated before any is written, sizes never change, and a converted script converts to the same bytes again.
-- `port/src/script_timing_inventory.inc` lists every script that holds a conversion, with the count of each recipe it must show. Before gameplay starts, NTSC timing validates every indexed `.stb` with the same decoder and recipes, including datapack replacements. Matching replacements are converted through the same loader. A listed script that does not match, or an unlisted one that holds a conversion, appears in a startup report naming the asset. Startup logs the complete asset list and exits with status 5; desktop runs also show an error dialog. Saved settings are unchanged. Unlisted, undecodable `.stb` files stay unchanged with a warning once per asset per session, matching the loader. Validation reads and decodes the scripts on up to 16 threads, then reports them in key order; it reads the files once and writes no disk cache. Each converted asset logs once per session.
+- `tools/luau/stb2luau/timing_inventory.json` lists every script that holds a conversion, with the count of each recipe it must show. The transpiler refuses a listed script that does not match and an unlisted one that holds a conversion.
 - Effect scripts keep PAL's waits for the end of their motion.
 
 [Luau scripts](PORT_LUAU.md) describes the script kinds, the command catalog and the corpus survey for the Luau replacement of the script machine.

@@ -9,7 +9,7 @@ local helper_de1504df = require("@lib/monster/helper_de1504df")
 local helper_f5727415 = require("@lib/monster/helper_f5727415")
 
 --- Helper function.
-local function helper_b3c03340(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: s32)
+local function helper_b3c03340(scale: f32, arg1: f32, arg2: f32, arg3: f32, arg4: s32)
 	local var5: f32 = 0
 	local var6: f32 = 0
 	local var7: f32 = 0
@@ -66,7 +66,7 @@ local function helper_b3c03340(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4:
 		var16 = out3 or var16
 	end
 	do
-		local out1, out2, out3 = monster.ScaleVector(var14, var15, var16, arg0)
+		local out1, out2, out3 = monster.ScaleVector(var14, var15, var16, scale)
 		var14 = out1 or var14
 		var15 = out2 or var15
 		var16 = out3 or var16
@@ -88,10 +88,10 @@ local function helper_b3c03340(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4:
 			var15 = 0.0
 		end
 		var18 = monster.GetDistVector2(var8, var9, var10, var5, var6, var7) or var18
-		if var18 < vm.f32(arg0 + arg2) then
+		if var18 < vm.f32(scale + arg2) then
 			return
 		end
-		var23 = helper_de1504df(var8, var9, var10, arg0, var12)
+		var23 = helper_de1504df(var8, var9, var10, scale, var12)
 		if var23 ~= 0 then
 			print("hit------------------\n")
 			return

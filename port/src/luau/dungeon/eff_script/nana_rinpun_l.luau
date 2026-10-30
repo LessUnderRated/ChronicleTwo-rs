@@ -14,7 +14,7 @@ function script.init() end
 
 --- Runs the effect from the frame it is created.
 function script.on_start()
-	local var0: f32 = 0
+	local scale: f32 = 0
 	local var1: f32 = 0
 	local var2: f32 = 0
 	local var3: f32 = 0
@@ -40,7 +40,7 @@ function script.on_start()
 	local var29: f32 = 0
 	local reversed: s32 = 0
 	local hit_num: s32 = 0
-	var0 = 12.5
+	scale = 12.5
 	do
 		local out1, out2, out3 = effect.GetWorkVect1()
 		var1 = out1 or var1
@@ -100,7 +100,7 @@ function script.on_start()
 			var24 = out3 or var24
 		end
 		do
-			local out1, out2, out3 = effect.ScaleVector(var22, var23, var24, var0)
+			local out1, out2, out3 = effect.ScaleVector(var22, var23, var24, scale)
 			var22 = out1 or var22
 			var23 = out2 or var23
 			var24 = out3 or var24

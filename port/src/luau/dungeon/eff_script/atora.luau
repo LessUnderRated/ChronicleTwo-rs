@@ -4,7 +4,7 @@
 local vm = require("@lib/vm")
 
 --- Helper function.
-local function helper_110(arg0: any, arg1: f32, arg2: f32, arg3: f32)
+local function helper_110(arg0: any, from_x: f32, from_y: f32, from_z: f32)
 	local var4: f32 = 0
 	local pos_x: f32 = 0
 	local pos_y: f32 = 0
@@ -17,7 +17,7 @@ local function helper_110(arg0: any, arg1: f32, arg2: f32, arg3: f32)
 		pos_y = out2 or pos_y
 		pos_z = out3 or pos_z
 	end
-	var4 = effect.DistVector2(arg1, arg2, arg3, pos_x, pos_y + 50.0, pos_z) or var4
+	var4 = effect.DistVector2(from_x, from_y, from_z, pos_x, pos_y + 50.0, pos_z) or var4
 	if var4 <= vm.f32(7.6) then
 		return 1
 	end

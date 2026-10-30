@@ -1,5 +1,6 @@
 import struct
 import sys
+import copy
 import unittest
 from pathlib import Path
 
@@ -368,8 +369,8 @@ class EmitTest(unittest.TestCase):
 
     def test_float_constant_formatting(self):
         body = [ir.Print((const(0.1, ir.FLOAT), const(2.0, ir.FLOAT), const(1e-05, ir.FLOAT)))]
-        self.assertIn("\tprint(0.1, 2.0, 1e-05)\n", emit_text(main_function(body)).text)
-        self.assertIn("\tprint(20.0)\n", emit_text(main_function([ir.Print((const(20.0, ir.FLOAT),))])).text)
+        self.assertIn("\tprint(vm.float(0.1), vm.float(2.0), vm.float(1e-05))\n", emit_text(main_function(body)).text)
+        self.assertIn("\tprint(vm.float(20.0))\n", emit_text(main_function([ir.Print((const(20.0, ir.FLOAT),))])).text)
 
     def test_float_arithmetic_and_constants_are_float32(self):
         tenth = struct.unpack("<f", struct.pack("<f", 0.1))[0]
@@ -465,11 +466,11 @@ class EmitTest(unittest.TestCase):
         result = emit_text(function(0x40, body, programs=[1])).text
         self.assertIn("\taction.Ext(30, 0, 1, 2, 3, 4) -- retail: the handler rejects 5 arguments\n", result)
 
-    def test_reference_where_the_handler_reads_a_value_is_refused(self):
-        # The PC interpreter would read the low bits of the variable's address, so the script stays on it.
+    def test_reference_where_the_handler_reads_a_value_passes_the_value(self):
+        # Retail reads the low bits of the variable's address, which vary from run to run; the variable's value is passed.
         body = [ir.ExtCall(30, (addr(3), const(b"x", ir.STR)))]
-        with self.assertRaisesRegex(EmitError, "reference the handler reads as a value"):
-            emit_text(function(0x40, body, slots=ints(3), programs=[1]))
+        result = emit_text(function(0x40, body, slots=ints(3), programs=[1])).text
+        self.assertIn("(var3, \"x\") -- retail: argument 1 passes a reference where the handler reads a value", result)
 
     def test_number_where_handler_reads_string_is_refused(self):
         body = [ir.ExtCall(30, (const(1), const(2)))]
@@ -480,6 +481,25 @@ class EmitTest(unittest.TestCase):
         body = [ir.ExtCall(30, (const(b"x", ir.STR), const(b"y", ir.STR)))]
         with self.assertRaisesRegex(EmitError, "argument 1 is a string where the handler reads a number"):
             emit_text(function(0x40, body, programs=[1]))
+
+    def test_other_kind_handling(self):
+        def with_kind(handling):
+            catalog = copy.deepcopy(CATALOG)
+            command = next(c for c in catalog["kinds"]["action"]["commands"] if c["no"] == 30)
+            command["signatures"][0]["params"][1]["other_kind"] = handling
+            command["signatures"][0]["params"][0]["other_kind"] = handling
+            return catalog
+
+        def text(handling, *args):
+            return emit(module(function(0x40, [ir.ExtCall(30, args)], programs=[1])), with_kind(handling)).text
+
+        # A string-reading handler given 0 reads no string; any other number names none it finds.
+        self.assertIn("action.SetPallet(1, nil) -- retail: argument 2 is 0, which the handler reads as no string", text("address", const(1), const(0)))
+        self.assertIn('action.SetPallet(1, "") -- retail: argument 2 is -1, an address', text("address", const(1), const(-1)))
+        # A number-reading handler that only tests for zero sees a string's address as not zero.
+        self.assertIn("action.SetPallet(1, \"x\") -- retail: argument 1 is \"y\", whose address", text("nonzero", const(b"y", ir.STR), const(b"x", ir.STR)))
+        self.assertIn('action.SetPallet("y", "x")', text("accepted", const(b"y", ir.STR), const(b"x", ir.STR)))
+        self.assertIn('-- retail: action.SetPallet("y", "x") does nothing, since its handler ignores a string as argument 1', text("ignored", const(b"y", ir.STR), const(b"x", ir.STR)))
 
     def test_output_is_reinterpreted_as_the_script_reads_it(self):
         # ProgGet writes an integer; the script reads its variable as a float, which reads the integer's bits.
@@ -499,9 +519,30 @@ class EmitTest(unittest.TestCase):
         call = ir.ExtCall(61, (const(1), addr(3, ir.FLOAT)), tags=(("value", ("int",)), ("ref", ("int",), ("float",))))
         result = emit_text(function(0x40, [call, ir.Print((var(3, ir.FLOAT),))], slots=slots, programs=[1])).text
         self.assertIn("\tvalue = vm.bits_float(action.VPop(1)) or value\n", result)
+
+    def test_tag_that_varies_is_followed_by_a_flag(self):
+        # The variable is integer-tagged on the first pass and float-tagged after: a flag follows its tag, and a float
+        # load clears it.
+        slots = {("local", 3): ir.FLOAT}
         mixed = ir.ExtCall(61, (const(1), addr(3, ir.FLOAT)), tags=(("value", ("int",)), ("ref", ("float", "int"), ("float",))))
-        with self.assertRaisesRegex(EmitError, "may be float or int"):
-            emit_text(function(0x40, [mixed, ir.Print((var(3, ir.FLOAT),))], slots=slots, programs=[1]))
+        loop = ir.While(const(1), [mixed, ir.Print((var(3, ir.FLOAT),))])
+        fn = function(0x40, [loop], slots=slots, programs=[1])
+        fn.load_kinds = {("local", 3): frozenset({True})}
+        result = emit_text(fn).text
+        self.assertIn("\tlocal value_int = true\n", result)
+        self.assertIn(
+            "value = (if value_int then vm.bits_float(action.VPop(1)) else action.VPopFloat(1)) or value\n", result
+        )
+        self.assertIn("\t\tvalue_int = false\n", result)
+
+    def test_tag_that_varies_in_a_condition_is_refused(self):
+        slots = {("local", 3): ir.FLOAT}
+        mixed = ir.ExtCall(61, (const(1), addr(3, ir.FLOAT)), tags=(("value", ("int",)), ("ref", ("float", "int"), ("float",))))
+        check = ir.If(ir.Compare("lt", var(3, ir.FLOAT), const(1.0, ir.FLOAT)), [], [])
+        fn = function(0x40, [ir.While(const(1), [mixed, check])], slots=slots, programs=[1])
+        fn.load_kinds = {("local", 3): frozenset({True})}
+        with self.assertRaisesRegex(EmitError, "a condition loads variable 3"):
+            emit_text(fn)
 
     def test_tagged_command_takes_the_variant_of_its_argument_type(self):
         slots = {("local", 3): ir.FLOAT, ("local", 4): ir.INT}
@@ -589,8 +630,8 @@ class EmitTest(unittest.TestCase):
         self.assertIn("\tlocal var1: { f32 } = table.create(3, 0)\n", result)
         self.assertIn("\tvar1[var0 + 1] = 2.5\n", result)
         self.assertIn("\tvar1[var0] = 1.5\n", result)
-        self.assertIn("\tprint(var1[3])\n", result)
-        self.assertNotIn("vm.", result)
+        self.assertIn("\tprint(vm.float(var1[3]))\n", result)
+        self.assertNotIn("vm.index", result)
 
     def test_output_into_an_array_element(self):
         body = [ir.ExtCall(2, (ir.Addr(ARRAY, ir.INT, var(0)),)), ir.Print((ir.Elem(ARRAY, const(0), ir.INT),))]

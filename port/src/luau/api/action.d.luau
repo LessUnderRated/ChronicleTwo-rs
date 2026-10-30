@@ -24,8 +24,9 @@ declare action: {
 	SetPallet_2: (arg1: s32, arg2: string) -> (),
 	SetPallet_5: (arg1: s32, arg2: s32, arg3: s32, arg4: s32, arg5: s32) -> (),
 	--- Returns the equipped item number for the selected equipment slot.
-	CheckEquip: (slot: s32) -> s32?,
+	CheckEquip: ((slot: s32) -> s32?) & ((slot: s32, arg2: f32) -> ()),
 	CheckEquip_2: (slot: s32) -> s32?,
+	CheckEquip_2v: (slot: s32, arg2: f32) -> (),
 	--- Starts a dungeon camera quake with the requested strength and duration.
 	CameraQuake: ((power: f32, duration: s32) -> ()) & ((arg1: s32, arg2: string, arg3: f32, arg4: string, arg5: f32, arg6: f32) -> ()),
 	CameraQuake_2: (power: f32, duration: s32) -> (),
@@ -55,8 +56,9 @@ declare action: {
 	GetFrontVec: () -> (f32?, f32?, f32?),
 	GetFrontVec_3: () -> (f32?, f32?, f32?),
 	--- Returns the current gamepad buttons held down.
-	GetPadon: () -> s32?,
+	GetPadon: (() -> s32?) & ((arg1: s32) -> ()),
 	GetPadon_1: () -> s32?,
+	GetPadon_1v: (arg1: s32) -> (),
 	--- Returns gamepad buttons pressed this frame.
 	GetPaddown: () -> s32?,
 	GetPaddown_1: () -> s32?,
@@ -197,8 +199,8 @@ declare action: {
 	SetDirGun: () -> (),
 	SetDirGun_0: () -> (),
 	--- Fires a charged magic sword projectile from a named action object.
-	SetSpecialShot: (object_name: string) -> (),
-	SetSpecialShot_1: (object_name: string) -> (),
+	SetSpecialShot: (object_name: string?) -> (),
+	SetSpecialShot_1: (object_name: string?) -> (),
 	--- Returns the current battle character HP divided by maximum HP.
 	GetNowHpRate: () -> f32?,
 	GetNowHpRate_1: () -> f32?,

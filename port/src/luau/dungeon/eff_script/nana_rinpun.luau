@@ -14,7 +14,7 @@ function script.init() end
 
 --- Runs the effect from the frame it is created.
 function script.on_start()
-	local var0: f32 = 0
+	local scale: f32 = 0
 	local var1: f32 = 0
 	local var2: f32 = 0
 	local var3: f32 = 0
@@ -39,7 +39,7 @@ function script.on_start()
 	local var30: { f32 } = table.create(3, 0)
 	local value_3: f32 = 0
 	local var34: f32 = 0
-	var0 = 4.0
+	scale = 4.0
 	do
 		local out1, out2, out3 = effect.GetWorkVect1()
 		var1 = out1 or var1
@@ -72,7 +72,7 @@ function script.on_start()
 			var18 = out3 or var18
 		end
 		do
-			local out1, out2, out3 = effect.ScaleVector(var16, var17, var18, var0)
+			local out1, out2, out3 = effect.ScaleVector(var16, var17, var18, scale)
 			var16 = out1 or var16
 			var17 = out2 or var17
 			var18 = out3 or var18

@@ -140,7 +140,7 @@ local function helper_11ed8()
 end
 
 --- Helper function.
-local function helper_12400(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: s32, arg5: f32)
+local function helper_12400(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: s32, next_rot: f32)
 	local var6: f32 = 0
 	local var7: f32 = 0
 	local var8: f32 = 0
@@ -155,7 +155,7 @@ local function helper_12400(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: s3
 	local var17: f32 = 0
 	local var18: f32 = 0
 	local var19: f32 = 0
-	local var20: f32 = 0
+	local scale: f32 = 0
 	local var21: s32 = 0
 	local var23: f32 = 0
 	do
@@ -188,13 +188,13 @@ local function helper_12400(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: s3
 		var13 = out2 or var13
 		var14 = out3 or var14
 	end
-	var20 = arg3
+	scale = arg3
 	var18 = monster.GetDistVector2(arg0, arg1, arg2, pos_x, pos_y, pos_z) or var18
-	var19 = helper_adcbef14(var18, var20, vm.f32(vm.fdiv(vm.f32(var18 * vm.f32(1.9)), var20)), var19)
+	var19 = helper_adcbef14(var18, scale, vm.f32(vm.fdiv(vm.f32(var18 * vm.f32(1.9)), scale)), var19)
 	var21 = 0
 	while var21 < arg4 do
-		var20 = vm.f32(var20 + var19)
-		if var20 < 0.0 then
+		scale = vm.f32(scale + var19)
+		if scale < 0.0 then
 			break
 		end
 		do
@@ -210,7 +210,7 @@ local function helper_12400(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: s3
 			pos_z = out3 or pos_z
 		end
 		var18 = monster.GetDistVector2(arg0, arg1, arg2, pos_x, pos_y, pos_z) or var18
-		if var18 < var20 then
+		if var18 < scale then
 			break
 		end
 		do
@@ -220,7 +220,7 @@ local function helper_12400(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: s3
 			var17 = out3 or var17
 		end
 		do
-			local out1, out2, out3 = monster.ScaleVector(var15, var16, var17, var20)
+			local out1, out2, out3 = monster.ScaleVector(var15, var16, var17, scale)
 			var15 = out1 or var15
 			var16 = out2 or var16
 			var17 = out3 or var17
@@ -232,7 +232,7 @@ local function helper_12400(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: s3
 			var8 = out3 or var8
 		end
 		monster.SetPos(var6, var7, var8)
-		monster.SetNextRot(arg5, 0.004363323)
+		monster.SetNextRot(next_rot, 0.004363323)
 		helper_205c()
 		var21 = var21 + 1
 		helper_442b9962()
@@ -242,8 +242,8 @@ local function helper_12400(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: s3
 			local _, out2, _ = monster.GetRot()
 			var23 = out2 or var23
 		end
-		monster.SetNextRot(arg5, 0.004363323)
-		if helper_8971d3b6(var23, arg5, vm.f32(0.004363323)) == 0 then
+		monster.SetNextRot(next_rot, 0.004363323)
+		if helper_8971d3b6(var23, next_rot, vm.f32(0.004363323)) == 0 then
 			break
 		else
 			helper_205c()
@@ -326,23 +326,27 @@ local function helper_3170(arg0: f32, arg1: f32, arg2: f32)
 end
 
 --- Helper function.
-local function helper_54c8(arg0: f32, arg1: f32)
-	arg0 = helper_787df986(arg0)
-	if arg0 > vm.f32(3.1415927) then
-		arg0 = vm.f32(arg0 - vm.f32(6.2831855))
+local function helper_54c8(next_rot: f32, rot_speed: f32)
+	next_rot = helper_787df986(next_rot)
+	if next_rot > vm.f32(3.1415927) then
+		next_rot = vm.f32(next_rot - vm.f32(6.2831855))
 	end
-	if arg0 <= vm.f32(-3.1415927) then
-		arg0 = vm.f32(arg0 + vm.f32(6.2831855))
+	if next_rot <= vm.f32(-3.1415927) then
+		next_rot = vm.f32(next_rot + vm.f32(6.2831855))
 	end
-	arg1 = helper_787df986(arg1)
-	if arg1 > vm.f32(3.1415927) then
-		arg1 = vm.f32(arg1 - vm.f32(6.2831855))
+	rot_speed = helper_787df986(rot_speed)
+	if rot_speed > vm.f32(3.1415927) then
+		rot_speed = vm.f32(rot_speed - vm.f32(6.2831855))
 	end
-	if arg1 <= vm.f32(-3.1415927) then
-		arg1 = vm.f32(arg1 + vm.f32(6.2831855))
+	if rot_speed <= vm.f32(-3.1415927) then
+		rot_speed = vm.f32(rot_speed + vm.f32(6.2831855))
 	end
-	monster.SetNextRot(arg0, arg1)
-	local _ = helper_3170(helper_28452e16(arg0), helper_28452e16(arg1), vm.f32(vm.fdiv(360.0, helper_28452e16(arg1))))
+	monster.SetNextRot(next_rot, rot_speed)
+	local _ = helper_3170(
+		helper_28452e16(next_rot),
+		helper_28452e16(rot_speed),
+		vm.f32(vm.fdiv(360.0, helper_28452e16(rot_speed)))
+	)
 	helper_442b9962()
 end
 
@@ -376,9 +380,9 @@ local function helper_13594()
 	local var0: f32 = 0
 	local var1: f32 = 0
 	local var2: f32 = 0
-	local var3: f32 = 0
-	local var4: f32 = 0
-	local var5: f32 = 0
+	local target: f32 = 0
+	local target_2: f32 = 0
+	local target_3: f32 = 0
 	local var6: f32 = 0
 	local argc: s32 = 0
 	helper_205c()
@@ -393,40 +397,40 @@ local function helper_13594()
 			var0 = vm.f32(vm.sin(0.0) * 600.0)
 			var2 = vm.f32(vm.cos(0.0) * 600.0)
 			var1 = 150.0
-			var3 = vm.f32(vm.sin(vm.f32(1.5707964)) * 600.0)
-			var5 = vm.f32(vm.cos(vm.f32(1.5707964)) * 600.0)
-			var4 = 0.0
-			var6 = monster.GetRefAngle(var3, var4, var5) or var6
+			target = vm.f32(vm.sin(vm.f32(1.5707964)) * 600.0)
+			target_3 = vm.f32(vm.cos(vm.f32(1.5707964)) * 600.0)
+			target_2 = 0.0
+			var6 = monster.GetRefAngle(target, target_2, target_3) or var6
 			helper_12400(var0, var1, var2, 9.0, 180, var6)
 		end
 		if argc == 1 then
 			var0 = vm.f32(vm.sin(vm.f32(1.5707964)) * 600.0)
 			var2 = vm.f32(vm.cos(vm.f32(1.5707964)) * 600.0)
 			var1 = 250.0
-			var3 = vm.f32(vm.sin(vm.f32(3.1415927)) * 600.0)
-			var5 = vm.f32(vm.cos(vm.f32(3.1415927)) * 600.0)
-			var4 = 0.0
-			var6 = monster.GetRefAngle(var3, var4, var5) or var6
+			target = vm.f32(vm.sin(vm.f32(3.1415927)) * 600.0)
+			target_3 = vm.f32(vm.cos(vm.f32(3.1415927)) * 600.0)
+			target_2 = 0.0
+			var6 = monster.GetRefAngle(target, target_2, target_3) or var6
 			helper_12400(var0, var1, var2, 9.0, 180, var6)
 		end
 		if argc == 2 then
 			var0 = vm.f32(vm.sin(vm.f32(3.1415927)) * 600.0)
 			var2 = vm.f32(vm.cos(vm.f32(3.1415927)) * 600.0)
 			var1 = 300.0
-			var3 = vm.f32(vm.sin(vm.f32(4.712389)) * 600.0)
-			var5 = vm.f32(vm.cos(vm.f32(4.712389)) * 600.0)
-			var4 = 100.0
-			var6 = monster.GetRefAngle(var3, var4, var5) or var6
+			target = vm.f32(vm.sin(vm.f32(4.712389)) * 600.0)
+			target_3 = vm.f32(vm.cos(vm.f32(4.712389)) * 600.0)
+			target_2 = 100.0
+			var6 = monster.GetRefAngle(target, target_2, target_3) or var6
 			helper_12400(var0, var1, var2, 9.0, 180, var6)
 		end
 		if argc == 3 then
 			var0 = vm.f32(vm.sin(vm.f32(4.712389)) * 600.0)
 			var2 = vm.f32(vm.cos(vm.f32(4.712389)) * 600.0)
 			var1 = 250.0
-			var3 = vm.f32(vm.sin(0.0) * 600.0)
-			var5 = vm.f32(vm.cos(0.0) * 600.0)
-			var4 = 200.0
-			var6 = monster.GetRefAngle(var3, var4, var5) or var6
+			target = vm.f32(vm.sin(0.0) * 600.0)
+			target_3 = vm.f32(vm.cos(0.0) * 600.0)
+			target_2 = 200.0
+			var6 = monster.GetRefAngle(target, target_2, target_3) or var6
 			helper_12400(var0, var1, var2, 9.0, 180, var6)
 		end
 	end

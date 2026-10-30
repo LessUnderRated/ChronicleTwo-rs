@@ -6,7 +6,7 @@ local helper_48852a90 = require("@lib/monster/helper_48852a90")
 local helper_56d63eae = require("@lib/monster/helper_56d63eae")
 
 --- Helper function.
-local function helper_1ae935f0(arg0: f32, arg1: f32, arg2: f32, arg3: any)
+local function helper_1ae935f0(vector: f32, vector_2: f32, vector_3: f32, arg3: any)
 	local pos_x: f32 = 0
 	local pos_y: f32 = 0
 	local pos_z: f32 = 0
@@ -26,7 +26,7 @@ local function helper_1ae935f0(arg0: f32, arg1: f32, arg2: f32, arg3: any)
 	monster.EsmCreate_1("毒液2L")
 	monster.EsmSetTargetId(-1, chara_type)
 	monster.EsmSetVect1(-1, pos_x, pos_y, pos_z)
-	monster.EsmSetVect2(-1, arg0, arg1, arg2)
+	monster.EsmSetVect2(-1, vector, vector_2, vector_3)
 	monster.EsmSetValue(-1, 0, attack)
 	helper_56d63eae()
 end

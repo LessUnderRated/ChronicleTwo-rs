@@ -72,7 +72,7 @@ function script.loop()
 	local var10: f32 = 0
 	local var11: f32 = 0
 	local var12: f32 = 0
-	local var13: f32 = 0
+	local scale: f32 = 0
 	local var14: f32 = 0
 	local var15: f32 = 0
 	local var16: f32 = 0
@@ -146,7 +146,7 @@ function script.loop()
 		end
 		var16 = var22
 		var15 = vm.f32(var15 - vm.f32(0.04))
-		var13 = vm.f32(vm.f32(var15 * vm.cos(var17)) * var16)
+		scale = vm.f32(vm.f32(var15 * vm.cos(var17)) * var16)
 		var14 =
 			vm.f32(vm.f32(vm.f32(var15 * vm.sin(var17)) * var16) - vm.f32(vm.f32(vm.f32(var21 * var16) * var16) / 2.0))
 		do
@@ -156,7 +156,7 @@ function script.loop()
 			var8 = out3 or var8
 		end
 		do
-			local out1, out2, out3 = monster.ScaleVector(var6, var7, var8, var13)
+			local out1, out2, out3 = monster.ScaleVector(var6, var7, var8, scale)
 			var6 = out1 or var6
 			var7 = out2 or var7
 			var8 = out3 or var8

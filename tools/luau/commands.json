@@ -3498,11 +3498,14 @@
          "constants": [
           0.0
          ],
-         "distinct_constants": 1
+         "distinct_constants": 1,
+         "other_kind": "address"
         }
        ]
       }
-     ]
+     ],
+     "notes": "Two scripts pass 0.0, which the handler reads as a null name: the object search finds nothing.",
+     "curated": true
     },
     {
      "no": 106,
@@ -20130,7 +20133,8 @@
          "observed": {
           "in s32": 6,
           "in string": 2
-         }
+         },
+         "other_kind": "ignored"
         },
         {
          "name": "rot_y",
@@ -20194,7 +20198,9 @@
        ],
        "handler_rejects": true
       }
-     ]
+     ],
+     "notes": "e236a passes a motion name as the id; its address indexes no active monster, so the call is left out.",
+     "curated": true
     },
     {
      "no": 101,
@@ -22884,6 +22890,7 @@
          ],
          "distinct_constants": 4,
          "tagged": true,
+         "other_kind": "ignored",
          "name_source": "curated"
         }
        ]
@@ -22961,7 +22968,7 @@
        ]
       }
      ],
-     "notes": "An integer sets the life, a float sets it as a fraction of the maximum.",
+     "notes": "An integer sets the life, a float sets it as a fraction of the maximum. A string matches neither tag, so the handler does nothing.",
      "curated": true
     },
     {
@@ -23972,7 +23979,8 @@
          "constants": [
           -1
          ],
-         "distinct_constants": 1
+         "distinct_constants": 1,
+         "other_kind": "address"
         },
         {
          "name": "arg2",
@@ -24012,7 +24020,9 @@
         }
        ]
       }
-     ]
+     ],
+     "notes": "b07a_atora_yellow passes -1 as the name, an address that names no motion: the motion stays and the step is set.",
+     "curated": true
     },
     {
      "no": 183,
@@ -26438,7 +26448,7 @@
         {
          "name": "arg2",
          "dir": "in",
-         "type": "string",
+         "type": "unknown",
          "observed": {
           "in string": 1470
          }
@@ -26465,7 +26475,7 @@
         {
          "name": "arg2",
          "dir": "in",
-         "type": "string",
+         "type": "unknown",
          "observed": {
           "in s32": 96,
           "in string": 996
@@ -26499,7 +26509,9 @@
         }
        ]
       }
-     ]
+     ],
+     "notes": "Arg 2 is a map number (integer) or a map name (string), chosen by its slot's tag.",
+     "curated": true
     },
     {
      "no": 21,
@@ -27164,12 +27176,14 @@
        "files": 318,
        "params": [
         {
-         "name": "out1",
+         "name": "item",
          "dir": "out",
          "type": "s32",
          "observed": {
           "out s32": 688
-         }
+         },
+         "deferred": true,
+         "name_source": "curated"
         },
         {
          "name": "arg2",
@@ -27192,7 +27206,9 @@
         }
        ]
       }
-     ]
+     ],
+     "notes": "The use item menu writes the chosen item through the reference when it exits, after the call returns.",
+     "curated": true
     },
     {
      "no": 32,
@@ -27369,7 +27385,7 @@
         {
          "name": "item_no",
          "dir": "in",
-         "type": "s32",
+         "type": "unknown",
          "name_source": "handler",
          "observed": {
           "in s32": 113,
@@ -27379,7 +27395,7 @@
         {
          "name": "arg2",
          "dir": "in",
-         "type": "s32",
+         "type": "unknown",
          "observed": {
           "in s32": 113,
           "in string": 909
@@ -27617,7 +27633,9 @@
         "parameter 1: type unknown"
        ]
       }
-     ]
+     ],
+     "notes": "Each argument is a string, or an integer pair (item number and flag), chosen by the slot's tag.",
+     "curated": true
     },
     {
      "no": 36,
@@ -31467,7 +31485,7 @@
         {
          "name": "arg1",
          "dir": "in",
-         "type": "string",
+         "type": "unknown",
          "observed": {
           "in s32": 231,
           "in string": 2020
@@ -31496,7 +31514,9 @@
         }
        ]
       }
-     ]
+     ],
+     "notes": "Arg 1 is a parts number (integer) or a place name (string), chosen by its slot's tag.",
+     "curated": true
     },
     {
      "no": 94,
@@ -33539,7 +33559,7 @@
         {
          "name": "arg2",
          "dir": "in",
-         "type": "string",
+         "type": "unknown",
          "observed": {
           "in s32": 1892,
           "in string": 68574,
@@ -33589,12 +33609,11 @@
           "out s32": 966
          }
         }
-       ],
-       "review": [
-        "parameter 2: type unknown"
        ]
       }
-     ]
+     ],
+     "notes": "Arg 2 is a message number (integer) or the message text (string), chosen by its slot's tag.",
+     "curated": true
     },
     {
      "no": 193,
@@ -42496,7 +42515,8 @@
          "constants": [
           0
          ],
-         "distinct_constants": 1
+         "distinct_constants": 1,
+         "other_kind": "nonzero"
         }
        ]
       },
@@ -42550,7 +42570,9 @@
         }
        ]
       }
-     ]
+     ],
+     "notes": "With two arguments the second is only tested for zero; a string's address is not zero.",
+     "curated": true
     },
     {
      "no": 472,
@@ -50230,7 +50252,7 @@
         {
          "name": "arg1",
          "dir": "in",
-         "type": "s32",
+         "type": "unknown",
          "observed": {
           "in s32": 1547
          },
@@ -50279,7 +50301,7 @@
         {
          "name": "arg2",
          "dir": "in",
-         "type": "string",
+         "type": "unknown",
          "observed": {
           "in s32": 13,
           "in string": 2009
@@ -50300,7 +50322,9 @@
         }
        ]
       }
-     ]
+     ],
+     "notes": "The file is a default event sound number (integer) or a file name (string), chosen by its slot's tag.",
+     "curated": true
     },
     {
      "no": 602,
@@ -53303,7 +53327,7 @@
         {
          "name": "arg2",
          "dir": "in",
-         "type": "string",
+         "type": "unknown",
          "observed": {
           "in s32": 233,
           "in string": 4078
@@ -53338,7 +53362,7 @@
         {
          "name": "arg2",
          "dir": "in",
-         "type": "string",
+         "type": "unknown",
          "observed": {
           "in s32": 1708,
           "in string": 22873
@@ -53382,7 +53406,7 @@
         {
          "name": "arg2",
          "dir": "in",
-         "type": "string",
+         "type": "unknown",
          "observed": {
           "in string": 48
          }
@@ -53405,7 +53429,9 @@
         }
        ]
       }
-     ]
+     ],
+     "notes": "Arg 2 is a parts id (integer) or a parts name (string), chosen by its slot's tag.",
+     "curated": true
     },
     {
      "no": 702,
@@ -54095,7 +54121,8 @@
          "constants": [
           0
          ],
-         "distinct_constants": 1
+         "distinct_constants": 1,
+         "other_kind": "accepted"
         }
        ]
       },
@@ -54146,7 +54173,9 @@
         }
        ]
       }
-     ]
+     ],
+     "notes": "A string as argument 2 turns that texture animation on.",
+     "curated": true
     },
     {
      "no": 709,
@@ -55318,7 +55347,7 @@
         {
          "name": "arg2",
          "dir": "in",
-         "type": "s32",
+         "type": "unknown",
          "observed": {
           "in s32": 72,
           "in string": 12
@@ -55334,7 +55363,9 @@
         }
        ]
       }
-     ]
+     ],
+     "notes": "Arg 2 is a parts number (integer) or a place name (string), chosen by its slot's tag.",
+     "curated": true
     },
     {
      "no": 731,
@@ -62337,14 +62368,16 @@
         {
          "name": "arg1",
          "dir": "in",
-         "type": "s32",
+         "type": "unknown",
          "observed": {
           "in string": 590
          }
         }
        ]
       }
-     ]
+     ],
+     "notes": "The argument is a base effect script number (integer) or its name (string), chosen by its slot's tag.",
+     "curated": true
     },
     {
      "no": 1104,
@@ -63542,13 +63575,15 @@
        "files": 67,
        "params": [
         {
-         "name": "arg1",
+         "name": "part",
          "dir": "in",
-         "type": "string",
+         "type": "s32",
          "observed": {
           "in s32": 36,
           "in string": 343
-         }
+         },
+         "other_kind": "accepted",
+         "name_source": "curated"
         },
         {
          "name": "arg2",
@@ -63611,7 +63646,9 @@
         }
        ]
       }
-     ]
+     ],
+     "notes": "The part is a placed part number or a part name.",
+     "curated": true
     },
     {
      "no": 1215,
@@ -64983,12 +65020,14 @@
        "files": 24,
        "params": [
         {
-         "name": "out1",
+         "name": "item",
          "dir": "out",
          "type": "s32",
          "observed": {
           "out s32": 24
-         }
+         },
+         "deferred": true,
+         "name_source": "curated"
         },
         {
          "name": "arg2",
@@ -65016,7 +65055,9 @@
         }
        ]
       }
-     ]
+     ],
+     "notes": "The use item menu writes the chosen item through the reference when it exits, after the call returns.",
+     "curated": true
     },
     {
      "no": 1248,

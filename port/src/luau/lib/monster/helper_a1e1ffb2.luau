@@ -20,7 +20,6 @@ local function helper_a1e1ffb2(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4:
 		pos_z = out3 or pos_z
 	end
 	pos_x = vm.f32(pos_x + vm.f32(vm.sin(vm.f32(arg2 * vm.f32(0.017453292))) * arg3))
-	pos_y = pos_y
 	pos_z = vm.f32(pos_z + vm.f32(vm.cos(vm.f32(arg2 * vm.f32(0.017453292))) * arg3))
 	local _ = helper_0b6e560f(pos_x, pos_y, pos_z, arg1, arg4, arg5, arg6)
 end

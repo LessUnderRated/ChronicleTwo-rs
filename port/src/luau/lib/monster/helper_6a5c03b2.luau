@@ -7,12 +7,12 @@ local helper_a8458c0a = require("@lib/monster/helper_a8458c0a")
 local helper_f5727415 = require("@lib/monster/helper_f5727415")
 
 --- Helper function.
-local function helper_6a5c03b2(arg0: f32, arg1: f32, arg2: f32, arg3: s32)
+local function helper_6a5c03b2(move_speed: f32, arg1: f32, arg2: f32, arg3: s32)
 	local pos_x: f32 = 0
 	local pos_y: f32 = 0
 	local pos_z: f32 = 0
-	local var7: f32 = 0
-	local var9: f32 = 0
+	local target: f32 = 0
+	local target_3: f32 = 0
 	local var11: f32 = 0
 	local var20: f32 = 0
 	local var21: f32 = 0
@@ -26,17 +26,17 @@ local function helper_6a5c03b2(arg0: f32, arg1: f32, arg2: f32, arg3: s32)
 		pos_z = out3 or pos_z
 	end
 	var20 = monster.GetTargetDist() or var20
-	var21 = monster.SearchArea(arg0 + arg2, 0.0) or var21
-	if var21 < vm.f32(arg0 + arg2) then
+	var21 = monster.SearchArea(move_speed + arg2, 0.0) or var21
+	if var21 < vm.f32(move_speed + arg2) then
 		return
 	end
 	do
 		local _, out2, _ = monster.GetRot()
 		var11 = out2 or var11
 	end
-	var7 = vm.f32(pos_x + vm.f32(vm.sin(var11) * var20))
-	var9 = vm.f32(pos_z + vm.f32(vm.cos(var11) * var20))
-	monster.SetNextPos(var7, pos_y - 20.0, var9, arg0, arg2 + arg0)
+	target = vm.f32(pos_x + vm.f32(vm.sin(var11) * var20))
+	target_3 = vm.f32(pos_z + vm.f32(vm.cos(var11) * var20))
+	monster.SetNextPos(target, pos_y - 20.0, target_3, move_speed, arg2 + move_speed)
 	local _ = helper_a8458c0a(arg2, arg3)
 	monster.ResetMove()
 end

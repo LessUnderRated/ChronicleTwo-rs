@@ -29,7 +29,7 @@ function script.on_start()
 	local var12: f32 = 0
 	local var13: f32 = 0
 	local var14: f32 = 0
-	local var16: f32 = 0
+	local scale: f32 = 0
 	local var17: s32 = 0
 	local value: s32 = 0
 	local var19: s32 = 0
@@ -49,7 +49,7 @@ function script.on_start()
 	effect.ChrSetPos(var0, var1, var2)
 	effect.ChrSetRot(var6, var7, var8)
 	effect.ChrSetMotion("ループ")
-	var16 = 10.0
+	scale = 10.0
 	do
 		local out1, out2, out3 = effect.GetDirVector(var6, var7, var8)
 		dir_x = out1 or dir_x
@@ -97,12 +97,12 @@ function script.on_start()
 			var14 = out3 or var14
 		end
 		do
-			local out1, out2, out3 = effect.ScaleVector(var12, var13, var14, var16)
+			local out1, out2, out3 = effect.ScaleVector(var12, var13, var14, scale)
 			var12 = out1 or var12
 			var13 = out2 or var13
 			var14 = out3 or var14
 		end
-		var16 = vm.f32(var16 + vm.f32(1.2))
+		scale = vm.f32(scale + vm.f32(1.2))
 		vm.wait()
 		do
 			local out1, out2, out3 = effect.AddVector(var0, var1, var2, var12, var13, var14)

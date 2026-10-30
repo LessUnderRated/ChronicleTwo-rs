@@ -137,8 +137,6 @@ DataReadPathNameExt DivPathNameExt(std::string_view path) {
 
 #include <algorithm>
 #include <array>
-#include <atomic>
-#include <cassert>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -152,7 +150,6 @@ DataReadPathNameExt DivPathNameExt(std::string_view path) {
 #include <span>
 #include <string>
 #include <string_view>
-#include <thread>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -172,7 +169,6 @@ DataReadPathNameExt DivPathNameExt(std::string_view path) {
 #include "platform/vfs.hpp"
 #include "profile.hpp"
 #include "script_text.hpp"
-#include "script_timing.hpp"
 #include "texture_source.hpp"
 
 namespace dc2::io {
@@ -221,7 +217,6 @@ struct IndexedFile {
 };
 
 std::unordered_map<std::string, IndexedFile> file_index;
-std::unordered_set<std::string>              undecoded_script_warnings;
 bool                                         index_built;
 
 /** Byte bounds for actual file contents loaded into game-owned arenas. */
@@ -531,21 +526,11 @@ int ReadWhole(const IndexedFile &file, void *buffer, std::size_t capacity) {
     return size;
 }
 
-// The NTSC timing converts scripts before any loader or cache sees them, including datapack scripts.
-bool ConvertScriptTiming(const std::string &key, void *buffer, int size) {
-    if (size < 0 || !key.ends_with(".stb")) {
-        return true;
-    }
-    const bool ok = ScriptTimingPatch(key.c_str(), static_cast<unsigned char *>(buffer), static_cast<std::size_t>(size));
-    assert(ok && "script changed after startup timing validation");
-    return ok;
-}
-
 /**
  * Corrects PAL text and records the complete patched buffer extent.
  */
 int PatchScriptText(const std::string &key, void *buffer, int size) {
-    if (size < 0 || (!key.ends_with(".stb") && !key.ends_with(".txt"))) {
+    if (size < 0 || !key.ends_with(".txt")) {
         return size;
     }
     const auto extra = script_text::Extra(key);
@@ -602,19 +587,21 @@ int ResolveFile(const char *name, const std::string &key, void *buffer, bool siz
         }
     }
 
-    // Scripts with a Luau module load as a handle naming it; CRunScript::load runs the module instead.
+    // A script loads as a handle naming its Luau module, which CRunScript::load runs; one without a module is missing.
     if (key.ends_with(".stb")) {
-        if (const auto module = luau_runtime::ModuleForScript(key)) {
-            const std::string handle = luau_runtime::MakeHandle(*module);
-            if (!size_only && handle.size() > capacity) {
-                return -1;
-            }
-            if (buffer && !size_only) {
-                ReportDestination(buffer, handle.size());
-                std::memcpy(buffer, handle.data(), handle.size());
-            }
-            return static_cast<int>(handle.size());
+        const auto module = luau_runtime::ModuleForScript(key);
+        if (!module) {
+            return -1;
         }
+        const std::string handle = luau_runtime::MakeHandle(*module);
+        if (!size_only && handle.size() > capacity) {
+            return -1;
+        }
+        if (buffer && !size_only) {
+            ReportDestination(buffer, handle.size());
+            std::memcpy(buffer, handle.data(), handle.size());
+        }
+        return static_cast<int>(handle.size());
     }
 
     const IndexedFile *file = Lookup(key);
@@ -633,9 +620,6 @@ int ResolveFile(const char *name, const std::string &key, void *buffer, bool siz
         int size = ReadWhole(*file, buffer, capacity);
         if (size >= 0) {
             if (static_cast<std::size_t>(size) + extra > capacity) {
-                return -1;
-            }
-            if (!ConvertScriptTiming(key, buffer, size)) {
                 return -1;
             }
             size = PatchScriptText(key, buffer, size);
@@ -808,17 +792,6 @@ std::optional<std::string> DataReadAssetPath(const char *game_name) {
     return std::nullopt;
 }
 
-std::vector<std::string> DataReadScriptKeys() {
-    std::vector<std::string> keys;
-    for (const auto &[key, file] : file_index) {
-        if (key.ends_with(".stb")) {
-            keys.push_back(key);
-        }
-    }
-    std::ranges::sort(keys);
-    return keys;
-}
-
 std::vector<std::string> DataReadNativeKeys(std::string_view directory) {
     const auto                      prefix = IndexKey("/" + std::string(directory)) + "/";
     std::unordered_set<std::string> found;
@@ -839,119 +812,6 @@ std::vector<std::string> DataReadNativeKeys(std::string_view directory) {
     std::vector<std::string> keys(found.begin(), found.end());
     std::ranges::sort(keys);
     return keys;
-}
-
-namespace {
-
-// Scripts are independent, so validation reads and decodes them on several threads.
-constexpr std::size_t kScriptTimingThreads = 16;
-
-/**
- * One script's validation outcome.
- */
-struct ScriptTimingOutcome {
-    std::string error;             /**< Mismatch or read failure; empty when the script is usable. */
-    bool        undecoded = false; /**< An unlisted script the decoder rejects, which loads unchanged. */
-    std::string reason;            /**< The decoder's rejection of an undecoded script. */
-};
-
-ScriptTimingOutcome CheckScriptTiming(const std::string &key, const IndexedFile &file, std::vector<unsigned char> &bytes) {
-    ScriptTimingOutcome outcome{};
-    const auto          size = FileSize(file);
-    if (!size) {
-        outcome.error = "cannot read script size";
-        return outcome;
-    }
-    bytes.resize(std::max(kSector, PaddedSize(static_cast<std::size_t>(*size))));
-    const int read = ReadUnregistered(file, bytes.data(), bytes.size());
-    if (read < 0) {
-        outcome.error = "cannot read script";
-        return outcome;
-    }
-    script_timing::Options options;
-    options.write = false;
-    const auto result = script_timing::Apply(key, bytes.data(), static_cast<std::size_t>(read), options);
-    if (!result.ok) {
-        outcome.error = result.error;
-    } else if (!result.decoded) {
-        outcome.undecoded = true;
-        outcome.reason = result.error;
-    }
-    return outcome;
-}
-
-} // namespace
-
-ScriptTimingValidation DataReadValidateScriptTiming() {
-    CT_PROFILE_ZONE("Validate script timing");
-    ScriptTimingValidation report;
-    const auto             start = std::chrono::steady_clock::now();
-    const auto             keys = DataReadScriptKeys();
-
-    // The workers see only this snapshot, never the index itself.
-    std::vector<const IndexedFile *> files;
-    files.reserve(keys.size());
-    for (const std::string &key : keys) {
-        files.push_back(&file_index.at(key));
-    }
-    std::vector<ScriptTimingOutcome> outcomes(keys.size());
-    std::atomic<std::size_t>         next = 0;
-    const auto                       work = [&] {
-        std::vector<unsigned char> bytes;
-        for (std::size_t i = next++; i < keys.size(); i = next++) {
-            outcomes[i] = CheckScriptTiming(keys[i], *files[i], bytes);
-        }
-    };
-    const std::size_t threads =
-        std::max<std::size_t>(1, std::min<std::size_t>({std::thread::hardware_concurrency(), kScriptTimingThreads, keys.size()}));
-    {
-        std::vector<std::jthread> helpers;
-        for (std::size_t i = 1; i < threads; ++i) {
-            helpers.emplace_back(work);
-        }
-        work();
-    }
-
-    // Reported in key order, as a single pass would.
-    for (std::size_t i = 0; i < keys.size(); ++i) {
-        const std::string         &key = keys[i];
-        const ScriptTimingOutcome &outcome = outcomes[i];
-        report.files++;
-        if (outcome.undecoded && undecoded_script_warnings.insert(key).second) {
-            CT_LOG_WARN(Script, "script timing startup: warning: {} is an unlisted, undecodable script; leaving it unchanged ({})",
-                        key, outcome.reason);
-        }
-        if (!outcome.error.empty()) {
-            report.errors.push_back(key + (files[i]->replaced ? " [datapack]: " : ": ") + outcome.error);
-        }
-    }
-    report.seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
-    return report;
-}
-
-bool DataReadPrepareScriptTiming(bool headless) {
-    const auto report = DataReadValidateScriptTiming();
-    CT_LOG_INFO(Script, "script timing startup: {} scripts, {} mismatches, {:.3f} seconds",
-                report.files, report.errors.size(), report.seconds);
-    if (report.errors.empty()) {
-        return true;
-    }
-    std::string message = "These scripts cannot use NTSC gameplay timing:\n\n";
-    for (std::size_t i = 0; i < report.errors.size(); ++i) {
-        CT_LOG_ERROR(Script, "script timing startup: {}", report.errors[i]);
-        if (i < 8) {
-            message += report.errors[i] + "\n";
-        }
-    }
-    if (report.errors.size() > 8) {
-        message += "\nAdditional mismatches are listed in the log.\n";
-    }
-    CT_LOG_ERROR(Script, "script timing startup: NTSC timing unavailable; refusing startup");
-    if (!headless) {
-        message += "\nThe game cannot start with this script data. See the log for details.";
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Dark Chronicle - Script timing", message.c_str(), nullptr);
-    }
-    return false;
 }
 
 void InitCDFile() {

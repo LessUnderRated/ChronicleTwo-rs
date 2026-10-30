@@ -99,9 +99,9 @@ end
 
 --- Helper function.
 local function helper_182a4()
-	local var0: f32 = 0
-	local var1: f32 = 0
-	local var2: f32 = 0
+	local x: f32 = 0
+	local y: f32 = 0
+	local z: f32 = 0
 	local var3: f32 = 0
 	local pos_x: f32 = 0
 	local pos_y: f32 = 0
@@ -139,36 +139,36 @@ local function helper_182a4()
 	var3 = monster.GetTargetAngle() or var3
 	argc = monster.GetRnd(9) or argc
 	if argc == 0 then
-		var0 = vm.f32(-327.07)
-		var1 = 35.0
-		var2 = vm.f32(309.72)
+		x = vm.f32(-327.07)
+		y = 35.0
+		z = vm.f32(309.72)
 	end
 	if argc == 1 then
-		var0 = vm.f32(-108.6)
-		var1 = 35.0
-		var2 = vm.f32(483.43)
+		x = vm.f32(-108.6)
+		y = 35.0
+		z = vm.f32(483.43)
 	end
 	if argc == 2 then
-		var0 = -19.5
-		var1 = 35.0
-		var2 = vm.f32(478.12)
+		x = -19.5
+		y = 35.0
+		z = vm.f32(478.12)
 	end
 	if argc == 3 then
-		var0 = vm.f32(169.15)
-		var1 = 35.0
-		var2 = vm.f32(330.21)
+		x = vm.f32(169.15)
+		y = 35.0
+		z = vm.f32(330.21)
 	end
 	if argc == 4 then
-		var0 = 269.25
-		var1 = 35.0
-		var2 = vm.f32(305.36)
+		x = 269.25
+		y = 35.0
+		z = vm.f32(305.36)
 	end
 	if argc >= 5 then
-		var0 = 0.0
-		var1 = 35.0
-		var2 = 120.0
+		x = 0.0
+		y = 35.0
+		z = 120.0
 	end
-	monster.SetPos(var0, var1, var2)
+	monster.SetPos(x, y, z)
 	helper_1c74()
 	do
 		local out1, out2, out3 = monster.GetPos_3()
@@ -274,12 +274,12 @@ local function helper_4c38(arg0: f32, arg1: f32)
 end
 
 --- Helper function.
-local function helper_bc34(arg0: f32, arg1: s32)
+local function helper_bc34(rot_speed: f32, arg1: s32)
 	local var2: f32 = 0
-	local _ = helper_787df986(arg0)
+	local _ = helper_787df986(rot_speed)
 	for var4 = 0, arg1 - 1 do
 		var2 = monster.GetTargetAngle() or var2
-		monster.SetNextRot(var2, arg0)
+		monster.SetNextRot(var2, rot_speed)
 		helper_1c74()
 	end
 	helper_442b9962()
@@ -299,18 +299,18 @@ end
 
 --- Helper function.
 local function helper_1e138(arg0: any)
-	local var1: f32 = 0
+	local vector: f32 = 0
 	local var2: f32 = 0
-	local var3: f32 = 0
+	local vector_3: f32 = 0
 	local var4: f32 = 0
 	local var5: f32 = 0
 	local var6: f32 = 0
-	local var7: f32 = 0
+	local value: f32 = 0
 	local attack: s32 = 0
-	local var9: s32 = 0
+	local value_2: s32 = 0
 	local var10: { s32 } = table.create(6, 0)
-	var9 = 30
-	var7 = 15.0
+	value_2 = 30
+	value = 15.0
 	attack = monster.GetBaseAttack_1() or attack
 	attack = vm.ftoi(vm.f32(attack * vm.f32(0.45)))
 	monster.SetIntFlag(2, 1)
@@ -321,28 +321,28 @@ local function helper_1e138(arg0: any)
 		var6 = out3 or var6
 	end
 	if var4 > -200.0 and var4 < 200.0 then
-		var1 = vm.f32(-154.46)
+		vector = vm.f32(-154.46)
 		var2 = vm.f32(93.65)
-		var3 = vm.f32(-29.71)
+		vector_3 = vm.f32(-29.71)
 	end
 	if var4 < -200.0 then
-		var1 = vm.f32(-759.58)
+		vector = vm.f32(-759.58)
 		var2 = vm.f32(93.65)
-		var3 = vm.f32(-0.93)
+		vector_3 = vm.f32(-0.93)
 	end
 	if var4 > 200.0 then
-		var1 = vm.f32(760.43)
+		vector = vm.f32(760.43)
 		var2 = vm.f32(93.65)
-		var3 = vm.f32(-0.18)
+		vector_3 = vm.f32(-0.18)
 	end
 	var10[1] = monster.EsmCreate_2("バラ") or var10[1]
-	monster.EsmSetVect1(var10[1], var1, var2 + 15.0, var3)
+	monster.EsmSetVect1(var10[1], vector, var2 + 15.0, vector_3)
 	monster.EsmSetVect2(var10[1], var4 + vm.f32(vm.sin(0.0) * 30.0), var5 + 15.0, var6 + vm.f32(vm.cos(0.0) * 30.0))
 	monster.EsmSetValue(var10[1], 0, attack)
-	monster.EsmSetValueFloat(var10[1], 1, var7)
-	monster.EsmSetValue(var10[1], 2, var9)
+	monster.EsmSetValueFloat(var10[1], 1, value)
+	monster.EsmSetValue(var10[1], 2, value_2)
 	var10[2] = monster.EsmCreate_2("バラ") or var10[2]
-	monster.EsmSetVect1(var10[2], var1, var2 + 15.0, var3)
+	monster.EsmSetVect1(var10[2], vector, var2 + 15.0, vector_3)
 	monster.EsmSetVect2(
 		var10[2],
 		var4 + vm.f32(vm.sin(vm.f32(1.0471976)) * 30.0),
@@ -350,10 +350,10 @@ local function helper_1e138(arg0: any)
 		var6 + vm.f32(vm.cos(vm.f32(1.0471976)) * 30.0)
 	)
 	monster.EsmSetValue(var10[2], 0, attack)
-	monster.EsmSetValueFloat(var10[2], 1, var7)
-	monster.EsmSetValue(var10[2], 2, var9)
+	monster.EsmSetValueFloat(var10[2], 1, value)
+	monster.EsmSetValue(var10[2], 2, value_2)
 	var10[3] = monster.EsmCreate_2("バラ") or var10[3]
-	monster.EsmSetVect1(var10[3], var1, var2 + 15.0, var3)
+	monster.EsmSetVect1(var10[3], vector, var2 + 15.0, vector_3)
 	monster.EsmSetVect2(
 		var10[3],
 		var4 + vm.f32(vm.sin(vm.f32(2.0943952)) * 30.0),
@@ -361,25 +361,25 @@ local function helper_1e138(arg0: any)
 		var6 + vm.f32(vm.cos(vm.f32(2.0943952)) * 30.0)
 	)
 	monster.EsmSetValue(var10[3], 0, attack)
-	monster.EsmSetValueFloat(var10[3], 1, var7)
-	monster.EsmSetValue(var10[3], 2, var9)
+	monster.EsmSetValueFloat(var10[3], 1, value)
+	monster.EsmSetValue(var10[3], 2, value_2)
 	if var4 > -200.0 and var4 < 200.0 then
-		var1 = vm.f32(153.97)
+		vector = vm.f32(153.97)
 		var2 = vm.f32(93.65)
-		var3 = vm.f32(-30.21)
+		vector_3 = vm.f32(-30.21)
 	end
 	if var4 < -200.0 then
-		var1 = vm.f32(-713.73)
+		vector = vm.f32(-713.73)
 		var2 = vm.f32(93.65)
-		var3 = vm.f32(-261.19)
+		vector_3 = vm.f32(-261.19)
 	end
 	if var4 > 200.0 then
-		var1 = vm.f32(714.34)
+		vector = vm.f32(714.34)
 		var2 = vm.f32(93.65)
-		var3 = vm.f32(-260.45)
+		vector_3 = vm.f32(-260.45)
 	end
 	var10[4] = monster.EsmCreate_2("バラ") or var10[4]
-	monster.EsmSetVect1(var10[4], var1, var2 + 15.0, var3)
+	monster.EsmSetVect1(var10[4], vector, var2 + 15.0, vector_3)
 	monster.EsmSetVect2(
 		var10[4],
 		var4 + vm.f32(vm.sin(vm.f32(3.1415927)) * 30.0),
@@ -387,10 +387,10 @@ local function helper_1e138(arg0: any)
 		var6 + vm.f32(vm.cos(vm.f32(3.1415927)) * 30.0)
 	)
 	monster.EsmSetValue(var10[4], 0, attack)
-	monster.EsmSetValueFloat(var10[4], 1, var7)
-	monster.EsmSetValue(var10[4], 2, var9)
+	monster.EsmSetValueFloat(var10[4], 1, value)
+	monster.EsmSetValue(var10[4], 2, value_2)
 	var10[5] = monster.EsmCreate_2("バラ") or var10[5]
-	monster.EsmSetVect1(var10[5], var1, var2 + 15.0, var3)
+	monster.EsmSetVect1(var10[5], vector, var2 + 15.0, vector_3)
 	monster.EsmSetVect2(
 		var10[5],
 		var4 + vm.f32(vm.sin(vm.f32(4.1887903)) * 30.0),
@@ -398,10 +398,10 @@ local function helper_1e138(arg0: any)
 		var6 + vm.f32(vm.cos(vm.f32(4.1887903)) * 30.0)
 	)
 	monster.EsmSetValue(var10[5], 0, attack)
-	monster.EsmSetValueFloat(var10[5], 1, var7)
-	monster.EsmSetValue(var10[5], 2, var9)
+	monster.EsmSetValueFloat(var10[5], 1, value)
+	monster.EsmSetValue(var10[5], 2, value_2)
 	var10[6] = monster.EsmCreate_2("バラ") or var10[6]
-	monster.EsmSetVect1(var10[6], var1, var2 + 15.0, var3)
+	monster.EsmSetVect1(var10[6], vector, var2 + 15.0, vector_3)
 	monster.EsmSetVect2(
 		var10[6],
 		var4 + vm.f32(vm.sin(vm.f32(5.2359877)) * 30.0),
@@ -409,12 +409,12 @@ local function helper_1e138(arg0: any)
 		var6 + vm.f32(vm.cos(vm.f32(1.0471976)) * 30.0)
 	)
 	monster.EsmSetValue(var10[6], 0, attack)
-	monster.EsmSetValueFloat(var10[6], 1, var7)
-	monster.EsmSetValue(var10[6], 2, var9)
+	monster.EsmSetValueFloat(var10[6], 1, value)
+	monster.EsmSetValue(var10[6], 2, value_2)
 	for var16 = 0, 5 do
 		monster.VPush(12 + var16, var10[var16 + 1])
 	end
-	helper_1cf4(var9)
+	helper_1cf4(value_2)
 	monster.SetIntFlag(1, 1)
 	monster.SetIntFlag(2, 1)
 	do
@@ -423,52 +423,52 @@ local function helper_1e138(arg0: any)
 		var5 = out2 or var5
 		var6 = out3 or var6
 	end
-	var7 = 1.25
+	value = 1.25
 	monster.EsmSetVect1(var10[1], var4, var5 + 15.0, var6)
-	monster.EsmSetValueFloat(var10[1], 1, var7)
+	monster.EsmSetValueFloat(var10[1], 1, value)
 	monster.EsmSetValue(var10[1], 7, 1)
 	monster.EsmSetValueFloat(var10[1], 4, -0.043633234)
 	monster.EsmSetValueFloat(var10[1], 5, 0.0)
 	monster.EsmSetValueFloat(var10[1], 3, 0.043633234)
 	monster.EsmSetVect1(var10[2], var4, var5 + 15.0, var6)
-	monster.EsmSetValueFloat(var10[2], 1, var7)
+	monster.EsmSetValueFloat(var10[2], 1, value)
 	monster.EsmSetValue(var10[2], 7, 1)
 	monster.EsmSetValueFloat(var10[2], 4, 0.043633234)
 	monster.EsmSetValueFloat(var10[2], 5, 1.0471976)
 	monster.EsmSetValueFloat(var10[2], 3, 0.043633234)
 	monster.EsmSetVect1(var10[3], var4, var5 + 15.0, var6)
-	monster.EsmSetValueFloat(var10[3], 1, var7)
+	monster.EsmSetValueFloat(var10[3], 1, value)
 	monster.EsmSetValue(var10[3], 7, 1)
 	monster.EsmSetValueFloat(var10[3], 4, 0.043633234)
 	monster.EsmSetValueFloat(var10[3], 5, 2.0943952)
 	monster.EsmSetValueFloat(var10[3], 3, -0.043633234)
 	monster.EsmSetVect1(var10[4], var4, var5 + 15.0, var6)
-	monster.EsmSetValueFloat(var10[4], 1, var7)
+	monster.EsmSetValueFloat(var10[4], 1, value)
 	monster.EsmSetValue(var10[4], 7, 1)
 	monster.EsmSetValueFloat(var10[4], 4, 0.043633234)
 	monster.EsmSetValueFloat(var10[4], 5, 3.1415927)
 	monster.EsmSetValueFloat(var10[4], 3, 0.043633234)
 	monster.EsmSetVect1(var10[5], var4, var5 + 15.0, var6)
-	monster.EsmSetValueFloat(var10[5], 1, var7)
+	monster.EsmSetValueFloat(var10[5], 1, value)
 	monster.EsmSetValue(var10[5], 7, 1)
 	monster.EsmSetValueFloat(var10[5], 4, -0.043633234)
 	monster.EsmSetValueFloat(var10[5], 5, 4.1887903)
 	monster.EsmSetValueFloat(var10[5], 3, -0.043633234)
 	monster.EsmSetVect1(var10[6], var4, var5 + 15.0, var6)
-	monster.EsmSetValueFloat(var10[6], 1, var7)
+	monster.EsmSetValueFloat(var10[6], 1, value)
 	monster.EsmSetValue(var10[6], 7, 1)
 	monster.EsmSetValueFloat(var10[6], 4, 0.043633234)
 	monster.EsmSetValueFloat(var10[6], 5, 5.2359877)
 	monster.EsmSetValueFloat(var10[6], 3, 0.043633234)
 	monster.SetMos("歩き", -1.0, 0)
-	helper_bc34(5.0, var9)
+	helper_bc34(5.0, value_2)
 	monster.SetMos("歩き", -1.0, 0)
 	helper_5cb0(5.0)
 	monster.MySePlay(5)
 	monster.SetMos("攻撃１", -1, 2)
 	helper_4c38(vm.f32(0.453), -1.0)
 	attack = monster.GetBaseAttack_1() or attack
-	var7 = 20.0
+	value = 20.0
 	monster.MySePlay(6)
 	do
 		local out1, out2, out3 = monster.GetTargetPos()
@@ -478,7 +478,7 @@ local function helper_1e138(arg0: any)
 	end
 	monster.EsmSetVect2(var10[1], var4, var5 + 3.0, var6)
 	monster.EsmSetValue(var10[1], 0, attack)
-	monster.EsmSetValueFloat(var10[1], 1, var7)
+	monster.EsmSetValueFloat(var10[1], 1, value)
 	monster.EsmSetValue(var10[1], 2, 90)
 	monster.EsmSetValue(var10[1], 7, 1)
 	helper_1cf4(9)
@@ -491,7 +491,7 @@ local function helper_1e138(arg0: any)
 	end
 	monster.EsmSetVect2(var10[2], var4, var5 + 3.0, var6)
 	monster.EsmSetValue(var10[2], 0, attack)
-	monster.EsmSetValueFloat(var10[2], 1, var7)
+	monster.EsmSetValueFloat(var10[2], 1, value)
 	monster.EsmSetValue(var10[2], 2, 90)
 	monster.EsmSetValue(var10[2], 7, 1)
 	helper_1cf4(9)
@@ -504,7 +504,7 @@ local function helper_1e138(arg0: any)
 	end
 	monster.EsmSetVect2(var10[3], var4, var5 + 3.0, var6)
 	monster.EsmSetValue(var10[3], 0, attack)
-	monster.EsmSetValueFloat(var10[3], 1, var7)
+	monster.EsmSetValueFloat(var10[3], 1, value)
 	monster.EsmSetValue(var10[3], 2, 90)
 	monster.EsmSetValue(var10[3], 7, 1)
 	helper_1cf4(9)
@@ -517,7 +517,7 @@ local function helper_1e138(arg0: any)
 	end
 	monster.EsmSetVect2(var10[4], var4, var5 + 3.0, var6)
 	monster.EsmSetValue(var10[4], 0, attack)
-	monster.EsmSetValueFloat(var10[4], 1, var7)
+	monster.EsmSetValueFloat(var10[4], 1, value)
 	monster.EsmSetValue(var10[4], 2, 90)
 	monster.EsmSetValue(var10[4], 7, 1)
 	helper_1cf4(9)
@@ -530,7 +530,7 @@ local function helper_1e138(arg0: any)
 	end
 	monster.EsmSetVect2(var10[5], var4, var5 + 3.0, var6)
 	monster.EsmSetValue(var10[5], 0, attack)
-	monster.EsmSetValueFloat(var10[5], 1, var7)
+	monster.EsmSetValueFloat(var10[5], 1, value)
 	monster.EsmSetValue(var10[5], 2, 90)
 	monster.EsmSetValue(var10[5], 7, 1)
 	helper_1cf4(9)
@@ -543,7 +543,7 @@ local function helper_1e138(arg0: any)
 	end
 	monster.EsmSetVect2(var10[6], var4, var5 + 3.0, var6)
 	monster.EsmSetValue(var10[6], 0, attack)
-	monster.EsmSetValueFloat(var10[6], 1, var7)
+	monster.EsmSetValueFloat(var10[6], 1, value)
 	monster.EsmSetValue(var10[6], 2, 90)
 	monster.EsmSetValue(var10[6], 7, 1)
 	helper_1dc70()
@@ -556,23 +556,27 @@ local function helper_1e138(arg0: any)
 end
 
 --- Helper function.
-local function helper_50e0(arg0: f32, arg1: f32)
-	arg0 = helper_787df986(arg0)
-	if arg0 > vm.f32(3.1415927) then
-		arg0 = vm.f32(arg0 - vm.f32(6.2831855))
+local function helper_50e0(next_rot: f32, rot_speed: f32)
+	next_rot = helper_787df986(next_rot)
+	if next_rot > vm.f32(3.1415927) then
+		next_rot = vm.f32(next_rot - vm.f32(6.2831855))
 	end
-	if arg0 <= vm.f32(-3.1415927) then
-		arg0 = vm.f32(arg0 + vm.f32(6.2831855))
+	if next_rot <= vm.f32(-3.1415927) then
+		next_rot = vm.f32(next_rot + vm.f32(6.2831855))
 	end
-	arg1 = helper_787df986(arg1)
-	if arg1 > vm.f32(3.1415927) then
-		arg1 = vm.f32(arg1 - vm.f32(6.2831855))
+	rot_speed = helper_787df986(rot_speed)
+	if rot_speed > vm.f32(3.1415927) then
+		rot_speed = vm.f32(rot_speed - vm.f32(6.2831855))
 	end
-	if arg1 <= vm.f32(-3.1415927) then
-		arg1 = vm.f32(arg1 + vm.f32(6.2831855))
+	if rot_speed <= vm.f32(-3.1415927) then
+		rot_speed = vm.f32(rot_speed + vm.f32(6.2831855))
 	end
-	monster.SetNextRot(arg0, arg1)
-	local _ = helper_2d88(helper_28452e16(arg0), helper_28452e16(arg1), vm.f32(vm.fdiv(360.0, helper_28452e16(arg1))))
+	monster.SetNextRot(next_rot, rot_speed)
+	local _ = helper_2d88(
+		helper_28452e16(next_rot),
+		helper_28452e16(rot_speed),
+		vm.f32(vm.fdiv(360.0, helper_28452e16(rot_speed)))
+	)
 	helper_442b9962()
 end
 
@@ -618,7 +622,7 @@ local function helper_19a44(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: an
 	local var11: f32 = 0
 	local var12: f32 = 0
 	local var13: f32 = 0
-	local var14: f32 = 0
+	local scale: f32 = 0
 	local var15: f32 = 0
 	local var16: f32 = 0
 	local var17: f32 = 0
@@ -652,7 +656,7 @@ local function helper_19a44(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: an
 		var12 = out2 or var12
 		var13 = out3 or var13
 	end
-	var14 = arg3
+	scale = arg3
 	var26 = 0
 	do
 		local out1, out2, out3 = monster.GetPos_3()
@@ -661,9 +665,9 @@ local function helper_19a44(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: an
 		pos_z = out3 or pos_z
 	end
 	var21 = monster.GetDistVector2(arg0, arg1, arg2, pos_x, pos_y, pos_z) or var21
-	var25 = helper_198a4(var21, var14, vm.f32(vm.fdiv(vm.f32(vm.f32(var21 + arg5) * vm.f32(1.9)), var14)), var25)
+	var25 = helper_198a4(var21, scale, vm.f32(vm.fdiv(vm.f32(vm.f32(var21 + arg5) * vm.f32(1.9)), scale)), var25)
 	while var26 < arg7 do
-		var14 = vm.f32(var14 + var25)
+		scale = vm.f32(scale + var25)
 		do
 			local out1, out2, out3 = monster.GetPos_3()
 			pos_x = out1 or pos_x
@@ -686,7 +690,7 @@ local function helper_19a44(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: an
 			var20 = out3 or var20
 		end
 		do
-			local out1, out2, out3 = monster.ScaleVector(var18, var19, var20, var14)
+			local out1, out2, out3 = monster.ScaleVector(var18, var19, var20, scale)
 			var18 = out1 or var18
 			var19 = out2 or var19
 			var20 = out3 or var20
@@ -697,7 +701,7 @@ local function helper_19a44(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: an
 			var16 = out2 or var16
 			var17 = out3 or var17
 		end
-		if var14 < 0.0 then
+		if scale < 0.0 then
 			return
 		end
 		if helper_19438(var15, var16, var17) == 0 then
@@ -712,38 +716,38 @@ end
 
 --- Helper function.
 local function helper_1c190()
-	local var3: f32 = 0
-	local var4: f32 = 0
-	local var5: f32 = 0
+	local target: f32 = 0
+	local target_2: f32 = 0
+	local target_3: f32 = 0
 	local var6: f32 = 0
 	local argc: s32 = 0
 	argc = monster.GetRnd(7) or argc
 	if argc == 0 then
-		var3 = -159.75
-		var4 = 35.0
-		var5 = vm.f32(336.53)
+		target = -159.75
+		target_2 = 35.0
+		target_3 = vm.f32(336.53)
 	end
 	if argc == 1 then
-		var3 = vm.f32(27.98)
-		var4 = 35.0
-		var5 = vm.f32(390.28)
+		target = vm.f32(27.98)
+		target_2 = 35.0
+		target_3 = vm.f32(390.28)
 	end
 	if argc == 2 then
-		var3 = vm.f32(202.6)
-		var4 = 35.0
-		var5 = vm.f32(335.46)
+		target = vm.f32(202.6)
+		target_2 = 35.0
+		target_3 = vm.f32(335.46)
 	end
 	if argc == 3 then
-		var3 = vm.f32(19.08)
-		var4 = 35.0
-		var5 = vm.f32(170.05)
+		target = vm.f32(19.08)
+		target_2 = 35.0
+		target_3 = vm.f32(170.05)
 	end
 	if argc >= 4 then
-		var3 = vm.f32(0.26)
-		var4 = 35.0
-		var5 = 120.0
+		target = vm.f32(0.26)
+		target_2 = 35.0
+		target_3 = 120.0
 	end
-	var6 = monster.GetRefAngle(var3, var4, var5) or var6
+	var6 = monster.GetRefAngle(target, target_2, target_3) or var6
 	monster.SetMos("歩き", -1.0, 0)
 	if var6 > vm.f32(3.1415927) then
 		var6 = vm.f32(var6 - vm.f32(6.2831855))
@@ -753,7 +757,7 @@ local function helper_1c190()
 	end
 	helper_50e0(helper_28452e16(var6), 5.0)
 	monster.SetMos("走り", -1.0, 0)
-	helper_19a44(var3, var4, var5, vm.f32(9.8), vm.f32(9.8), 0.0, vm.f32(0.8), 180)
+	helper_19a44(target, target_2, target_3, vm.f32(9.8), vm.f32(9.8), 0.0, vm.f32(0.8), 180)
 	helper_1029a353()
 end
 
@@ -793,18 +797,18 @@ end
 
 --- Helper function.
 local function helper_1bb18(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: f32, arg5: any, arg6: any)
-	local var7: f32 = 0
-	local var8: f32 = 0
-	local var9: f32 = 0
+	local target: f32 = 0
+	local target_2: f32 = 0
+	local target_3: f32 = 0
 	local pos_y: f32 = 0
 	local height: f32 = 0
-	var7, var8, var9 = helper_125e5305(arg2, arg3, var7, var8, var9)
+	target, target_2, target_3 = helper_125e5305(arg2, arg3, target, target_2, target_3)
 	monster.GetTargetPos()
 	do
 		local _, out2, _ = monster.GetPos_3()
 		pos_y = out2 or pos_y
 	end
-	arg2 = monster.GetRefAngle(var7, var8, var9) or arg2
+	arg2 = monster.GetRefAngle(target, target_2, target_3) or arg2
 	if arg2 > vm.f32(3.1415927) then
 		arg2 = vm.f32(arg2 - vm.f32(6.2831855))
 	end
@@ -821,7 +825,7 @@ local function helper_1bb18(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: f3
 	height = monster.GetHigh() or height
 	height = vm.f32(pos_y - height)
 	arg4 = vm.f32(arg4 + height)
-	helper_19a44(var7, arg4, var9, arg0, arg0, 0.0, vm.f32(0.8), 180)
+	helper_19a44(target, arg4, target_3, arg0, arg0, 0.0, vm.f32(0.8), 180)
 	monster.ResetMove()
 end
 
@@ -978,7 +982,7 @@ local function helper_23028()
 end
 
 --- Helper function.
-local function helper_109cc(arg0: f32, arg1: any, arg2: f32, arg3: f32, arg4: s32, arg5: s32)
+local function helper_109cc(scale: f32, arg1: any, arg2: f32, arg3: f32, arg4: s32, arg5: s32)
 	local var6: f32 = 0
 	local var7: f32 = 0
 	local var8: f32 = 0
@@ -1029,7 +1033,7 @@ local function helper_109cc(arg0: f32, arg1: any, arg2: f32, arg3: f32, arg4: s3
 			var17 = out3 or var17
 		end
 		do
-			local out1, out2, out3 = monster.ScaleVector(var15, var16, var17, arg0)
+			local out1, out2, out3 = monster.ScaleVector(var15, var16, var17, scale)
 			var15 = out1 or var15
 			var16 = out2 or var16
 			var17 = out3 or var17
@@ -1052,10 +1056,10 @@ local function helper_109cc(arg0: f32, arg1: any, arg2: f32, arg3: f32, arg4: s3
 			var16 = 0.0
 		end
 		var18 = monster.GetDistVector2(var9, var10, var11, var6, var7, var8) or var18
-		if var18 < vm.f32(arg0 + arg2) then
+		if var18 < vm.f32(scale + arg2) then
 			return
 		end
-		var22 = helper_de1504df(var9, var10, var11, arg0, var13)
+		var22 = helper_de1504df(var9, var10, var11, scale, var13)
 		if var22 ~= 0 then
 			print("hit------------------\n")
 			return
@@ -1167,7 +1171,7 @@ local function helper_cb24()
 end
 
 --- Helper function.
-local function helper_f280(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: f32, arg5: f32, arg6: any)
+local function helper_f280(arg0: f32, arg1: f32, arg2: f32, scale: f32, arg4: f32, arg5: f32, arg6: any)
 	local var7: f32 = 0
 	local var8: f32 = 0
 	local var9: f32 = 0
@@ -1207,7 +1211,7 @@ local function helper_f280(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: f32
 		var15 = out3 or var15
 	end
 	do
-		local out1, out2, out3 = monster.ScaleVector(var13, var14, var15, arg3)
+		local out1, out2, out3 = monster.ScaleVector(var13, var14, var15, scale)
 		var13 = out1 or var13
 		var14 = out2 or var14
 		var15 = out3 or var15
@@ -1228,10 +1232,10 @@ local function helper_f280(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: f32
 			var14 = 0.0
 		end
 		var20 = monster.GetDistVector2(var7, var8, var9, arg0, arg1, arg2) or var20
-		if var20 < vm.f32(arg3 + arg4) then
+		if var20 < vm.f32(scale + arg4) then
 			return
 		end
-		var24 = helper_de1504df(var7, var8, var9, arg3, var11)
+		var24 = helper_de1504df(var7, var8, var9, scale, var11)
 		if var24 ~= 0 then
 			return
 		end
@@ -1480,9 +1484,9 @@ end
 function script.loop()
 	local value: s32 = 0
 	local value_2: s32 = 0
-	local var2: f32 = 0
-	local var3: f32 = 0
-	local var4: f32 = 0
+	local target: f32 = 0
+	local target_2: f32 = 0
+	local target_3: f32 = 0
 	local var5: f32 = 0
 	monster.SetIntFlag(1, 0)
 	monster.SetIntFlag(2, 0)
@@ -1497,12 +1501,12 @@ function script.loop()
 	value = monster.VPop(15) or value
 	if value == 0 then
 		helper_24610()
-		var2 = vm.f32(-0.3)
-		var3 = vm.f32(78.62)
-		var4 = vm.f32(327.79)
+		target = vm.f32(-0.3)
+		target_2 = vm.f32(78.62)
+		target_3 = vm.f32(327.79)
 		monster.SetIntFlag(1, 1)
 		monster.SetIntFlag(2, 1)
-		var5 = monster.GetRefAngle(var2, var3, var4) or var5
+		var5 = monster.GetRefAngle(target, target_2, target_3) or var5
 		monster.SetMos("歩き", -1.0, 0)
 		if var5 > vm.f32(3.1415927) then
 			var5 = vm.f32(var5 - vm.f32(6.2831855))
@@ -1512,7 +1516,7 @@ function script.loop()
 		end
 		helper_50e0(helper_28452e16(var5), 5.0)
 		monster.SetMos("走り", -1.0, 0)
-		helper_19a44(var2, var3, var4, vm.f32(11.2), vm.f32(9.8), 0.0, vm.f32(0.8), 180)
+		helper_19a44(target, target_2, target_3, vm.f32(11.2), vm.f32(9.8), 0.0, vm.f32(0.8), 180)
 		helper_1029a353()
 		monster.SetIntFlag(1, 0)
 		monster.SetIntFlag(2, 0)
@@ -1667,15 +1671,15 @@ function script.on_dodge_1()
 	local var4: f32 = 0
 	local var5: f32 = 0
 	local var7: f32 = 0
-	local var8: f32 = 0
-	local var9: f32 = 0
-	local var10: f32 = 0
+	local x: f32 = 0
+	local y: f32 = 0
+	local z: f32 = 0
 	local var11: f32 = 0
 	local var12: f32 = 0
 	local var14: f32 = 0
-	local var15: f32 = 0
-	local var16: f32 = 0
-	local var17: f32 = 0
+	local x_2: f32 = 0
+	local y_2: f32 = 0
+	local z_2: f32 = 0
 	value = monster.VPop(15) or value
 	if value == 0 then
 		helper_1ddf8()
@@ -1699,8 +1703,8 @@ function script.on_dodge_1()
 	var11 = monster.GetDistVector2(var5, 0.0, var7, var12, 0.0, var14) or var11
 	if var11 < 300.0 then
 		helper_1ca90()
-		var8, var9, var10 = helper_125e5305(180.0, 35.0, var8, var9, var10)
-		monster.SetPos(var8, var9, var10)
+		x, y, z = helper_125e5305(180.0, 35.0, x, y, z)
+		monster.SetPos(x, y, z)
 		helper_1c74()
 		helper_1d08c()
 		monster.SetMos("歩き", -1.0, 0)
@@ -1724,8 +1728,8 @@ function script.on_dodge_1()
 			monster.SetMos("立ち", -1, 0)
 		else
 			helper_1ca90()
-			var15, var16, var17 = helper_125e5305(180.0, 35.0, var15, var16, var17)
-			monster.SetPos(var15, var16, var17)
+			x_2, y_2, z_2 = helper_125e5305(180.0, 35.0, x_2, y_2, z_2)
+			monster.SetPos(x_2, y_2, z_2)
 			helper_1c74()
 			helper_1d08c()
 			monster.SetMos("歩き", -1.0, 0)

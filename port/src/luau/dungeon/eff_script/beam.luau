@@ -78,14 +78,14 @@ function script.on_finish()
 	local var6: f32 = 0
 	local var7: f32 = 0
 	local var8: f32 = 0
-	local var9: f32 = 0
-	local var10: f32 = 0
-	local var11: f32 = 0
-	local var12: f32 = 0
-	var9 = 128.0
-	var10 = 128.0
-	var11 = 128.0
-	var12 = 128.0
+	local value: f32 = 0
+	local value_2: f32 = 0
+	local value_3: f32 = 0
+	local value_4: f32 = 0
+	value = 128.0
+	value_2 = 128.0
+	value_3 = 128.0
+	value_4 = 128.0
 	while true do
 		do
 			local out1, out2, out3 = effect.GetWorkVect1()
@@ -118,9 +118,9 @@ function script.on_finish()
 			var8 = out3 or var8
 		end
 		effect.SptVanSetPos(0, work_vect1_x, work_vect1_y, work_vect1_z, var6, var7, var8, 0.0, 0.0, 0.0, 600)
-		effect.SptSetColor(0, var9, var10, var11, var12, 600)
-		var12 = vm.f32(var12 - 4.0)
-		if var12 <= 0.0 then
+		effect.SptSetColor(0, value, value_2, value_3, value_4, 600)
+		value_4 = vm.f32(value_4 - 4.0)
+		if value_4 <= 0.0 then
 			break
 		else
 			vm.wait()

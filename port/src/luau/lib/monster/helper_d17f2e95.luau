@@ -24,7 +24,6 @@ local function helper_d17f2e95(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4:
 		pos_z = out3 or pos_z
 	end
 	pos_x = vm.f32(pos_x + vm.f32(vm.sin(arg1) * arg2))
-	pos_y = pos_y
 	pos_z = vm.f32(pos_z + vm.f32(vm.cos(arg1) * arg2))
 	local _ = helper_0b6e560f(pos_x, pos_y, pos_z, arg0, arg3, arg4, arg5)
 end

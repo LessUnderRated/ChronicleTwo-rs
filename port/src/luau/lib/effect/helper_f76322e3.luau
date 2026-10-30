@@ -4,7 +4,7 @@
 local vm = require("@lib/vm")
 
 --- Helper function.
-local function helper_f76322e3(arg0: s32, arg1: f32, arg2: f32, arg3: f32, arg4: f32)
+local function helper_f76322e3(arg0: s32, range: f32, arg2: f32, arg3: f32, arg4: f32)
 	local var5: f32 = 0
 	local var6: f32 = 0
 	local var7: f32 = 0
@@ -27,7 +27,7 @@ local function helper_f76322e3(arg0: s32, arg1: f32, arg2: f32, arg3: f32, arg4:
 	value_2 = 1.0
 	value_3 = 1.0
 	value = effect.GetRand(360.0) or value
-	value_2 = effect.GetRand(arg1) or value_2
+	value_2 = effect.GetRand(range) or value_2
 	value_3 = effect.GetRand(8.0) or value_3
 	value = vm.f32(vm.f32(value / 180.0) * vm.f32(3.1415927))
 	x = vm.f32(vm.sin(value) * value_2)

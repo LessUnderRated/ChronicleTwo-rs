@@ -15,9 +15,9 @@ local helper_e05438b5 = require("@lib/monster/helper_e05438b5")
 --- Helper function.
 local function helper_e300(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: f32, arg5: f32, arg6: f32, arg7: s32)
 	local var8: s32 = 0
-	local var10: f32 = 0
-	local var11: f32 = 0
-	local var12: f32 = 0
+	local x: f32 = 0
+	local y: f32 = 0
+	local z: f32 = 0
 	local var13: f32 = 0
 	var8 = 0
 	while var8 < arg7 do
@@ -27,17 +27,17 @@ local function helper_e300(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: f32
 				vm.f32(vm.i32(arg7 + 1) * 2.0)
 			)
 		)
-		var11 = arg1
+		y = arg1
 		for var9 = 0, var8 - 1 do
 			var13 = vm.f32(var13 + arg6)
-			var11 = vm.f32(var11 + var13)
+			y = vm.f32(y + var13)
 		end
-		var10 = vm.f32(vm.f32(vm.fdiv(vm.f32(vm.f32(arg3 - arg0) * var8), arg7)) + arg0)
-		var12 = vm.f32(vm.f32(vm.fdiv(vm.f32(vm.f32(arg5 - arg2) * var8), arg7)) + arg2)
-		if var11 < arg4 then
-			var11 = arg4
+		x = vm.f32(vm.f32(vm.fdiv(vm.f32(vm.f32(arg3 - arg0) * var8), arg7)) + arg0)
+		z = vm.f32(vm.f32(vm.fdiv(vm.f32(vm.f32(arg5 - arg2) * var8), arg7)) + arg2)
+		if y < arg4 then
+			y = arg4
 		end
-		monster.SetPos(var10, var11, var12)
+		monster.SetPos(x, y, z)
 		var8 = var8 + 1
 		vm.wait()
 	end

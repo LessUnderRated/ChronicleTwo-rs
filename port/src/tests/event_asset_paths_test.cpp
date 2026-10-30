@@ -1,5 +1,4 @@
 #include "common.h"
-#include "kazarov_bridge/rust/lib.h"
 
 #include <gtest/gtest.h>
 #include <nlohmann/json.hpp>
@@ -21,6 +20,7 @@
 #include "event_background.hpp"
 #include "event_func.hpp"
 #include "gyorace.hpp"
+#include "luau_runtime.hpp"
 #include "mainloop.hpp"
 #include "mapjump.hpp"
 #include "mapselect.hpp"
@@ -717,6 +717,7 @@ protected:
     void TearDown() override {
         SetEventScript({}, nullptr);
         SetScriptBuffer(nullptr);
+        luau_runtime::SetScriptsRoot({});
 #ifdef _WIN32
         auto absolute = std::filesystem::absolute(root);
         root = std::filesystem::path(L"\\\\?\\" + absolute.make_preferred().native());
@@ -725,36 +726,26 @@ protected:
         EXPECT_FALSE(std::filesystem::exists(root));
     }
 
-    void WriteProgram(const std::string &name, int entry, std::size_t size = sizeof(NativeScriptProgram)) {
-        NativeScriptProgram program;
-        program.entry.no = entry;
-        auto file = (root / "data" / name).lexically_normal();
+    /**
+     * Writes the Luau module that an event script path loads as, with one program that returns 0.
+     */
+    void WriteProgram(const std::string &name, int entry) {
+        auto file = (root / "scripts" / name).replace_extension(".luau").lexically_normal();
 #ifdef _WIN32
         auto absolute = std::filesystem::absolute(file);
         file = std::filesystem::path(L"\\\\?\\" + absolute.make_preferred().native());
 #endif
         std::filesystem::create_directories(file.parent_path());
-        std::vector<u8> bytes(program.Bytes().begin(), program.Bytes().end());
-        bytes.resize(size);
-        std::ofstream(file, std::ios::binary).write(reinterpret_cast<const char *>(bytes.data()), static_cast<std::streamsize>(bytes.size()));
-    }
-
-    /**
-     * Publishes long logical names through the same archive writer used by converted game data.
-     */
-    void PackPrograms() {
-        const auto from = (root / "data").u8string();
-        const auto to = (root / "data.zip").u8string();
-        kazarov::pack_directory(rust::Str(reinterpret_cast<const char *>(from.data()), from.size()),
-                                rust::Str(reinterpret_cast<const char *>(to.data()), to.size()));
-        DataReadIndex(root / "data");
+        std::ofstream(file) << "local function run() return 0 end\nreturn { [" << entry << "] = run, event_" << entry << " = run }\n";
+        luau_runtime::SetScriptsRoot(root / "scripts");
     }
 };
 } // namespace
 
 TEST_F(MapScriptPaths, LongBoundedPathsPreferLocalizedProgramsAndFallBackToTheOriginal) {
-    std::string directory;
-    for (int component = 0; component < 10; ++component) {
+    std::string directory = "map/";
+    // Long enough to pass the retail 64-byte name buffer, short enough for the host's path limit under the temporary root.
+    for (int component = 0; component < 4; ++component) {
         directory += std::string(28, 'a') + '/';
     }
     const auto original = directory + "fixture.stb";
@@ -763,7 +754,6 @@ TEST_F(MapScriptPaths, LongBoundedPathsPreferLocalizedProgramsAndFallBackToTheOr
     WriteProgram(original, 100);
     WriteProgram(localized, 101);
     WriteProgram(fallback, 102);
-    PackPrograms();
 
     const auto nonterminated = original + "ignored";
     LoadScript(std::string_view(nonterminated).substr(0, original.size()));
@@ -799,7 +789,6 @@ TEST_F(MapScriptPaths, ReloadRetainsTheCompleteMapScriptPath) {
     const auto path = dc2::world::MapPath(map_name) + ".stb";
     ASSERT_GT(path.size(), 64U);
     WriteProgram(path, 103);
-    DataReadIndex(root / "data");
     LoadMapScript(map_name.data());
     EXPECT_EQ(RunEvent(103, nullptr), 0);
     LoadScript("a");
@@ -809,13 +798,15 @@ TEST_F(MapScriptPaths, ReloadRetainsTheCompleteMapScriptPath) {
 }
 
 TEST_F(MapScriptPaths, TooSmallAndRetiredWorkspacesCannotPublishAProgram) {
-    WriteProgram("fixture_2.stb", 101);
-    DataReadIndex(root / "data");
-    std::array<u_long128, 4> storage{};
-    mgCMemory                small;
-    small.stSetBuffer(storage.data(), static_cast<int>(storage.size()));
+    // The program's handle names a long module, so it needs more than the small workspace holds.
+    const std::string name = "map/" + std::string(64, 'f');
+    WriteProgram(name + "_2.stb", 101);
+    static char key;
+    auto       *storage = reinterpret_cast<u_long128 *>(ArenaBlock(&key, 4 * sizeof(u_long128)));
+    mgCMemory   small;
+    small.stSetBuffer(storage, 4);
     SetScriptBuffer(&small);
-    LoadScript("fixture.stb");
+    LoadScript(name + ".stb");
     EXPECT_EQ(RunEvent(101, nullptr), -1);
     EXPECT_EQ(small.stGetUsed(), 0);
 
@@ -823,19 +814,18 @@ TEST_F(MapScriptPaths, TooSmallAndRetiredWorkspacesCannotPublishAProgram) {
     ASSERT_TRUE(borrowed.stShareStack(script_memory));
     script_memory.stReset();
     SetScriptBuffer(&borrowed);
-    LoadScript("fixture.stb");
+    LoadScript(name + ".stb");
     EXPECT_EQ(RunEvent(101, nullptr), -1);
 }
 
 TEST_F(MapScriptPaths, AProgramThatConsumesTheGuardQuadwordIsRejectedBeforeAllocation) {
-    constexpr std::size_t size = 2048;
-    WriteProgram("full_2.stb", 104, size);
-    DataReadIndex(root / "data");
-    mgCMemory exact;
-    auto     *storage = reinterpret_cast<u_long128 *>(ArenaBlock(&exact, size));
+    WriteProgram("map/full_2.stb", 104);
+    const std::size_t size = (luau_runtime::MakeHandle("map/full_2").size() + 15) / 16 * 16;
+    mgCMemory         exact;
+    auto             *storage = reinterpret_cast<u_long128 *>(ArenaBlock(&exact, size));
     exact.stSetBuffer(storage, static_cast<int>(size / sizeof(u_long128)));
     SetScriptBuffer(&exact);
-    LoadScript("full.stb");
+    LoadScript("map/full.stb");
     EXPECT_EQ(RunEvent(104, nullptr), -1);
     EXPECT_EQ(exact.stGetUsed(), 0);
 }

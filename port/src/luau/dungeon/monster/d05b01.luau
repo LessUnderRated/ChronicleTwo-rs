@@ -186,9 +186,9 @@ local function helper_3b78()
 	local pos_x: f32 = 0
 	local pos_y: f32 = 0
 	local pos_z: f32 = 0
-	local var4: f32 = 0
-	local var5: f32 = 0
-	local var6: f32 = 0
+	local target: f32 = 0
+	local target_2: f32 = 0
+	local target_3: f32 = 0
 	local var7: f32 = 0
 	local angle: f32 = 0
 	local argc: s32 = 0
@@ -214,11 +214,11 @@ local function helper_3b78()
 			pos_z = out3 or pos_z
 		end
 		var0 = vm.f32(var0 * 2.5)
-		var4 = vm.f32(vm.f32(vm.sin(var7) * var0) + pos_x)
-		var5 = vm.f32(0.0 + pos_y)
-		var6 = vm.f32(vm.f32(vm.cos(var7) * var0) + pos_z)
+		target = vm.f32(vm.f32(vm.sin(var7) * var0) + pos_x)
+		target_2 = vm.f32(0.0 + pos_y)
+		target_3 = vm.f32(vm.f32(vm.cos(var7) * var0) + pos_z)
 		var0 = vm.f32(var0 / 24.0)
-		monster.SetNextPos(var4, var5, var6, var0, var0)
+		monster.SetNextPos(target, target_2, target_3, var0, var0)
 		helper_c3e8ae39(28)
 		monster.SetAttrib(49, 0)
 		if helper_661d392d(0, 45.0) ~= 0 then
@@ -296,9 +296,9 @@ end
 local function helper_4bfc()
 	local var0: f32 = 0
 	local var1: f32 = 0
-	local var2: f32 = 0
-	local var3: f32 = 0
-	local var4: f32 = 0
+	local target: f32 = 0
+	local target_2: f32 = 0
+	local target_3: f32 = 0
 	local pos_x: f32 = 0
 	local pos_y: f32 = 0
 	local pos_z: f32 = 0
@@ -315,12 +315,12 @@ local function helper_4bfc()
 		end
 		var1 = vm.f32(var1 - vm.f32(3.1415927))
 		var1 = monster.AngleLimit(var1) or var1
-		var2 = vm.f32(vm.f32(vm.sin(var1) * 80.0) + pos_x)
-		var3 = vm.f32(0.0 + pos_y)
-		var4 = vm.f32(vm.f32(vm.cos(var1) * 80.0) + pos_z)
+		target = vm.f32(vm.f32(vm.sin(var1) * 80.0) + pos_x)
+		target_2 = vm.f32(0.0 + pos_y)
+		target_3 = vm.f32(vm.f32(vm.cos(var1) * 80.0) + pos_z)
 		monster.SetMos("ステップ後", -1, 2)
 		helper_c3e8ae39(10)
-		monster.SetNextPos(var2, var3, var4, 8.0, 8.0)
+		monster.SetNextPos(target, target_2, target_3, 8.0, 8.0)
 		var8 = 0
 		while var8 < 20 do
 			helper_82cb5588(vm.f32(0.19634955))
@@ -362,9 +362,9 @@ local function helper_534c()
 	local var16: f32 = 0
 	local var17: f32 = 0
 	local var18: s32 = 0
-	local var19: f32 = 0
-	local var20: f32 = 0
-	local var21: f32 = 0
+	local x: f32 = 0
+	local y: f32 = 0
+	local z: f32 = 0
 	local var22: f32 = 0
 	local var23: s32 = 0
 	local yaw_2: f32 = 0
@@ -405,19 +405,19 @@ local function helper_534c()
 		monster.SetNextRot(var9, 0.19634955)
 		while var18 < 24 do
 			var22 = vm.f32(vm.f32(vm.f32(vm.f32(var12 - pos_y) * 2.0) - -62.5) / 50.0)
-			var20 = pos_y
+			y = pos_y
 			var17 = 0
 			while var17 < var18 do
 				var22 = vm.f32(var22 + vm.f32(-0.1))
-				var20 = vm.f32(var20 + var22)
+				y = vm.f32(y + var22)
 				var17 = vm.f32(var17 + 1)
 			end
-			if var20 < var12 then
-				var20 = var12
+			if y < var12 then
+				y = var12
 			end
-			var19 = vm.f32(vm.f32(vm.f32(var11 - pos_x) * vm.f32(var18 / 24.0)) + pos_x)
-			var21 = vm.f32(vm.f32(vm.f32(var13 - pos_z) * vm.f32(var18 / 24.0)) + pos_z)
-			monster.SetPos(var19, var20, var21)
+			x = vm.f32(vm.f32(vm.f32(var11 - pos_x) * vm.f32(var18 / 24.0)) + pos_x)
+			z = vm.f32(vm.f32(vm.f32(var13 - pos_z) * vm.f32(var18 / 24.0)) + pos_z)
+			monster.SetPos(x, y, z)
 			var18 = var18 + 1
 			vm.wait()
 		end

@@ -68,7 +68,7 @@ function script.on_finish()
 	local var33: f32 = 0
 	local var34: f32 = 0
 	local var35: f32 = 0
-	local var36: f32 = 0
+	local scale: f32 = 0
 	local var37: f32 = 0
 	do
 		local out1, out2, out3 = effect.GetWorkVect1()
@@ -167,7 +167,7 @@ function script.on_finish()
 		end
 		var10 = vm.f32(var10 + var15)
 		var35 = effect.DistVector(var9, var10, var11) or var35
-		var36 = var35
+		scale = var35
 		do
 			local out1, out2, out3 = effect.CopyVector(var9, var10, var11)
 			var32 = out1 or var32
@@ -278,12 +278,12 @@ function script.on_finish()
 				var10 = out2 or var10
 				var11 = out3 or var11
 			end
-			var36 = vm.f32(var36 - var37)
-			if var36 <= 0.0 then
+			scale = vm.f32(scale - var37)
+			if scale <= 0.0 then
 				break
 			else
 				do
-					local out1, out2, out3 = effect.ScaleVector(var29, var30, var31, var36)
+					local out1, out2, out3 = effect.ScaleVector(var29, var30, var31, scale)
 					var29 = out1 or var29
 					var30 = out2 or var30
 					var31 = out3 or var31

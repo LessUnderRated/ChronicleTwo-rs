@@ -1,0 +1,41 @@
+--!strict
+-- Shared event helper used by 5 scripts, translated by tools/luau/stb2luau.
+
+local vm = require("@lib/vm")
+local helper_d355d559 = require("@lib/event/helper_d355d559")
+local wait_frames = require("@lib/event/wait_frames")
+
+--- Helper function.
+local function helper_cb475ce1()
+	local world_coord_pos: f32 = 0
+	local world_coord_pos_2: f32 = 0
+	local world_coord_pos_3: f32 = 0
+	local angle: f32 = 0
+	event.Initialize()
+	world_coord_pos, world_coord_pos_2, world_coord_pos_3, angle =
+		helper_d355d559(world_coord_pos, world_coord_pos_2, world_coord_pos_3, angle)
+	angle = vm.f32(angle + vm.f32(3.1415927))
+	angle = event.AngleLimit(angle) or angle
+	event.SetWorldCoord(world_coord_pos, world_coord_pos_2, world_coord_pos_3, angle)
+	event.EohSyncChara(0, 0)
+	event.ObjsInit(0)
+	event.ObjsSyncObj(0, 0)
+	event.ObjsSetPos(0, 0.0, 0.0, 0.0)
+	event.ObjsSetRot(0, 0.0, 0.0, 0.0)
+	event.ObjsResetDaPosition(0)
+	event.EohSetFootSoundId(0, 18)
+	event.CmrsInit()
+	event.CmrsSetPos(56.71, 54.78, -129.16)
+	event.CmrsSetRef(-1.53, 22.52, 48.82)
+	event.ObjsMove(0, 0.0, 0.0, 155.0, 40)
+	event.ObjsSetMotion(0, "走り", 4)
+	event.ObjsMotionDelay(0, 40)
+	event.ObjsSetMotion(0, "立ち")
+	wait_frames(10)
+	event.SetFadeOut(30)
+	wait_frames(30)
+	wait_frames(60)
+	event.Finish()
+end
+
+return helper_cb475ce1

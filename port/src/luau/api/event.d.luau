@@ -6,8 +6,9 @@ declare event: {
 	GetPadon_3: (arg1: f32, arg2: f32, arg3: f32) -> (),
 	GetPadon_4: (arg1: s32, arg2: f32, arg3: f32, arg4: f32) -> (),
 	--- Pushes the buttons newly pressed on the pad onto the stack.
-	GetPaddown: () -> s32?,
+	GetPaddown: (() -> s32?) & ((arg1: s32) -> ()),
 	GetPaddown_1: () -> s32?,
+	GetPaddown_1v: (arg1: s32) -> (),
 	--- Pushes the buttons newly released on the pad onto the stack.
 	GetPadup: () -> any?,
 	GetPadup_1: () -> any?,
@@ -101,8 +102,8 @@ declare event: {
 	LoadItem_4: (arg1: s32, arg2: s32, arg3: string, arg4: s32) -> (),
 	LoadItem_5: (stack_no: s32, item_no: s32, name: string, chara_no: s32, index: s32) -> (),
 	--- Opens the use item menu for the item in the given stack slot, passing the remaining values as menu parameters.
-	GotoUseItem: (arg2: s32) -> s32?,
-	GotoUseItem_2: (arg2: s32) -> s32?,
+	GotoUseItem: (arg2: s32) -> (),
+	GotoUseItem_2: (arg2: s32) -> (),
 	--- Sets a local event flag to the given value.
 	SetLocalFlag: (index: s32, arg2: s32) -> (),
 	SetLocalFlag_2: (index: s32, arg2: s32) -> (),
@@ -268,8 +269,9 @@ declare event: {
 	SetProjection: (projection: f32) -> (),
 	SetProjection_1: (projection: f32) -> (),
 	--- Pushes the projection value of the event onto the stack.
-	GetProjection: () -> f32?,
+	GetProjection: (() -> f32?) & ((arg1: f32) -> ()),
 	GetProjection_1: () -> f32?,
+	GetProjection_1v: (arg1: f32) -> (),
 	--- Fades the screen in over the given duration, optionally from a colour.
 	SetFadeIn: ((arg1: s32) -> ()) & ((frames: s32, color_x: f32, color_y: f32, color_z: f32) -> ()),
 	SetFadeIn_1: (arg1: s32) -> (),
@@ -352,8 +354,9 @@ declare event: {
 	SetCharaRot_3: (arg1: s32, arg2: f32, arg3: s32) -> (),
 	SetCharaRot_4: (arg1: s32, rot_x: f32, rot_y: f32, rot_z: f32) -> (),
 	--- Gives the rotation of the character with the id on the stack.
-	GetCharaRot: (arg1: s32) -> (f32?, f32?, f32?),
+	GetCharaRot: ((arg1: s32) -> (f32?, f32?, f32?)) & ((arg1: s32, arg2: f32, arg3: f32, arg4: f32) -> ()),
 	GetCharaRot_4: (arg1: s32) -> (f32?, f32?, f32?),
+	GetCharaRot_4v: (arg1: s32, arg2: f32, arg3: f32, arg4: f32) -> (),
 	--- Sets the motion of a character, from direct arguments or an argument list.
 	SetMotion: ((arg1: s32, arg2: string) -> ()) & ((arg1: s32, arg2: string, arg3: s32) -> ()) & ((arg1: s32, arg2: string, arg3: s32, arg4: f32) -> ()) & ((arg1: s32, name: string, flags: s32, step: f32, reset: s32) -> ()),
 	SetMotion_2: (arg1: s32, arg2: string) -> (),
@@ -466,14 +469,16 @@ declare event: {
 	SetCameraPos: (pos_x: f32, pos_y: f32, pos_z: f32) -> (),
 	SetCameraPos_3: (pos_x: f32, pos_y: f32, pos_z: f32) -> (),
 	--- Stores the active camera position into three stack slots.
-	GetCameraPos: () -> (f32?, f32?, f32?),
+	GetCameraPos: (() -> (f32?, f32?, f32?)) & ((arg1: f32, arg2: f32, arg3: f32) -> ()),
 	GetCameraPos_3: () -> (f32?, f32?, f32?),
+	GetCameraPos_3v: (arg1: f32, arg2: f32, arg3: f32) -> (),
 	--- Sets the active camera reference point from direct arguments or an argument list.
 	SetCameraRef: (pos_x: f32, pos_y: f32, pos_z: f32) -> (),
 	SetCameraRef_3: (pos_x: f32, pos_y: f32, pos_z: f32) -> (),
 	--- Stores the active camera reference point into three stack slots.
-	GetCameraRef: () -> (f32?, f32?, f32?),
+	GetCameraRef: (() -> (f32?, f32?, f32?)) & ((arg1: f32, arg2: f32, arg3: f32) -> ()),
 	GetCameraRef_3: () -> (f32?, f32?, f32?),
+	GetCameraRef_3v: (arg1: f32, arg2: f32, arg3: f32) -> (),
 	--- Sets the active camera speed.
 	SetCameraSpeed: (arg1: f32) -> (),
 	SetCameraSpeed_1: (arg1: f32) -> (),
@@ -1117,9 +1122,10 @@ declare event: {
 	SetMenuEtc_3: (arg1: s32, arg2: s32, arg3: s32) -> (),
 	SetMenuEtc_4: (arg1: s32, arg2: string, arg3: string, arg4: s32) -> (),
 	--- Gives a menu value, by the sub-command on the stack.
-	GetMenuEtc: (arg1: s32) -> (s32?, s32?),
+	GetMenuEtc: ((arg1: s32) -> (s32?, s32?)) & ((arg1: s32, arg2: s32) -> s32?),
 	GetMenuEtc_2: (arg1: s32) -> s32?,
 	GetMenuEtc_3: (arg1: s32) -> (s32?, s32?),
+	GetMenuEtc_3v: (arg1: s32, arg2: s32) -> s32?,
 	--- Gives the analyze flag of a map condition, from the analyze id on the stack.
 	GetAnalyze: (analyze_id: s32) -> s32?,
 	GetAnalyze_2: (analyze_id: s32) -> s32?,
@@ -1364,8 +1370,9 @@ declare event: {
 	LoadBgmPack: (bgm_no: s32) -> (),
 	LoadBgmPack_1: (bgm_no: s32) -> (),
 	--- Pushes the load number of the active background music.
-	GetBgmNo: () -> s32?,
+	GetBgmNo: (() -> s32?) & ((arg1: s32) -> ()),
 	GetBgmNo_1: () -> s32?,
+	GetBgmNo_1v: (arg1: s32) -> (),
 	--- Pushes the master volume of the active background music.
 	GetMasterVol: () -> s32?,
 	GetMasterVol_1: () -> s32?,
@@ -1459,8 +1466,8 @@ declare event: {
 	EohSetStep: (argc: s32, arg2: f32) -> (),
 	EohSetStep_2: (argc: s32, arg2: f32) -> (),
 	--- Sets an event object texture animation from one name, or from an off name and an on name.
-	EohSetTexAnim: ((arg1: s32, arg2: s32) -> ()) & ((arg1: s32, arg2: s32, arg3: string) -> ()),
-	EohSetTexAnim_2: (arg1: s32, arg2: s32) -> (),
+	EohSetTexAnim: ((arg1: s32, arg2: s32 | string) -> ()) & ((arg1: s32, arg2: s32, arg3: string) -> ()),
+	EohSetTexAnim_2: (arg1: s32, arg2: s32 | string) -> (),
 	EohSetTexAnim_3: (arg1: s32, arg2: s32, arg3: string) -> (),
 	--- Sets an event object scale.
 	EohSetScale: (no: s32, x: f32, y: f32, z: f32) -> (),
@@ -1897,8 +1904,9 @@ declare event: {
 	DngSetupMainUnit: (chara_no: s32) -> (),
 	DngSetupMainUnit_1: (chara_no: s32) -> (),
 	--- Adds or removes a character from the party, or pushes whether it is a member.
-	JoinPartyMember: (arg1: s32) -> s32?,
+	JoinPartyMember: ((arg1: s32) -> s32?) & ((arg1: s32, arg2: s32) -> ()),
 	JoinPartyMember_2: (arg1: s32) -> s32?,
+	JoinPartyMember_2v: (arg1: s32, arg2: s32) -> (),
 	--- Enables or disables a character for party changes.
 	SetCharaChangeFlag: (chara_no: s32, arg2: s32) -> (),
 	SetCharaChangeFlag_2: (chara_no: s32, arg2: s32) -> (),
@@ -2014,8 +2022,9 @@ declare event: {
 	AddHpRate: (arg1: f32, arg2: s32) -> (),
 	AddHpRate_2: (arg1: f32, arg2: s32) -> (),
 	--- Pushes the time of the event scene.
-	GetTime: () -> f32?,
+	GetTime: (() -> f32?) & ((arg1: f32) -> ()),
 	GetTime_1: () -> f32?,
+	GetTime_1v: (arg1: f32) -> (),
 	--- Pushes whether the item limit is exceeded, or an item count clamped to the remaining limit.
 	CheckGetItemLimit: (() -> s32?) & ((item_id: s32, count: s32) -> s32?),
 	CheckGetItemLimit_1: () -> s32?,
@@ -2048,8 +2057,8 @@ declare event: {
 	ScrEffStopRaster: (amplitude: f32, speed: f32, pitch: f32, frames: s32) -> (),
 	ScrEffStopRaster_4: (amplitude: f32, speed: f32, pitch: f32, frames: s32) -> (),
 	--- Sets the motion of the character on a map piece of a map parts.
-	SetMpcharaMotion: ((arg1: string, arg2: string, arg3: string) -> ()) & ((arg1: s32, arg2: string, arg3: string, arg4: s32) -> ()),
-	SetMpcharaMotion_3: (arg1: string, arg2: string, arg3: string) -> (),
+	SetMpcharaMotion: ((part: s32 | string, arg2: string, arg3: string) -> ()) & ((arg1: s32, arg2: string, arg3: string, arg4: s32) -> ()),
+	SetMpcharaMotion_3: (part: s32 | string, arg2: string, arg3: string) -> (),
 	SetMpcharaMotion_4: (arg1: s32, arg2: string, arg3: string, arg4: s32) -> (),
 	--- Sets the position of a function point, found by parts and name or by place and name.
 	FuncPointPos: (arg1: s32, arg2: string, arg3: f32, arg4: f32, arg5: f32) -> (),
@@ -2150,8 +2159,8 @@ declare event: {
 	PlacePartsNameStrcmp: (arg1: s32, arg2: string) -> s32?,
 	PlacePartsNameStrcmp_3: (arg1: s32, arg2: string) -> s32?,
 	--- Opens the use item menu for a pointer and its parameters.
-	GotoUseItem2: (arg2: s32, arg3: s32) -> s32?,
-	GotoUseItem2_3: (arg2: s32, arg3: s32) -> s32?,
+	GotoUseItem2: (arg2: s32, arg3: s32) -> (),
+	GotoUseItem2_3: (arg2: s32, arg3: s32) -> (),
 	--- Sets an analyze flag of an edit data area.
 	DbgSetAnalyzeFlag: (arg1: s32, arg2: s32, arg3: s32) -> (),
 	DbgSetAnalyzeFlag_3: (arg1: s32, arg2: s32, arg3: s32) -> (),

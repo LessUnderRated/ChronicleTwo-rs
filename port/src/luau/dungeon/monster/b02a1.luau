@@ -56,12 +56,12 @@ local function helper_2c14(arg0: s32, arg1: f32, arg2: f32, arg3: f32)
 end
 
 --- Helper function.
-local function helper_18c0(arg0: s32, arg1: s32)
-	monster.VPush(vm.i32(vm.i32(9 + arg0) - 1), arg1)
+local function helper_18c0(arg0: s32, value: s32)
+	monster.VPush(vm.i32(vm.i32(9 + arg0) - 1), value)
 end
 
 --- Helper function.
-local function helper_3ce0(arg0: f32, arg1: f32, arg2: f32, arg3: s32, arg4: s32)
+local function helper_3ce0(target: f32, target_2: f32, target_3: f32, arg3: s32, arg4: s32)
 	local var5: s32 = 0
 	local var6: s32 = 0
 	local var7: s32 = 0
@@ -74,12 +74,12 @@ local function helper_3ce0(arg0: f32, arg1: f32, arg2: f32, arg3: s32, arg4: s32
 	local var16: f32 = 0
 	local var17: f32 = 0
 	local var18: f32 = 0
-	local var19: f32 = 0
-	local var20: f32 = 0
-	local var21: f32 = 0
+	local x: f32 = 0
+	local y: f32 = 0
+	local z: f32 = 0
 	local var22: f32 = 0
 	local var24: f32 = 0
-	local var25: f32 = 0
+	local y_2: f32 = 0
 	local value: s32 = 0
 	local var27: f32 = 0
 	var6 = 0
@@ -95,7 +95,7 @@ local function helper_3ce0(arg0: f32, arg1: f32, arg2: f32, arg3: s32, arg4: s32
 			local _, out2, _ = monster.GetRot()
 			var12 = out2 or var12
 		end
-		var15 = helper_14c68180(pos_x, pos_z, var12, arg0, arg2)
+		var15 = helper_14c68180(pos_x, pos_z, var12, target, target_3)
 		if true then
 			if 0 < var15 then
 				var14 = var15
@@ -112,11 +112,11 @@ local function helper_3ce0(arg0: f32, arg1: f32, arg2: f32, arg3: s32, arg4: s32
 			var14 = 0.0
 		end
 		var16, var17 = helper_327ff876(vm.f32(var12 + var14), 5.0, var16, var17)
-		if pos_y == arg1 then
+		if pos_y == target_2 then
 			var18 = 0.0
 		else
-			var18 = vm.f32(arg1 - pos_y)
-			if pos_y < arg1 then
+			var18 = vm.f32(target_2 - pos_y)
+			if pos_y < target_2 then
 				if var18 > 1.0 then
 					var18 = 1.0
 				end
@@ -124,23 +124,23 @@ local function helper_3ce0(arg0: f32, arg1: f32, arg2: f32, arg3: s32, arg4: s32
 				var18 = -1.0
 			end
 		end
-		var19 = vm.f32(pos_x + var16)
-		var20 = vm.f32(pos_y + var18)
-		var21 = vm.f32(pos_z + var17)
-		monster.SetPos(var19, var20, var21)
+		x = vm.f32(pos_x + var16)
+		y = vm.f32(pos_y + var18)
+		z = vm.f32(pos_z + var17)
+		monster.SetPos(x, y, z)
 		do
 			local out1, _, out3 = monster.GetRot()
 			var22 = out1 or var22
 			var24 = out3 or var24
 		end
-		var25 = vm.f32(var12 + var14)
-		if var25 > vm.f32(3.1415927) then
-			var25 = vm.f32(var25 - vm.f32(6.2831855))
+		y_2 = vm.f32(var12 + var14)
+		if y_2 > vm.f32(3.1415927) then
+			y_2 = vm.f32(y_2 - vm.f32(6.2831855))
 		end
-		if var25 <= vm.f32(-3.1415927) then
-			var25 = vm.f32(var25 + vm.f32(6.2831855))
+		if y_2 <= vm.f32(-3.1415927) then
+			y_2 = vm.f32(y_2 + vm.f32(6.2831855))
 		end
-		monster.SetRot(var22, var25, var24)
+		monster.SetRot(var22, y_2, var24)
 		vm.wait()
 		var6 = vm.i32(var6 + 1)
 		if var6 == arg4 then
@@ -159,7 +159,7 @@ local function helper_3ce0(arg0: f32, arg1: f32, arg2: f32, arg3: s32, arg4: s32
 			var7 = 0
 			var5 = 3
 		end
-		var27 = monster.GetDist(arg0, arg1, arg2) or var27
+		var27 = monster.GetDist(target, target_2, target_3) or var27
 		if var27 <= 10.0 then
 			var7 = 0
 			var5 = 6
@@ -173,9 +173,9 @@ end
 local function helper_4b58()
 	local pos_x: f32 = 0
 	local pos_z: f32 = 0
-	local var3: f32 = 0
-	local var4: f32 = 0
-	local var5: f32 = 0
+	local x: f32 = 0
+	local y: f32 = 0
+	local z: f32 = 0
 	local monster_id: s32 = 0
 	local var7: f32 = 0
 	local var8: f32 = 0
@@ -191,10 +191,10 @@ local function helper_4b58()
 		pos_x = out1 or pos_x
 		pos_z = out3 or pos_z
 	end
-	var3 = pos_x
-	var4 = 1050.0
-	var5 = pos_z
-	monster.SetPos(var3, var4, var5)
+	x = pos_x
+	y = 1050.0
+	z = pos_z
+	monster.SetPos(x, y, z)
 	monster_id = monster.GetMonsterIndex() or monster_id
 	var7, var8, var9 = helper_2c14(vm.i32(monster_id - 501), var7, var8, var9)
 	helper_18c0(vm.i32(monster_id - 501), vm.i32(monster_id - 501))
@@ -204,7 +204,7 @@ local function helper_4b58()
 		var11 = out2 or var11
 		var12 = out3 or var12
 	end
-	var11 = monster.Atan2f(var7 - var3, var9 - var5) or var11
+	var11 = monster.Atan2f(var7 - x, var9 - z) or var11
 	var11 = vm.f32(var11 + vm.f32(3.1415927))
 	if vm.f32(3.1415927) < var11 then
 		var11 = vm.f32(var11 - vm.f32(6.2831855))
@@ -214,7 +214,7 @@ local function helper_4b58()
 end
 
 --- Helper function.
-local function helper_31d0(arg0: f32, arg1: f32, arg2: f32, arg3: s32)
+local function helper_31d0(to: f32, to_2: f32, to_3: f32, arg3: s32)
 	local value: s32 = 0
 	local pos_x: f32 = 0
 	local pos_z: f32 = 0
@@ -223,7 +223,7 @@ local function helper_31d0(arg0: f32, arg1: f32, arg2: f32, arg3: s32)
 	local var10: f32 = 0
 	local var11: f32 = 0
 	local var12: f32 = 0
-	local var13: f32 = 0
+	local y: f32 = 0
 	local value_2: s32 = 0
 	local pos_x_2: f32 = 0
 	local pos_y_2: f32 = 0
@@ -255,7 +255,7 @@ local function helper_31d0(arg0: f32, arg1: f32, arg2: f32, arg3: s32)
 			var9 = out2 or var9
 			var10 = out3 or var10
 		end
-		var12 = helper_14c68180(pos_x, pos_z, var9, arg0, arg2)
+		var12 = helper_14c68180(pos_x, pos_z, var9, to, to_3)
 		if vm.f32(0.01) < var12 or var12 < vm.f32(-0.01) then
 			if 0 < var12 then
 				var11 = var12
@@ -271,14 +271,14 @@ local function helper_31d0(arg0: f32, arg1: f32, arg2: f32, arg3: s32)
 		else
 			break
 		end
-		var13 = vm.f32(var9 + var11)
-		if var13 > vm.f32(3.1415927) then
-			var13 = vm.f32(var13 - vm.f32(6.2831855))
+		y = vm.f32(var9 + var11)
+		if y > vm.f32(3.1415927) then
+			y = vm.f32(y - vm.f32(6.2831855))
 		end
-		if var13 <= vm.f32(-3.1415927) then
-			var13 = vm.f32(var13 + vm.f32(6.2831855))
+		if y <= vm.f32(-3.1415927) then
+			y = vm.f32(y + vm.f32(6.2831855))
 		end
-		monster.SetRot(var8, var13, var10)
+		monster.SetRot(var8, y, var10)
 		vm.wait()
 	end
 	while true do
@@ -299,7 +299,7 @@ local function helper_31d0(arg0: f32, arg1: f32, arg2: f32, arg3: s32)
 			pos_z_2 = out3 or pos_z_2
 		end
 		do
-			local out1, out2, out3, out4 = monster.CalcMoveNextPos(pos_x_2, pos_y_2, pos_z_2, arg0, arg1, arg2, 5.0)
+			local out1, out2, out3, out4 = monster.CalcMoveNextPos(pos_x_2, pos_y_2, pos_z_2, to, to_2, to_3, 5.0)
 			next_x = out1 or next_x
 			next_y = out2 or next_y
 			next_z = out3 or next_z
@@ -368,7 +368,7 @@ local function helper_5f24()
 	local pos_y: f32 = 0
 	local pos_z: f32 = 0
 	local monster_id: s32 = 0
-	local var4: s32 = 0
+	local index: s32 = 0
 	local pos_x_2: f32 = 0
 	local pos_y_2: f32 = 0
 	local pos_z_2: f32 = 0
@@ -380,14 +380,14 @@ local function helper_5f24()
 		pos_z = out3 or pos_z
 	end
 	monster_id = monster.GetMonsterIndex() or monster_id
-	var4 = 502
-	while var4 <= 508 do
-		if var4 == monster_id then
-			var4 = var4 + 1
+	index = 502
+	while index <= 508 do
+		if index == monster_id then
+			index = index + 1
 			continue
 		end
 		do
-			local out1, out2, out3 = monster.GetIndexPos_4(var4)
+			local out1, out2, out3 = monster.GetIndexPos_4(index)
 			pos_x_2 = out1 or pos_x_2
 			pos_y_2 = out2 or pos_y_2
 			pos_z_2 = out3 or pos_z_2
@@ -396,7 +396,7 @@ local function helper_5f24()
 		if var8 < 50.0 then
 			return 1
 		end
-		var4 = var4 + 1
+		index = index + 1
 	end
 	return 0
 end
@@ -519,9 +519,9 @@ local function helper_23f8()
 	local pos_y: f32 = 0
 	local pos_z: f32 = 0
 	local var3: s32 = 0
-	local var4: f32 = 0
-	local var5: f32 = 0
-	local var6: f32 = 0
+	local x: f32 = 0
+	local y: f32 = 0
+	local z: f32 = 0
 	monster.SetAttrib(1, 1)
 	monster.SetAttrib(32, 1)
 	monster.SetMos("ダメージ", -1, 6)
@@ -536,10 +536,10 @@ local function helper_23f8()
 	end
 	var3 = 0
 	while var3 < 120 do
-		var4 = pos_x
-		var5 = helper_bf1b4ec0(pos_y, 1050.0, vm.f32(vm.fdiv(var3, 120)))
-		var6 = pos_z
-		monster.SetPos(var4, var5, var6)
+		x = pos_x
+		y = helper_bf1b4ec0(pos_y, 1050.0, vm.f32(vm.fdiv(var3, 120)))
+		z = pos_z
+		monster.SetPos(x, y, z)
 		var3 = var3 + 1
 		vm.wait()
 	end

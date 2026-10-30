@@ -1,0 +1,41 @@
+--!strict
+-- Shared event helper used by 8 scripts, translated by tools/luau/stb2luau.
+
+local vm = require("@lib/vm")
+local helper_2bcf81b0 = require("@lib/event/helper_2bcf81b0")
+local show_message = require("@lib/event/show_message")
+
+--- Helper function.
+local function helper_41e53d93(arg0: s32)
+	local flag: s32 = 0
+	flag = event.GetFlag(612) or flag
+	if flag == 0 then
+		return
+	end
+	event.SetMesWindowMode(0, 12)
+	event.SpriteInit(0)
+	event.SpriteSetType(0, 0)
+	event.SpriteSetPos(0, 256, 208)
+	event.SpriteSetPutsize(0, 512, 416)
+	event.SpriteSetColor(0, 255, 255, 255, 255)
+	event.SpriteSetDraw(0, 0)
+	event.EohSyncSprite(20, 0)
+	event.ObjsInit(20)
+	event.ObjsSyncObj(20, 20)
+	event.SpriteSetDraw(0, 1)
+	event.SetFadeIn(0)
+	vm.wait(1)
+	if arg0 ~= 0 then
+		event.MesMake_2(0, "We jumped to the future with the\nIxion's time-travelling mechanism.")
+	else
+		event.MesMake_2(0, "We returned to the present with the\nIxion's time-travelling mechanism.")
+	end
+	vm.wait(2)
+	show_message(0, -1, 5, 0, 0)
+	vm.wait(4)
+	event.SetFadeOut(0, 255.0, 255.0, 255.0)
+	vm.wait(5)
+	helper_2bcf81b0()
+end
+
+return helper_41e53d93

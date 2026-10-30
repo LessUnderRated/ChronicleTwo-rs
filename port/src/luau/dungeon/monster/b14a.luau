@@ -60,9 +60,9 @@ end
 local function helper_1984(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: f32, arg5: f32, arg6: f32, arg7: s32)
 	local var8: s32 = 0
 	local var9: s32 = 0
-	local var11: f32 = 0
-	local var12: f32 = 0
-	local var13: f32 = 0
+	local x: f32 = 0
+	local y: f32 = 0
+	local z: f32 = 0
 	local var14: f32 = 0
 	var8 = 0
 	var9 = 0
@@ -73,21 +73,21 @@ local function helper_1984(arg0: f32, arg1: f32, arg2: f32, arg3: f32, arg4: f32
 				vm.f32(vm.i32(arg7 + 1) * 2.0)
 			)
 		)
-		var12 = arg1
+		y = arg1
 		for var10 = 0, var8 - 1 do
 			var14 = vm.f32(var14 + arg6)
-			var12 = vm.f32(var12 + var14)
+			y = vm.f32(y + var14)
 		end
-		var11 = vm.f32(vm.f32(vm.fdiv(vm.f32(vm.f32(arg3 - arg0) * var8), arg7)) + arg0)
-		var13 = vm.f32(vm.f32(vm.fdiv(vm.f32(vm.f32(arg5 - arg2) * var8), arg7)) + arg2)
+		x = vm.f32(vm.f32(vm.fdiv(vm.f32(vm.f32(arg3 - arg0) * var8), arg7)) + arg0)
+		z = vm.f32(vm.f32(vm.fdiv(vm.f32(vm.f32(arg5 - arg2) * var8), arg7)) + arg2)
 		if var9 == 1 then
-			if var12 < arg4 then
-				var12 = arg4
+			if y < arg4 then
+				y = arg4
 			end
-		elseif var12 > arg4 then
+		elseif y > arg4 then
 			var9 = 1
 		end
-		monster.SetPos(var11, var12, var13)
+		monster.SetPos(x, y, z)
 		var8 = var8 + 1
 		vm.wait()
 	end
@@ -95,32 +95,32 @@ end
 
 --- Helper function.
 local function helper_296c()
-	local var0: s32 = 0
+	local value: s32 = 0
 	local var1: f32 = 0
-	var0 = 0
+	value = 0
 	var1 = monster.GetTargetDist() or var1
 	if var1 <= 50.0 then
-		var0 = vm.i32(bit32.bor(var0, 1))
+		value = vm.i32(bit32.bor(value, 1))
 	elseif var1 <= 240.0 then
-		var0 = vm.i32(bit32.bor(var0, 2))
+		value = vm.i32(bit32.bor(value, 2))
 	elseif var1 <= 760.0 then
-		var0 = vm.i32(bit32.bor(var0, 4))
+		value = vm.i32(bit32.bor(value, 4))
 	else
-		var0 = vm.i32(bit32.bor(var0, 8))
+		value = vm.i32(bit32.bor(value, 8))
 	end
 	if var1 <= 240.0 then
-		var0 = vm.i32(bit32.bor(var0, 16))
+		value = vm.i32(bit32.bor(value, 16))
 	end
 	if helper_6eaf9360(0, 45.0) ~= 0 then
-		var0 = vm.i32(bit32.bor(var0, 32))
+		value = vm.i32(bit32.bor(value, 32))
 	end
 	if var1 <= 90.0 then
-		var0 = vm.i32(bit32.bor(var0, 64))
+		value = vm.i32(bit32.bor(value, 64))
 	end
 	if helper_6eaf9360(0, 80.0) ~= 0 then
-		var0 = vm.i32(bit32.bor(var0, 128))
+		value = vm.i32(bit32.bor(value, 128))
 	end
-	monster.VPush(0, var0)
+	monster.VPush(0, value)
 end
 
 --- Helper function.
@@ -148,18 +148,18 @@ end
 local function helper_2354()
 	local var0: f32 = 0
 	local argc: f32 = 0
-	local var2: f32 = 0
-	local var3: f32 = 0
-	local var4: f32 = 0
+	local target: f32 = 0
+	local target_2: f32 = 0
+	local target_3: f32 = 0
 	local var5: f32 = 0
 	local argc_2: s32 = 0
 	local arrived: s32 = 0
 	argc = vm.bits_float(monster.GetRnd(20.0)) or argc
 	argc = vm.f32(argc + 20.0)
 	var0 = monster.GetRefAngle(0.0, 0.0, 0.0) or var0
-	var2 = vm.f32(vm.f32(vm.sin(var0) * argc) + var2)
-	var3 = 0.0
-	var4 = vm.f32(vm.f32(vm.cos(var0) * argc) + var4)
+	target = vm.f32(vm.f32(vm.sin(var0) * argc) + target)
+	target_2 = 0.0
+	target_3 = vm.f32(vm.f32(vm.cos(var0) * argc) + target_3)
 	argc_2 = monster.GetRnd(100) or argc_2
 	if vm.imod(argc_2, 2) == 0 then
 		monster.SetMos("歩き")
@@ -168,7 +168,7 @@ local function helper_2354()
 		monster.SetMos("走り")
 		var5 = vm.f32(0.4)
 	end
-	monster.SetNextPos(var2, var3, var4, var5, var5)
+	monster.SetNextPos(target, target_2, target_3, var5, var5)
 	arrived = monster.ChkMoveEnd() or arrived
 	while arrived == 0 do
 		monster.SetNextRot(var0, 0.034906585)
@@ -231,10 +231,10 @@ function script.loop()
 	local value_2: s32 = 0
 	local var2: s32 = 0
 	local argc: s32 = 0
-	local var4: s32 = 0
-	local var5: f32 = 0
-	local var6: f32 = 0
-	local var7: f32 = 0
+	local value_3: s32 = 0
+	local x: f32 = 0
+	local y: f32 = 0
+	local z: f32 = 0
 	local pos_x: f32 = 0
 	local pos_z: f32 = 0
 	local var11: f32 = 0
@@ -253,25 +253,25 @@ function script.loop()
 		end
 		while true do
 			var2 = 0
-			var4 = 1
+			value_3 = 1
 			argc = monster.GetRnd(8) or argc
 			while var2 < argc do
-				var4 = vm.i32(var4 * 2)
+				value_3 = vm.i32(value_3 * 2)
 				var2 = var2 + 1
 			end
-			if vm.i32(bit32.band(value_2, var4)) == 0 then
-				value_2 = vm.i32(bit32.bor(value_2, var4))
+			if vm.i32(bit32.band(value_2, value_3)) == 0 then
+				value_2 = vm.i32(bit32.bor(value_2, value_3))
 				monster.VPush(8, value_2)
-				monster.VPush(6, var4)
+				monster.VPush(6, value_3)
 				break
 			end
 		end
 		angle = vm.f32(vm.f32(-0.08) + vm.f32(vm.f32(0.7853982) * argc))
 		angle = monster.AngleLimit(angle) or angle
-		var5 = vm.f32(vm.sin(angle) * 400.0)
-		var6 = -80.0
-		var7 = vm.f32(vm.cos(angle) * 400.0)
-		monster.SetPos(var5, var6, var7)
+		x = vm.f32(vm.sin(angle) * 400.0)
+		y = -80.0
+		z = vm.f32(vm.cos(angle) * 400.0)
+		monster.SetPos(x, y, z)
 		var11 = monster.GetRefAngle(0.0, 0.0, 0.0) or var11
 		do
 			local out1, _, out3 = monster.GetRefanglePos(var11, 140.0)
@@ -279,7 +279,7 @@ function script.loop()
 			pos_z = out3 or pos_z
 		end
 		monster.SetRot(0.0, var11, 0.0)
-		helper_1984(var5, -80.0, var7, pos_x, 0.0, pos_z, vm.f32(-0.6), 30)
+		helper_1984(x, -80.0, z, pos_x, 0.0, pos_z, vm.f32(-0.6), 30)
 		monster.SetAttrib(12, 0)
 	end
 	monster.SetIntFlag(1, 0)

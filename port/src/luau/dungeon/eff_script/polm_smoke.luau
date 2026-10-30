@@ -21,7 +21,7 @@ function script.on_start()
 	local value_2: f32 = 0
 	local value_3: f32 = 0
 	local value_4: f32 = 0
-	local var8: f32 = 0
+	local value_4_2: f32 = 0
 	local var9: f32 = 0
 	do
 		local out1, out2, out3 = effect.GetWorkVect1()
@@ -48,13 +48,13 @@ function script.on_start()
 		value_4 = vm.f32(vm.f32(vm.f32(vm.f32(value_4 / 360.0) * vm.f32(3.1415927)) * 2.0) - vm.f32(3.1415927))
 		effect.SptSetRotz(var3, value_4)
 	end
-	var8 = 128.0
+	value_4_2 = 128.0
 	var9 = 1.0
 	while true do
-		effect.SptSetColor(0, 128.0, 128.0, 128.0, var8, 8)
+		effect.SptSetColor(0, 128.0, 128.0, 128.0, value_4_2, 8)
 		effect.SptSetScale(0, var9, var9, 8)
-		var8 = vm.f32(var8 - 6.0)
-		if var8 <= 0.0 then
+		value_4_2 = vm.f32(value_4_2 - 6.0)
+		if value_4_2 <= 0.0 then
 			break
 		else
 			var9 = vm.f32(var9 + vm.f32(0.2))

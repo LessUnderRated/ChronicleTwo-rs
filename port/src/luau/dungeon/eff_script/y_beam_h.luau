@@ -20,7 +20,7 @@ function script.on_start()
 	local work_vect2_x: f32 = 0
 	local work_vect2_y: f32 = 0
 	local work_vect2_z: f32 = 0
-	local var6: f32 = 0
+	local alpha: f32 = 0
 	local value: f32 = 0
 	local check_motion_end: s32 = 0
 	value = 0.0
@@ -41,10 +41,10 @@ function script.on_start()
 	if value == 0.0 then
 		value = 1.0
 	end
-	var6 = 128.0
+	alpha = 128.0
 	effect.ChrSetPos(work_vect1_x, work_vect1_y, work_vect1_z)
 	effect.ChrSetMotion("ヒット", -1, 6)
-	effect.ChrSetLightColor(work_vect2_x, work_vect2_y, work_vect2_z, var6, 1)
+	effect.ChrSetLightColor(work_vect2_x, work_vect2_y, work_vect2_z, alpha, 1)
 	effect.ChrSetScale(value, value, value)
 	effect.ChrSetShow(1, 1, 0.1)
 	check_motion_end = 0

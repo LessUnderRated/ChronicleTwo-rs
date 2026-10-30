@@ -25,7 +25,7 @@ local function helper_1a24c()
 	local var8: f32 = 0
 	local var9: f32 = 0
 	local var10: f32 = 0
-	local var13: f32 = 0
+	local scale: f32 = 0
 	local var14: f32 = 0
 	local var15: f32 = 0
 	local var16: f32 = 0
@@ -47,7 +47,7 @@ local function helper_1a24c()
 	var8 = var2
 	var9 = vm.f32(var3 + 100.0)
 	var10 = var4
-	var13 = helper_783c61dc(var13, var8, var9, var10, 60.0)
+	scale = helper_783c61dc(scale, var8, var9, var10, 60.0)
 	do
 		local out1, out2, out3 = monster.CopyVector(var8, var9, var10)
 		var14 = out1 or var14
@@ -67,7 +67,7 @@ local function helper_1a24c()
 		var16 = out3 or var16
 	end
 	do
-		local out1, out2, out3 = monster.ScaleVector(var14, var15, var16, var13)
+		local out1, out2, out3 = monster.ScaleVector(var14, var15, var16, scale)
 		var14 = out1 or var14
 		var15 = out2 or var15
 		var16 = out3 or var16
@@ -100,7 +100,7 @@ local function helper_1998c()
 	local var9: f32 = 0
 	local var10: f32 = 0
 	local var12: f32 = 0
-	local var13: f32 = 0
+	local scale: f32 = 0
 	monster.VPush(28, 8)
 	do
 		local out1, out2, out3 = monster.GetPos_3()
@@ -112,7 +112,7 @@ local function helper_1998c()
 	var6 = var3
 	var7 = vm.f32(var4 + vm.f32(vm.cos(vm.f32(2.0943952)) * 30.0))
 	var12 = monster.GetDistVector2(var5, var6, var7, var2, var3, var4) or var12
-	var13 = vm.f32(var12 / 45.0)
+	scale = vm.f32(var12 / 45.0)
 	do
 		local out1, out2, out3 = monster.CopyVector(var5, var6, var7)
 		var8 = out1 or var8
@@ -132,7 +132,7 @@ local function helper_1998c()
 		var10 = out3 or var10
 	end
 	do
-		local out1, out2, out3 = monster.ScaleVector(var8, var9, var10, var13)
+		local out1, out2, out3 = monster.ScaleVector(var8, var9, var10, scale)
 		var8 = out1 or var8
 		var9 = out2 or var9
 		var10 = out3 or var10
@@ -217,7 +217,7 @@ local function helper_1aac4()
 	local var14: f32 = 0
 	local var15: f32 = 0
 	local var16: f32 = 0
-	local var17: f32 = 0
+	local scale: f32 = 0
 	local var18: f32 = 0
 	local var19: f32 = 0
 	local var20: f32 = 0
@@ -250,7 +250,7 @@ local function helper_1aac4()
 	var8 = vm.f32(var2 + var20)
 	var9 = vm.f32(vm.f32(vm.f32(var3 + 50.0) + var19) + var21)
 	var10 = vm.f32(var4 + var18)
-	var17 = helper_783c61dc(var17, var8, var9, var10, 60.0)
+	scale = helper_783c61dc(scale, var8, var9, var10, 60.0)
 	do
 		local out1, out2, out3 = monster.CopyVector(var8, var9, var10)
 		var14 = out1 or var14
@@ -270,7 +270,7 @@ local function helper_1aac4()
 		var16 = out3 or var16
 	end
 	do
-		local out1, out2, out3 = monster.ScaleVector(var14, var15, var16, var17)
+		local out1, out2, out3 = monster.ScaleVector(var14, var15, var16, scale)
 		var14 = out1 or var14
 		var15 = out2 or var15
 		var16 = out3 or var16

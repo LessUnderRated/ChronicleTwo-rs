@@ -146,7 +146,7 @@ local function helper_62b8(arg0: f32)
 end
 
 --- Helper function.
-local function helper_7ab0(arg0: f32, arg1: f32, arg2: f32, arg3: s32)
+local function helper_7ab0(arg0: f32, rot_speed: f32, arg2: f32, arg3: s32)
 	local pos_x: f32 = 0
 	local pos_y: f32 = 0
 	local pos_z: f32 = 0
@@ -156,13 +156,13 @@ local function helper_7ab0(arg0: f32, arg1: f32, arg2: f32, arg3: s32)
 	local var16: f32 = 0
 	local var17: f32 = 0
 	local var18: s32 = 0
-	helper_62b8(arg1)
-	arg1 = helper_787df986(arg1)
-	if arg1 > vm.f32(3.1415927) then
-		arg1 = vm.f32(arg1 - vm.f32(6.2831855))
+	helper_62b8(rot_speed)
+	rot_speed = helper_787df986(rot_speed)
+	if rot_speed > vm.f32(3.1415927) then
+		rot_speed = vm.f32(rot_speed - vm.f32(6.2831855))
 	end
-	if arg1 <= vm.f32(-3.1415927) then
-		arg1 = vm.f32(arg1 + vm.f32(6.2831855))
+	if rot_speed <= vm.f32(-3.1415927) then
+		rot_speed = vm.f32(rot_speed + vm.f32(6.2831855))
 	end
 	var18 = 0
 	while var18 < arg3 do
@@ -173,7 +173,7 @@ local function helper_7ab0(arg0: f32, arg1: f32, arg2: f32, arg3: s32)
 			return
 		end
 		var14 = monster.GetTargetAngle() or var14
-		monster.SetNextRot(var14, arg1)
+		monster.SetNextRot(var14, rot_speed)
 		monster.GetTargetPos()
 		do
 			local out1, out2, out3 = monster.GetPos_3()
@@ -377,8 +377,8 @@ local function helper_10bdc(arg0: f32, arg1: any, arg2: f32, arg3: s32)
 	local var9: f32 = 0
 	local var10: f32 = 0
 	local var11: f32 = 0
-	local var12: f32 = 0
-	local var14: f32 = 0
+	local from: f32 = 0
+	local from_3: f32 = 0
 	local var18: f32 = 0
 	local var19: f32 = 0
 	local var20: s32 = 0
@@ -398,11 +398,11 @@ local function helper_10bdc(arg0: f32, arg1: any, arg2: f32, arg3: s32)
 			var5 = out2 or var5
 			var6 = out3 or var6
 		end
-		monster.GetRefAngle(var4, var5, var6) -- retail: argument 4 is a value where the handler writes an output; the output is discarded
+		monster.GetRefAngle(var4, var5, var6, var10)
 		var10 = monster.GetTargetAngle() or var10
-		var12 = vm.f32(-33.22)
-		var14 = 763.5
-		var18 = monster.GetDistVector2(var12, 0.0, var14, var4, 0.0, var6) or var18
+		from = vm.f32(-33.22)
+		from_3 = 763.5
+		var18 = monster.GetDistVector2(from, 0.0, from_3, var4, 0.0, var6) or var18
 		if var18 > 380.0 then
 			helper_442b9962()
 			monster.ResetMove()
@@ -423,23 +423,27 @@ local function helper_10bdc(arg0: f32, arg1: any, arg2: f32, arg3: s32)
 end
 
 --- Helper function.
-local function helper_56e8(arg0: f32, arg1: f32)
-	arg0 = helper_787df986(arg0)
-	if arg0 > vm.f32(3.1415927) then
-		arg0 = vm.f32(arg0 - vm.f32(6.2831855))
+local function helper_56e8(next_rot: f32, rot_speed: f32)
+	next_rot = helper_787df986(next_rot)
+	if next_rot > vm.f32(3.1415927) then
+		next_rot = vm.f32(next_rot - vm.f32(6.2831855))
 	end
-	if arg0 <= vm.f32(-3.1415927) then
-		arg0 = vm.f32(arg0 + vm.f32(6.2831855))
+	if next_rot <= vm.f32(-3.1415927) then
+		next_rot = vm.f32(next_rot + vm.f32(6.2831855))
 	end
-	arg1 = helper_787df986(arg1)
-	if arg1 > vm.f32(3.1415927) then
-		arg1 = vm.f32(arg1 - vm.f32(6.2831855))
+	rot_speed = helper_787df986(rot_speed)
+	if rot_speed > vm.f32(3.1415927) then
+		rot_speed = vm.f32(rot_speed - vm.f32(6.2831855))
 	end
-	if arg1 <= vm.f32(-3.1415927) then
-		arg1 = vm.f32(arg1 + vm.f32(6.2831855))
+	if rot_speed <= vm.f32(-3.1415927) then
+		rot_speed = vm.f32(rot_speed + vm.f32(6.2831855))
 	end
-	monster.SetNextRot(arg0, arg1)
-	local _ = helper_3390(helper_28452e16(arg0), helper_28452e16(arg1), vm.f32(vm.fdiv(360.0, helper_28452e16(arg1))))
+	monster.SetNextRot(next_rot, rot_speed)
+	local _ = helper_3390(
+		helper_28452e16(next_rot),
+		helper_28452e16(rot_speed),
+		vm.f32(vm.fdiv(360.0, helper_28452e16(rot_speed)))
+	)
 	helper_442b9962()
 end
 
@@ -472,32 +476,32 @@ end
 
 --- Helper function.
 local function helper_11908()
-	local var0: f32 = 0
-	local var1: f32 = 0
-	local var2: f32 = 0
+	local target: f32 = 0
+	local target_2: f32 = 0
+	local target_3: f32 = 0
 	local var3: f32 = 0
 	local argc: s32 = 0
 	monster.VPush(0, 64)
 	argc = monster.GetRnd(3) or argc
 	if argc == 0 then
-		var0 = vm.f32(-236.58)
-		var1 = vm.f32(-34.97)
-		var2 = vm.f32(336.42)
+		target = vm.f32(-236.58)
+		target_2 = vm.f32(-34.97)
+		target_3 = vm.f32(336.42)
 	end
 	if argc == 1 then
-		var0 = vm.f32(313.89)
-		var1 = vm.f32(-24.87)
-		var2 = vm.f32(452.05)
+		target = vm.f32(313.89)
+		target_2 = vm.f32(-24.87)
+		target_3 = vm.f32(452.05)
 	end
 	if argc == 2 then
-		var0 = vm.f32(39.48)
-		var1 = vm.f32(-23.78)
-		var2 = vm.f32(405.92)
+		target = vm.f32(39.48)
+		target_2 = vm.f32(-23.78)
+		target_3 = vm.f32(405.92)
 	end
-	var3 = monster.GetRefAngle(var0, var1 - 100.0, var2) or var3
+	var3 = monster.GetRefAngle(target, target_2 - 100.0, target_3) or var3
 	monster.SetMos("歩き", -1, 0)
 	helper_56e8(helper_28452e16(var3), vm.f32(4.2))
-	monster.SetNextPos(var0, var1, var2, 2.4, 3.6000001)
+	monster.SetNextPos(target, target_2, target_3, 2.4, 3.6000001)
 	helper_4878(0.0, helper_9df6409a(600))
 	monster.ResetMove()
 	monster.VPush(0, 16)
@@ -649,7 +653,7 @@ end
 --- Runs the monster's normal behaviour.
 function script.loop()
 	local var0: f32 = 0
-	local var1: f32 = 0
+	local target_2: f32 = 0
 	local var2: f32 = 0
 	local var3: f32 = 0
 	local pos_x: f32 = 0
@@ -670,7 +674,7 @@ function script.loop()
 		monster.VPush(9, 1)
 	end
 	var0 = vm.f32(-33.22)
-	var1 = vm.f32(3.88)
+	target_2 = vm.f32(3.88)
 	var2 = 763.5
 	while true do
 		helper_21ec()
@@ -680,7 +684,7 @@ function script.loop()
 			pos_z = out3 or pos_z
 		end
 		var3 = monster.GetDistVector2(pos_x, 0.0, pos_z, var0, 0.0, var2) or var3
-		print("dist=", var3, "---------------\n")
+		print("dist=", vm.float(var3), "---------------\n")
 		if var3 > 380.0 then
 			argc_2 = monster.GetRnd(100) or argc_2
 			if argc_2 < 15 then
@@ -698,8 +702,8 @@ function script.loop()
 			if argc_3 < 50 then
 				monster.SetMos("歩き", 0.75, 0)
 				for var12 = 0, 89 do
-					var11 = monster.GetRefAngle(var0, var1, var2) or var11
-					monster.SetNextPos(var0, var1, var2, 2.4, 2.4)
+					var11 = monster.GetRefAngle(var0, target_2, var2) or var11
+					monster.SetNextPos(var0, target_2, var2, 2.4, 2.4)
 					monster.SetNextRot(var11, helper_787df986(vm.f32(4.2)))
 					helper_21ec()
 				end

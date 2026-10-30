@@ -29,7 +29,7 @@ function script.on_start()
 	local vector_x: f32 = 0
 	local vector_y: f32 = 0
 	local vector_z: f32 = 0
-	local var15: f32 = 0
+	local scale: f32 = 0
 	local target_id: s32 = 0
 	local var17: s32 = 0
 	local value: s32 = 0
@@ -46,7 +46,7 @@ function script.on_start()
 	local var29: f32 = 0
 	local var30: f32 = 0
 	var17 = 0
-	var15 = 16.0
+	scale = 16.0
 	do
 		local out1, out2, out3 = effect.GetWorkVect1()
 		var0 = out1 or var0
@@ -78,7 +78,7 @@ function script.on_start()
 			var11 = out3 or var11
 		end
 		do
-			local out1, out2, out3 = effect.ScaleVector(var9, var10, var11, var15)
+			local out1, out2, out3 = effect.ScaleVector(var9, var10, var11, scale)
 			var9 = out1 or var9
 			var10 = out2 or var10
 			var11 = out3 or var11
