@@ -209,12 +209,19 @@ protected:
     void SetUp() override {
         const auto suffix = std::to_string(std::random_device{}());
         root = std::filesystem::temp_directory_path() / ("ct-luau-" + suffix);
+        // On-device runs cannot see the build machine's paths; the environment overrides them.
+        std::filesystem::path test_luau_dir = std::getenv("CT_TEST_LUAU_DIR_ENV")
+                                                  ? std::getenv("CT_TEST_LUAU_DIR_ENV")
+                                                  : std::filesystem::path(CT_TEST_LUAU_DIR);
+        std::filesystem::path luau_source_dir = std::getenv("CT_LUAU_SOURCE_DIR_ENV")
+                                                    ? std::getenv("CT_LUAU_SOURCE_DIR_ENV")
+                                                    : std::filesystem::path(CT_LUAU_SOURCE_DIR);
         std::error_code ec;
         std::filesystem::create_directories(root / "lib", ec);
         ASSERT_FALSE(ec);
-        std::filesystem::copy(CT_TEST_LUAU_DIR, root, std::filesystem::copy_options::recursive, ec);
+        std::filesystem::copy(test_luau_dir, root, std::filesystem::copy_options::recursive, ec);
         ASSERT_FALSE(ec);
-        std::filesystem::copy_file(std::filesystem::path(CT_LUAU_SOURCE_DIR) / "lib" / "vm.luau", root / "lib" / "vm.luau",
+        std::filesystem::copy_file(luau_source_dir / "lib" / "vm.luau", root / "lib" / "vm.luau",
                                    std::filesystem::copy_options::overwrite_existing, ec);
         ASSERT_FALSE(ec);
 

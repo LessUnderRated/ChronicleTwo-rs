@@ -55,7 +55,11 @@ protected:
         std::filesystem::remove_all(root, ec);
         std::filesystem::create_directories(root, ec);
         ASSERT_FALSE(ec);
-        std::filesystem::copy(std::filesystem::path(CT_TEST_LUAU_DIR) / "event_arg", root / "event_arg",
+        // On-device runs cannot see the build machine's paths; the environment overrides them.
+        const char *test_luau_env = std::getenv("CT_TEST_LUAU_DIR_ENV");
+        std::filesystem::path test_luau_dir =
+            test_luau_env ? std::filesystem::path(test_luau_env) : std::filesystem::path(CT_TEST_LUAU_DIR);
+        std::filesystem::copy(test_luau_dir / "event_arg", root / "event_arg",
                               std::filesystem::copy_options::recursive, ec);
         ASSERT_FALSE(ec);
         luau_runtime::SetScriptsRoot(root);

@@ -112,10 +112,10 @@ index 54560d7..f8b37ff 100644
      if (!error) {
          return self;
 diff --git a/src/cpp/sce/eekernel_threads.cpp b/src/cpp/sce/eekernel_threads.cpp
-index 38578d9..b383740 100644
+index 38578d9..772c956 100644
 --- a/src/cpp/sce/eekernel_threads.cpp
 +++ b/src/cpp/sce/eekernel_threads.cpp
-@@ -82,6 +82,56 @@ _kz_fiber_trampoline:
+@@ -82,6 +82,117 @@ _kz_fiber_trampoline:
      bl _kz_fiber_entry
      brk #0
  )");
@@ -169,9 +169,122 @@ index 38578d9..b383740 100644
 +    brk #0
 +    .size kz_fiber_trampoline, .-kz_fiber_trampoline
 +)");
++#elif defined(__ANDROID__) && defined(__x86_64__)
++// Android's bionic has no <ucontext.h> functions here either; the same switch idea for x86_64's SysV ABI.
++// Callee-saved are rbx, rbp, r12-r15 and xmm6-xmm15; the argument registers carry no live values into a fiber
++// because the fibers all run on one OS thread and enter through the trampoline.
++#define KZ_X86_FIBERS 1
++extern "C" void kz_fiber_switch(void **save_sp, void *load_sp);
++extern "C" void kz_fiber_trampoline();
++asm(R"(
++    .text
++    .p2align 4
++    .globl kz_fiber_switch
++    .type kz_fiber_switch, @function
++kz_fiber_switch:
++    push %rbx
++    push %rbp
++    push %r12
++    push %r13
++    push %r14
++    push %r15
++    sub $0xa0, %rsp
++    movups %xmm6, 0x00(%rsp)
++    movups %xmm7, 0x10(%rsp)
++    movups %xmm8, 0x20(%rsp)
++    movups %xmm9, 0x30(%rsp)
++    movups %xmm10, 0x40(%rsp)
++    movups %xmm11, 0x50(%rsp)
++    movups %xmm12, 0x60(%rsp)
++    movups %xmm13, 0x70(%rsp)
++    movups %xmm14, 0x80(%rsp)
++    movups %xmm15, 0x90(%rsp)
++    mov %rsp, (%rdi)
++    mov %rsi, %rsp
++    movups 0x90(%rsp), %xmm15
++    movups 0x80(%rsp), %xmm14
++    movups 0x70(%rsp), %xmm13
++    movups 0x60(%rsp), %xmm12
++    movups 0x50(%rsp), %xmm11
++    movups 0x40(%rsp), %xmm10
++    movups 0x30(%rsp), %xmm9
++    movups 0x20(%rsp), %xmm8
++    movups 0x10(%rsp), %xmm7
++    movups 0x00(%rsp), %xmm6
++    add $0xa0, %rsp
++    pop %r15
++    pop %r14
++    pop %r13
++    pop %r12
++    pop %rbp
++    pop %rbx
++    ret
++    .size kz_fiber_switch, .-kz_fiber_switch
++
++    .p2align 4
++    .globl kz_fiber_trampoline
++    .type kz_fiber_trampoline, @function
++kz_fiber_trampoline:
++    xor %ebp, %ebp
++    call kz_fiber_entry
++    ud2
++    .size kz_fiber_trampoline, .-kz_fiber_trampoline
++)");
  #else
  #include <ucontext.h>
  #endif
+@@ -170,6 +281,42 @@ void ContextDestroy(Context &c) {
+     c.sp = nullptr;
+ }
+ 
++#elif defined(KZ_X86_FIBERS)
++
++// A suspended thread is its stack pointer: kz_fiber_switch left the saved registers there.
++struct Context {
++    void *sp = nullptr;
++    void *stack = nullptr;
++};
++
++void ContextInitMain(Context &) {}
++
++void ContextCreate(Context &c) {
++    c.stack = std::malloc(kStackSize);
++    if (c.stack == nullptr) {
++        kz::Abort("eekernel", "out of memory for a thread stack");
++    }
++    // The first switch to the thread restores this frame: zeroed registers, the trampoline's address in the
++    // return-address slot so the final ret calls it. The frame is 0xd8 bytes (xmm block, six registers, the
++    // return address), sized so the trampoline starts with rsp 16-byte aligned for its call into RunEntry.
++    auto *top = reinterpret_cast<std::uintptr_t *>(
++        (reinterpret_cast<std::uintptr_t>(c.stack) + kStackSize) & ~static_cast<std::uintptr_t>(15));
++    auto *frame = top - 0xd8 / sizeof(std::uintptr_t);
++    std::memset(frame, 0, 0xd8);
++    frame[0xd0 / sizeof(std::uintptr_t)] = reinterpret_cast<std::uintptr_t>(&kz_fiber_trampoline);
++    c.sp = frame;
++}
++
++void ContextSwitch(Context &prev, Context &next) {
++    kz_fiber_switch(&prev.sp, next.sp);
++}
++
++void ContextDestroy(Context &c) {
++    std::free(c.stack);
++    c.stack = nullptr;
++    c.sp = nullptr;
++}
++
+ #else
+ 
+ struct Context {
+@@ -344,7 +491,7 @@ void RunEntry() {
+ 
+ } // namespace
+ 
+-#if defined(KZ_ARM64_FIBERS)
++#if defined(KZ_ARM64_FIBERS) || defined(KZ_X86_FIBERS)
+ extern "C" void kz_fiber_entry() {
+     RunEntry();
+ }
 diff --git a/src/rust/archive.rs b/src/rust/archive.rs
 index ccca81b..9a68684 100644
 --- a/src/rust/archive.rs
