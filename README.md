@@ -10,6 +10,8 @@
 Chronicle Two is a decompilation of Dark Chronicle/Dark Cloud 2 for the
 PlayStation 2, and a native port built from it.
 
+An Android build (arm64, Android 13 or later) is described in [docs/ANDROID.md](docs/ANDROID.md).
+
 ## Building and running
 
 Clone with submodules: `git clone --recurse-submodules https://github.com/TheMoonPeople/ChronicleTwo.git`

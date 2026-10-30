@@ -1,0 +1,114 @@
+# The Android APK (docs/ANDROID.md): the game built for arm64-v8a by the NDK through Gradle, with Kazarov's Rust core
+# and FFmpeg linked in, and SDL3's Java activity. No game data is needed or shipped.
+#
+# The APK is signed by the key in the ANDROID_KEYSTORE secrets when they are set, and otherwise by
+# android/app/chronicletwo-dev.jks, so each build installs over the last.
+#
+# A push whose app version (versionName, android/app/build.gradle.kts) has no release yet publishes the APK as the
+# release android-v<version>, the tag made at the commit pushed.
+name: Android
+
+on:
+  push:
+    branches: [master, 'ccr-*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  apk:
+    name: APK (arm64-v8a)
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install the toolchains
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y glslang-tools ninja-build
+          rustup default stable
+          rustup target add aarch64-linux-android
+          # The C++ half of Kazarov's Rust bridge (corrosion_add_cxxbridge), at the cxx crate's version.
+          cargo install cxxbridge-cmd --version 1.0.205 --locked
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install --package_file=android/app/packages.txt
+
+      # FFmpeg for Android takes minutes to build and changes only with Kazarov's kz-ffmpeg and the patch.
+      - uses: actions/cache@v5
+        with:
+          path: .kazarov/ffmpeg/android-arm64
+          key: ffmpeg-android-${{ hashFiles('tools/kazarov/tools/ffmpeg/kz-ffmpeg', 'android/patches/*.patch') }}
+
+      - name: Restore the keystore
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
+        if: ${{ env.KEYSTORE != '' }}
+        run: |
+          echo "$KEYSTORE" | base64 --decode > "$RUNNER_TEMP/chronicletwo.jks"
+          echo "CHRONICLE_KEYSTORE=$RUNNER_TEMP/chronicletwo.jks" >> "$GITHUB_ENV"
+
+      - name: Build
+        working-directory: android
+        env:
+          CHRONICLE_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          CHRONICLE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          CHRONICLE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew --no-daemon assembleRelease
+
+      - name: Check the APK
+        run: |
+          apk=android/app/build/outputs/apk/release/app-release.apk
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "$apk"
+          # Android 15 and later want every native library aligned for 16 KiB pages.
+          "$ANDROID_HOME/build-tools/36.0.0/zipalign" -c -P 16 -v 4 "$apk" | tail -n 3
+          unzip -l "$apk" | grep -E 'lib/arm64-v8a/lib(darkchronicle|SDL3|c\+\+_shared)\.so|assets/(chronicletwo-assets\.txt|assets/data\.zip)'
+          test -n "$(unzip -l "$apk" | grep -E 'assets/scripts/.*\.luauc$' | head -n 1)"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: chronicletwo-android
+          path: android/app/build/outputs/apk/release/app-release.apk
+
+      - name: Publish the release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SIGNED_BY: ${{ secrets.ANDROID_KEYSTORE != '' && 'the project''s release key' || 'the development key in the repository (android/app/chronicletwo-dev.jks)' }}
+        run: |
+          version=$(sed -n 's/^ *versionName = "\(.*\)"$/\1/p' android/app/build.gradle.kts)
+          tag="android-v${version}"
+          if gh release view "$tag" > /dev/null 2>&1; then
+            echo "$tag is already released"
+            exit 0
+          fi
+          apk="ChronicleTwo-${version}-arm64.apk"
+          cp android/app/build/outputs/apk/release/app-release.apk "$apk"
+          # The APK's library is stripped; this one turns the addresses in a crash report into names.
+          symbols="libdarkchronicle-${version}-arm64-symbols.so"
+          cp "$(find android/app/build/intermediates/cxx -path '*arm64-v8a/libdarkchronicle.so' | head -n 1)" "$symbols"
+          sha=$(sha256sum "$apk" | cut -d' ' -f1)
+          cat > notes.md <<NOTES
+          Chronicle Two ${version} for Android: arm64 phones with Vulkan 1.3, Android 13 or later.
+
+          No game data is included: on first start the app asks for a disc image of your own Dark Cloud 2 /
+          Dark Chronicle disc and extracts it. See docs/ANDROID.md.
+
+          Signed with ${SIGNED_BY}.
+
+          If it crashes, open it again: it offers the game's log and crash report to share.
+          \`${symbols}\` is for reading such a report; you don't need it to play.
+
+          SHA-256: \`${sha}\`
+          NOTES
+          gh release create "$tag" "$apk" "$symbols" --target "$GITHUB_SHA" --title "Chronicle Two ${version} (Android)" --notes-file notes.md
