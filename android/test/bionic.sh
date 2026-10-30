@@ -8,7 +8,7 @@
 #   android/test/bionic.sh all     both
 #   android/test/bionic.sh port [FILTER]
 #                                  the game's own tests (port/src/tests) built for Android and run there, those
-#                                  FILTER names (a --gtest_filter; default the model and costume menu tests); tests
+#                                  FILTER names (a --gtest_filter; default the model, costume menu and Luau runtime tests); tests
 #                                  that need a window, a GPU or a death test's re-exec cannot run under qemu
 #
 # CT_CMAKE_ARGS adds CMake arguments to the `port` build, such as FETCHCONTENT_SOURCE_DIR_* for offline sources.
@@ -108,7 +108,7 @@ sys.exit(f"not published: {missing}" if missing else print("models published: 24
 fi
 
 if [ "$what" = port ]; then
-    filter=${2:-'NativeModel.*:CostumeMenu.*'}
+    filter=${2:-'NativeModel.*:CostumeMenu.*:LuauRuntime.*'}
     build=${CT_BIONIC_PORT_BUILD:-$cache/port}
     cmake=$(ls "${ANDROID_HOME:-/opt/android-sdk}"/cmake/*/bin/cmake 2>/dev/null | sort -V | tail -1)
     cmake=${cmake:-cmake}
