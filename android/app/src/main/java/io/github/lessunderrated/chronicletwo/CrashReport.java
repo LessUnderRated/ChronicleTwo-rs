@@ -75,14 +75,17 @@ final class CrashReport {
     private static String readable(String data) {
         StringBuilder out = new StringBuilder();
         StringBuilder run = new StringBuilder();
+        String previous = "";
         for (int i = 0; i <= data.length(); i++) {
             char c = i < data.length() ? data.charAt(i) : 0;
             if (c >= 0x20 && c < 0x7F) {
                 run.append(c);
                 continue;
             }
-            if (run.length() >= 6) {
-                out.append(run).append('\n');
+            // A line the same as the one before (a run of similar memory maps) is left out.
+            if (run.length() >= 6 && !run.toString().equals(previous)) {
+                previous = run.toString();
+                out.append(previous).append('\n');
             }
             run.setLength(0);
         }
@@ -168,7 +171,10 @@ final class CrashReport {
             report.append("\n--- threads ---\n").append(tail(trace(exit), MAX_CHARS / 3));
         } else if (exit.getReason() == ApplicationExitInfo.REASON_CRASH_NATIVE) {
             // Android's tombstone of the crash, a protobuf: its text (the abort message, the frames' names) is enough.
-            report.append("\n--- tombstone ---\n").append(tail(readable(trace(exit)), MAX_CHARS / 3));
+            // The abort message and the backtrace come first; the memory maps after them fill the rest.
+            String tombstone = readable(trace(exit));
+            report.append("\n--- tombstone ---\n")
+                .append(tombstone, 0, Math.min(tombstone.length(), MAX_CHARS / 3)).append('\n');
         }
         // What that run left, if it is from then: its crash report, a Java exception, and its log.
         long since = exit.getTimestamp() - 10 * 60 * 1000;

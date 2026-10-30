@@ -108,6 +108,11 @@ void SetEnvironment(const fs::path &root) {
     setenv("HOME", root.c_str(), 1);
     setenv("TMPDIR", (root / "tmp").c_str(), 1);
     setenv("KAZAROV_GAMEPLAY_SEED", (root / "assets" / "data.zip").c_str(), 1);
+    // The extractor sizes its in-memory queue from the memory it is told is free: on Android the kernel's free pages,
+    // gigabytes on a large phone, so it held thousands of large buffers at once. Android's allocator maps each of
+    // those on its own, and the process ran out of mappings ("memory allocation of 632 bytes failed") converting
+    // assets. An iPhone's budget, which the iOS port extracts within, keeps the queue small.
+    setenv("DC2DATA_AVAILABLE_MEMORY_MB", "3072", 0);
 }
 
 const options::Row *RowAt(int page, int row) {
