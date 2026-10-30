@@ -40,6 +40,7 @@ import java.util.Locale;
 public class SetupActivity extends Activity {
     private static final String TAG = "ChronicleTwo";
     private static final int PICK_DISC = 1;
+    private static final int PICK_DATA = 2;
     /** What the extracted data and the disc copy need, with room to spare: a check before starting, not a promise. */
     private static final long SPACE_NEEDED = 6L << 30;
 
@@ -173,8 +174,98 @@ public class SetupActivity extends Activity {
             .setTitle(R.string.setup_title)
             .setMessage(R.string.setup_message)
             .setPositiveButton(R.string.setup_choose, (d, w) -> chooseDisc())
+            .setNeutralButton(R.string.setup_import, (d, w) -> chooseData())
             .setNegativeButton(R.string.setup_quit, (d, w) -> finish())
             .show();
+    }
+
+    // ---- Data extracted elsewhere -------------------------------------------------------------
+
+    /** dc2data extract on a computer writes data.zip and data.json; both are picked here and copied in. */
+    private void chooseData() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        startActivityForResult(intent, PICK_DATA);
+    }
+
+    private void importData(java.util.List<Uri> uris) {
+        Busy busy = showBusy(R.string.setup_import_title, getString(R.string.setup_starting), true);
+        new Thread(() -> {
+            String failure = null;
+            boolean zip = false, json = false;
+            try {
+                for (Uri uri : uris) {
+                    String name = displayName(uri);
+                    if (!"data.zip".equalsIgnoreCase(name) && !"data.json".equalsIgnoreCase(name)) {
+                        continue;
+                    }
+                    String target = name.toLowerCase(Locale.ROOT);
+                    zip |= target.equals("data.zip");
+                    json |= target.equals("data.json");
+                    // data.json is the marker the game checks: written last, so a half-copied data.zip never looks whole.
+                    if (target.equals("data.json")) {
+                        continue;
+                    }
+                    copyIn(uri, target, busy);
+                }
+                for (Uri uri : uris) {
+                    if ("data.json".equalsIgnoreCase(displayName(uri))) {
+                        copyIn(uri, "data.json", busy);
+                    }
+                }
+            } catch (IOException | SecurityException e) {
+                failure = e.getMessage();
+            }
+            boolean ready = zip && json && failure == null && !Native.dataMissing(root().getPath());
+            String why = failure != null ? failure : getString(R.string.setup_import_wrong);
+            ui.post(() -> {
+                endBusy(busy);
+                if (ready) {
+                    launchGame();
+                } else if (cancelled) {
+                    showWelcome();
+                } else {
+                    showError(getString(R.string.setup_import_failed), why);
+                }
+            });
+        }, "data-import").start();
+    }
+
+    private void copyIn(Uri uri, String name, Busy busy) throws IOException {
+        File target = new File(root(), name);
+        File partial = new File(root(), name + ".partial");
+        long total = -1;
+        try (ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(uri, "r")) {
+            if (pfd != null) {
+                total = pfd.getStatSize();
+            }
+        }
+        long size = total;
+        try (InputStream in = getContentResolver().openInputStream(uri); OutputStream out = new FileOutputStream(partial)) {
+            if (in == null) {
+                throw new IOException(getString(R.string.setup_unreadable));
+            }
+            byte[] buffer = new byte[4 << 20];
+            long done = 0, shown = 0;
+            for (int n; (n = in.read(buffer)) > 0; ) {
+                if (cancelled) {
+                    throw new IOException(getString(R.string.setup_cancelled));
+                }
+                out.write(buffer, 0, n);
+                done += n;
+                if (done - shown > (32 << 20)) {
+                    shown = done;
+                    long at = done;
+                    ui.post(() -> busy.show(name + ": " + getString(R.string.setup_copying_data, megabytes(at),
+                        megabytes(size)), size > 0 ? (float) at / size : -1));
+                }
+            }
+        }
+        if (!partial.renameTo(target)) {
+            throw new IOException("cannot move " + partial + " into place");
+        }
     }
 
     private void showError(String title, String message) {
@@ -198,6 +289,24 @@ public class SetupActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PICK_DATA) {
+            java.util.List<Uri> uris = new java.util.ArrayList<>();
+            if (resultCode == RESULT_OK && data != null) {
+                if (data.getClipData() != null) {
+                    for (int i = 0; i < data.getClipData().getItemCount(); i++) {
+                        uris.add(data.getClipData().getItemAt(i).getUri());
+                    }
+                } else if (data.getData() != null) {
+                    uris.add(data.getData());
+                }
+            }
+            if (uris.isEmpty()) {
+                showWelcome();
+            } else {
+                importData(uris);
+            }
+            return;
+        }
         if (requestCode != PICK_DISC) {
             return;
         }

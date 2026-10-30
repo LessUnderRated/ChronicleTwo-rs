@@ -22,6 +22,11 @@
     <string name="setup_extract_question">Extract the game data now? It takes several minutes; keep the app open while it runs.</string>
     <string name="setup_extract">Extract</string>
 
+    <string name="setup_import">Import extracted data</string>
+    <string name="setup_import_title">Importing the game data</string>
+    <string name="setup_copying_data">%1$s of %2$s MB</string>
+    <string name="setup_import_failed">Import failed</string>
+    <string name="setup_import_wrong">Choose both data.zip and data.json, as dc2data extract writes them on a computer (data.json says which version of the data they are; it has to match this version of Chronicle Two).</string>
     <string name="setup_extract_title">Extracting the game data</string>
     <string name="setup_starting">Starting…</string>
     <string name="setup_extracting">%1$d%% · %2$s</string>

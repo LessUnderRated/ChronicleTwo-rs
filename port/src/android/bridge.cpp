@@ -157,8 +157,8 @@ jstring JNICALL Extract(JNIEnv *env, jclass, jstring image, jstring root) {
     const std::string source = Utf8(env, image);
     const fs::path    data = fs::path(Utf8(env, root)) / "data";
     try {
-        // Two jobs at most: the extractor's working set grows with each, and a phone's memory runs out first.
-        const unsigned jobs = std::clamp(std::thread::hardware_concurrency(), 1u, 2u);
+        // One job: the extractor's working set grows with each, and a phone's memory runs out first.
+        const unsigned jobs = 1;
         std::fprintf(stderr, "extract: %s into %s, %u jobs\n", source.c_str(), data.c_str(), jobs);
         kazarov::extract_tracked(source, data.string(), jobs);
         std::fprintf(stderr, "extract: done\n");
@@ -208,7 +208,26 @@ void LogMappings() {
         top.emplace_back(count, name);
     }
     std::ranges::sort(top, std::greater{});
-    std::string text = std::to_string(total) + " mappings:";
+    // What the process holds and what the phone has left, from /proc/self/status and /proc/meminfo, in MiB.
+    auto field = [](const char *path, const char *name) -> long {
+        std::FILE *file = std::fopen(path, "r");
+        long       kib = -1;
+        char       row[256];
+        while (file != nullptr && std::fgets(row, sizeof row, file) != nullptr) {
+            if (std::strncmp(row, name, std::strlen(name)) == 0) {
+                kib = std::strtol(row + std::strlen(name), nullptr, 10);
+                break;
+            }
+        }
+        if (file != nullptr) {
+            std::fclose(file);
+        }
+        return kib < 0 ? -1 : kib / 1024;
+    };
+    std::string text = "rss " + std::to_string(field("/proc/self/status", "VmRSS:")) + " MiB, size " +
+                       std::to_string(field("/proc/self/status", "VmSize:")) + " MiB, phone available " +
+                       std::to_string(field("/proc/meminfo", "MemAvailable:")) + " MiB, " + std::to_string(total) +
+                       " mappings:";
     for (std::size_t i = 0; i < top.size() && i < 6; ++i) {
         text += " " + std::to_string(top[i].first) + " " + top[i].second + ";";
     }
@@ -226,7 +245,7 @@ jstring JNICALL ExtractStage(JNIEnv *env, jclass) {
         last = stage;
         std::fprintf(stderr, "extract: %3.0f%% %s\n", status.fraction * 100.0, stage.c_str());
         LogMappings();
-    } else if (++polls % 12 == 0) {
+    } else if (++polls % 4 == 0) {
         LogMappings();
     }
     return Java(env, stage);
