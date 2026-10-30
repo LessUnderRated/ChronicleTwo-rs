@@ -392,6 +392,13 @@ if(ANDROID)
     set_target_properties(darkchronicle PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
     ct_link_game(darkchronicle)
     target_link_libraries(darkchronicle PRIVATE android log)
+    if(CT_ANDROID_ASSETS_DIR)
+        add_custom_command(TARGET darkchronicle POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -DBUILD=${CMAKE_BINARY_DIR} -DOUT=${CT_ANDROID_ASSETS_DIR}
+                -P ${CMAKE_SOURCE_DIR}/android/assets.cmake
+            COMMENT "Copying the APK's assets"
+            VERBATIM)
+    endif()
 else()
     add_executable(darkchronicle ${PORT_DIR}/main.cpp)
     set_target_properties(darkchronicle PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
