@@ -190,6 +190,7 @@ final class CrashReport {
         if (stderr.isFile() && stderr.lastModified() >= since) {
             report.append("\n--- stderr ---\n").append(tail(read(stderr), MAX_CHARS / 4));
         }
+        report.append("\n--- logcat ---\n").append(tail(logcat(), MAX_CHARS / 4));
         File log = newestGameLog(context);
         report.append("\n--- log ---\n").append(log == null ? "(none)" : tail(read(log), MAX_CHARS / 2));
         return report.toString();
@@ -256,8 +257,70 @@ final class CrashReport {
     // ---- This run -----------------------------------------------------------------------------
 
     static String currentRun(Context context) {
+        StringBuilder report = new StringBuilder(device(context)).append('\n');
+        // How the run before this one ended, whatever it was: a game that quits on its own leaves no crash.
+        try {
+            List<ApplicationExitInfo> exits = context.getSystemService(ActivityManager.class)
+                .getHistoricalProcessExitReasons(null, 0, 1);
+            if (!exits.isEmpty()) {
+                ApplicationExitInfo exit = exits.get(0);
+                report.append("The last run ended ")
+                    .append(DateFormat.getDateTimeInstance().format(new Date(exit.getTimestamp())))
+                    .append(": ").append(reason(exit)).append(", status ").append(exit.getStatus());
+                if (exit.getDescription() != null) {
+                    report.append(", ").append(exit.getDescription());
+                }
+                report.append('\n');
+            }
+        } catch (RuntimeException ignored) {
+        }
+        report.append("\n--- logs/ ---\n");
+        File[] files = logDir(context).listFiles();
+        for (int i = 0; files != null && i < files.length; i++) {
+            report.append(files[i].getName()).append("  ").append(files[i].length()).append(" bytes, ")
+                .append(DateFormat.getDateTimeInstance().format(new Date(files[i].lastModified()))).append('\n');
+        }
+        File crash = newest(crashDir(context), "report.txt");
+        if (crash != null) {
+            report.append("\n--- crash report ").append(crash.getParentFile().getName()).append(" ---\n")
+                .append(tail(read(crash), MAX_CHARS / 6));
+        }
+        File stderr = new File(logDir(context), "stderr.log");
+        if (stderr.isFile()) {
+            report.append("\n--- stderr ---\n").append(tail(read(stderr), MAX_CHARS / 6));
+        }
+        report.append("\n--- logcat ---\n").append(tail(logcat(), MAX_CHARS / 3));
         File log = newestGameLog(context);
-        return device(context) + "\n\n--- log ---\n" + (log == null ? "(none)" : tail(read(log), MAX_CHARS));
+        report.append("\n--- log ---\n").append(log == null ? "(none)" : tail(read(log), MAX_CHARS / 3));
+        return report.toString();
+    }
+
+    /** This app's own lines in Android's log, the last runs' too while the buffer holds them: the game's console,
+     * SDL, and the graphics driver's complaints. An app reads its own lines without any permission. */
+    private static String logcat() {
+        try {
+            Process process = new ProcessBuilder("logcat", "-d", "-v", "time", "-t", "4000")
+                .redirectErrorStream(true).start();
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            try (InputStream in = process.getInputStream()) {
+                byte[] buffer = new byte[16384];
+                for (int n; (n = in.read(buffer)) > 0; ) {
+                    out.write(buffer, 0, n);
+                    if (out.size() > MAX_CHARS * 4) {
+                        byte[] kept = out.toByteArray();
+                        out.reset();
+                        out.write(kept, kept.length - MAX_CHARS * 2, MAX_CHARS * 2);
+                    }
+                }
+            }
+            process.waitFor();
+            return out.toString(StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            return "(no logcat: " + e.getMessage() + ")";
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return "(no logcat: interrupted)";
+        }
     }
 
     /** The last bytes of a file, which is all of a log worth sending. */
