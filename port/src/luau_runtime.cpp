@@ -1127,8 +1127,10 @@ lua_State *EnsureState() {
 
     luaL_sandbox(state);
     // iOS lets an app make no executable memory without a JIT entitlement a sideloaded app does not get, so the
-    // scripts stay interpreted there.
-#if defined(__APPLE__) && TARGET_OS_IPHONE
+    // scripts stay interpreted there. On Android the native code's unwind tables go to the copy of libunwind linked into
+    // this library, while errors are thrown by libc++_shared's own copy, which cannot see them: every error raised in
+    // native code, a skip's included, would end the game in std::terminate.
+#if (defined(__APPLE__) && TARGET_OS_IPHONE) || defined(__ANDROID__)
     codegen = false;
 #else
     codegen = luau_codegen_supported() != 0;
