@@ -14,6 +14,7 @@
 #include "editmenu.hpp"
 #include "inventmn.hpp"
 #include "mainloop.hpp"
+#include "memcard.hpp"
 #include "menuchr.hpp"
 #include "menucommon.hpp"
 #include "menudraw.hpp"
@@ -374,7 +375,7 @@ TEST(MenuMemory, InventoryObjectsConstructInSharedOwnerTailsAndRetireWithTheirOw
         testing::ExitedWithCode(0), "");
 }
 
-TEST(MenuMemory, ForcedMenuExitRetiresTheInventoryRepairModelWorkspace) {
+TEST(MenuMemory, ForcedMenuExitPreservesTitleControllerAndRetiresInventoryRepairWorkspace) {
     ASSERT_EXIT(
         {
             auto save = std::make_unique<CSaveData>();
@@ -397,12 +398,20 @@ TEST(MenuMemory, ForcedMenuExitRetiresTheInventoryRepairModelWorkspace) {
             owner.stSetBuffer(storage.data(), static_cast<int>(storage.size()));
             auto *allocation = owner.Alloc(4);
             ASSERT_NE(allocation, nullptr);
+            static CMemoryCardManager *title_manager = nullptr;
+            auto                      *title_card = dc2::mc::CreateManager(owner, title_manager);
+            ASSERT_NE(title_card, nullptr);
             auto &repair = dc2::menu::CreateInventoryRepairManager();
             ASSERT_TRUE(repair.model_stack.stShareBuffer(owner, std::span(allocation, 4)));
             const auto lease = dc2::memory::ArenaBuffer::Bind(repair.model_stack, dc2::memory::RemainingBytes(repair.model_stack), &owner);
             ASSERT_FALSE(lease.Bytes().empty());
             EXPECT_EQ(MenuMainExit(), 1);
             EXPECT_EQ(MenuRepairMan, nullptr);
+            ASSERT_EQ(title_manager, title_card);
+            title_manager->port = 0;
+            title_manager->SetFuncNo(MC_FUNC_SEARCH_TYPE);
+            owner.stClearUsed();
+            EXPECT_EQ(title_manager, nullptr);
             EXPECT_TRUE(lease.Bytes().empty());
             std::_Exit(testing::Test::HasFailure() ? 1 : 0);
         },

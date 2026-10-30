@@ -445,6 +445,7 @@ CMenuInvent &dc2::menu::CreateInventionMenu() {
 }
 
 void dc2::menu::ResetInventionMenu() {
+    dc2::mc::RetireManager(MCManagerPtr);
     InventSubDataReadBGInfo = {};
     CMenuInventPt = nullptr;
     invention_menu.reset();

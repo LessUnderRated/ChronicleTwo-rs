@@ -2577,7 +2577,7 @@ int MenuInitCore(MENU_INIT_ARG *arg) {
 }
 
 int MenuExitCore() {
-    dc2::mc::RetireManagers();
+    dc2::menu::ResetSaveMenuManager();
     dc2::menu::ResetInventoryRepairManager();
     InitBuildUpInfoEffect(nullptr, nullptr, 0, 0.0f);
     dc2::menu::ResetMonsterBook();

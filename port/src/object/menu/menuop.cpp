@@ -326,6 +326,10 @@ void InitMnOnePictTex();
  */
 static CMemoryCardManager *MemoryCardPtr;
 
+void dc2::menu::ResetSaveMenuManager() {
+    dc2::mc::RetireManager(MemoryCardPtr);
+}
+
 /**
  *
  * Active save and load menu.

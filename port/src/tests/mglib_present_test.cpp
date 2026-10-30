@@ -15,6 +15,7 @@
 #include <memory>
 #include <optional>
 #include <set>
+#include <span>
 #include <string>
 #include <thread>
 #include <vector>
@@ -1082,7 +1083,7 @@ void DamageProjection(float x) {
 std::vector<gfx::Vertex2D> DamageVertices(const gfx::DisplayList &list) {
     for (const auto &entry : list.entries) {
         if (const auto *draw = std::get_if<gfx::detail::Draw2DEntry>(&entry)) {
-            return draw->vertices;
+            return {draw->vertices.begin(), draw->vertices.end()};
         }
     }
     return {};
@@ -1290,7 +1291,7 @@ TEST(TargetPresentation, BracketsInterpolateAndTargetSwitchCuts) {
 }
 
 namespace {
-void CheckOverlayBlend(const std::vector<gfx::detail::Entry> &before, const std::vector<gfx::detail::Entry> &after,
+void CheckOverlayBlend(std::span<const gfx::detail::Entry> before, std::span<const gfx::detail::Entry> after,
                        const std::vector<uint8_t> &newest) {
     std::vector<const gfx::detail::Draw2DEntry *> previous;
     for (const auto &entry : before) {
