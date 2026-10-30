@@ -95,4 +95,9 @@ if [ "$what" = app ] || [ "$what" = all ]; then
     python3 -I "$repo/android/test/fake_disc.py" "$work/disc.iso"
     LD_LIBRARY_PATH=$work/stubs:$libs run "$work/load_extract" "$libs/libdarkchronicle.so" "$work/disc.iso" \
         "$work/game" "$seed"
+    # The fake disc's 24 models came through the model pass.
+    python3 -I -c 'import sys, zipfile
+names = set(zipfile.ZipFile(sys.argv[1]).namelist())
+missing = [f"fake/m{i:04}.{s}" for i in range(24) for s in ("gltf", "gltf.bin", "game.json") if f"fake/m{i:04}.{s}" not in names]
+sys.exit(f"not published: {missing}" if missing else print("models published: 24"))' "$work/game/data.zip"
 fi

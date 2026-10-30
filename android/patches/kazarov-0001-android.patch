@@ -173,7 +173,7 @@ index 38578d9..b383740 100644
  #include <ucontext.h>
  #endif
 diff --git a/src/rust/archive.rs b/src/rust/archive.rs
-index ccca81b..969fb77 100644
+index ccca81b..9a68684 100644
 --- a/src/rust/archive.rs
 +++ b/src/rust/archive.rs
 @@ -497,6 +497,9 @@ enum SourceData {
@@ -217,7 +217,7 @@ index ccca81b..969fb77 100644
              SourceData::Mapped { file, .. } => {
                  if range.is_empty() {
                      return Ok(SourceSlice::Borrowed(&[]));
-@@ -1305,6 +1318,81 @@ mod tests {
+@@ -1305,6 +1318,232 @@ mod tests {
          iso
      }
  
@@ -261,6 +261,157 @@ index ccca81b..969fb77 100644
 +            iso[offset..offset + bytes.len()].copy_from_slice(bytes);
 +        }
 +        iso
++    }
++
++    /// DATA.HD4 and DATA.DAT holding `files`, each from its own sector, and the index's final empty record.
++    fn data_files(files: &[(String, Vec<u8>)]) -> (Vec<u8>, Vec<u8>) {
++        let names_start = (files.len() + 1) * 12;
++        let (mut records, mut names, mut dat) = (Vec::new(), Vec::new(), Vec::new());
++        for (name, bytes) in files {
++            records.extend_from_slice(&((names_start + names.len()) as u32).to_le_bytes());
++            records.extend_from_slice(&(bytes.len() as u32).to_le_bytes());
++            records.extend_from_slice(&((dat.len() / SECTOR as usize) as u32).to_le_bytes());
++            names.extend_from_slice(name.as_bytes());
++            names.push(0);
++            dat.extend_from_slice(bytes);
++            dat.resize(dat.len().next_multiple_of(SECTOR as usize), 0);
++        }
++        records.extend_from_slice(&((names_start + names.len()) as u32).to_le_bytes());
++        records.extend_from_slice(&[0; 8]);
++        names.push(0);
++        records.extend_from_slice(&names);
++        (records, dat)
++    }
++
++    /// A model of `frames` chained frames, laid out as the retail MDS's frame table, each with a mesh of `vertices`
++    /// vertices (positions, normals, UVs and colours) in one triangle list when `vertices` is not 0.
++    fn fake_model(frames: usize, vertices: usize) -> Vec<u8> {
++        let put = |model: &mut Vec<u8>, at: usize, value: u32| {
++            model[at..at + 4].copy_from_slice(&value.to_le_bytes());
++        };
++        let mut model = vec![0; 16 + frames * 112];
++        model[..4].copy_from_slice(b"MDS\0");
++        put(&mut model, 8, frames as u32);
++        put(&mut model, 12, 16);
++        for frame in 0..frames {
++            let at = 16 + frame * 112;
++            put(&mut model, at + 4, 112);
++            let name = format!("f{frame}");
++            model[at + 8..at + 8 + name.len()].copy_from_slice(name.as_bytes());
++            put(&mut model, at + 44, (frame as u32).wrapping_sub(1));
++            for i in 0..16 {
++                let value = match i {
++                    0 | 5 | 10 | 15 => 1.0,
++                    13 => frame as f32,
++                    _ => 0.0,
++                };
++                put(&mut model, at + 48 + i * 4, f32::to_bits(value));
++            }
++            if vertices == 0 {
++                continue;
++            }
++            // The frame's MDT: its four vertex streams of 16-byte rows, then one primitive of `corners` corners, each
++            // naming a row of every stream.
++            let mdt = model.len();
++            put(&mut model, at + 40, mdt as u32);
++            let corners = vertices / 3 * 3;
++            let streams = mdt + 64;
++            let faces = streams + 4 * vertices * 16;
++            model.resize(faces + 28 + corners * 16, 0);
++            model[mdt..mdt + 4].copy_from_slice(b"MDT\0");
++            for (count, offset, stream) in [(12, 16, 0), (20, 24, 1), (44, 48, 2), (28, 32, 3)] {
++                put(&mut model, mdt + count, vertices as u32);
++                put(&mut model, mdt + offset, (streams + stream * vertices * 16 - mdt) as u32);
++            }
++            put(&mut model, mdt + 36, (28 + corners * 16) as u32);
++            put(&mut model, mdt + 40, (faces - mdt) as u32);
++            for vertex in 0..vertices {
++                let row = [vertex as f32, (vertex % 7) as f32, (vertex % 13) as f32, 1.0];
++                for stream in 0..4 {
++                    for (i, value) in row.iter().enumerate() {
++                        let at = streams + (stream * vertices + vertex) * 16 + i * 4;
++                        put(&mut model, at, (value / if stream == 0 { 1.0 } else { 16.0 }).to_bits());
++                    }
++                }
++            }
++            put(&mut model, faces + 4, 16);
++            put(&mut model, faces + 8, 1);
++            // A triangle list (3) that names colours too (0x100), with no material.
++            put(&mut model, faces + 16, 3 | 0x100);
++            put(&mut model, faces + 20, corners as u32);
++            put(&mut model, faces + 24, u32::MAX);
++            for corner in 0..corners {
++                for stream in 0..4 {
++                    put(&mut model, faces + 28 + corner * 16 + stream * 4, corner as u32);
++                }
++            }
++        }
++        model
++    }
++
++    /// Extracts, on the app's two workers, the ISO image of a fake disc whose DATA.DAT holds `models` models of
++    /// `frames` frames with meshes of `vertices` vertices (fake_model), and returns the published archive's entry names.
++    fn extract_disc_with_models(models: usize, frames: usize, vertices: usize) -> CoreResult<Vec<String>> {
++        let files: Vec<(String, Vec<u8>)> = (0..models)
++            .map(|index| (format!("FAKE\\M{index:04}.MDS"), fake_model(frames, vertices)))
++            .collect();
++        let (hd4, dat) = data_files(&files);
++        let temp = tempfile::tempdir()?;
++        let iso = temp.path().join("disc.iso");
++        fs::write(
++            &iso,
++            iso_of(&[
++                ("DATA.HD4", &hd4),
++                ("DATA.DAT", &dat),
++                ("SOUND.HD3", &sound_index()),
++                ("SOUND.DAT", b"SND"),
++            ]),
++        )?;
++        let output = temp.path().join("game/data");
++        let stages = std::sync::Mutex::new(Vec::new());
++        super::super::extract_with_progress(&iso, &output, 2, &|_, label| {
++            let mut stages = stages.lock().unwrap();
++            if stages.last() != Some(&label) {
++                stages.push(label);
++            }
++        })?;
++        super::super::check(&output)?;
++        let stages = stages.into_inner().unwrap();
++        assert_eq!(stages.last(), Some(&"Ready — starting game…"), "{stages:?}");
++        let archive = super::super::zip_archive::Archive::open(&temp.path().join("game/data.zip"))?;
++        Ok((0..archive.len()).map(|index| archive.name(index).to_owned()).collect())
++    }
++
++    /// The model pass, where 0.1.7 died on a phone, run to publication from a fake disc of model files with meshes.
++    #[test]
++    fn disc_image_with_models_extracts_past_the_model_pass() -> CoreResult<()> {
++        let names = extract_disc_with_models(24, 8, 300)?;
++        for index in 0..24 {
++            for suffix in ["gltf", "gltf.bin", "game.json"] {
++                let name = format!("fake/m{index:04}.{suffix}");
++                assert!(names.contains(&name), "{name} not published");
++            }
++        }
++        Ok(())
++    }
++
++    /// The same at a size the phone's memory feels. One 122 MB model file of 1.5M vertices fills Android's allocator,
++    /// scudo, as the retail model pass did; run on bionic (android/test/bionic.sh) with
++    /// KZ_FAKE_MODELS=1,16,95000 (models, frames, vertices per frame).
++    #[test]
++    #[ignore = "sized by KZ_FAKE_MODELS=models,frames,vertices"]
++    fn sized_disc_image_with_models() -> CoreResult<()> {
++        let sizes: Vec<usize> = std::env::var("KZ_FAKE_MODELS")
++            .map_err(|_| CoreError("KZ_FAKE_MODELS is not set".into()))?
++            .split(',')
++            .map(|value| value.parse().map_err(|_| CoreError("bad KZ_FAKE_MODELS".into())))
++            .collect::<CoreResult<_>>()?;
++        let [models, frames, vertices] = sizes[..] else {
++            return Err(CoreError("KZ_FAKE_MODELS is models,frames,vertices".into()));
++        };
++        let names = extract_disc_with_models(models, frames, vertices)?;
++        assert!(names.iter().any(|name| name.ends_with(".gltf.bin")));
++        Ok(())
 +    }
 +
 +    #[test]

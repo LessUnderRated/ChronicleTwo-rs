@@ -76,16 +76,19 @@ once into `~/.cache/chronicletwo-bionic`). CI runs it after each build.
 
 - `bionic.sh` (or `tests`): Kazarov's Rust tests, with `android/patches` applied, built for `aarch64-linux-android`.
   Besides the usual suite this runs the Android-only paths (the disc mapped whole, waiting bytes spilled to a file,
-  the archive read by position, `flock`), `disc_image_extracts_on_one_worker_as_the_android_app_does` (a fake disc
-  image extracted the way the app extracts one) and `small_allocations_hold_past_a_scudo_size_class`, which on
-  scudo dies as the 0.1.7 extraction did.
+  the archive read by position, `flock`), fake disc images extracted the way the app extracts one: with
+  `disc_image_with_models_extracts_past_the_model_pass` the model pass, where 0.1.7 died, converts, verifies and
+  publishes 24 models with meshes. `small_allocations_hold_past_a_scudo_size_class` dies on scudo as 0.1.7 did, and
+  so does the ignored `sized_disc_image_with_models` with `KZ_FAKE_MODELS=1,16,95000`: a 122 MB model file whose
+  model pass fills every scudo size class and aborts with "Scudo ERROR: internal map failure", and which extracts in
+  full on mimalloc (4.7 GB at its peak, under 300 mappings).
 - `bionic.sh app`: the release build's `libdarkchronicle.so`, loaded with `dlopen` as the app's activity loads it,
-  extracting the fake disc of `fake_disc.py` through `kazarov::extract_tracked` with the app's settings
-  (`load_extract.cpp`). This is where a library Android's linker refuses shows up, as 0.1.5's did.
+  extracting the fake disc of `fake_disc.py` (its 24 models included) through `kazarov::extract_tracked` with the
+  app's settings (`load_extract.cpp`). This is where a library Android's linker refuses shows up, as 0.1.5's did.
 - `bionic.sh all`: both.
 
 It needs qemu-user, e2fsprogs (`debugfs`), Python 3, the NDK and Rust's `aarch64-linux-android` target. What it
-cannot show is a phone's memory: the fake disc is small, and the real one's conversion has only run on a phone.
+cannot show is the real disc: its conversion has only run on a phone.
 
 ## Not done yet
 
