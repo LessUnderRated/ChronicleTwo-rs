@@ -9,6 +9,8 @@
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <string>
+#include <string_view>
 #include <vector>
 
 #include "assets/data_registry.hpp"
@@ -58,39 +60,40 @@ std::vector<u_long128> texture_storage(16384);
 mgCMemory              texture_memory;
 
 /**
- * Supplies complete glTF effect bundles with directly named child characters and VM programs.
+ * Supplies complete glTF effect bundles with directly named child characters and script modules.
  */
 class NativeEffectBase : public testing::Test {
 protected:
-    std::filesystem::path          root = std::filesystem::temp_directory_path() / ("native_effect_base_" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    std::filesystem::path          previous = datapacks::Root();
-    std::vector<u_long128>         storage = std::vector<u_long128>(16384);
-    mgCMemory                      memory;
-    CEffectScriptMan               manager;
-    std::string                    bundle;
-    std::array<unsigned char, 132> script{};
+    std::filesystem::path  root = std::filesystem::temp_directory_path() / ("native_effect_base_" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    std::filesystem::path  previous = datapacks::Root();
+    std::vector<u_long128> storage = std::vector<u_long128>(16384);
+    mgCMemory              memory;
+    CEffectScriptMan       manager;
+    std::string            bundle;
 
     static void Write(const std::filesystem::path &path, const Json &document) {
         dc::test::WriteNativeDocument(path, document);
     }
 
-    void Vm(const std::string &path) {
-        const auto file = root / "data" / path;
+    /**
+     * Writes the Luau module that the effect script at a data path loads as.
+     */
+    void Module(const std::string &path) {
+        const auto file = (root / "scripts" / path).replace_extension(".luau");
         std::filesystem::create_directories(file.parent_path());
-        std::ofstream output(file, std::ios::binary);
-        output.write(reinterpret_cast<const char *>(script.data()), script.size());
+        std::ofstream(file) << "return {}\n";
+    }
+
+    /**
+     * Reports whether a base's program is the handle of the module for a data path.
+     */
+    static bool LoadsModule(const EFF_SPT_BASE &base, std::string_view path) {
+        return luau_runtime::HandleModule({base.script, base.script_size}) ==
+               std::string(path.substr(0, path.size() - std::string_view(".stb").size()));
     }
 
     void SetUp() override {
-        // The fixture's programs run on the interpreter, so no Luau module may replace them.
-        luau_runtime::SetScriptsRoot(root);
-        std::memcpy(script.data(), "SB2", 4);
-        const auto put = [&](int offset, int value) { std::memcpy(script.data() + offset, &value, sizeof(value)); };
-        put(4, 64);
-        put(8, 64);
-        put(12, 28);
-        put(64, 56);
-        put(120, 27);
+        luau_runtime::SetScriptsRoot(root / "scripts");
         const Json gltf = {
             {"asset",  {{"version", "2.0"}}             },
             {"scene",  0                                },
@@ -128,12 +131,12 @@ protected:
         });
         Write(root / "data/dungeon/articles/eff01.game.json", game);
         bundle = gltf.dump(2);
-        Vm("dungeon/articles/eff01.assets/explosion.stb");
-        Vm("dungeon/articles/eff01.assets/n_heal.stb");
-        Vm("dungeon/articles/eff01.assets/n_heal_sub.stb");
-        Vm("dungeon/articles/eff01.assets/bakudan.stb");
+        Module("dungeon/articles/eff01.assets/explosion.stb");
+        Module("dungeon/articles/eff01.assets/n_heal.stb");
+        Module("dungeon/articles/eff01.assets/n_heal_sub.stb");
+        Module("dungeon/articles/eff01.assets/bakudan.stb");
         Write(root / "data/textures/dungeon/eff_script/n_heal.json", game["resources"]["texture_sets"][0]["document"]);
-        Vm("dungeon/eff_script/n_heal.stb");
+        Module("dungeon/eff_script/n_heal.stb");
         std::filesystem::create_directories(root / "data");
         DataReadIndex(root / "data");
         DataReadRegisterAsset(bundle.data(), "dungeon/articles/eff01.gltf", bundle.size());
@@ -180,7 +183,7 @@ TEST_F(NativeEffectBase, CharacterBaseUsesDirectChildGltfAndPreservesScriptAndPo
     EXPECT_EQ(manager.base[0]->texb, 20);
     EXPECT_EQ(manager.base[0]->texb_owned, 1);
     EXPECT_EQ(manager.texb_used, 1);
-    EXPECT_EQ(std::memcmp(manager.base[0]->script, script.data(), script.size()), 0);
+    EXPECT_TRUE(LoadsModule(*manager.base[0], "dungeon/articles/eff01.assets/explosion.stb"));
     EXPECT_EQ(manager.BuildPack(0, Bundle(), nullptr, -1), 0);
     EXPECT_EQ(manager.base_num, 1);
 }
@@ -202,7 +205,7 @@ TEST_F(NativeEffectBase, StandaloneTextureAndVmLoadWithoutTheLegacyLoadBuffer) {
     ASSERT_EQ(manager.load_buffer, nullptr);
     ASSERT_EQ(manager.LoadBaseEffSpt(4, nullptr, -1), 1);
     ASSERT_NE(manager.base[0], nullptr);
-    EXPECT_EQ(std::memcmp(manager.base[0]->script, script.data(), script.size()), 0);
+    EXPECT_TRUE(LoadsModule(*manager.base[0], "dungeon/eff_script/n_heal.stb"));
     char name[] = "n_heal";
     EXPECT_NE(mgTexManager.GetTexture(name, 20), nullptr);
 }
@@ -218,15 +221,16 @@ TEST_F(NativeEffectBase, ScriptOnlyEffectsKeepTheirUnmodeledSemanticsAndMissingS
 
 TEST_F(NativeEffectBase, DirectBufferBuildUsesItsActualGltfPathAndBoundedVmBytes) {
     DataReadRegisterAsset(bundle.data(), "dungeon/articles/eff01.assets/Explosion_s.gltf", bundle.size());
+    std::string handle = luau_runtime::MakeHandle("dungeon/articles/eff01.assets/explosion");
     ASSERT_EQ(manager.BuildBase(0, reinterpret_cast<u_long128 *>(bundle.data()), static_cast<int>(bundle.size()),
-                                reinterpret_cast<u_long128 *>(script.data()), static_cast<int>(script.size()), nullptr, -1),
+                                reinterpret_cast<u_long128 *>(handle.data()), static_cast<int>(handle.size()), nullptr, -1),
               1);
     ASSERT_NE(manager.base[0]->chara, nullptr);
     EXPECT_NE(manager.base[0]->chara->GetFrame(), nullptr);
-    EXPECT_EQ(std::memcmp(manager.base[0]->script, script.data(), script.size()), 0);
+    EXPECT_TRUE(LoadsModule(*manager.base[0], "dungeon/articles/eff01.assets/explosion.stb"));
 }
 
-TEST_F(NativeEffectBase, InvalidVmReplacementFallsThroughToTheBaseProgram) {
+TEST_F(NativeEffectBase, DatapackScriptDoesNotReplaceTheModule) {
     std::filesystem::create_directories(root / "datapacks/override/dungeon/articles/eff01.assets");
     std::ofstream(root / "datapacks/override/dungeon/articles/eff01.assets/bakudan.stb", std::ios::binary) << "invalid VM";
     Write(root / "datapacks/datapacks.json", {
@@ -235,7 +239,7 @@ TEST_F(NativeEffectBase, InvalidVmReplacementFallsThroughToTheBaseProgram) {
     });
     datapacks::Load(root / "data");
     ASSERT_EQ(manager.BuildPack(26, Bundle(), nullptr, -1), 1);
-    EXPECT_EQ(std::memcmp(manager.base[0]->script, script.data(), script.size()), 0);
+    EXPECT_TRUE(LoadsModule(*manager.base[0], "dungeon/articles/eff01.assets/bakudan.stb"));
 }
 
 TEST_F(NativeEffectBase, AbsentEmbeddedTextureSetFailsWithoutCommittingABase) {

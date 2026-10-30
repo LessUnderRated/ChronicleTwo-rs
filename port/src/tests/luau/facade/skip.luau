@@ -32,29 +32,29 @@ end
 
 script[1] = function()
     section(function()
-        event.Ext(1, 1)
+        event.call_command(1, 1)
         wait(10)
-        event.Ext(1, 2)
+        event.call_command(1, 2)
         wait(11)
-        event.Ext(1, 3)
+        event.call_command(1, 3)
     end, function(site)
-        event.Ext(1, 100 + site)
+        event.call_command(1, 100 + site)
         skip_site = site
     end)
-    event.Ext(1, 99)
+    event.call_command(1, 99)
     return skip_site or 0
 end
 
 script[2] = function()
     section(function()
-        event.Ext(1, 5)
+        event.call_command(1, 5)
     end)
-    event.Ext(1, 7)
+    event.call_command(1, 7)
 end
 
 script[3] = function()
     wait(1)
-    event.Ext(1, 8)
+    event.call_command(1, 8)
 end
 
 -- Reads a flag inside a skipped section (the call is dropped, so the output is nil) and again after it (the handler answers).
@@ -63,12 +63,12 @@ script[4] = function()
     section(function()
         wait(1)
     end, function()
-        local value = event.GetFlag(3)
+        local value = event.get_save_flag(3)
         if value == nil then
             skipped_nil = 1
         end
     end)
-    local answered = event.GetFlag(3)
+    local answered = event.get_save_flag(3)
     return skipped_nil * 10 + (if answered == 77 then 1 else 0)
 end
 

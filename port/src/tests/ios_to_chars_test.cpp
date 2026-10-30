@@ -72,3 +72,16 @@ TEST(IosToChars, MatchesShortestRepresentationsOfFiniteBitPatterns) {
         }
     }
 }
+
+TEST(IosToChars, HexRoundingAndSubnormalsMatchStandard) {
+    for (double value : {1.5, 1.96875, 1.9999999999999998, 100000.0, 0.00001,
+                         std::numeric_limits<double>::denorm_min(), std::numeric_limits<double>::min()}) {
+        for (int precision : {0, 1, 6, 13, 17}) {
+            ExpectConversion(value, std::chars_format::hex, precision);
+            ExpectConversion(-value, std::chars_format::hex, precision);
+            ExpectConversion(static_cast<float>(value), std::chars_format::hex, precision);
+        }
+        ExpectConversion(value, std::chars_format::hex);
+        ExpectConversion(static_cast<float>(value), std::chars_format::hex);
+    }
+}

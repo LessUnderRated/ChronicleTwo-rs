@@ -413,9 +413,6 @@ int Run(int argc, const char **argv) {
     if (!options.headless) {
         GameSetDataIcon();
     }
-    if (!DataReadPrepareScriptTiming(options.headless)) {
-        return kExitScriptTiming;
-    }
     const HostSettings &settings = SettingsGet();
     const bool          offscreen = options.offscreen || (options.headless && !gfx::HeadlessSurfaceAvailable());
 

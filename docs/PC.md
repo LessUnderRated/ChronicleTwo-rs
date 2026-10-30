@@ -30,13 +30,13 @@ The renderer's cases need a Vulkan device with the features `tools/kazarov/src/c
 .\run.bat windows-x64
 ```
 
-`build.bat` and `run.bat` pass the configuration through Kazarov's host launcher to `tools/windows/kazarov.ps1`. That script builds into `port/build/<configuration>`. The first run fetches the toolchain into `.kazarov/windows`, through `tools/windows/acquire.ps1`: llvm-mingw 20260922 (clang and lld), Ninja 1.13.2, SDL3 3.4.18 (MinGW), FFmpeg n9.0.2 (the LGPL shared build), glslang 16.6.0, the Vulkan 1.4.363.0 headers, and Rust 1.99.0 for the llvm-mingw UCRT target. `acquire-rust.ps1` verifies the official Rust and rustfmt archives, caches the locked crates, and installs `cxxbridge-cmd` 1.0.205; Corrosion 0.6.1 integrates Rust with CMake. Each downloaded archive is checked against its SHA-256 before extraction. `windows-x64` is a Debug build; `windows-x64-release` (and `windows`) is Release.
+`build.bat` and `run.bat` pass the configuration through Kazarov's host launcher to `tools/windows/kazarov.ps1`. That script builds into `port/build/<configuration>`. The first run uses Docker Desktop's Linux engine to export the `windows-deps` target in `tools/ci/Dockerfile` into `.kazarov/windows`. The bundle includes llvm-mingw 20260922, Ninja 1.13.2, CMake 4.4.5, Python 3.14, ccache 4.14.2, SDL3 3.4.18, glslang 16.6.0, the Vulkan 1.4.363.0 headers and redistributable loader, Rust 1.99.0 for the llvm-mingw UCRT target, cxxbridge-cmd 1.0.205, Corrosion 0.6.1, and the pinned CMake dependency sources. Docker cross-compiles FFmpeg 9.0.2 from Kazarov's pinned LGPL configuration instead of using expiring third-party autobuild assets. Every downloaded archive is verified against its SHA-256 before extraction. `windows-x64` is a Debug build; `windows-x64-release` (and `windows`) is Release.
 
-The Windows launcher prints elapsed stages for dependency checks, configuration and the build, and announces any lock wait. Compiler and Cargo output appears live, with the complete latest build output retained in `port/build/<configuration>/build.log`; failures preserve the native exit code. First-run downloads, archive verification and extraction announce their stages and log paths. `JOBS=N` sets the compile job count (the logical processor count by default). See [build measurements](port/buildperf.md) for the measured incremental costs. `pwsh -NoProfile -File tools/windows/test-build.ps1` checks live stdout/stderr, full logging and successful/failing exit codes without requiring a toolchain.
+The Windows launcher prints elapsed stages for dependency checks, configuration and the build, and announces any lock wait. Compiler and Cargo output appears live, with the complete latest build output retained in `port/build/<configuration>/build.log`; failures preserve the native exit code. The first dependency export shows Docker's layer progress and reuses its build cache. `JOBS=N` sets the compile job count (the logical processor count by default). See [build measurements](port/buildperf.md) for the measured incremental costs. `pwsh -NoProfile -File tools/windows/test-build.ps1` checks live stdout/stderr, full logging and successful/failing exit codes without requiring a toolchain.
 
 `run.bat` uses the same ignored `port/run/` extraction and version checks before launching, under the `port-data.lock` lock. The game holds the lock shared while it runs.
 
-The scripts need PowerShell 7, 7-Zip, CMake and Python 3. Python 3 is found through the `py` launcher or on `PATH`. 7-Zip and CMake are also looked for at their default install locations under `Program Files`.
+The launcher needs PowerShell 7 and Docker Desktop with its Linux engine. The exported bundle supplies the native compiler, build tools and Python; compilation runs directly on Windows.
 
 The test build is separate. After a `build.bat` run has fetched the toolchain:
 
@@ -57,7 +57,9 @@ Windows builds include the SDL, FFmpeg, C++/Rust runtime DLLs and the pinned red
 ctest --preset macos-arm64
 ```
 
-`macos-arm64` is a Debug build with the Homebrew preset in `CMakePresets.json`, into `port/build/macos-arm64`. `macos-arm64-release` is the Release build. The preset expects Homebrew's LLVM under `/opt/homebrew/opt/llvm`, and its `CMAKE_PREFIX_PATH` also names `sdl3`, `vulkan-headers`, `vulkan-loader` and `glslang`. CI additionally installs `molten-vk`, `googletest` and `nlohmann-json`. To run the game, SDL needs the loader by its full path, and the loader needs the MoltenVK driver:
+Apple builds use Xcode and Homebrew on macOS; Apple's SDKs cannot execute in the Linux dependency container. Docker's `apple-deps` target supplies verified portable sources, FFmpeg source, iOS SDL/MoltenVK inputs and the native cxxbridge generator. `tools/ci/apple-deps.sh` installs the native tools and builds the Apple libraries with Xcode.
+
+`macos-arm64` is a Debug build with the Homebrew preset in `CMakePresets.json`, into `port/build/macos-arm64`. `macos-arm64-release` is the Release build. The preset expects Homebrew's LLVM under `/opt/homebrew/opt/llvm`, and its `CMAKE_PREFIX_PATH` also names `sdl3`, `vulkan-headers`, `vulkan-loader` and `glslang`. CI additionally installs `molten-vk`; GoogleTest and JSON come from the Docker source bundle. To run the game, SDL needs the loader by its full path, and the loader needs the MoltenVK driver:
 
 ```sh
 export SDL_VULKAN_LIBRARY="$(brew --prefix vulkan-loader)/lib/libvulkan.1.dylib"
@@ -71,8 +73,9 @@ The iOS arm64 build requires macOS and Xcode with Swift C++ interoperability. Th
 and packages an unsigned IPA with its scripts, glyphs and gameplay seed. It targets iOS 16.3 and later;
 install the IPA through a sideloading tool that signs it for your device.
 
-For a local build, run `tools/ci/prebuilt-deps.sh ios-arm64`, install the Rust
-`aarch64-apple-ios` target, and configure `ios-arm64-release` with `SDL3_DIR`, `Vulkan_INCLUDE_DIR`
+For a local build, export Docker's `apple-deps` target into `.kazarov`, then run
+`bash tools/ci/apple-deps.sh ios-arm64` on macOS. Outside Actions it records the environment in
+`.kazarov/apple.env` and the cxxbridge path in `.kazarov/apple.path`. Configure `ios-arm64-release` with `SDL3_DIR`, `Vulkan_INCLUDE_DIR`
 and `Vulkan_LIBRARY` pointing to the iOS libraries. Build with
 `cmake --build port/build/ios-arm64-release --target darkchronicle`.
 
@@ -106,12 +109,13 @@ BUILD_DIR=build/pal python3 scripts/build/verify.py -c
 
 ### Continuous integration
 
-`.github/workflows/pc.yml` runs on pushes to `master` and on pull requests, in four jobs:
+Four independent workflows publish Windows, macOS, iOS and Linux builds on pushes to `master`, pull requests and manual dispatches. Builds configure `CT_BUILD_TESTS=OFF`; neither the game suite nor the data bridge test executable is compiled. Linux remains the Flatpak in `linux.yml`, without a duplicate native Release build. Platform packages retain their separate symbol artifacts.
 
-- Linux (`ubuntu-26.04`): configures `linux-x64` with `-DCT_TEST_TIMEOUT=60` (lavapipe renders on the CPU), builds it in the Kazarov container, checks that the clang Python bindings import, runs the full `ctest`, runs `scripts/port/native_gate.py` on the binary, and checks that `darkchronicle` is position-independent. It configures `CT_SYMBOLS=split`, runs the `tools/crash` tests, checks the build id and debuglink, and resolves a frame through `darkchronicle.debug`. Without the bindings, `Truncations.Check` and `Records.Check` skip, and a skip counts as a pass.
-- macOS (`macos-26`, Homebrew libraries): builds `macos-arm64` with `CT_SYMBOLS=split`, runs `ctest --preset macos-arm64`, and uploads the packaged binary and a `vulkaninfo` summary. It also resolves a frame through the dSYM and uploads `darkchronicle` with its dSYM as the symbol artifact. The pinned shared code carries the executable bit for `tools/kazarov/scripts/build/kz-ffmpeg`.
-- Windows (`windows-2025`): fetches the toolchain and the Vulkan runtime with `acquire.ps1 -VulkanLoader`, configures the test build with `configure.ps1 -Tests -VulkanLibrary`, builds it, runs `ctest -LE gpu`, and uploads the zipped build. It then resolves a frame at `wmain` with `symbolize.py` and uploads `package-symbols.ps1`'s symbol zip.
-- Flatpak (Flathub's `freedesktop-26.08` image): checks that `port/flatpak/cargo-sources.json` matches Kazarov's `Cargo.lock`, builds `chronicletwo.flatpak` from the commit under test (`docs/FLATPAK.md`), uploads it and the packaged `darkchronicle` as the symbol artifact, and checks that the packaged `darkchronicle` reaches its data check.
+`tests.yml` runs separately and calls the same Windows, macOS and Linux configurations with tests enabled. Linux uses the Docker toolchain, Debug assertions and lavapipe; it preserves the PAL timing baseline check, Python clang-binding checks, Rust publisher tests, crash-symboliser tests, native runtime gate, PIE check and split-symbol checks. Windows runs the desktop suite excluding GPU cases, Rust tests and symbol resolution. macOS runs its desktop and Rust suites and checks dSYM resolution; the documented virtual-GPU exceptions remain report-only. iOS runs the existing floating-point formatting compatibility regressions on an available arm64 iPhone simulator. The desktop suite's subprocess/death-test assumptions are not supported by iOS. Each platform uploads CTest XML and diagnostics on failure.
+
+`dependencies.yml` exports the Windows and Apple bundles from `tools/ci/Dockerfile` on a Linux runner. Dependency archives, CMake sources and single-header libraries are verified before export; the complete bundle is hashed again before extraction. Dependency cache keys include the Dockerfile, build declarations and pinned Kazarov revision. BuildKit layers, compiler results, Cargo registries and Cargo outputs are cached independently. Apple SDK and Homebrew setup stays native, with cached downloads and built iOS libraries. Failed dependency builds do not publish a partial bundle.
+
+Builds use the available CPU cores, including the nested Luau host-tool build. Native Luau precompilation shares the game's compiler library; cross builds use a separate host compiler with the same source revision. Individual script outputs remain separate Ninja jobs, so copying and bytecode generation run in parallel and unchanged scripts remain incremental. Windows, macOS and iOS also retain their ThinLTO caches across runs; Apple links enable the cache while preserving the objects needed for dSYM generation. New commits cancel obsolete runs for the same platform/ref; platform failures do not cancel other platforms.
 
 Cases default to a 5-second timeout. Slow GPU cases use the larger of 30 seconds and `CT_TEST_TIMEOUT`, so the Linux job gives them 60 seconds. Cases that need a Vulkan device carry the CTest label `gpu`. The hosted Windows runner has no device, so its job excludes them with `-LE gpu`. `ctest -L gpu -N` lists them. Local runs run every case.
 
@@ -501,13 +505,10 @@ five PAL languages with the translation's wording plus both, for example
 The PAL disc's Spanish script for the map where Max learns Spheda
 (`map/s/s17/s17_5.stb`) is a byte-for-byte copy of the Italian one, so its
 Spheda tutorial, prompts and dialogue read in Italian. `port/src/script_text.cpp`
-gives those 19 strings Spanish text when the script is read from the data index
-(`ResolveFile` in `port/src/platform/dataread.cpp`), after the NTSC timing conversion. Each
-line is anchored on its push instruction and the Italian text it must find there;
-a script that does not show every line is left unchanged with a warning. A text
-that fits is written over the Italian one, a longer one is appended after the
-script, so the file reads 1 KB or so longer and size queries report the same.
-The wording keeps the PAL Spanish names (Esfera, Esfeda, Bastón Multiusos, Ayuda).
+gives those 19 strings Spanish text when the script is translated to Luau
+(`tools/luau/script_text.json`). Each line is anchored on its push instruction and
+the Italian text it must find there; the transpiler refuses a script that does not
+show every line. The wording keeps the PAL Spanish names (Esfera, Esfeda, Bastón Multiusos, Ayuda).
 
 The Spanish text of the Spheda lesson that follows (`event/e300/e314/e314_5.txt`)
 says there is nothing more to remember right before the colour rules, and has a
@@ -519,7 +520,7 @@ The Spanish jump gate menus in Gundorada (`map/f/f04/f04_5.stb` and
 `map/s/s30/s30_5.stb`) put East and West on one line, "Puerta de salto Este --
 Oeste", so they show one destination fewer than the script offers: the last
 choice is blank and the ones after North lead one destination further than they
-say. The same file gives the three menus the English menu's lines, with East and
+say. The transpiler gives the three menus the English menu's lines, with East and
 West apart and the time gate named "Puerta del tiempo".
 
 ### darkchronicle
@@ -555,7 +556,6 @@ Environment, with the `DC2` prefix that `GameSetIdentity` sets:
 - `DC2_AUDIO_TRACE`: any value other than empty or `0` traces the audio calls on stderr.
 - `DC2_LOG=SPEC`: the log level, as `--log-level` takes it; `--log-level` outranks it, and it outranks `config.json`. An invalid value is logged and ignored.
 - `DC2_LOG_FILE=0`: no session log file, whatever `log.file` says.
-- `DC2_SCRIPT_VM=interpreter`: run every script on the retail interpreter, including those with a Luau module ([PORT_LUAU.md](PORT_LUAU.md)).
 - `DC2_CRASH_TEST=MODE[:early]`: as `--crash-test` (see "Test hooks"); the option outranks it.
 - `DC2_VULKAN_VALIDATION`: has no effect. `main` ORs its presence into `gfx::RendererConfig::validation`, which is already on in a Debug build, and a Release build never requests the layer.
 - `DC2_RENDER_SCALE`: pixels per PS2 line of the render targets (`gfx::RendererConfig::render_scale`), up to 8; `0`, the default, derives it from the window height over 480.
@@ -648,7 +648,7 @@ Fixtures and extracted game data stay outside the repository.
 2b. `CrashInit` installs the crash handlers and starts the crash report writer; runs with `--headless`, `--frames` or `--input` never show a crash dialog (see [CRASH_REPORTS.md](CRASH_REPORTS.md)). `--crash-test` (or `DC2_CRASH_TEST`) is parsed here.
 3. `ConfigLoad` reads `config.json` from the save root's parent directory (see "config.json"). `LogAttachFile` then applies its `log` section and opens `<save root>/../logs/darkchronicle-<session>.log`, which starts with every line logged since `LogInit`. `CrashSetBundleRoot` then puts crash bundles under `<save root>/crashes/<session>/`, and an early `--crash-test` fires.
 4. `FirstRunRequireData` checks the data root and opens setup when extraction is needed, or exits with status 3 in headless mode; on iOS it shows the launcher every time (see "Game data and first run").
-4a. `InitCDFile` indexes the data root, printing `dataread: indexed N files under <dir>`. NTSC script validation runs before the window, renderer, audio and clock. Incompatible scripts are named in the log and startup exits with status 5; desktop runs also show an error dialog.
+4a. `InitCDFile` indexes the data root, printing `dataread: indexed N files under <dir>`.
 5. The window opens, or the offscreen surface with `--headless`. A windowed run then shows the notice of a crash in an earlier session, if there is one not yet shown. Input initialises, and the input script is installed.
 6. The renderer starts (`gfx::RendererInit`) with a logical size of 512x480 at a 4:3 display aspect. It builds every pipeline, uses `<save root>/pipeline_cache.bin` as its pipeline cache, and prints `compiling shaders n/total` as it goes.
 7. `AudioInit(options.headless)` selects device-driven or tick-driven mixer ownership (see "Audio"). `AudioShutdown` is registered with `atexit`.
@@ -666,7 +666,7 @@ Each arena's high-water mark is tracked, and `MainLoop` logs `mg_memory: <name> 
 
 ### MainLoop
 
-`port/src/platform/mainloop.cpp` retains the retail boot and mode-dispatch order. Native changes include pointer-width alignment; mapped arenas and native-sized sub-game storage; retained static helpers through link-name bridges; writable file paths; and arena high-water reporting. `InitCDFile` runs from `main` before NTSC script validation and renderer startup.
+`port/src/platform/mainloop.cpp` retains the retail boot and mode-dispatch order. Native changes include pointer-width alignment; mapped arenas and native-sized sub-game storage; retained static helpers through link-name bridges; writable file paths; and arena high-water reporting. `InitCDFile` runs from `main` before renderer startup.
 
 Launch hooks prepare an explicit scene jump and give requested items on arrival. Jumps skip the ordinary boot logo and select English. `game.skip_intro` keeps the language select but drops the boot logo's fades, the copyright notice and the Level-5 logo movie. Configured debug mode or a jump unlocks debug controls; the one-controller modifier, developer-menu chord and capture/resume handling are native additions. Mode changes cut interpolation, and the final frame border follows the live visible extent rather than fixed retail screen edges. Ordinary launches preserve the retail scene route and default debug gate.
 
@@ -1538,14 +1538,14 @@ The reason for this design: the retail thread loops (`GamePadStep`, `NowLoadingL
 
 ### Disc scripts under the NTSC timing
 
-The PAL scripts (`.stb`) hold the NTSC frame counts and convert them while they run. `port/src/script_timing.cpp` removes those conversions when a script is read from the data index (`ResolveFile` in `port/src/platform/dataread.cpp`), so every loader and the file cache get the converted bytes.
+The PAL scripts (`.stb`) hold the NTSC frame counts and convert them while they run. The transpiler (`tools/luau/stb2luau/timing.py`) removes those conversions before it translates a script, so the Luau modules hold the NTSC counts.
 
-- Event and map scripts count fields: the shared event helpers scale their counts by `* 50 / 60`, and some loop bounds and cues are written as `(N * 50) / 60`. Monster scripts count game frames through a `conv(n) = ftoi(itof(n) / 30.0f * 25.0f)` helper, and a few scripts divide by 30 and multiply by 25 in integers. Each conversion becomes opcode-22 no-ops, which `CRunScript::exe()` steps over, so the value reaches its consumer unchanged; the converter keeps its `FTOI`.
+- Event and map scripts count fields: the shared event helpers scale their counts by `* 50 / 60`, and some loop bounds and cues are written as `(N * 50) / 60`. Monster scripts count game frames through a `conv(n) = ftoi(itof(n) / 30.0f * 25.0f)` helper, and a few scripts divide by 30 and multiply by 25 in integers. Each conversion becomes opcode-22 no-ops, so the value reaches its consumer unchanged; the converter keeps its `FTOI`.
 - The lip-sync helper's cue assignment, which PAL derives from the already scaled timeout, is removed whole.
 - A few literals PAL retuned by hand (a jump in d03, a turn in s03, an object delay and wait in m06b, the backpack scene in i01h01b, one turn in e221a) are anchored: the instruction sequence must occur once and hold the PAL value before the NTSC value is written. The same anchors cover the language copies `_1` to `_5`.
 - Max's and Monica's motion-ratio windows (`mainchr/c01.stb`, `c02.stb`, 8 bounds) take their NTSC values.
 - Matching only looks at decoded instructions inside the script's functions (the program table, CALL targets and unreferenced function blocks), never at raw bytes. Every recipe is validated before any is written, sizes never change, and a converted script converts to the same bytes again.
-- `port/src/script_timing_inventory.inc` lists every script that holds a conversion, with the count of each recipe it must show. Before gameplay starts, NTSC timing validates every indexed `.stb` with the same decoder and recipes, including datapack replacements. Matching replacements are converted through the same loader. A listed script that does not match, or an unlisted one that holds a conversion, appears in a startup report naming the asset. Startup logs the complete asset list and exits with status 5; desktop runs also show an error dialog. Saved settings are unchanged. Unlisted, undecodable `.stb` files stay unchanged with a warning once per asset per session, matching the loader. Validation reads and decodes the scripts on up to 16 threads, then reports them in key order; it reads the files once and writes no disk cache. Each converted asset logs once per session.
+- `tools/luau/stb2luau/timing_inventory.json` lists every script that holds a conversion, with the count of each recipe it must show. The transpiler refuses a listed script that does not match and an unlisted one that holds a conversion.
 - Effect scripts keep PAL's waits for the end of their motion.
 
 [Luau scripts](PORT_LUAU.md) describes the script kinds, the command catalog and the corpus survey for the Luau replacement of the script machine.

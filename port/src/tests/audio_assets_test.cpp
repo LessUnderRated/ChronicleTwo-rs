@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 #include <nlohmann/json.hpp>
 
+#include <array>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -86,11 +87,17 @@ TEST_F(AudioAssetsTest, SoundConfigRejectsOversizedTableBeforeChangingBankOrAren
 }
 
 TEST_F(AudioAssetsTest, PoisonedSceneAudioStartsWithNoLoadedBanksOrRequests) {
-    auto bytes = std::make_unique<std::byte[]>(sizeof(CScene));
-    std::memset(bytes.get(), 0xA5, sizeof(CScene));
-    static_assert(alignof(CScene) <= alignof(std::max_align_t));
+    /**
+     * Holds poisoned scene storage with the scene's required alignment.
+     */
+    struct alignas(CScene) SceneStorage {
+        std::array<std::byte, sizeof(CScene)> bytes; /**< Uninitialized scene representation. */
+    };
+
+    auto bytes = std::make_unique<SceneStorage>();
+    bytes->bytes.fill(std::byte{0xA5});
     const auto                                 destroy = [](CScene *scene) { std::destroy_at(scene); };
-    std::unique_ptr<CScene, decltype(destroy)> owner(std::construct_at(reinterpret_cast<CScene *>(bytes.get())), destroy);
+    std::unique_ptr<CScene, decltype(destroy)> owner(std::construct_at(reinterpret_cast<CScene *>(bytes->bytes.data())), destroy);
     auto                                      *scene = owner.get();
     ASSERT_EQ(scene->bgm_no, 0);
     EXPECT_EQ(scene->GetActiveBgmInfo(), &scene->bgm[0]);

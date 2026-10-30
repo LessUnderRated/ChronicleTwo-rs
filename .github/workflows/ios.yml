@@ -1,19 +1,30 @@
-name: iOS builds
-
+name: iOS
 on:
   push:
     branches: [master]
   pull_request:
   workflow_dispatch:
-
 permissions:
   contents: read
-
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
+  dependencies:
+    uses: ./.github/workflows/dependencies.yml
+    with:
+      platform: apple
+      artifact: apple-dependencies-ios
   build:
-    name: Build for iOS arm64
+    name: Build (iOS arm64)
+    needs: dependencies
+    timeout-minutes: 60
     runs-on: macos-26
     env:
+      CARGO_TARGET_DIR: ${{ github.workspace }}/.kazarov/cargo-target/ios
+      CCACHE_DIR: ${{ github.workspace }}/.kazarov/ccache/ios
+      CCACHE_BASEDIR: ${{ github.workspace }}
+      CCACHE_COMPILERCHECK: content
       HOMEBREW_NO_AUTO_UPDATE: 1
       HOMEBREW_NO_INSTALL_CLEANUP: 1
     steps:
@@ -21,52 +32,34 @@ jobs:
         with:
           submodules: true
 
-      # FFmpeg's libraries are cross-compiled with Kazarov's pinned LGPL configuration.
-      - name: Install the toolchain and libraries
+      - uses: actions/download-artifact@v7
+        with:
+          name: apple-dependencies-ios
+          path: .kazarov/bundle
+      - name: Unpack verified dependencies
         run: |
-          brew install cmake ninja glslang
-          rustup toolchain install stable --profile minimal
-          rustup target add aarch64-apple-ios
-          tools/ci/prebuilt-deps.sh ios-arm64
-
-      # SDL3 is required by kazarov and is not shipped as an iOS framework by Homebrew,
-      # so cross-compile it for iOS arm64 into a local prefix the CMake configure can find.
-      - name: Build SDL3 for iOS arm64
-        run: |
-          curl -L https://github.com/libsdl-org/SDL/archive/refs/tags/release-3.4.0.tar.gz \
-            | tar xz -C "$RUNNER_TEMP"
-          cmake -S "$RUNNER_TEMP/SDL-release-3.4.0" -B "$RUNNER_TEMP/sdl-ios-build" \
-            -DCMAKE_SYSTEM_NAME=iOS \
-            -DCMAKE_OSX_ARCHITECTURES=arm64 \
-            -DCMAKE_OSX_SYSROOT=iphoneos \
-            -DCMAKE_OSX_DEPLOYMENT_TARGET=16.3 \
-            -DCMAKE_C_COMPILER=clang \
-            -DCMAKE_CXX_COMPILER=clang++ \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_INSTALL_PREFIX="$RUNNER_TEMP/sdl-ios" \
-            -DSDL_STATIC=ON \
-            -DSDL_SHARED=OFF \
-            -DSDL_TESTS=OFF \
-            -DSDL_EXAMPLES=OFF
-          cmake --build "$RUNNER_TEMP/sdl-ios-build" --config Release -j"$(sysctl -n hw.ncpu)"
-          cmake --install "$RUNNER_TEMP/sdl-ios-build" --config Release
-          echo "SDL3_PREFIX=$RUNNER_TEMP/sdl-ios" >> "$GITHUB_ENV"
-
-      # Homebrew's molten-vk is a macOS dylib; the iOS static library and its Vulkan headers come from the
-      # MoltenVK release.
-      - name: Fetch MoltenVK for iOS
-        run: |
-          curl -L https://github.com/KhronosGroup/MoltenVK/releases/download/v1.4.2/MoltenVK-ios.tar \
-            | tar x -C "$RUNNER_TEMP"
-          lib=$(find "$RUNNER_TEMP/MoltenVK" -path '*/static/MoltenVK.xcframework/ios-arm64/libMoltenVK.a' | head -n1)
-          header=$(find "$RUNNER_TEMP/MoltenVK" -path '*/include/vulkan/vulkan.h' | head -n1)
-          test -n "$lib" && test -n "$header"
-          echo "MOLTENVK_LIBRARY=$lib" >> "$GITHUB_ENV"
-          echo "VULKAN_INCLUDE_DIR=$(dirname "$(dirname "$header")")" >> "$GITHUB_ENV"
+          test "$(shasum -a 256 .kazarov/bundle/deps.tar.gz | cut -d' ' -f1)" = "$(cat .kazarov/bundle/deps.sha256)"
+          tar xzf .kazarov/bundle/deps.tar.gz -C .kazarov
+      - uses: actions/cache@v5
+        with:
+          path: |
+            ~/Library/Caches/Homebrew
+            ~/.cargo/registry
+            ~/.cargo/git
+            .kazarov/ffmpeg/ios-arm64
+            .kazarov/apple/ios-arm64
+            .kazarov/cargo-target/ios
+            .kazarov/ccache/ios
+            port/build/ios-arm64-release/lto-cache
+          key: compile-ios-${{ hashFiles('tools/ci/Dockerfile', 'tools/ci/apple-deps.sh', 'tools/kazarov/Cargo.lock') }}-${{ github.sha }}
+          restore-keys: |
+            compile-ios-${{ hashFiles('tools/ci/Dockerfile', 'tools/ci/apple-deps.sh', 'tools/kazarov/Cargo.lock') }}-
+      - name: Prepare Apple dependencies
+        run: bash tools/ci/apple-deps.sh ios-arm64
 
       - name: Configure for iOS
         run: |
-          cmake --preset ios-arm64-release \
+          cmake --preset ios-arm64-release -C tools/ci/dependencies.cmake -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DSDL3_DIR="$SDL3_PREFIX/lib/cmake/SDL3" \
             -DVulkan_INCLUDE_DIR="$VULKAN_INCLUDE_DIR" \
             -DVulkan_LIBRARY="$MOLTENVK_LIBRARY" \
@@ -78,8 +71,7 @@ jobs:
         # Only here: FFmpeg's configure would build its host tools for iOS too and could not run them.
         env:
           IPHONEOS_DEPLOYMENT_TARGET: "16.3"
-        # -k 0 reports every unit that fails, not only the first.
-        run: cmake --build port/build/ios-arm64-release --target darkchronicle -j"$(sysctl -n hw.ncpu)" -- -k 0
+        run: cmake --build port/build/ios-arm64-release --target darkchronicle --parallel "$CMAKE_BUILD_PARALLEL_LEVEL"
 
       # The .ipa is unsigned: a sideloading tool (Sideloadly, AltStore) signs it with the installer's Apple ID.
       # The button symbols and the gameplay seed (assets/data.zip) go inside the bundle, which is where the game

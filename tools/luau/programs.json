@@ -165,7 +165,7 @@
    ],
    "port": {
     "enum": "EffectScriptProgram",
-    "header": "port/src/effscript_port.hpp"
+    "header": "port/include/script/effect_script_runtime.hpp"
    }
   },
   "event": {

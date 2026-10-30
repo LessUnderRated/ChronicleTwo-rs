@@ -548,14 +548,6 @@ TEST_F(LuauRuntime, ModuleForScriptMapsTheKindsLuauRuns) {
     EXPECT_EQ(luau_runtime::ModuleForScript("event/tbox/ntbox_arg.stb"), std::optional<std::string>("event/tbox/ntbox_arg"));
 }
 
-TEST_F(LuauRuntime, FallbackScriptsIgnoreAStaleModule) {
-    // Monster Gaspard is on tools/luau/fallback.json; an old copy of its module must not bring it back to Luau.
-    std::filesystem::create_directories(root / "dungeon/monster");
-    std::ofstream(root / "dungeon/monster/p00_23a.luau") << "return {}\n";
-    luau_runtime::SetScriptsRoot(root);
-    EXPECT_FALSE(luau_runtime::ModuleForScript("dungeon/monster/p00_23a.stb").has_value());
-}
-
 TEST_F(LuauRuntime, PrintMatchesRetailPrint) {
     Loaded loaded("facade/natives");
     testing::internal::CaptureStdout();
@@ -736,7 +728,7 @@ TEST_F(LuauRuntime, NativeOutputsAreNilWhileSkipping) {
 
 TEST_F(LuauRuntime, NestedHelpersLoadNativeCommandsAndResumeInTheInstanceSandbox) {
     std::ofstream(root / "lib/boss_command.luau") << R"(
-local set_program = action.ProgSet
+local set_program = action.set_program_value
 return function(value) set_program(value) end
 )";
     std::ofstream(root / "lib/boss_setup.luau") << R"(
@@ -769,13 +761,13 @@ return { setup = setup }
     EXPECT_EQ(loaded.script.end, 1);
 }
 
-TEST_F(LuauRuntime, ItemMenuResultSurvivesTheNativeCallFrameAndCoroutineYield) {
+TEST_F(LuauRuntime, ItemMenuResultReachesTheScriptAfterTheMenuExits) {
     std::ofstream(root / "map" / "deferred_menu.luau") << R"(
 local script = {}
 function script.event_3()
-    local result = event.GotoUseItem(376)
+    event.open_use_item_menu(376)
     coroutine.yield()
-    return result
+    return vmhost.used_item() or -1
 end
 return script
 )";
@@ -785,12 +777,8 @@ return script
     const auto previous_mode = EdEventInfo.command_mode;
     ASSERT_EQ(loaded.script.run(3), 1);
     EXPECT_EQ(loaded.script.end, 0);
-    loaded.script.resume();
-    EXPECT_EQ(loaded.script.end, 0);
     MenuArg.result[0] = 376;
     EdEventMenuExit();
-    loaded.script.resume();
-    EXPECT_EQ(loaded.script.end, 0);
     loaded.script.resume();
     EXPECT_EQ(loaded.script.end, 1);
     EXPECT_EQ(loaded.script.result, 376);
@@ -798,9 +786,12 @@ return script
     EdEventInfo.command_mode = previous_mode;
 }
 
-TEST_F(LuauRuntime, CancelledItemMenuResultCannotWriteIntoARetiredNativeCall) {
+TEST_F(LuauRuntime, ItemMenuOfARetiredScriptWritesNothing) {
     std::ofstream(root / "map" / "cancelled_menu.luau") << R"(
-return { event_3 = function() return event.GotoUseItem(376) end }
+return { event_3 = function() event.open_use_item_menu(376) coroutine.yield() end }
+)";
+    std::ofstream(root / "map" / "used_item_probe.luau") << R"(
+return { event_3 = function() return vmhost.used_item() or -1 end }
 )";
     Loaded loaded("map/cancelled_menu");
     SetEventFunc(&loaded.script);
@@ -811,6 +802,10 @@ return { event_3 = function() return event.GotoUseItem(376) end }
     MenuArg.result[0] = 7;
     EdEventMenuExit();
     EXPECT_FALSE(luau_runtime::Owns(&loaded.script));
+    Loaded probe("map/used_item_probe");
+    probe.script.run(3);
+    EXPECT_EQ(probe.script.end, 1);
+    EXPECT_EQ(probe.script.result, -1);
     MenuArg = previous_menu;
     EdEventInfo.command_mode = previous_mode;
 }
@@ -840,9 +835,9 @@ TEST_F(LuauRuntime, RetiredArenaStorageDropsTheInstanceBeforeReadingItsPoisonedC
 TEST_F(LuauRuntime, NativeTextRemainsBoundedAcrossNestedCallsAndRetainedCopiesOutliveCallFrames) {
     {
         std::ofstream output(root / "facade" / "text_lifetime.luau");
-        output << "return {[200]=function() action.SetPallet(4,'outer');"
-                  "action.SetPallet(4,'replacement') end,"
-                  "[201]=function() action.Ext(200,'inner') end}";
+        output << "return {[200]=function() action.start_palette_flash(4,'outer');"
+                  "action.start_palette_flash(4,'replacement') end,"
+                  "[201]=function() action.call_command(200,'inner') end}";
     }
     static char key;
     auto       *storage = reinterpret_cast<u_long128 *>(ArenaBlock(&key, 1024 * sizeof(u_long128)));

@@ -4,6 +4,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
+#include <locale>
+#include <sstream>
 
 #include "log/game_output.hpp"
 #include "scriptinterpreter.hpp"
@@ -489,9 +492,15 @@ int CScriptInterpreter::GetArg() {
         } else if (text.empty() || non_numeric) {
             argument.type = SPI_STACK_TYPE_INVALID;
         } else if (argument.type == SPI_STACK_TYPE_FLOAT) {
-            float      value = 0.0f;
-            const auto parsed = std::from_chars(text.data(), text.data() + text.size(), value);
-            if (parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size() || !std::isfinite(value)) {
+            float              value = 0.0f;
+            std::istringstream input(text);
+            input.imbue(std::locale::classic());
+            input >> std::noskipws >> value;
+            // Some standard libraries report underflow for representable subnormals.
+            const bool subnormal = value != 0.0f && std::fabs(value) < std::numeric_limits<float>::min();
+            // A nonzero decimal that rounds to zero is outside the float range.
+            const bool underflow = value == 0.0f && text.find_first_of("123456789") != std::string::npos;
+            if ((!input && !subnormal) || !input.eof() || !std::isfinite(value) || underflow) {
                 argument.type = SPI_STACK_TYPE_INVALID;
             } else {
                 argument.value.real = value;

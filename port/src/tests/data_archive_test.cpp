@@ -340,7 +340,6 @@ TEST_F(DataArchive, DataReadLoadsFromDataZipWithoutDirectories) {
     const auto expected = Bytes(5000, 2);
     EXPECT_TRUE(std::equal(expected.begin(), expected.end(), buffer.begin()));
     EXPECT_TRUE(std::all_of(buffer.begin() + 5000, buffer.begin() + 6144, [](std::uint8_t value) { return value == 0; }));
-    EXPECT_EQ(DataReadScriptKeys().size(), 0u);
     EXPECT_FALSE(DataReadFind("missing.bin"));
     const auto settings = DataReadFind("menu/cfg7/wepdat.cfg.json");
     if (!settings) {

@@ -92,8 +92,10 @@ void FirstRunRequireData(const fs::path &root, bool headless) {
     if (!headless) {
         try {
             const auto path = root.u8string();
-            if (kazarov::setup_data("Dark Chronicle — Game data", std::string(
-                                                                      reinterpret_cast<const char *>(path.data()), path.size())) &&
+            // The game runs the scripts' Luau modules, so the compiled scripts are not published.
+            if (kazarov::setup_data_with_script_policy("Dark Chronicle — Game data",
+                                                       std::string(reinterpret_cast<const char *>(path.data()), path.size()),
+                                                       kazarov::ScriptPublicationPolicy::LuauOnly) &&
                 !FirstRunDataMissing(root)) {
                 return;
             }

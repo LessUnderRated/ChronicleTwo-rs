@@ -40,22 +40,7 @@ std::optional<vfs::Ref> DataReadFind(const char *game_name);
  */
 std::optional<std::string> DataReadAssetPath(const char *game_name);
 
-// Sorted script keys from the existing index; does not walk the data tree again.
-std::vector<std::string> DataReadScriptKeys();
 /**
  * Lists directly indexed files immediately below a native resource directory.
  */
 std::vector<std::string> DataReadNativeKeys(std::string_view directory);
-
-struct ScriptTimingValidation {
-    std::size_t              files = 0;
-    double                   seconds = 0;
-    std::vector<std::string> errors;
-};
-
-// Dry-run the same recipes as the loader over every indexed .stb, including datapack replacements.
-ScriptTimingValidation DataReadValidateScriptTiming();
-
-// Validate before gameplay starts; incompatible scripts are logged and refuse startup.
-// Desktop runs also show an error dialog. False means the caller must exit with status 5.
-bool DataReadPrepareScriptTiming(bool headless);

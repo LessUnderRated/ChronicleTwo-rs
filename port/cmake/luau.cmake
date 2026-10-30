@@ -28,9 +28,9 @@ set(CT_LUAU_BINDINGS ${CMAKE_BINARY_DIR}/generated/luau/luau_bindings.cpp)
 add_custom_command(OUTPUT ${CT_LUAU_BINDINGS}
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/luau/bindings.py
         ${CMAKE_SOURCE_DIR}/tools/luau/commands.json ${CT_LUAU_BINDINGS} --kinds ${ct_luau_kinds}
-        --programs ${CMAKE_SOURCE_DIR}/tools/luau/programs.json --fallback ${CMAKE_SOURCE_DIR}/tools/luau/fallback.json
+        --programs ${CMAKE_SOURCE_DIR}/tools/luau/programs.json
     DEPENDS ${CMAKE_SOURCE_DIR}/tools/luau/bindings.py ${CMAKE_SOURCE_DIR}/tools/luau/commands.json
-        ${CMAKE_SOURCE_DIR}/tools/luau/programs.json ${CMAKE_SOURCE_DIR}/tools/luau/fallback.json
+        ${CMAKE_SOURCE_DIR}/tools/luau/programs.json
     COMMENT "Generating the Luau native command tables"
     VERBATIM)
 target_sources(ct_port PRIVATE ${CT_LUAU_BINDINGS})
@@ -79,34 +79,48 @@ if(NOT CT_LUAU_PRECOMPILE_LEVEL MATCHES "^[012]$")
     message(FATAL_ERROR "CT_LUAU_PRECOMPILE_LEVEL must be 0, 1 or 2")
 endif()
 if(CT_LUAU_PRECOMPILE)
-    include(ExternalProject)
-    set(ct_luau_host_dir ${CMAKE_BINARY_DIR}/luau-host)
-    set(ct_luau_precompiler ${ct_luau_host_dir}/luau-precompile)
-    if(CMAKE_HOST_WIN32)
-        string(APPEND ct_luau_precompiler .exe)
-    endif()
-    set(ct_luau_host_compilers "")
     if(NOT CMAKE_CROSSCOMPILING)
-        list(APPEND ct_luau_host_compilers -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-            -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM})
+        # Native builds share the game's compiler library rather than building Luau.Compiler twice.
+        add_executable(luau-precompile EXCLUDE_FROM_ALL ${CMAKE_SOURCE_DIR}/tools/luau/precompile/precompile.cpp)
+        target_include_directories(luau-precompile PRIVATE ${CMAKE_SOURCE_DIR}/port/src)
+        target_link_libraries(luau-precompile PRIVATE Luau.Compiler)
+        set(ct_luau_precompiler $<TARGET_FILE:luau-precompile>)
+        set(ct_luau_precompiler_target luau-precompile)
+    else()
+        include(ExternalProject)
+        set(ct_luau_host_dir ${CMAKE_BINARY_DIR}/luau-host)
+        set(ct_luau_precompiler ${ct_luau_host_dir}/luau-precompile)
+        if(CMAKE_HOST_WIN32)
+            string(APPEND ct_luau_precompiler .exe)
+        endif()
+        # The iOS build's environment names a deployment target, which would make the host compiler target iOS too.
+        set(ct_luau_host_env ${CMAKE_COMMAND} -E env --unset=IPHONEOS_DEPLOYMENT_TARGET --unset=SDKROOT)
+        include(ProcessorCount)
+        ProcessorCount(ct_luau_host_jobs)
+        if(DEFINED ENV{CMAKE_BUILD_PARALLEL_LEVEL} AND NOT "$ENV{CMAKE_BUILD_PARALLEL_LEVEL}" STREQUAL "")
+            set(ct_luau_host_jobs "$ENV{CMAKE_BUILD_PARALLEL_LEVEL}")
+        endif()
+        if(NOT ct_luau_host_jobs MATCHES "^[1-9][0-9]*$")
+            set(ct_luau_host_jobs 1)
+        endif()
+        ExternalProject_Add(ct_luau_host
+            SOURCE_DIR ${CMAKE_SOURCE_DIR}/tools/luau/precompile
+            BINARY_DIR ${ct_luau_host_dir}
+            CONFIGURE_COMMAND ${ct_luau_host_env} ${CMAKE_COMMAND} -S <SOURCE_DIR> -B <BINARY_DIR> -G ${CMAKE_GENERATOR}
+                -DCMAKE_BUILD_TYPE=Release -DLUAU_SOURCE_DIR=${luau_SOURCE_DIR} -DCT_PORT_SOURCE_DIR=${CMAKE_SOURCE_DIR}/port/src
+                -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
+            BUILD_COMMAND ${ct_luau_host_env} ${CMAKE_COMMAND} --build <BINARY_DIR> --target luau-precompile --parallel ${ct_luau_host_jobs}
+            INSTALL_COMMAND ""
+            # The inner build decides what is out of date, and leaves the tool untouched when nothing is.
+            BUILD_ALWAYS ON
+            BUILD_BYPRODUCTS ${ct_luau_precompiler})
+        set(ct_luau_precompiler_target ct_luau_host)
     endif()
-    # The iOS build's environment names a deployment target, which would make the host compiler target iOS too.
-    set(ct_luau_host_env ${CMAKE_COMMAND} -E env --unset=IPHONEOS_DEPLOYMENT_TARGET --unset=SDKROOT)
-    ExternalProject_Add(ct_luau_host
-        SOURCE_DIR ${CMAKE_SOURCE_DIR}/tools/luau/precompile
-        BINARY_DIR ${ct_luau_host_dir}
-        CONFIGURE_COMMAND ${ct_luau_host_env} ${CMAKE_COMMAND} -S <SOURCE_DIR> -B <BINARY_DIR> -G ${CMAKE_GENERATOR}
-            ${ct_luau_host_compilers} -DCMAKE_BUILD_TYPE=Release -DLUAU_SOURCE_DIR=${luau_SOURCE_DIR} -DCT_PORT_SOURCE_DIR=${CMAKE_SOURCE_DIR}/port/src
-        BUILD_COMMAND ${ct_luau_host_env} ${CMAKE_COMMAND} --build <BINARY_DIR> --target luau-precompile
-        INSTALL_COMMAND ""
-        # The inner build decides what is out of date, and leaves the tool untouched when nothing is.
-        BUILD_ALWAYS ON
-        BUILD_BYPRODUCTS ${ct_luau_precompiler})
     foreach(relative IN LISTS CT_LUAU_RELATIVES)
         set(compiled ${CMAKE_BINARY_DIR}/scripts/${relative}c)
         add_custom_command(OUTPUT ${compiled}
             COMMAND ${ct_luau_precompiler} -O${CT_LUAU_PRECOMPILE_LEVEL} ${CMAKE_BINARY_DIR}/scripts/${relative} ${compiled}
-            DEPENDS ${CMAKE_BINARY_DIR}/scripts/${relative} ${ct_luau_precompiler} ct_luau_host
+            DEPENDS ${CMAKE_BINARY_DIR}/scripts/${relative} ${ct_luau_precompiler} ${ct_luau_precompiler_target}
             COMMENT "Precompiling the script ${relative}"
             VERBATIM)
         list(APPEND CT_LUAU_COPIES ${compiled})

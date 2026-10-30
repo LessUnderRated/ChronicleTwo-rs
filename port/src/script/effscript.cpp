@@ -5611,7 +5611,6 @@ int InitSpriteCore(dc2::script::RunArguments stack, int argument_count) {
 #include "render/texture_runtime.hpp"
 #include "scenesnd.hpp"
 #include "script/effect_script_runtime.hpp"
-#include "script_timing.hpp"
 
 // The effect whose script is running (port/src/effscript_config_bridge.inc).
 _EFF_SCRIPT *PortRunningEffect();
@@ -5863,25 +5862,15 @@ struct EffectResource {
 };
 
 /**
- * Reads and validates one directly named compiled VM program with its timing conversion, or the handle of the Luau
- * module that replaces it.
+ * Returns the handle of the Luau module of one directly named effect script, or nothing when it has none.
  */
 std::vector<unsigned char> EffectScript(const std::string &path) {
-    if (const auto module = luau_runtime::ModuleForScript(vfs::FoldKey(path))) {
-        const std::string handle = luau_runtime::MakeHandle(*module);
-        return {handle.begin(), handle.end()};
+    const auto module = luau_runtime::ModuleForScript(vfs::FoldKey(path));
+    if (!module) {
+        return {};
     }
-    for (const auto &candidate : datapacks::Candidates(path)) {
-        std::vector<unsigned char> bytes;
-        if (!datapacks::ReadFileBytes(candidate, bytes) || bytes.size() > static_cast<std::size_t>(std::numeric_limits<int>::max())) {
-            continue;
-        }
-        const auto result = script_timing::Apply(path, bytes.data(), bytes.size());
-        if (result.ok && result.decoded) {
-            return bytes;
-        }
-    }
-    return {};
+    const std::string handle = luau_runtime::MakeHandle(*module);
+    return {handle.begin(), handle.end()};
 }
 
 /**

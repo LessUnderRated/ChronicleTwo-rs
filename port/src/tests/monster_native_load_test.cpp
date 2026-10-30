@@ -10,10 +10,13 @@
 #include <filesystem>
 #include <fstream>
 #include <memory>
+#include <optional>
+#include <string>
 #include <vector>
 
 #include "assets/data_registry.hpp"
 #include "dng_main.hpp"
+#include "luau_runtime.hpp"
 #include "mg_memory.hpp"
 #include "monster.hpp"
 #include "native_document_fixture.hpp"
@@ -72,18 +75,9 @@ protected:
         };
         game["profiles"]["p00_23a"]["commands"] = Json::array({command});
         dc::test::WriteNativeDocument(root / "data/dungeon/monster/p00_23a.game.json", game);
-        std::array<unsigned char, 132> script{};
-        std::memcpy(script.data(), "SB2", 4);
-        const auto put = [&](int offset, int value) { std::memcpy(script.data() + offset, &value, sizeof(value)); };
-        put(4, 64);
-        put(8, 64);
-        put(12, 28);
-        put(64, 56);
-        put(120, 27);
-        std::filesystem::create_directories(root / "data/dungeon/monster");
-        std::ofstream output(root / "data/dungeon/monster/native_fixture.stb", std::ios::binary);
-        output.write(reinterpret_cast<const char *>(script.data()), script.size());
-        output.close();
+        std::filesystem::create_directories(root / "scripts/dungeon/monster");
+        std::ofstream(root / "scripts/dungeon/monster/native_fixture.luau") << "return { setup = function() end }\n";
+        luau_runtime::SetScriptsRoot(root / "scripts");
         DataReadIndex(root / "data");
         std::memset(scratch.data(), 0xA5, sizeof(scratch));
         BuffReadData = scratch.data();
@@ -94,6 +88,7 @@ protected:
     }
 
     void TearDown() override {
+        luau_runtime::SetScriptsRoot({});
         BuffReadData = previous_buffer;
         model_assets::Clear();
         DataReadIndex(previous);
@@ -114,8 +109,9 @@ TEST_F(NativeMonsterLoad, LoadsOversizedGltfWithoutWritingOriginalReadScratch) {
     EXPECT_EQ(manager->refer[0].id, 511);
     EXPECT_EQ(manager->refer[0].chara.tbl, &table);
     ASSERT_NE(manager->refer[0].chara.GetFrame(), nullptr);
-    ASSERT_GE(manager->refer[0].script.size(), 4u);
-    EXPECT_EQ(std::memcmp(manager->refer[0].script.data(), "SB2", 4), 0);
+    const auto script = manager->refer[0].script;
+    EXPECT_EQ(luau_runtime::HandleModule({reinterpret_cast<const char *>(script.data()), script.size()}),
+              std::optional<std::string>("dungeon/monster/native_fixture"));
 }
 
 TEST_F(NativeMonsterLoad, RejectsSwordEffectCountsBeyondCharacterSlots) {

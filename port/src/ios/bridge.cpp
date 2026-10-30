@@ -152,7 +152,8 @@ void ExtractBegin(const std::string &image, const std::string &root) {
         extraction_worker = std::async(std::launch::async, [](const std::string &image, const std::string &root) {
         try {
             const unsigned jobs = std::clamp(std::thread::hardware_concurrency(), 1u, 2u);
-            kazarov::extract_tracked(image, root, jobs);
+            // The game runs the scripts' Luau modules, so the compiled scripts are not published.
+            kazarov::extract_tracked_with_script_policy(image, root, jobs, kazarov::ScriptPublicationPolicy::LuauOnly);
             return FirstRunDataMissing(root) ? std::string("The extraction finished without current game data.") : std::string{};
         } catch (const std::exception &error) {
             return std::string(error.what());

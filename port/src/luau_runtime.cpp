@@ -38,7 +38,6 @@
 #include "luau_runtime.hpp"
 #include "platform/legacy_encoding.hpp"
 #include "platform/paths.hpp"
-#include "platform/settings.hpp"
 #include "platform/vfs.hpp"
 
 namespace {
@@ -50,6 +49,29 @@ constexpr std::size_t      kHandleAlignment = 16;
 constexpr std::int32_t     kUnwritten = 0x7FC0DEAD;
 constexpr std::int64_t     kDefaultBudget = 10000000;
 constexpr std::size_t      kMaxArguments = 32;
+
+// The slot a deferred output's handler keeps: the use item menu writes the chosen item there when it exits, after the
+// call has returned, and vmhost.used_item reads it.
+RS_STACKDATA deferred_output{RS_INT, {.i = kUnwritten}};
+// Counts deferred calls and forgotten callers, so a menu that exits after its slot was replaced writes nothing.
+std::uint64_t     deferred_generation = 0;
+const CRunScript *deferred_owner = nullptr;
+
+/**
+ *
+ * Gives the use item menu a writer for the deferred slot of the call that opened it.
+ *
+ */
+dc2::script::DeferredIntegerWriter CaptureDeferredOutput(void *, RS_STACKDATA &value) {
+    if (&value != &deferred_output) {
+        return {};
+    }
+    return [generation = deferred_generation](int result) {
+        if (generation == deferred_generation) {
+            deferred_output.val.i = result;
+        }
+    };
+}
 
 /**
  *
@@ -206,17 +228,6 @@ int Print(lua_State *lua) {
 
 /**
  *
- * Holds a menu result across native return and coroutine suspension.
- *
- */
-struct PendingIntegerOutput {
-    RS_STACKDATA        value{};                         /**< Stable slot supplied to the native command. */
-    luau_bindings::Type type = luau_bindings::Type::S32; /**< Type returned to the suspended caller. */
-    bool                ready = false;                   /**< Whether the menu completed this result. */
-};
-
-/**
- *
  * One script instance's Luau state: its sandboxed thread, its programs and the coroutine of the running program.
  *
  */
@@ -230,7 +241,6 @@ struct Instance {
     int                                     script_ref = LUA_NOREF; /**< Registry ref to the script table the module returned. */
     int                                     thread_ref = LUA_NOREF; /**< Registry ref to the coroutine of the running program. */
     int                                     running_no = 0;         /**< Program number the coroutine of the running program was started for. */
-    std::shared_ptr<PendingIntegerOutput>   pending_output;         /**< Result owned until completion, cancellation or program replacement. */
     bool                                    broken = false;         /**< Whether the module failed to load and has no handlers. */
 
     ~Instance() {
@@ -252,19 +262,6 @@ std::unordered_map<const CRunScript *, std::shared_ptr<Instance>> &Instances() {
                (entry.second->controller_anchor && entry.second->controller_anchor->Bytes().empty());
     });
     return values;
-}
-
-/**
- *
- * Reports whether Luau runs script kinds, unless DC2_SCRIPT_VM selects the interpreter; read once.
- *
- */
-bool ScriptVmEnabled() {
-    static const bool enabled = [] {
-        const char *value = SettingsEnv("SCRIPT_VM");
-        return value == nullptr || std::string_view(value) != "interpreter";
-    }();
-    return enabled;
 }
 
 /**
@@ -495,6 +492,12 @@ void MarshalValue(lua_State *lua, int arg, luau_bindings::Type type, RS_STACKDAT
             return;
         case LUA_TNIL:
         case LUA_TNONE:
+            if (type == luau_bindings::Type::String) {
+                // No string, as retail reads the address 0.
+                slot.type = RS_STR;
+                slot.val.s = nullptr;
+                return;
+            }
             SetInteger(slot, 0.0);
             return;
         default: {
@@ -594,9 +597,9 @@ enum class Variant : unsigned char {
 std::string_view VariantSuffix(Variant variant) {
     switch (variant) {
         case Variant::Int:
-            return "Int";
+            return "_int";
         case Variant::Float:
-            return "Float";
+            return "_float";
         default:
             return "";
     }
@@ -625,93 +628,6 @@ bool HasTagged(const luau_bindings::Signature &signature) {
 
 /**
  *
- * Associates a native output factory with the pending result of this invocation.
- *
- */
-struct PendingIntegerRegistration {
-    std::weak_ptr<PendingIntegerOutput> output;           /**< Result owned by the suspended script instance. */
-    bool                                captured = false; /**< Whether the native handler retained a deferred writer. */
-};
-
-/**
- *
- * Gives a native callback a cancellation-aware writer for the exact persistent result slot.
- *
- */
-dc2::script::DeferredIntegerWriter CapturePendingInteger(void *context, RS_STACKDATA &value) {
-    auto      &registration = *static_cast<PendingIntegerRegistration *>(context);
-    const auto output = registration.output.lock();
-    if (!output || &output->value != &value) {
-        return {};
-    }
-    registration.captured = true;
-    return [weak = registration.output](int result) {
-        if (const auto pending = weak.lock()) {
-            pending->value.val.i = result;
-            pending->ready = true;
-        }
-    };
-}
-
-/**
- *
- * Resumes a suspended native menu call only after its result exists or skipping cancels it.
- *
- */
-int ContinuePendingInteger(lua_State *lua, int) {
-    CRunScript *script = ActiveScript(lua);
-    const auto  found = Instances().find(script);
-    if (found == Instances().end() || found->second->program != script->prog || !found->second->pending_output) {
-        luaL_error(lua, "native result has no live script instance");
-    }
-    auto &instance = *found->second;
-    auto *pending = instance.pending_output.get();
-    if (!pending->ready) {
-        if (script->skip_wait == 0) {
-            return lua_yield(lua, 0);
-        }
-        instance.pending_output.reset();
-        lua_pushnil(lua);
-        return 1;
-    }
-    PushOutput(lua, pending->value, pending->type);
-    instance.pending_output.reset();
-    return 1;
-}
-
-/**
- *
- * Starts a menu call with an instance-owned result and returns whether its caller must suspend.
- *
- */
-int CallPendingInteger(lua_State *lua, CRunScript *script, std::span<RS_STACKDATA> slots,
-                       const RS_STACKDATA &initial, luau_bindings::Type type,
-                       std::span<const std::span<const char>> text_sources) {
-    const auto found = Instances().find(script);
-    if (found == Instances().end() || found->second->program != script->prog) {
-        luaL_error(lua, "deferred native output called outside a script instance");
-    }
-    auto pending = std::make_shared<PendingIntegerOutput>();
-    pending->value = initial;
-    pending->type = type;
-    found->second->pending_output = pending;
-    for (auto &slot : slots) {
-        if (slot.type == RS_PTR && slot.val.p == &initial) {
-            slot.val.p = &pending->value;
-        }
-    }
-    PendingIntegerRegistration registration{.output = pending};
-    script->ext(slots, text_sources, std::span(&pending->value, 1), CapturePendingInteger, &registration);
-    if (registration.captured && !pending->ready) {
-        return -1;
-    }
-    PushOutput(lua, pending->value, pending->type);
-    found->second->pending_output.reset();
-    return 1;
-}
-
-/**
- *
  * Calls a native command with a signature's parameters, typed for a variant, returning its outputs to the script.
  *
  */
@@ -728,6 +644,7 @@ int CallTyped(lua_State *lua, const luau_bindings::Command &command, const luau_
     std::array<std::string, kMaxArguments>           text_storage;
     std::size_t                                      text_count = 0;
     std::size_t                                      output_count = 0;
+    bool                                             deferred = false;
     slots[0].type = RS_INT;
     slots[0].val.i = command.no;
 
@@ -738,6 +655,14 @@ int CallTyped(lua_State *lua, const luau_bindings::Command &command, const luau_
         RS_STACKDATA               &slot = slots[index + 1];
         if (param.direction == luau_bindings::Direction::In) {
             MarshalValue(lua, next_arg++, type, slot, &command, text_sources, text_storage, text_count);
+            continue;
+        }
+        if (param.deferred) {
+            deferred = true;
+            deferred_output.type = RS_INT;
+            deferred_output.val.i = kUnwritten;
+            slot.type = RS_PTR;
+            slot.val.p = &deferred_output;
             continue;
         }
         // The output's tag is the variable's, which a tagged handler reads to choose what it writes. An in-out output
@@ -763,13 +688,21 @@ int CallTyped(lua_State *lua, const luau_bindings::Command &command, const luau_
         }
         return static_cast<int>(output_count);
     }
-    if ((command.name == "GotoUseItem" || command.name == "GotoUseItem2") && output_count == 1) {
-        const int result = CallPendingInteger(lua, script, std::span(slots).first(param_count + 1),
-                                              outputs[0], output_types[0], std::span(text_sources).first(text_count));
-        return result < 0 ? lua_yield(lua, 0) : result;
+    std::span<RS_STACKDATA>             writable = std::span(outputs).first(output_count);
+    dc2::script::DeferredIntegerFactory factory = nullptr;
+    if (deferred) {
+        // The handler keeps the deferred slot, so it is the call's only writable output.
+        if (output_count != 0) {
+            const std::string message = std::format("{} mixes a deferred output with other outputs", CommandLabel(command));
+            luaL_error(lua, "%s", message.c_str());
+        }
+        ++deferred_generation;
+        deferred_owner = script;
+        writable = std::span(&deferred_output, 1);
+        factory = CaptureDeferredOutput;
     }
-    script->ext(std::span(slots).first(param_count + 1), std::span(text_sources).first(text_count),
-                std::span(outputs).first(output_count));
+    script->ext(std::span(slots).first(param_count + 1), std::span(text_sources).first(text_count), writable, factory,
+                nullptr);
 
     for (std::size_t index = 0; index < output_count; ++index) {
         PushOutput(lua, outputs[index], output_types[index]);
@@ -838,12 +771,24 @@ int CallCommand(lua_State *lua) {
     const luau_bindings::Signature *chosen = nullptr;
     std::size_t                     matches = 0;
     for (const luau_bindings::Signature &signature : command.signatures) {
-        if (CountParams(signature, luau_bindings::Direction::In) != count || (variant != Variant::Catalogued && !HasTagged(signature))) {
+        if (signature.values || CountParams(signature, luau_bindings::Direction::In) != count ||
+            (variant != Variant::Catalogued && !HasTagged(signature))) {
             continue;
         }
         ++matches;
         if (chosen == nullptr || CountParams(signature, luau_bindings::Direction::Out) > CountParams(*chosen, luau_bindings::Direction::Out)) {
             chosen = &signature;
+        }
+    }
+    // A value form answers only an input count that no catalogued signature takes, and only when it alone takes it.
+    if (chosen == nullptr && variant == Variant::Catalogued) {
+        const auto forms = std::ranges::count_if(command.signatures, [&](const luau_bindings::Signature &signature) {
+            return signature.values && CountParams(signature, luau_bindings::Direction::In) == count;
+        });
+        if (forms == 1) {
+            chosen = &*std::ranges::find_if(command.signatures, [&](const luau_bindings::Signature &signature) {
+                return signature.values && CountParams(signature, luau_bindings::Direction::In) == count;
+            });
         }
     }
     if (chosen == nullptr) {
@@ -1018,25 +963,25 @@ int Require(lua_State *lua) {
 void RegisterCommand(lua_State *lua, const luau_bindings::Command &command, Variant variant) {
     const std::string name = std::format("{}{}", command.name, VariantSuffix(variant));
     for (const luau_bindings::Signature &signature : command.signatures) {
-        if (variant != Variant::Catalogued && !HasTagged(signature)) {
+        if (variant != Variant::Catalogued && (signature.values || !HasTagged(signature))) {
             continue;
         }
-        const std::string field = std::format("{}_{}", name, signature.argc);
+        const std::string field = std::format("{}_{}{}", name, signature.argc, signature.values ? "v" : "");
         lua_pushlightuserdata(lua, Userdata(&command));
         lua_pushlightuserdata(lua, Userdata(&signature));
         lua_pushinteger(lua, static_cast<int>(variant));
-        lua_pushcclosurek(lua, CallSignature, field.c_str(), 3, ContinuePendingInteger);
+        lua_pushcclosure(lua, CallSignature, field.c_str(), 3);
         lua_setfield(lua, -2, field.c_str());
     }
     lua_pushlightuserdata(lua, Userdata(&command));
     lua_pushinteger(lua, static_cast<int>(variant));
-    lua_pushcclosurek(lua, CallCommand, name.c_str(), 2, ContinuePendingInteger);
+    lua_pushcclosure(lua, CallCommand, name.c_str(), 2);
     lua_setfield(lua, -2, name.c_str());
 }
 
 /**
  *
- * Creates one read-only global table per native namespace, holding each command, the Int and Float variants of commands with tagged parameters, and the generic Ext entry.
+ * Creates one read-only global table per native namespace, holding each command, the _int and _float variants of commands with tagged parameters, and the generic call_command entry.
  *
  */
 void RegisterNamespaces(lua_State *lua) {
@@ -1049,8 +994,8 @@ void RegisterNamespaces(lua_State *lua) {
                 RegisterCommand(lua, command, Variant::Float);
             }
         }
-        lua_pushcclosure(lua, CallExt, "Ext", 0);
-        lua_setfield(lua, -2, "Ext");
+        lua_pushcclosure(lua, CallExt, "call_command", 0);
+        lua_setfield(lua, -2, "call_command");
         lua_setreadonly(lua, -1, 1);
         const std::string space(kind.space);
         lua_setfield(lua, LUA_GLOBALSINDEX, space.c_str());
@@ -1103,15 +1048,33 @@ int VmHostSkipEnd(lua_State *lua) {
 
 /**
  *
- * Creates the global vmhost table, the machine state the vm library reads and writes for skip mode.
+ * vmhost.used_item: the item the use item menu wrote when it exited, once, or nil when it wrote none.
+ *
+ */
+int VmHostUsedItem(lua_State *lua) {
+    if (deferred_output.val.i == kUnwritten) {
+        lua_pushnil(lua);
+    } else {
+        lua_pushinteger(lua, deferred_output.val.i);
+        deferred_output.val.i = kUnwritten;
+    }
+    return 1;
+}
+
+/**
+ *
+ * Creates the global vmhost table: the machine state the vm library reads and writes for skip mode, and the item the use
+ * item menu wrote.
  *
  */
 void RegisterVmHost(lua_State *lua) {
-    lua_createtable(lua, 0, 2);
+    lua_createtable(lua, 0, 3);
     lua_pushcfunction(lua, VmHostSkipping, "skipping");
     lua_setfield(lua, -2, "skipping");
     lua_pushcfunction(lua, VmHostSkipEnd, "skip_end");
     lua_setfield(lua, -2, "skip_end");
+    lua_pushcfunction(lua, VmHostUsedItem, "used_item");
+    lua_setfield(lua, -2, "used_item");
     lua_setreadonly(lua, -1, 1);
     lua_setglobal(lua, "vmhost");
 }
@@ -1256,7 +1219,6 @@ void Step(CRunScript *script, Instance &instance, lua_State *co, int nargs) {
         lua_settop(co, 0);
         return;
     }
-    instance.pending_output.reset();
     script->end = 1;
     if (status == LUA_OK) {
         script->result = lua_type(co, 1) == LUA_TNUMBER ? ClampToInt(lua_tonumberx(co, 1, nullptr)) : 0;
@@ -1507,15 +1469,11 @@ std::optional<std::string> HandleModule(std::span<const char> program) {
 }
 
 std::optional<std::string> ModuleForScript(std::string_view key) {
-    if (!ScriptVmEnabled() || !key.ends_with(".stb")) {
+    if (!key.ends_with(".stb")) {
         return std::nullopt;
     }
     std::string module(key.substr(0, key.size() - std::string_view(".stb").size()));
     if (KindForModule(module) == nullptr) {
-        return std::nullopt;
-    }
-    // A script on the fallback list runs on the interpreter even when an old copy of its module is still present.
-    if (std::ranges::find(luau_bindings::FallbackModules(), std::string_view(module)) != luau_bindings::FallbackModules().end()) {
         return std::nullopt;
     }
     EnsureIndex();
@@ -1594,8 +1552,8 @@ void Load(CRunScript *script, std::string_view module) {
             StartInstance(script, *instance, found->second);
         }
     }
-    script->end = 0;
-    script->skip_wait = 0;
+    // As retail's load, this keeps the end and skip flags: a script that loads another and ends, leaving no program to
+    // start, ends the event.
     script->pc = nullptr;
 }
 
@@ -1614,6 +1572,11 @@ void BindStorage(CRunScript *script, dc2::memory::ArenaBuffer anchor,
 }
 
 void Forget(CRunScript *script) {
+    if (script == deferred_owner) {
+        ++deferred_generation;
+        deferred_output.val.i = kUnwritten;
+        deferred_owner = nullptr;
+    }
     Instances().erase(script);
 }
 
@@ -1633,7 +1596,6 @@ int Run(CRunScript *script, int no) {
         return -1;
     }
 
-    instance->pending_output.reset();
     ReleaseRef(instance->thread_ref);
     lua_State *co = lua_newthread(state);
     instance->thread_ref = lua_ref(state, -1);
