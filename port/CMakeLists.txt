@@ -66,6 +66,13 @@ endif()
 # Retail textures are converted offline; the native executable only loads PNG assets.
 set(KZ_PORT_BUILD_TIM2 OFF CACHE BOOL "Build legacy TIM2 decoding into the native runtime" FORCE)
 
+# All Clang diagnostics, except those about compatibility with C++ standards older than the one the port uses.
+set(CT_WARNINGS -Weverything
+    -Wno-c++98-compat -Wno-c++98-compat-pedantic
+    -Wno-pre-c++14-compat -Wno-pre-c++14-compat-pedantic -Wno-pre-c++17-compat -Wno-pre-c++17-compat-pedantic
+    -Wno-pre-c++20-compat -Wno-pre-c++20-compat-pedantic -Wno-pre-c++23-compat -Wno-pre-c++23-compat-pedantic
+    -Wno-pre-c++26-compat -Wno-pre-c++26-compat-pedantic)
+
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 kz_port_host_library(ct_host)
 set_property(SOURCE
@@ -75,7 +82,7 @@ set_property(SOURCE
     ${KZ_ROOT}/src/cpp/sce/eekernel_threads.cpp
     ${KZ_ROOT}/src/cpp/sce/libmc.cpp
     TARGET_DIRECTORY ct_host
-    APPEND PROPERTY COMPILE_OPTIONS -Weverything)
+    APPEND PROPERTY COMPILE_OPTIONS ${CT_WARNINGS})
 
 # Native game sources and headers are tracked alongside the port. These files contain the
 # effective host adaptations of the retail units and require no build-time PS2 source rewriting.
@@ -260,7 +267,7 @@ target_include_directories(ct_options INTERFACE
     ${PORT_INCLUDE_DIR}/sce)
 target_compile_options(ct_options INTERFACE
     "SHELL:-include \"${CMAKE_SOURCE_DIR}/port/include/port.h\""
-    -fms-extensions -ffunction-sections -fdata-sections -Weverything
+    -fms-extensions -ffunction-sections -fdata-sections ${CT_WARNINGS}
     -fcomment-block-commands=mangled,address,size,unknownret)
 # arm64 clang fuses a*b+c into one rounding by default and x86-64 has no FMA in its baseline; off
 # everywhere so the game's arithmetic rounds the same on both.
@@ -441,6 +448,35 @@ file(GLOB ct_stream_cmake CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/cmake/*.
 foreach(f IN LISTS ct_stream_cmake)
     include(${f})
 endforeach()
+
+# Third-party projects build without warnings, and their headers are system headers to the port's sources.
+function(ct_quiet_dependency_directory directory)
+    get_property(targets DIRECTORY ${directory} PROPERTY BUILDSYSTEM_TARGETS)
+    foreach(target IN LISTS targets)
+        get_target_property(type ${target} TYPE)
+        if(type STREQUAL "UTILITY")
+            continue()
+        endif()
+        set_property(TARGET ${target} PROPERTY SYSTEM TRUE)
+        if(NOT type STREQUAL "INTERFACE_LIBRARY")
+            target_compile_options(${target} PRIVATE -w)
+        endif()
+    endforeach()
+    get_property(subdirectories DIRECTORY ${directory} PROPERTY SUBDIRECTORIES)
+    foreach(subdirectory IN LISTS subdirectories)
+        ct_quiet_dependency_directory(${subdirectory})
+    endforeach()
+endfunction()
+foreach(dependency IN ITEMS cpptrace fastgltf googletest libdwarf luau nlohmann_json quill simdjson tracy)
+    FetchContent_GetProperties(${dependency})
+    if(${dependency}_POPULATED)
+        ct_quiet_dependency_directory(${${dependency}_SOURCE_DIR})
+    endif()
+endforeach()
+# SDL's package marks its headers as non-system.
+if(TARGET SDL3::Headers)
+    set_property(TARGET SDL3::Headers PROPERTY SYSTEM TRUE)
+endif()
 
 if(WIN32)
     include(${KZ_ROOT}/cmake/KazarovWindowsRuntime.cmake)
