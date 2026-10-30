@@ -30,13 +30,13 @@ The renderer's cases need a Vulkan device with the features `tools/kazarov/src/c
 .\run.bat windows-x64
 ```
 
-`build.bat` and `run.bat` pass the configuration through Kazarov's host launcher to `tools/windows/kazarov.ps1`. That script builds into `port/build/<configuration>`. The first run fetches the toolchain into `.kazarov/windows`, through `tools/windows/acquire.ps1`: llvm-mingw 20260922 (clang and lld), Ninja 1.13.2, SDL3 3.4.18 (MinGW), FFmpeg n9.0.2 (the LGPL shared build), glslang 16.6.0, the Vulkan 1.4.363.0 headers, and Rust 1.99.0 for the llvm-mingw UCRT target. `acquire-rust.ps1` verifies the official Rust and rustfmt archives, caches the locked crates, and installs `cxxbridge-cmd` 1.0.205; Corrosion 0.6.1 integrates Rust with CMake. Each downloaded archive is checked against its SHA-256 before extraction. `windows-x64` is a Debug build; `windows-x64-release` (and `windows`) is Release.
+`build.bat` and `run.bat` pass the configuration through Kazarov's host launcher to `tools/windows/kazarov.ps1`. That script builds into `port/build/<configuration>`. The first run uses Docker Desktop's Linux engine to export the `windows-deps` target in `tools/ci/Dockerfile` into `.kazarov/windows`. The bundle includes llvm-mingw 20260922, Ninja 1.13.2, CMake 4.4.5, Python 3.14, ccache 4.14.2, SDL3 3.4.18, glslang 16.6.0, the Vulkan 1.4.363.0 headers and redistributable loader, Rust 1.99.0 for the llvm-mingw UCRT target, cxxbridge-cmd 1.0.205, Corrosion 0.6.1, and the pinned CMake dependency sources. Docker cross-compiles FFmpeg 9.0.2 from Kazarov's pinned LGPL configuration instead of using expiring third-party autobuild assets. Every downloaded archive is verified against its SHA-256 before extraction. `windows-x64` is a Debug build; `windows-x64-release` (and `windows`) is Release.
 
-The Windows launcher prints elapsed stages for dependency checks, configuration and the build, and announces any lock wait. Compiler and Cargo output appears live, with the complete latest build output retained in `port/build/<configuration>/build.log`; failures preserve the native exit code. First-run downloads, archive verification and extraction announce their stages and log paths. `JOBS=N` sets the compile job count (the logical processor count by default). See [build measurements](port/buildperf.md) for the measured incremental costs. `pwsh -NoProfile -File tools/windows/test-build.ps1` checks live stdout/stderr, full logging and successful/failing exit codes without requiring a toolchain.
+The Windows launcher prints elapsed stages for dependency checks, configuration and the build, and announces any lock wait. Compiler and Cargo output appears live, with the complete latest build output retained in `port/build/<configuration>/build.log`; failures preserve the native exit code. The first dependency export shows Docker's layer progress and reuses its build cache. `JOBS=N` sets the compile job count (the logical processor count by default). See [build measurements](port/buildperf.md) for the measured incremental costs. `pwsh -NoProfile -File tools/windows/test-build.ps1` checks live stdout/stderr, full logging and successful/failing exit codes without requiring a toolchain.
 
 `run.bat` uses the same ignored `port/run/` extraction and version checks before launching, under the `port-data.lock` lock. The game holds the lock shared while it runs.
 
-The scripts need PowerShell 7, 7-Zip, CMake and Python 3. Python 3 is found through the `py` launcher or on `PATH`. 7-Zip and CMake are also looked for at their default install locations under `Program Files`.
+The launcher needs PowerShell 7 and Docker Desktop with its Linux engine. The exported bundle supplies the native compiler, build tools and Python; compilation runs directly on Windows.
 
 The test build is separate. After a `build.bat` run has fetched the toolchain:
 
@@ -57,7 +57,9 @@ Windows builds include the SDL, FFmpeg, C++/Rust runtime DLLs and the pinned red
 ctest --preset macos-arm64
 ```
 
-`macos-arm64` is a Debug build with the Homebrew preset in `CMakePresets.json`, into `port/build/macos-arm64`. `macos-arm64-release` is the Release build. The preset expects Homebrew's LLVM under `/opt/homebrew/opt/llvm`, and its `CMAKE_PREFIX_PATH` also names `sdl3`, `vulkan-headers`, `vulkan-loader` and `glslang`. CI additionally installs `molten-vk`, `googletest` and `nlohmann-json`. To run the game, SDL needs the loader by its full path, and the loader needs the MoltenVK driver:
+Apple builds use Xcode and Homebrew on macOS; Apple's SDKs cannot execute in the Linux dependency container. Docker's `apple-deps` target supplies verified portable sources, FFmpeg source, iOS SDL/MoltenVK inputs and the native cxxbridge generator. `tools/ci/apple-deps.sh` installs the native tools and builds the Apple libraries with Xcode.
+
+`macos-arm64` is a Debug build with the Homebrew preset in `CMakePresets.json`, into `port/build/macos-arm64`. `macos-arm64-release` is the Release build. The preset expects Homebrew's LLVM under `/opt/homebrew/opt/llvm`, and its `CMAKE_PREFIX_PATH` also names `sdl3`, `vulkan-headers`, `vulkan-loader` and `glslang`. CI additionally installs `molten-vk`; GoogleTest and JSON come from the Docker source bundle. To run the game, SDL needs the loader by its full path, and the loader needs the MoltenVK driver:
 
 ```sh
 export SDL_VULKAN_LIBRARY="$(brew --prefix vulkan-loader)/lib/libvulkan.1.dylib"
@@ -71,8 +73,9 @@ The iOS arm64 build requires macOS and Xcode with Swift C++ interoperability. Th
 and packages an unsigned IPA with its scripts, glyphs and gameplay seed. It targets iOS 16.3 and later;
 install the IPA through a sideloading tool that signs it for your device.
 
-For a local build, run `tools/ci/prebuilt-deps.sh ios-arm64`, install the Rust
-`aarch64-apple-ios` target, and configure `ios-arm64-release` with `SDL3_DIR`, `Vulkan_INCLUDE_DIR`
+For a local build, export Docker's `apple-deps` target into `.kazarov`, then run
+`bash tools/ci/apple-deps.sh ios-arm64` on macOS. Outside Actions it records the environment in
+`.kazarov/apple.env` and the cxxbridge path in `.kazarov/apple.path`. Configure `ios-arm64-release` with `SDL3_DIR`, `Vulkan_INCLUDE_DIR`
 and `Vulkan_LIBRARY` pointing to the iOS libraries. Build with
 `cmake --build port/build/ios-arm64-release --target darkchronicle`.
 
@@ -106,12 +109,13 @@ BUILD_DIR=build/pal python3 scripts/build/verify.py -c
 
 ### Continuous integration
 
-`.github/workflows/pc.yml` runs on pushes to `master` and on pull requests, in four jobs:
+Four independent workflows publish Windows, macOS, iOS and Linux builds on pushes to `master`, pull requests and manual dispatches. Builds configure `CT_BUILD_TESTS=OFF`; neither the game suite nor the data bridge test executable is compiled. Linux remains the Flatpak in `linux.yml`, without a duplicate native Release build. Platform packages retain their separate symbol artifacts.
 
-- Linux (`ubuntu-26.04`): configures `linux-x64` with `-DCT_TEST_TIMEOUT=60` (lavapipe renders on the CPU), builds it in the Kazarov container, checks that the clang Python bindings import, runs the full `ctest`, runs `scripts/port/native_gate.py` on the binary, and checks that `darkchronicle` is position-independent. It configures `CT_SYMBOLS=split`, runs the `tools/crash` tests, checks the build id and debuglink, and resolves a frame through `darkchronicle.debug`. Without the bindings, `Truncations.Check` and `Records.Check` skip, and a skip counts as a pass.
-- macOS (`macos-26`, Homebrew libraries): builds `macos-arm64` with `CT_SYMBOLS=split`, runs `ctest --preset macos-arm64`, and uploads the packaged binary and a `vulkaninfo` summary. It also resolves a frame through the dSYM and uploads `darkchronicle` with its dSYM as the symbol artifact. The pinned shared code carries the executable bit for `tools/kazarov/scripts/build/kz-ffmpeg`.
-- Windows (`windows-2025`): fetches the toolchain and the Vulkan runtime with `acquire.ps1 -VulkanLoader`, configures the test build with `configure.ps1 -Tests -VulkanLibrary`, builds it, runs `ctest -LE gpu`, and uploads the zipped build. It then resolves a frame at `wmain` with `symbolize.py` and uploads `package-symbols.ps1`'s symbol zip.
-- Flatpak (Flathub's `freedesktop-26.08` image): checks that `port/flatpak/cargo-sources.json` matches Kazarov's `Cargo.lock`, builds `chronicletwo.flatpak` from the commit under test (`docs/FLATPAK.md`), uploads it and the packaged `darkchronicle` as the symbol artifact, and checks that the packaged `darkchronicle` reaches its data check.
+`tests.yml` runs separately and calls the same Windows, macOS and Linux configurations with tests enabled. Linux uses the Docker toolchain, Debug assertions and lavapipe; it preserves the PAL timing baseline check, Python clang-binding checks, Rust publisher tests, crash-symboliser tests, native runtime gate, PIE check and split-symbol checks. Windows runs the desktop suite excluding GPU cases, Rust tests and symbol resolution. macOS runs its desktop and Rust suites and checks dSYM resolution; the documented virtual-GPU exceptions remain report-only. iOS runs the existing floating-point formatting compatibility regressions on an available arm64 iPhone simulator. The desktop suite's subprocess/death-test assumptions are not supported by iOS. Each platform uploads CTest XML and diagnostics on failure.
+
+`dependencies.yml` exports the Windows and Apple bundles from `tools/ci/Dockerfile` on a Linux runner. Dependency archives, CMake sources and single-header libraries are verified before export; the complete bundle is hashed again before extraction. Dependency cache keys include the Dockerfile, build declarations and pinned Kazarov revision. BuildKit layers, compiler results, Cargo registries and Cargo outputs are cached independently. Apple SDK and Homebrew setup stays native, with cached downloads and built iOS libraries. Failed dependency builds do not publish a partial bundle.
+
+Builds use the available CPU cores, including the nested Luau host-tool build. Native Luau precompilation shares the game's compiler library; cross builds use a separate host compiler with the same source revision. Individual script outputs remain separate Ninja jobs, so copying and bytecode generation run in parallel and unchanged scripts remain incremental. Windows, macOS and iOS also retain their ThinLTO caches across runs; Apple links enable the cache while preserving the objects needed for dSYM generation. New commits cancel obsolete runs for the same platform/ref; platform failures do not cancel other platforms.
 
 Cases default to a 5-second timeout. Slow GPU cases use the larger of 30 seconds and `CT_TEST_TIMEOUT`, so the Linux job gives them 60 seconds. Cases that need a Vulkan device carry the CTest label `gpu`. The hosted Windows runner has no device, so its job excludes them with `-LE gpu`. `ctest -L gpu -N` lists them. Local runs run every case.
 
