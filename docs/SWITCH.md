@@ -9,7 +9,7 @@ Run `./build.sh switch` with Docker available from Linux or WSL. The first build
 Extract current game data with the desktop `dc2data` tool. Copy these files to `sdmc:/switch/chronicletwo/`:
 
 - `darkchronicle.nro` from `port/build/switch/`
-- `scripts/` and `glyphs/` from the same build directory
+- `scripts/`, `glyphs/` and `fonts/` from the same build directory
 - `data.zip` and `data.json` from the current extraction
 
 Keep disc-derived data outside Git. The runtime accepts the current ZIP64/Zstandard data archive directly; an extracted `data/` tree also works. `data.json` must match the data version expected by the executable. The Switch does not extract disc images itself.

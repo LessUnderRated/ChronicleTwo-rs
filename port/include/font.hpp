@@ -2,10 +2,16 @@
 
 #include "common.h"
 
+#include <cstdint>
+#include <span>
 #include <string_view>
 
 #include "mg_drawprim.hpp"
 #include "mg_tanime.hpp"
+
+namespace ttffont {
+class Face;
+} // namespace ttffont
 
 /**
  * @file
@@ -511,6 +517,81 @@ namespace dc2::font {
  *
  */
 unsigned short AlphabeticalCode(std::string_view text);
+
+/**
+ *
+ * Returns the ChronicleTwoMessage character a language's font page draws at a font number, or 0 to keep its bitmap.
+ *
+ */
+char32_t Character(int language, int font_no, std::span<const std::uint8_t> table);
+
+/**
+ *
+ * Places ChronicleTwoMessage inside a 16x20-texel cell of a language's font page.
+ *
+ */
+struct Page {
+    float texels_per_unit_x; /**< Texels across per font unit. */
+    float texels_per_unit_y; /**< Texels down per font unit. */
+    float pen_x;             /**< Texels from the cell's left edge to the pen. */
+    float baseline;          /**< Texels from the cell's top to the baseline. */
+};
+
+/**
+ *
+ * Returns how a language's font page draws ChronicleTwoMessage.
+ *
+ */
+Page PageOf(int language);
+
+/**
+ *
+ * Names the port's bundled typefaces.
+ *
+ */
+enum class Typeface {
+    Message, /**< ChronicleTwoMessage, the game's text. */
+    Menu,    /**< ChronicleTwoMenu, the pause menu's painted words. */
+    Board,   /**< ChronicleTwoBoard, the pause menu's time board. */
+    Title,   /**< ChronicleTwoTitle, the title and language menus' buttons. */
+};
+
+/**
+ *
+ * Returns a typeface read from fonts/ beside the executable on first use, or null where it is missing.
+ *
+ */
+const ttffont::Face *FaceOf(Typeface typeface);
+
+/**
+ *
+ * Returns whether text takes ChronicleTwoMessage's own letter widths: the sharp font is chosen and loaded.
+ *
+ */
+bool Proportional();
+
+/**
+ *
+ * Returns how many retail half-width advances a half-width character moves the pen; digits and symbols keep 1.
+ *
+ */
+float HalfAdvance(int font_no);
+
+/**
+ *
+ * Sets the fraction of a logical pixel right of their whole pixel that glyphs are drawn at while it lives.
+ *
+ */
+class SubpixelPen {
+public:
+    explicit SubpixelPen(float fraction);
+    ~SubpixelPen();
+    SubpixelPen(const SubpixelPen &) = delete;
+    SubpixelPen &operator=(const SubpixelPen &) = delete;
+
+private:
+    float previous; /**< Fraction restored when this pen ends. */
+};
 } // namespace dc2::font
 
 /**

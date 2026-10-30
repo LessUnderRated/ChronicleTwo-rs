@@ -42,7 +42,7 @@ include(${KZ_ROOT}/cmake/KazarovPort.cmake)
 if(NINTENDO_SWITCH)
     set(KZ_SWITCH_APPLICATION_NAME "Dark Chronicle")
     set(KZ_SWITCH_LOG_FILE "darkchronicle.log")
-    set(KZ_SWITCH_DATA_INSTRUCTIONS "Copy data.zip, data.json, scripts/ and glyphs/ beside darkchronicle.nro.")
+    set(KZ_SWITCH_DATA_INSTRUCTIONS "Copy data.zip, data.json, scripts/, glyphs/ and fonts/ beside darkchronicle.nro.")
     include(${KZ_ROOT}/cmake/KazarovSwitch.cmake)
 endif()
 
@@ -462,24 +462,27 @@ if(CT_ENABLE_TRACY)
         DESTINATION ${CMAKE_INSTALL_DATADIR}/licenses/chronicletwo)
 endif()
 
-# The button symbols (docs/GLYPHS.md): port/assets/glyphs, copied to glyphs/ beside the executable, the art of
-# TheMoonPeople/Chronicle's port/glyphs.
+# Assets copied beside the executable: the button symbols (docs/GLYPHS.md), the art of TheMoonPeople/Chronicle's
+# port/glyphs, to glyphs/; and the text fonts (docs/PC.md "Message font"), with their licences and the notice of what
+# was changed, to fonts/.
 # Each copy is a declared output, so an up-to-date build runs nothing and a deleted copy is restored.
-file(GLOB CT_GLYPH_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/assets/glyphs/*)
-set(CT_GLYPH_COPIES "")
-foreach(glyph IN LISTS CT_GLYPH_SOURCES)
-    get_filename_component(glyph_name ${glyph} NAME)
-    set(glyph_copy ${CMAKE_BINARY_DIR}/glyphs/${glyph_name})
-    add_custom_command(OUTPUT ${glyph_copy}
-        COMMAND ${CMAKE_COMMAND} -E copy ${glyph} ${glyph_copy}
-        DEPENDS ${glyph}
-        COMMENT "Copying the button symbol ${glyph_name}"
-        VERBATIM)
-    list(APPEND CT_GLYPH_COPIES ${glyph_copy})
+foreach(asset_dir IN ITEMS glyphs fonts)
+    file(GLOB asset_sources CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/assets/${asset_dir}/*)
+    set(asset_copies "")
+    foreach(asset IN LISTS asset_sources)
+        get_filename_component(asset_name ${asset} NAME)
+        set(asset_copy ${CMAKE_BINARY_DIR}/${asset_dir}/${asset_name})
+        add_custom_command(OUTPUT ${asset_copy}
+            COMMAND ${CMAKE_COMMAND} -E copy ${asset} ${asset_copy}
+            DEPENDS ${asset}
+            COMMENT "Copying ${asset_dir}/${asset_name}"
+            VERBATIM)
+        list(APPEND asset_copies ${asset_copy})
+    endforeach()
+    add_custom_target(ct_${asset_dir} DEPENDS ${asset_copies})
+    add_dependencies(darkchronicle ct_${asset_dir})
+    install(DIRECTORY assets/${asset_dir}/ DESTINATION ${CMAKE_INSTALL_BINDIR}/${asset_dir})
 endforeach()
-add_custom_target(ct_glyphs DEPENDS ${CT_GLYPH_COPIES})
-add_dependencies(darkchronicle ct_glyphs)
-install(DIRECTORY assets/glyphs/ DESTINATION ${CMAKE_INSTALL_BINDIR}/glyphs)
 
 if(CT_BUILD_TESTS)
     add_subdirectory(src/tests)
