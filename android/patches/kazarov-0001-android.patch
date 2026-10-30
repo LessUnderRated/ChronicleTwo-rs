@@ -1,63 +1,3 @@
-diff --git a/Cargo.lock b/Cargo.lock
-index bc40572..68a604e 100644
---- a/Cargo.lock
-+++ b/Cargo.lock
-@@ -1278,6 +1278,7 @@ dependencies = [
-  "iso9660-rs",
-  "libc",
-  "memmap2",
-+ "mimalloc",
-  "png",
-  "rayon",
-  "rfd",
-@@ -1327,6 +1328,15 @@ version = "0.2.16"
- source = "registry+https://github.com/rust-lang/crates.io-index"
- checksum = "b6d2cec3eae94f9f509c767b45932f1ada8350c4bdb85af2fcab4a3c14807981"
- 
-+[[package]]
-+name = "libmimalloc-sys"
-+version = "0.1.49"
-+source = "registry+https://github.com/rust-lang/crates.io-index"
-+checksum = "6a45a52f43e1c16f667ccfe4dd8c85b7f7c204fd5e3bf46c5b0db9a5c3c0b8e9"
-+dependencies = [
-+ "cc",
-+]
-+
- [[package]]
- name = "libredox"
- version = "0.1.25"
-@@ -1402,6 +1412,15 @@ dependencies = [
-  "libc",
- ]
- 
-+[[package]]
-+name = "mimalloc"
-+version = "0.1.52"
-+source = "registry+https://github.com/rust-lang/crates.io-index"
-+checksum = "2d4139bb28d14ad1facf21d5eb8825051b326e172d216b39f6d31df53cc97862"
-+dependencies = [
-+ "libmimalloc-sys",
-+]
-+
- [[package]]
- name = "miniz_oxide"
- version = "0.8.9"
-diff --git a/Cargo.toml b/Cargo.toml
-index 6662c0e..af063c4 100644
---- a/Cargo.toml
-+++ b/Cargo.toml
-@@ -24,6 +24,11 @@ sha2 = "0.11.1"
- zstd = { version = "0.14.2", default-features = false }
- libc = "0.2"
- 
-+# Android's scudo maps each allocation past 64 KiB on its own; the extractor's thousands of buffers used up the
-+# process's mappings, and every allocation failed. mimalloc takes memory in large segments (src/rust/lib.rs).
-+[target.'cfg(target_os = "android")'.dependencies]
-+mimalloc = { version = "0.1", default-features = false }
-+
- [features]
- # The desktop setup window; iOS builds without it.
- default = ["desktop-ui"]
 diff --git a/cmake/KazarovRust.cmake b/cmake/KazarovRust.cmake
 index ab4ec57..a342465 100644
 --- a/cmake/KazarovRust.cmake
@@ -171,18 +111,50 @@ index 38578d9..b383740 100644
  #include <ucontext.h>
  #endif
 diff --git a/src/rust/archive.rs b/src/rust/archive.rs
-index ccca81b..5a30056 100644
+index ccca81b..2b4ffb5 100644
 --- a/src/rust/archive.rs
 +++ b/src/rust/archive.rs
-@@ -533,7 +533,7 @@ impl SourceBytes {
+@@ -497,6 +497,9 @@ enum SourceData {
+     /// converters too little, and an allocation fails. There each resource maps its own range of the image only
+     /// while it is read.
+     Mapped { file: File, length: usize },
++    /// 64-bit Android has the address space to map the image whole, once: a mapping per resource, as on iOS, adds to
++    /// the process's ~65k memory mappings, which the extraction already runs short of.
++    Whole(memmap2::Mmap),
+ }
+ 
+ /// A source's bytes, borrowed from memory or mapped from the disc image for as long as this lives.
+@@ -533,6 +536,14 @@ impl SourceBytes {
          let length = usize::try_from(file.metadata()?.len())
              .map_err(|_| error("ISO exceeds addressable memory"))?;
          phase.set_total(length as u64);
--        if cfg!(any(target_os = "ios", kazarov_mapped_source)) {
-+        if cfg!(any(target_os = "ios", target_os = "android", kazarov_mapped_source)) {
++        #[cfg(target_os = "android")]
++        {
++            phase.inc(length as u64);
++            phase.add_bytes(length as u64);
++            // SAFETY: the mapping is read-only, and the disc image is not changed during extraction.
++            let map = unsafe { memmap2::Mmap::map(&file)? };
++            return Ok(Self(Arc::new(SourceData::Whole(map))));
++        }
+         if cfg!(any(target_os = "ios", kazarov_mapped_source)) {
              phase.inc(length as u64);
              phase.add_bytes(length as u64);
-             return Ok(Self(Arc::new(SourceData::Mapped { file, length })));
+@@ -559,6 +570,7 @@ impl SourceBytes {
+         match &*self.0 {
+             SourceData::Owned(bytes) => bytes.len(),
+             SourceData::Mapped { length, .. } => *length,
++            SourceData::Whole(map) => map.len(),
+         }
+     }
+ 
+@@ -569,6 +581,7 @@ impl SourceBytes {
+         }
+         match &*self.0 {
+             SourceData::Owned(bytes) => Ok(SourceSlice::Borrowed(&bytes[range])),
++            SourceData::Whole(map) => Ok(SourceSlice::Borrowed(&map[range])),
+             SourceData::Mapped { file, .. } => {
+                 if range.is_empty() {
+                     return Ok(SourceSlice::Borrowed(&[]));
 diff --git a/src/rust/configs.rs b/src/rust/configs.rs
 index 6d68b7a..b61e669 100644
 --- a/src/rust/configs.rs
@@ -220,21 +192,6 @@ index ec2b738..6bc4fd5 100644
  fn system_available_memory() -> Option<u64> {
      None
  }
-diff --git a/src/rust/lib.rs b/src/rust/lib.rs
-index 2834c92..b250b76 100644
---- a/src/rust/lib.rs
-+++ b/src/rust/lib.rs
-@@ -1,3 +1,10 @@
-+
-+// On Android the Rust side allocates from mimalloc rather than scudo, which maps every allocation past 64 KiB on its
-+// own: the extractor's buffers used up the process's memory mappings and every allocation failed (Cargo.toml).
-+#[cfg(target_os = "android")]
-+#[global_allocator]
-+static ALLOCATOR: mimalloc::MiMalloc = mimalloc::MiMalloc;
-+
- pub mod core;
- #[cfg(not(test))]
- mod host_jobs;
 diff --git a/src/rust/publish.rs b/src/rust/publish.rs
 index cf1295a..3c76d98 100644
 --- a/src/rust/publish.rs

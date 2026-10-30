@@ -16,8 +16,11 @@
 #include <atomic>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <exception>
 #include <filesystem>
+#include <functional>
+#include <map>
 #include <string>
 #include <thread>
 #include <utility>
@@ -174,14 +177,57 @@ jfloat JNICALL ExtractFraction(JNIEnv *, jclass) {
     return std::clamp(kazarov::extract_status().fraction, 0.0f, 1.0f);
 }
 
-// Polled by the setup screen; each new stage also goes to stderr.log, so a crash shows how far it got.
+// The process's memory mappings, which Android caps (about 65,000), counted by what they map: the six largest groups.
+void LogMappings() {
+    std::FILE *maps = std::fopen("/proc/self/maps", "r");
+    if (maps == nullptr) {
+        return;
+    }
+    std::map<std::string, int> groups;
+    int                        total = 0;
+    char                       line[512];
+    while (std::fgets(line, sizeof line, maps) != nullptr) {
+        ++total;
+        // The name is the sixth field, after address, perms, offset, device and inode; anonymous ones have none.
+        const char *at = line;
+        for (int field = 0; field < 5 && at != nullptr; ++field) {
+            at = std::strchr(at, ' ');
+            while (at != nullptr && *at == ' ') {
+                ++at;
+            }
+        }
+        std::string name = at != nullptr ? at : "";
+        while (!name.empty() && (name.back() == '\n' || name.back() == ' ')) {
+            name.pop_back();
+        }
+        ++groups[name.empty() ? "(anonymous)" : name];
+    }
+    std::fclose(maps);
+    std::vector<std::pair<int, std::string>> top;
+    for (const auto &[name, count] : groups) {
+        top.emplace_back(count, name);
+    }
+    std::ranges::sort(top, std::greater{});
+    std::string text = std::to_string(total) + " mappings:";
+    for (std::size_t i = 0; i < top.size() && i < 6; ++i) {
+        text += " " + std::to_string(top[i].first) + " " + top[i].second + ";";
+    }
+    std::fprintf(stderr, "extract: %s\n", text.c_str());
+}
+
+// Polled by the setup screen; each new stage goes to stderr.log, so a crash shows how far it got, and every few
+// seconds the mapping count with it.
 jstring JNICALL ExtractStage(JNIEnv *env, jclass) {
     static std::string last;
+    static int         polls = 0;
     const auto         status = kazarov::extract_status();
     std::string        stage(status.stage);
     if (stage != last) {
         last = stage;
         std::fprintf(stderr, "extract: %3.0f%% %s\n", status.fraction * 100.0, stage.c_str());
+        LogMappings();
+    } else if (++polls % 12 == 0) {
+        LogMappings();
     }
     return Java(env, stage);
 }
