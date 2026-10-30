@@ -2,7 +2,7 @@
     <string name="app_name">Chronicle Two</string>
 
     <string name="setup_title">Your Dark Cloud 2 disc</string>
-    <string name="setup_message">Chronicle Two plays from the files of your own copy of Dark Cloud 2 (Dark Chronicle). Make a disc image (ISO) of your PlayStation 2 disc, put it on this phone, and choose it here.\n\nChronicle Two is built from the European (PAL) game; the US release\'s data is also known to play.\n\nThe game\'s data is converted out of the image once, which takes a while. The image itself is left as it is.</string>
+    <string name="setup_message">Chronicle Two plays from the files of your own copy of Dark Cloud 2 (Dark Chronicle). Make a disc image (ISO) of your PlayStation 2 disc, put it on this phone, and choose it here.\n\nFor now only the European (PAL) Dark Chronicle disc, SCES-51190, can be extracted: Chronicle Two is built from it, and the US and Japanese discs keep their data differently.\n\nThe game\'s data is converted out of the image once, which takes a while. The image itself is left as it is.</string>
     <string name="setup_choose">Choose disc image</string>
     <string name="setup_choose_another">Choose another</string>
     <string name="setup_quit">Quit</string>
@@ -17,7 +17,7 @@
     <string name="setup_unknown">This file has no PlayStation 2 disc\'s SYSTEM.CNF. Choose an ISO image of your Dark Cloud 2 disc.</string>
     <string name="setup_serial">Product code: %1$s</string>
     <string name="setup_not_dark_cloud_2">This does not look like Dark Cloud 2 or Dark Chronicle. Extracting it will most likely fail.</string>
-    <string name="setup_region_note">Chronicle Two is built from the European release. This one\'s data is expected to play, with small differences (a voice line or two may not match).</string>
+    <string name="setup_region_note">For now Chronicle Two can only extract the European disc, Dark Chronicle (SCES-51190). This release keeps its data in other files, which the extractor does not read yet.</string>
     <string name="setup_no_space">There is not enough free space: about %1$s GB is needed and %2$s GB is free.</string>
     <string name="setup_extract_question">Extract the game data now? It takes several minutes; keep the app open while it runs.</string>
     <string name="setup_extract">Extract</string>

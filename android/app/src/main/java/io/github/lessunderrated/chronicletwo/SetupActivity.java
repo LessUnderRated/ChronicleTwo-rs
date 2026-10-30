@@ -352,7 +352,10 @@ public class SetupActivity extends Activity {
         }
         long free = getFilesDir().getUsableSpace();
         AlertDialog.Builder builder = dialog().setTitle(title);
-        if (free < SPACE_NEEDED) {
+        if (disc != null && disc.known() && !disc.pal()) {
+            // The extractor reads the PAL disc's DATA.HD4; another release stops at once without it.
+            builder.setPositiveButton(R.string.setup_choose_another, (d, w) -> chooseDisc());
+        } else if (free < SPACE_NEEDED) {
             message.append("\n\n").append(getString(R.string.setup_no_space, gigabytes(SPACE_NEEDED), gigabytes(free)));
             builder.setPositiveButton(R.string.setup_choose_another, (d, w) -> chooseDisc());
         } else {

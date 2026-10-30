@@ -12,9 +12,10 @@ Chronicle disc and extracts it with Kazarov's extractor, the code `dc2data extra
 
 1. Install the APK (GitHub release `android-v<version>`, or a build of your own).
 2. Make an ISO image of your disc and put it on the phone.
-3. Open Chronicle Two and choose the image. It shows the release from the disc's product code (SCES-51190 is the
-   PAL Dark Chronicle the port is built from; SCUS-97213, the US Dark Cloud 2, is known to play with small
-   differences) and asks to extract. That takes several minutes and about 6 GB of free space while it runs.
+3. Open Chronicle Two and choose the image. It shows the release from the disc's product code and asks to
+   extract, which takes several minutes and about 6 GB of free space while it runs. Only the European disc,
+   Dark Chronicle (SCES-51190), extracts for now: it is the one Chronicle Two is built from, and the extractor
+   reads its DATA.HD4. The US Dark Cloud 2 (SCUS-97213) keeps its data in other files.
 4. The game starts. Later starts go straight to it.
 
 The app's files are in its internal storage, which the Files app can reach as "Chronicle Two": `data.zip` and
@@ -43,7 +44,7 @@ addresses in a report.
 | Where | What |
 |---|---|
 | `android/` | The Gradle project: SDL's activity, the setup screen, the menu, the touch overlay; `native.cmake` (SDL from source, FFmpeg for Android), `kazarov.cmake` (Kazarov with `android/patches`), `assets.cmake` (what the APK carries) |
-| `android/patches/kazarov-0001-android.patch` | What Android needs of Kazarov, applied to a copy in the build tree: an `android-arm64` target for `kz-ffmpeg`; the extractor's iOS memory paths (the disc read a resource at a time, waiting bytes spilled to a file) and an available-memory query on Android; no desktop setup window; `KAZAROV_GAMEPLAY_SEED` naming the gameplay seed; the PS2 threads' fibers on iOS's arm64 switch, since bionic has no `swapcontext`; the swapchain sized from the window; no `/proc/self/exe` (which is Android's `app_process`) |
+| `android/patches/kazarov-0001-android.patch` | What Android needs of Kazarov, applied to a copy in the build tree: `flock` for the extractor's stage lock, which `File::try_lock` does not support on Android; an `android-arm64` target for `kz-ffmpeg`; the extractor's iOS memory paths (the disc read a resource at a time, waiting bytes spilled to a file) and an available-memory query on Android; no desktop setup window; `KAZAROV_GAMEPLAY_SEED` naming the gameplay seed; the PS2 threads' fibers on iOS's arm64 switch, since bionic has no `swapcontext`; the swapchain sized from the window; no `/proc/self/exe` (which is Android's `app_process`) |
 | `port/src/android/bridge.cpp` | The app's native side: the game's command line and environment in the app's storage, extraction and its progress, the Options pages, the touch gamepad's state (`InputSetTouchOverlay`), pause and speed; stdout and stderr to logcat |
 | `port/CMakeLists.txt` | `libdarkchronicle.so` on Android, `-fsigned-char` (the PS2's `char` is signed, Android's on arm64 is not), no `_FORTIFY_SOURCE` (it stops the process on the retail code's small overruns), Tracy and the tests off, the Luau scripts precompiled as on iOS |
 

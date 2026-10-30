@@ -160,6 +160,45 @@ index ec2b738..6bc4fd5 100644
  fn system_available_memory() -> Option<u64> {
      None
  }
+diff --git a/src/rust/publish.rs b/src/rust/publish.rs
+index cf1295a..3c76d98 100644
+--- a/src/rust/publish.rs
++++ b/src/rust/publish.rs
+@@ -521,6 +521,25 @@ impl StageGuard {
+         &self.path
+     }
+ }
++/// File::try_lock is flock on the platforms std lists, and unsupported elsewhere, Android among them; bionic has
++/// flock, so Android calls it directly.
++#[cfg(not(target_os = "android"))]
++fn try_lock_file(lock: &File) -> CoreResult<()> {
++    lock.try_lock().map_err(|e| fail(e.to_string()))
++}
++
++#[cfg(target_os = "android")]
++fn try_lock_file(lock: &File) -> CoreResult<()> {
++    use std::os::fd::AsRawFd;
++    if unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } != 0 {
++        return Err(fail(format!(
++            "the extraction's stage is in use: {}",
++            std::io::Error::last_os_error()
++        )));
++    }
++    Ok(())
++}
++
+ fn lock_stage(path: &Path) -> CoreResult<StageGuard> {
+     let lock = OpenOptions::new()
+         .read(true)
+@@ -528,7 +547,7 @@ fn lock_stage(path: &Path) -> CoreResult<StageGuard> {
+         .create(true)
+         .truncate(false)
+         .open(path.join(".lock"))?;
+-    lock.try_lock().map_err(|e| fail(e.to_string()))?;
++    try_lock_file(&lock)?;
+     Ok(StageGuard {
+         path: path.to_path_buf(),
+         _lock: lock,
 diff --git a/src/rust/spill.rs b/src/rust/spill.rs
 index 843d000..cfc279e 100644
 --- a/src/rust/spill.rs
