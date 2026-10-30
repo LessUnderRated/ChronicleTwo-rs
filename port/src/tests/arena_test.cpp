@@ -179,6 +179,49 @@ TEST(CtArena, PacketDataBufferRejectsShortPoolsBeforeChangingBinding) {
     EXPECT_EQ(bound->stGetSize(), expected_child_size);
 }
 
+TEST(CtArena, PacketDataBufferRetainsTemporaryCursorBackingUntilItsOwnerResets) {
+    static char allocation_key;
+    mgCMemory   owner;
+    owner.stSetBuffer(reinterpret_cast<u_long128 *>(ArenaBlock(&allocation_key, 0x3000 * sizeof(u_long128))), 0x3000);
+    mgCMemory *bound = nullptr;
+    {
+        mgCMemory first;
+        mgCMemory second;
+        first.stSetBorrowedBuffer(owner, std::span(owner.stAlloc64(0x1000), 0x1000));
+        second.stSetBorrowedBuffer(owner, std::span(owner.stAlloc64(0x1000), 0x1000));
+        mgSetDataBuffer(&first, &second, 1);
+        bound = mgGetDataBuffer();
+        ASSERT_NE(bound, nullptr);
+        ASSERT_TRUE(dc2::memory::ArenaStorageLive(*bound));
+    }
+    ASSERT_TRUE(dc2::memory::ArenaStorageLive(*bound));
+    ASSERT_FALSE(dc2::memory::RemainingBytes(*bound).empty());
+    EXPECT_NE(bound->Alloc(1), nullptr);
+    owner.stReset();
+    EXPECT_TRUE(dc2::memory::RemainingBytes(*bound).empty());
+    EXPECT_EQ(bound->Alloc(1), nullptr);
+}
+
+TEST(CtArena, PacketDataBufferRetainsTheLifetimeOfAGenuinePoolOwner) {
+    static char allocation_key;
+    mgCMemory   owner;
+    owner.stSetBuffer(reinterpret_cast<u_long128 *>(ArenaBlock(&allocation_key, 0x3000 * sizeof(u_long128))), 0x3000);
+    mgCMemory *bound = nullptr;
+    {
+        mgCMemory first;
+        mgCMemory second;
+        first.stSetChildBuffer(owner, owner.stAlloc64(0x1000), 0x1000);
+        second.stSetChildBuffer(owner, owner.stAlloc64(0x1000), 0x1000);
+        mgSetDataBuffer(&first, &second, 1);
+        bound = mgGetDataBuffer();
+        ASSERT_NE(bound, nullptr);
+        ASSERT_TRUE(dc2::memory::ArenaStorageLive(*bound));
+    }
+    EXPECT_TRUE(dc2::memory::RemainingBytes(*bound).empty());
+    EXPECT_EQ(bound->Alloc(1), nullptr);
+    EXPECT_TRUE(dc2::memory::ArenaStorageLive(owner));
+}
+
 TEST(CtArena, RootBufferMovesToItsOwnBlock) {
     static u_long128 retail[100];
     std::memset(retail, 0x11, sizeof retail);

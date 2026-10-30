@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <span>
 
 #include "actionchara.hpp"
 #include "dataread.hpp"
@@ -646,8 +647,8 @@ void TitleInit(INIT_LOOP_ARG arg) {
     mgInitVif1Packet(vif0, vif1, 160000);
     packet0.stSetBuffer(main_stack->stAlloc64(30000), 30000);
     packet1.stSetBuffer(main_stack->stAlloc64(30000), 30000);
-    data0.stSetBuffer(main_stack->stAlloc64(60000), 60000);
-    data1.stSetBuffer(main_stack->stAlloc64(60000), 60000);
+    data0.stSetBorrowedBuffer(*main_stack, std::span(main_stack->stAlloc64(60000), 60000));
+    data1.stSetBorrowedBuffer(*main_stack, std::span(main_stack->stAlloc64(60000), 60000));
     DataBuffer.stSetBuffer(main_stack->stAlloc64(1300000), 1300000);
     mgSetPacketBuffer(&packet0, &packet1);
     mgSetDataBuffer(&data0, &data1, 1);
@@ -1219,7 +1220,7 @@ int TitleLoop() {
                 mgCMemory  menu_stack;
                 int        rest = Stack_ReadBuff.stGetRest();
                 u_long128 *top = Stack_ReadBuff.stGetTop();
-                menu_stack.stSetBuffer(top, rest);
+                menu_stack.stSetBorrowedBuffer(Stack_ReadBuff, std::span(top, static_cast<std::size_t>(rest)));
                 Stack_ReadBuff.Alloc(0x40000);
                 MenuArg.stack = &menu_stack;
                 MenuArg.chara_stack = &Stack_MenuCharaBuff_Fix;

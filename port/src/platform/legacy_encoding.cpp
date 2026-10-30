@@ -7,6 +7,12 @@
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <windows.h>
+#elif defined(__ANDROID__)
+// Android's iconv converts only Unicode and Latin-1; Kazarov's Rust core has CP932.
+#include <cstdint>
+#include <exception>
+
+#include "kazarov_bridge/rust/lib.h"
 #else
 #include <iconv.h>
 #endif
@@ -40,6 +46,9 @@ std::string GameText(std::string_view utf8) {
     std::string encoded(count, '\0');
     WideCharToMultiByte(kCodePageCp932, WC_NO_BEST_FIT_CHARS, wide.data(), length, encoded.data(), count, nullptr, &substituted);
     return encoded;
+#elif defined(__ANDROID__)
+    const rust::Vec<std::uint8_t> encoded = kazarov::cp932_encode(rust::Str(utf8.data(), utf8.size()));
+    return std::string(encoded.begin(), encoded.end());
 #else
     auto converter = iconv_open("CP932", "UTF-8");
     if (converter == reinterpret_cast<iconv_t>(-1)) {
@@ -81,6 +90,14 @@ std::optional<std::string> ReadableText(std::string_view cp932) {
     std::string text(count, '\0');
     WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wide.data(), length, text.data(), count, nullptr, nullptr);
     return text;
+#elif defined(__ANDROID__)
+    try {
+        const rust::String text = kazarov::cp932_decode(
+            rust::Slice<const std::uint8_t>(reinterpret_cast<const std::uint8_t *>(cp932.data()), cp932.size()));
+        return std::string(text);
+    } catch (const std::exception &) {
+        return std::nullopt;
+    }
 #else
     auto converter = iconv_open("UTF-8", "CP932");
     if (converter == reinterpret_cast<iconv_t>(-1)) {

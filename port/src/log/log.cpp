@@ -820,10 +820,12 @@ std::string_view LogSessionId() {
 #else
         localtime_r(&now, &local);
 #endif
-        char text[32];
-        std::strftime(text, sizeof text, "%Y%m%d-%H%M%S", &local);
+        char              text[32];
+        const std::size_t size = std::strftime(text, sizeof text, "%Y%m%d-%H%M%S", &local);
         std::random_device random;
-        return std::format("{}-{:04x}", text, random() & 0xffff);
+        // The written characters only: Android's libc++ formats a char array to its full length, the bytes past
+        // the terminator too, which made the log file's name unopenable.
+        return std::format("{}-{:04x}", std::string_view(text, size), random() & 0xffff);
     }();
     return id;
 }
