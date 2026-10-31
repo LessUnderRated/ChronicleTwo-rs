@@ -6231,6 +6231,8 @@ void CMenuItemInfo::ExitEnd() {
         AccumulateEffect.unk_320 = 0;
         AccumulateEffect.mode = 0;
         chara->accume_effect = &AccumulateEffect;
+        // The block's texture animations live in the arena just cleared; the model would append to them there.
+        mgTexManager.DeleteTexAnime(MenuArg.chara_tex_block);
         chara->LoadPack(MainCharaReadBuffer.model, "info", MorattaStack, MorattaStack, MorattaStack,
                         MenuArg.chara_tex_block, nullptr);
         SwordEffectStack.stClearUsed();
