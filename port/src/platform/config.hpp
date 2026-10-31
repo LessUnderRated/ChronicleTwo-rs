@@ -85,6 +85,9 @@ struct Config : HostSettings {
     // aims for in the Watts mode.
     ConfigDynamicScale dynamic_scale = ConfigDynamicScale::Off;
     float              power_target = 5.0f;
+    // video.frame_gen: when interpolation is on and the device offers Qualcomm's Adreno Neural
+    // Fusion, the between-frames are generated instead of replaying every draw.
+    bool               frame_gen = true;
     // video.frame_timing_log: the periodic present-rate and GPU timing summary in the log, plus the device
     // counters (draws, transient uploads, constant-record bytes) that point at where the watts go.
     // Formerly video.log_perf; renamed so old configs that saved it on stop forcing the per-second

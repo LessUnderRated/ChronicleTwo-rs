@@ -416,7 +416,7 @@ bool PresentPublishedCanonical(const Published &frame);
 
 // The published tick at alpha, as DisplayFrame renders it, with the overlay recorded on the game thread.
 bool RenderPublished(const Published &frame, float alpha) {
-    if (gfx::detail::FrameGenActive() && !frame.mouse_fixed && !frame.mouse_pointer) {
+    if (gfx::detail::FrameGenActive() && ConfigGet().frame_gen && !frame.mouse_fixed && !frame.mouse_pointer) {
         // The tick's first display slot shows the generated between-frame through its own normal
         // swapchain cycle; when it is already shown this tick, the canonical takes the slot, in
         // the reference sample's deferred-present shape.
@@ -723,7 +723,7 @@ void PresentPublishTick(int start, int frames, bool canonical_endpoint_allowed) 
         const bool      eligible_source = endpoint_enabled && canonical_endpoint_allowed && canonical_image && list &&
                                           frames == 2 && InterpolateFrame(frames) && !ClockUnbounded() && settings.display_per_tick == 0 &&
                                           std::abs(tick_rate - 60.0) < .1 && std::abs(settings.max_fps - 60.0) < .1 && !fixed && !pointer && suppressed_key == 0 &&
-                                          !gfx::detail::FrameGenActive();
+                                          !(gfx::detail::FrameGenActive() && ConfigGet().frame_gen);
         const bool      endpoint = eligible_source && previous_compatible && previous &&
                                    list->instance == previous->instance && list->cut_generation == previous->cut_generation;
         published.canonical_endpoint_source = eligible_source;

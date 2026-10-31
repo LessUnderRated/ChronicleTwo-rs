@@ -1,9 +1,9 @@
 diff --git a/include/gfx/anf_fg.hpp b/include/gfx/anf_fg.hpp
 new file mode 100644
-index 0000000..5a1933a
+index 0000000..84ea5ee
 --- /dev/null
 +++ b/include/gfx/anf_fg.hpp
-@@ -0,0 +1,44 @@
+@@ -0,0 +1,46 @@
 +// ANF frame generation lifecycle for the Android renderer. Qualcomm's Adreno Neural
 +// Fusion interpolates a display frame between two rendered canonical frames; the
 +// renderer keeps its canonical colour double-buffered, so the current colour, the
@@ -20,8 +20,9 @@ index 0000000..5a1933a
 +// without libanf.so this turns the whole module off.
 +void FrameGenInit();
 +void FrameGenShutdown();
-+// Creates or resizes the motion-vector and generated-frame images at the canonical size.
-+void FrameGenEnsureTargets(uint32_t width, uint32_t height);
++// Creates or resizes the motion-vector and generated-frame images at the canonical size;
++// device_idle says whether the caller has the device quiescent (semaphores may be rebuilt).
++void FrameGenEnsureTargets(uint32_t width, uint32_t height, bool device_idle);
 +bool FrameGenActive();
 +// Records the motion pass and prepares the input layouts inside the canonical frame's
 +// command buffer; the caller submits it with the returned pair wired as extra wait/signal
@@ -29,8 +30,9 @@ index 0000000..5a1933a
 +void FrameGenRecordCanonical(VkCommandBuffer cmd, Image &color, Image &depth, VkSemaphore &wait,
 +                             VkSemaphore &signal);
 +// Immediately after the canonical submit: hands the images to ANF, which generates the
-+// between-frame into its own submission.
-+void FrameGenDispatch();
++// between-frame into its own submission. submit_fence is that submit's fence, waited if the
++// dispatch fails so the slot's semaphores can be rebuilt without double-signaling.
++void FrameGenDispatch(VkFence submit_fence);
 +// True while a generated frame for the newest canonical waits to be shown.
 +bool FrameGenHasOutput();
 +// The generated frame is being presented this canonical commit: mark it consumed.
@@ -1182,11 +1184,11 @@ index 0000000..b4d3b76
 +#endif // ANF_TYPES_VK_H
 diff --git a/src/cpp/gfx/anf_fg.cpp b/src/cpp/gfx/anf_fg.cpp
 new file mode 100644
-index 0000000..4c986de
+index 0000000..48118bb
 --- /dev/null
 +++ b/src/cpp/gfx/anf_fg.cpp
-@@ -0,0 +1,748 @@
-+#include "gfx/anf_fg.hpp"
+@@ -0,0 +1,784 @@
++﻿#include "gfx/anf_fg.hpp"
 +
 +#ifdef __ANDROID__
 +#include <dlfcn.h>
@@ -1263,6 +1265,7 @@ index 0000000..4c986de
 +    std::array<bool, kFramesInFlight>        dispatched = {}; // fg_done_render[slot] is meaningful
 +
 +    uint32_t slot = 0;
++    uint32_t failures = 0; // consecutive failed dispatches; four in a row retire the module
 +    uint64_t dispatch_serial = 0;  // canonical commit serial the pending output was generated from
 +    uint64_t presented_serial = 0; // serial whose generated frame has been shown
 +    Mat4     cur_clip = {};
@@ -1324,7 +1327,7 @@ index 0000000..4c986de
 +    return false;
 +}
 +
-+void DestroyTargets() {
++void DestroyTargets(bool with_semaphores) {
 +    DestroyImage(fg.motion);
 +    DestroyImage(fg.output);
 +    if (fg.depth_view != VK_NULL_HANDLE) {
@@ -1336,27 +1339,30 @@ index 0000000..4c986de
 +        fg.pool = VK_NULL_HANDLE;
 +        fg.sets.fill(VK_NULL_HANDLE);
 +    }
-+    // The semaphores go with the technique: a dispatch that never got its present or render wait
-+    // would leave one signaled, and the next technique's first dispatch must not signal it again.
-+    for (VkSemaphore &semaphore : fg.canon_done) {
-+        if (semaphore != VK_NULL_HANDLE) {
-+            vkDestroySemaphore(g.device, semaphore, nullptr);
-+            semaphore = VK_NULL_HANDLE;
++    // The semaphores go with the technique, but only when the device is idle: a dispatch that
++    // never got its wait would leave one signaled, and the next technique's first dispatch must
++    // not signal it again. In-flight submits hold their own, so resizing mid-frame keeps them.
++    if (with_semaphores) {
++        for (VkSemaphore &semaphore : fg.canon_done) {
++            if (semaphore != VK_NULL_HANDLE) {
++                vkDestroySemaphore(g.device, semaphore, nullptr);
++                semaphore = VK_NULL_HANDLE;
++            }
 +        }
-+    }
-+    for (VkSemaphore &semaphore : fg.fg_done_present) {
-+        if (semaphore != VK_NULL_HANDLE) {
-+            vkDestroySemaphore(g.device, semaphore, nullptr);
-+            semaphore = VK_NULL_HANDLE;
++        for (VkSemaphore &semaphore : fg.fg_done_present) {
++            if (semaphore != VK_NULL_HANDLE) {
++                vkDestroySemaphore(g.device, semaphore, nullptr);
++                semaphore = VK_NULL_HANDLE;
++            }
 +        }
-+    }
-+    for (VkSemaphore &semaphore : fg.fg_done_render) {
-+        if (semaphore != VK_NULL_HANDLE) {
-+            vkDestroySemaphore(g.device, semaphore, nullptr);
-+            semaphore = VK_NULL_HANDLE;
++        for (VkSemaphore &semaphore : fg.fg_done_render) {
++            if (semaphore != VK_NULL_HANDLE) {
++                vkDestroySemaphore(g.device, semaphore, nullptr);
++                semaphore = VK_NULL_HANDLE;
++            }
 +        }
++        fg.dispatched.fill(false);
 +    }
-+    fg.dispatched.fill(false);
 +    fg.width = 0;
 +    fg.height = 0;
 +}
@@ -1415,9 +1421,8 @@ index 0000000..4c986de
 +        return;
 +    }
 +    fg.tried = true;
-+    if (!g.config.frame_gen) {
-+        return;
-+    }
++    // Armed regardless of the frame-generation setting: the support probe answers once, and the
++    // port flips between the generated and replayed between-frames at runtime.
 +    fg.library = dlopen("libanf.so", RTLD_NOW | RTLD_LOCAL);
 +    if (fg.library == nullptr) {
 +        kz::Logf(kz::LogLevel::Info, "gfx", "anf: frame generation off, libanf.so not packaged");
@@ -1639,7 +1644,7 @@ index 0000000..4c986de
 +    if (fg.library == nullptr) {
 +        return;
 +    }
-+    DestroyTargets();
++    DestroyTargets(true);
 +    DestroyTechnique();
 +    if (fg.pipeline != VK_NULL_HANDLE) {
 +        vkDestroyPipeline(g.device, fg.pipeline, nullptr);
@@ -1688,11 +1693,16 @@ index 0000000..4c986de
 +    fg.available = false;
 +}
 +
-+void FrameGenEnsureTargets(uint32_t width, uint32_t height) {
++void FrameGenEnsureTargets(uint32_t width, uint32_t height, bool device_idle) {
 +    if (!fg.instance || (fg.width == width && fg.height == height && fg.pipeline != VK_NULL_HANDLE)) {
 +        return;
 +    }
-+    DestroyTargets();
++    if (!device_idle) {
++        // Mid-frame the in-flight submits hold the semaphores and ANF may hold the images: only
++        // the images and views can be swapped, and the dispatch skips this mismatched tick.
++        return;
++    }
++    DestroyTargets(true);
 +    EnsureSemaphores();
 +    fg.width = width;
 +    fg.height = height;
@@ -1759,7 +1769,7 @@ index 0000000..4c986de
 +        fg.available = CreateTechnique();
 +        if (!fg.available) {
 +            // Retire the module for the process: every later attempt would fail the same way.
-+            DestroyTargets();
++            DestroyTargets(true);
 +            fg.instance = nullptr;
 +            fg.available = false;
 +        }
@@ -1772,6 +1782,9 @@ index 0000000..4c986de
 +
 +void FrameGenRecordCanonical(VkCommandBuffer cmd, Image &color, Image &depth, VkSemaphore &wait,
 +                             VkSemaphore &signal) {
++    // Pick up a resolution change here rather than waiting for the next target sync: the
++    // technique's dimensions must match the images this dispatch hands over.
++    FrameGenEnsureTargets(g.main_color[g.main_current].width, g.main_color[g.main_current].height, false);
 +    if (!fg.available) {
 +        return;
 +    }
@@ -1831,8 +1844,14 @@ index 0000000..4c986de
 +    signal = fg.canon_done[slot];
 +}
 +
-+void FrameGenDispatch() {
++void FrameGenDispatch(VkFence submit_fence) {
 +    if (!fg.available) {
++        return;
++    }
++    const Image &canonical = g.main_color[g.main_current];
++    if (canonical.width != fg.width || canonical.height != fg.height) {
++        // The resolution changed under the technique: this dispatch would hand ANF mismatched
++        // images. Skip it; the next canonical commit rebuilds the technique first.
 +        return;
 +    }
 +    const uint32_t slot = fg.slot;
@@ -1886,10 +1905,29 @@ index 0000000..4c986de
 +    dispatch.reset = reset ? ANF_TRUE : ANF_FALSE;
 +    dispatch.pTechniqueGroupDispatchInfo = &group.header;
 +    if (fg.fns.DispatchTechnique(fg.technique, &dispatch) != ANF_RESULT_SUCCESS) {
-+        kz::Logf(kz::LogLevel::Info, "gfx", "anf: frame generation dispatch failed; falling back");
-+        fg.available = false;
++        // A transient rejection (a resolution that changed under us) must not retire the module;
++        // only persistent failures do.
++        if (++fg.failures >= 4) {
++            kz::Logf(kz::LogLevel::Info, "gfx", "anf: frame generation disabled after {} failed dispatches",
++                     fg.failures);
++            fg.available = false;
++            return;
++        }
++        // The canonical submit's canon_done[slot] went unconsumed: drain the submit's fence, then
++        // rebuild the slot's semaphores so the next dispatch signals fresh ones.
++        vkWaitForFences(g.device, 1, &submit_fence, VK_TRUE, UINT64_MAX);
++        VkSemaphoreCreateInfo info = {};
++        info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
++        vkDestroySemaphore(g.device, fg.canon_done[slot], nullptr);
++        vkDestroySemaphore(g.device, fg.fg_done_present[slot], nullptr);
++        vkDestroySemaphore(g.device, fg.fg_done_render[slot], nullptr);
++        Check(vkCreateSemaphore(g.device, &info, nullptr, &fg.canon_done[slot]), "anf semaphore");
++        Check(vkCreateSemaphore(g.device, &info, nullptr, &fg.fg_done_present[slot]), "anf semaphore");
++        Check(vkCreateSemaphore(g.device, &info, nullptr, &fg.fg_done_render[slot]), "anf semaphore");
++        fg.dispatched[slot] = false;
 +        return;
 +    }
++    fg.failures = 0;
 +    fg.dispatched[slot] = true;
 +    fg.dispatch_serial = g.canonical_commit_serial;
 +}
@@ -1923,10 +1961,10 @@ index 0000000..4c986de
 +namespace gfx::detail {
 +void FrameGenInit() {}
 +void FrameGenShutdown() {}
-+void FrameGenEnsureTargets(uint32_t, uint32_t) {}
++void FrameGenEnsureTargets(uint32_t, uint32_t, bool) {}
 +bool FrameGenActive() { return false; }
 +void FrameGenRecordCanonical(VkCommandBuffer, Image &, Image &, VkSemaphore &, VkSemaphore &) {}
-+void FrameGenDispatch() {}
++void FrameGenDispatch(VkFence submit_fence) {}
 +bool FrameGenHasOutput() { return false; }
 +void FrameGenNotePresented() {}
 +VkSemaphore FrameGenOutputDone() { return VK_NULL_HANDLE; }
@@ -1964,7 +2002,7 @@ index 2a1355b..1a4e762 100644
                  const auto start = std::chrono::steady_clock::now();
                  OpenListFrame(true, false, false);
 diff --git a/src/cpp/gfx/renderer.cpp b/src/cpp/gfx/renderer.cpp
-index bf424c4..e48c550 100644
+index bf424c4..13f8426 100644
 --- a/src/cpp/gfx/renderer.cpp
 +++ b/src/cpp/gfx/renderer.cpp
 @@ -1,4 +1,4 @@
@@ -1991,7 +2029,7 @@ index bf424c4..e48c550 100644
  namespace {
  
  // Validation and performance messages seen, from any thread the driver reports on.
-@@ -553,6 +557,19 @@ void CreateDevice() {
+@@ -553,6 +557,17 @@ void CreateDevice() {
      if (!g.bindless) {
          extensions.push_back(VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME);
      }
@@ -1999,19 +2037,17 @@ index bf424c4..e48c550 100644
 +    // Qualcomm's Adreno Neural Fusion frame generation submits through external semaphores and
 +    // reads the canonical images across process-external handles; both are Adreno-supported, and
 +    // enabling them unconditionally is harmless on devices where ANF is absent.
-+    if (g.config.frame_gen) {
-+        if (HasExtension(g.physical_device, VK_KHR_EXTERNAL_SEMAPHORE_FD_EXTENSION_NAME)) {
-+            extensions.push_back(VK_KHR_EXTERNAL_SEMAPHORE_FD_EXTENSION_NAME);
-+        }
-+        if (HasExtension(g.physical_device, VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME)) {
-+            extensions.push_back(VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME);
-+        }
++    if (HasExtension(g.physical_device, VK_KHR_EXTERNAL_SEMAPHORE_FD_EXTENSION_NAME)) {
++        extensions.push_back(VK_KHR_EXTERNAL_SEMAPHORE_FD_EXTENSION_NAME);
++    }
++    if (HasExtension(g.physical_device, VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME)) {
++        extensions.push_back(VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME);
 +    }
 +#endif
      VkPhysicalDevicePipelineExecutablePropertiesFeaturesKHR executable = {};
      executable.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_EXECUTABLE_PROPERTIES_FEATURES_KHR;
      if (!g.perf.stats.empty()) {
-@@ -579,6 +596,11 @@ void CreateDevice() {
+@@ -579,6 +594,11 @@ void CreateDevice() {
      LoadCoreDeviceCommands(g.device);
  #endif
      vkGetDeviceQueue(g.device, g.queue_family, 0, &g.queue);
@@ -2023,7 +2059,7 @@ index bf424c4..e48c550 100644
      if (g.dynamic_color_write_mask) {
          g.cmd_set_color_write_mask = reinterpret_cast<PFN_vkCmdSetColorWriteMaskEXT>(
              vkGetDeviceProcAddr(g.device, "vkCmdSetColorWriteMaskEXT"));
-@@ -810,7 +832,7 @@ bool ResizeOffscreen() {
+@@ -810,7 +830,7 @@ bool ResizeOffscreen() {
      }
      VkExtent2D extent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
      g.swapchain.extent = extent;
@@ -2032,7 +2068,7 @@ index bf424c4..e48c550 100644
      if (g.main_color[0].width != desired.width || g.main_color[0].height != desired.height) {
          vkDeviceWaitIdle(g.device);
          DestroyMainTargets();
-@@ -824,7 +846,7 @@ bool ResizeOffscreen() {
+@@ -824,7 +844,7 @@ bool ResizeOffscreen() {
  // The main targets follow the swapchain's size, losing their contents.
  void SyncMainTargets() {
      const Image     &main = g.main_color[0];
@@ -2041,17 +2077,17 @@ index bf424c4..e48c550 100644
      if (main.width != desired.width || main.height != desired.height) {
          vkDeviceWaitIdle(g.device);
          DestroyMainTargets();
-@@ -832,6 +854,9 @@ void SyncMainTargets() {
+@@ -832,6 +852,9 @@ void SyncMainTargets() {
          RecreateSharedTargets();
          RecreateRenderTargets();
      }
 +#ifdef __ANDROID__
-+    FrameGenEnsureTargets(g.main_color[0].width, g.main_color[0].height);
++    FrameGenEnsureTargets(g.main_color[0].width, g.main_color[0].height, true);
 +#endif
  }
  
  // Without targets the main targets keep their size until a frame that draws the game's state
-@@ -1216,7 +1241,8 @@ void AdvanceSlot() {
+@@ -1216,7 +1239,8 @@ void AdvanceSlot() {
      }
  }
  
@@ -2061,7 +2097,7 @@ index bf424c4..e48c550 100644
      AssertDeviceThread(__func__);
      KZ_PROFILE_ZONE("Kazarov Submit");
      Frame                                 &frame = CurrentFrame();
-@@ -1231,23 +1257,45 @@ void Submit(bool with_draw, VkSemaphore wait, VkSemaphore signal) {
+@@ -1231,23 +1255,45 @@ void Submit(bool with_draw, VkSemaphore wait, VkSemaphore signal) {
          commands.push_back({VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO, nullptr, frame.draw_cmd, 0});
      }
  
@@ -2119,7 +2155,7 @@ index bf424c4..e48c550 100644
      Check(vkResetFences(g.device, 1, &frame.fence), "vkResetFences");
      Check(vkQueueSubmit2(g.queue, 1, &submit, frame.fence), "vkQueueSubmit2");
      frame.pending = true;
-@@ -1393,6 +1441,16 @@ Image &CurrentMainColor() { return g.main_color[g.main_current]; }
+@@ -1393,6 +1439,16 @@ Image &CurrentMainColor() { return g.main_color[g.main_current]; }
  
  Image &PreviousMainColor() { return g.main_color[g.main_current ^ 1]; }
  
@@ -2136,7 +2172,7 @@ index bf424c4..e48c550 100644
  VkExtent2D DesiredMainExtent(VkExtent2D output, uint32_t height_limit) {
      if (output.width == 0 || output.height == 0 || height_limit == 0 || height_limit >= output.height) {
          return output;
-@@ -1414,7 +1472,7 @@ void CreateMainTargets() {
+@@ -1414,7 +1470,7 @@ void CreateMainTargets() {
      if (trace_init) {
          std::fprintf(stderr, "perf init: allocating main targets\n");
      }
@@ -2145,7 +2181,7 @@ index bf424c4..e48c550 100644
      const uint32_t   width = extent.width;
      const uint32_t   height = extent.height;
      ++g.canonical_target_generation;
-@@ -1610,6 +1668,9 @@ void RendererShutdown() {
+@@ -1610,6 +1666,9 @@ void RendererShutdown() {
          RunDeletions(frame);
      }
      DestroyPipelines();
@@ -2155,7 +2191,7 @@ index bf424c4..e48c550 100644
      ShutdownResources();
      for (Frame &frame : g.frames) {
          DestroyTransients(frame);
-@@ -1770,8 +1831,8 @@ bool AcquireImage(bool targets) {
+@@ -1770,8 +1829,8 @@ bool AcquireImage(bool targets) {
  }
  
  // Ends the frame's draw commands with source blitted onto the acquired swapchain image, submits
@@ -2166,7 +2202,16 @@ index bf424c4..e48c550 100644
      AssertDeviceThread(__func__);
      KZ_PROFILE_ZONE("Kazarov PresentImage");
      VkImage swapchain = g.swapchain.images[g.image_index];
-@@ -1799,7 +1860,7 @@ void PresentImage(Frame &frame, VkCommandBuffer cmd, Image &source) {
+@@ -1789,7 +1848,7 @@ void PresentImage(Frame &frame, VkCommandBuffer cmd, Image &source) {
+     {
+         KZ_PROFILE_GPU_ZONE(cmd, "Kazarov swapchain blit");
+         vkCmdBlitImage(cmd, source.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, swapchain,
+-                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region, VK_FILTER_NEAREST);
++                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region, VK_FILTER_LINEAR);
+     }
+     SwapchainBarrier(cmd, swapchain, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+                      VK_PIPELINE_STAGE_2_ALL_TRANSFER_BIT, VK_ACCESS_2_TRANSFER_WRITE_BIT,
+@@ -1799,7 +1858,7 @@ void PresentImage(Frame &frame, VkCommandBuffer cmd, Image &source) {
      Check(vkEndCommandBuffer(cmd), "vkEndCommandBuffer");
  
      VkSemaphore render_finished = g.swapchain.render_finished[g.image_index];
@@ -2175,7 +2220,7 @@ index bf424c4..e48c550 100644
      g.in_frame = false;
      g_game_frame_open.store(false);
  
-@@ -1836,13 +1897,14 @@ void PlotFrameCounters() {
+@@ -1836,13 +1895,14 @@ void PlotFrameCounters() {
      KZ_PROFILE_PLOT("Kazarov transient bytes", g.counters.transient_bytes);
  }
  
@@ -2192,7 +2237,7 @@ index bf424c4..e48c550 100644
      NoteFrameCpu(false);
      g.in_frame = false;
      g_game_frame_open.store(false);
-@@ -1863,7 +1925,7 @@ void PrepareRecordingFromCaller() {
+@@ -1863,7 +1923,7 @@ void PrepareRecordingFromCaller() {
      // from the swapchain. The idle hook never recreates the swapchain, so the extents change only on
      // the game thread; the pending flag is atomic.
      const Image     &main = g.main_color[0];
@@ -2201,7 +2246,16 @@ index bf424c4..e48c550 100644
      const bool       same_size = main.width == desired.width && main.height == desired.height;
      if (!g_resize_pending.load() && (g.offscreen || same_size)) {
          return;
-@@ -1933,11 +1995,20 @@ void CloseListFrame(bool canonical, bool present) {
+@@ -1914,7 +1974,7 @@ bool OpenListFrame(bool canonical, bool present, bool base, double preparation_m
+         region.dstOffsets[1] = {static_cast<int32_t>(g.display_color.width),
+                                 static_cast<int32_t>(g.display_color.height), 1};
+         vkCmdBlitImage(cmd, source.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, g.display_color.image,
+-                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region, VK_FILTER_NEAREST);
++                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region, VK_FILTER_LINEAR);
+         ToRest(cmd, source);
+         ToRest(cmd, g.display_color);
+     }
+@@ -1933,11 +1993,21 @@ void CloseListFrame(bool canonical, bool present) {
              KZ_PROFILE_GPU_ZONE(cmd, "Kazarov depth queries");
              RecordDepthQueries(cmd);
          }
@@ -2209,6 +2263,7 @@ index bf424c4..e48c550 100644
 +        // Frame generation: the motion pass rides this submission, which then signals ANF's work.
 +        VkSemaphore fg_wait = VK_NULL_HANDLE;
 +        VkSemaphore fg_signal = VK_NULL_HANDLE;
++        Frame      &submitted = CurrentFrame();
 +        if (FrameGenActive()) {
 +            FrameGenRecordCanonical(cmd, CurrentMainColor(), g.main_depth, fg_wait, fg_signal);
 +        }
@@ -2218,12 +2273,12 @@ index bf424c4..e48c550 100644
          g.canonical_newest = true;
          g.presented_display = false;
 +        if (fg_signal != VK_NULL_HANDLE) {
-+            FrameGenDispatch();
++            FrameGenDispatch(submitted.fence);
 +        }
          return;
      }
      if (present && !g.offscreen) {
-@@ -2006,6 +2077,8 @@ void EndFrame() {
+@@ -2006,6 +2076,8 @@ void EndFrame() {
      });
  }
  
@@ -2232,7 +2287,7 @@ index bf424c4..e48c550 100644
  bool PresentCanonical() {
      // Read on the game thread: the worker must not look at the list the game thread records.
      const bool recording = RecordingCalls();
-@@ -2033,6 +2106,34 @@ bool PresentCanonical() {
+@@ -2033,6 +2105,34 @@ bool PresentCanonical() {
      return presented;
  }
  
@@ -2267,7 +2322,7 @@ index bf424c4..e48c550 100644
  std::optional<CanonicalImageToken> CaptureCanonicalImage() {
      const bool                         recording = RecordingCalls();
      std::optional<CanonicalImageToken> result;
-@@ -2159,4 +2260,25 @@ void SetRenderScale(float scale) {
+@@ -2159,4 +2259,25 @@ void SetRenderScale(float scale) {
      });
  }
  
