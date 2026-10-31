@@ -241,6 +241,7 @@ set(NATIVE_SOURCES
     platform/mainloop.cpp
     platform/mainloop3.cpp
     platform/memcard.cpp
+    platform/power.cpp
     platform/savedata.cpp
     platform/userdata.cpp
     render/maintex.cpp

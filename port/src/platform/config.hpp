@@ -18,6 +18,14 @@ enum class ConfigAspect {
     FourThree,
 };
 
+// video.dynamic_scale: what the dynamic render-scale governor hunts for. Off leaves the scale
+// alone; Fps pins the display near 60; Watts holds the whole device near video.power_target.
+enum class ConfigDynamicScale {
+    Off,
+    Fps,
+    Watts,
+};
+
 // input.dualsense_haptics: what a DualSense's actuators play (see dualsense_haptics.hpp).
 enum class ConfigHaptics {
     Off,       // Classic rumble only.
@@ -73,6 +81,10 @@ struct Config : HostSettings {
     // video.render_scale: pixels per PS2 line of the render targets; 0 picks the window's height over
     // 480. Applies at the next start. On a phone this is the cheapest big fill-rate lever.
     float render_scale = 0.0f;
+    // video.dynamic_scale: the governor's mode, and video.power_target: the whole-device watts it
+    // aims for in the Watts mode.
+    ConfigDynamicScale dynamic_scale = ConfigDynamicScale::Off;
+    float              power_target = 5.0f;
     // video.frame_timing_log: the periodic present-rate and GPU timing summary in the log, plus the device
     // counters (draws, transient uploads, constant-record bytes) that point at where the watts go.
     // Formerly video.log_perf; renamed so old configs that saved it on stop forcing the per-second

@@ -1,9 +1,9 @@
 diff --git a/include/gfx/anf_fg.hpp b/include/gfx/anf_fg.hpp
 new file mode 100644
-index 0000000..5818a9e
+index 0000000..5a1933a
 --- /dev/null
 +++ b/include/gfx/anf_fg.hpp
-@@ -0,0 +1,42 @@
+@@ -0,0 +1,44 @@
 +// ANF frame generation lifecycle for the Android renderer. Qualcomm's Adreno Neural
 +// Fusion interpolates a display frame between two rendered canonical frames; the
 +// renderer keeps its canonical colour double-buffered, so the current colour, the
@@ -35,19 +35,35 @@ index 0000000..5818a9e
 +bool FrameGenHasOutput();
 +// The generated frame is being presented this canonical commit: mark it consumed.
 +void FrameGenNotePresented();
-+// The semaphore ANF signals when the pending generated frame is ready; the frame itself; and the
-+// spare semaphore for the second swapchain-image acquire at present time.
++// The semaphore ANF signals when the pending generated frame is ready; the frame itself.
 +VkSemaphore FrameGenOutputDone();
-+VkSemaphore FrameGenAcquireSemaphore();
 +Image      &FrameGenOutputImage();
++// Presents the pending generated frame through a normal single swapchain cycle (acquire, blit,
++// present), waiting on ANF's completion. The port calls this for a tick's display slot in place
++// of the interpolated replay.
++bool PresentFrameGenerated();
 +// displaylist.cpp reports the canonical camera's world-to-clip each canonical frame.
 +void FrameGenSetClip(const float *world_to_clip);
 +
 +} // namespace gfx::detail
 +
 +#endif
+diff --git a/include/gfx/context.hpp b/include/gfx/context.hpp
+index 1b23f41..5f2a960 100644
+--- a/include/gfx/context.hpp
++++ b/include/gfx/context.hpp
+@@ -448,6 +448,9 @@ struct Context {
+     Image                main_depth;
+     uint32_t             main_current = 0;
+     float                render_scale = 1.0f;
++    // The main raster's fraction of the swapchain extent; 0 follows the window. The dynamic-scale
++    // governor moves this live.
++    float                main_scale = 0.0f;
+     FrameLayout          layout;
+     UiAnchor             ui_anchor;
+ 
 diff --git a/include/gfx/gfx.hpp b/include/gfx/gfx.hpp
-index e100835..cddc894 100644
+index e100835..7ec81b1 100644
 --- a/include/gfx/gfx.hpp
 +++ b/include/gfx/gfx.hpp
 @@ -102,6 +102,9 @@ struct RendererConfig {
@@ -60,6 +76,24 @@ index e100835..cddc894 100644
      // False draws triangle fans as indexed lists, as on a VK_KHR_portability_subset device without
      // triangleFans, so that path can be exercised on any device.
      bool triangle_fans = true;
+@@ -263,6 +266,9 @@ double PipelineCompileSeconds();
+ float  RenderScale();
+ // Recreates every render target at the new scale, carrying its contents over.
+ void SetRenderScale(float scale);
++// The main raster's live fraction of the window (0 = follow it). The dynamic-scale governor
++// steps this; recreating the main targets takes a few milliseconds, so keep the calls spaced.
++void SetMainRasterScale(float scale);
+ // Outside a frame; frame targets are recreated for the new aspect, carrying their logical frame over.
+ void        SetFrameLayout(const FrameLayout &layout);
+ FrameLayout CurrentFrameLayout();
+@@ -946,6 +952,7 @@ struct RenderOptions {
+ // screen presented since) or the window cannot present.
+ bool RenderList(const DisplayList &list, float alpha, const RenderOptions &options);
+ // Presents the last canonical render as it is (interpolation off, headless runs).
++// Presents the newest canonical frame.
+ bool PresentCanonical();
+ 
+ /**
 diff --git a/src/cpp/gfx/anf/anf.h b/src/cpp/gfx/anf/anf.h
 new file mode 100644
 index 0000000..3b14d6f
@@ -1148,10 +1182,10 @@ index 0000000..b4d3b76
 +#endif // ANF_TYPES_VK_H
 diff --git a/src/cpp/gfx/anf_fg.cpp b/src/cpp/gfx/anf_fg.cpp
 new file mode 100644
-index 0000000..37302eb
+index 0000000..4c986de
 --- /dev/null
 +++ b/src/cpp/gfx/anf_fg.cpp
-@@ -0,0 +1,666 @@
+@@ -0,0 +1,748 @@
 +#include "gfx/anf_fg.hpp"
 +
 +#ifdef __ANDROID__
@@ -1166,6 +1200,8 @@ index 0000000..37302eb
 +#include "shaders/anf_motion.vert.spv.hpp"
 +
 +#include "anf/anf.h"
++#include "anf/anf_fg.h"
++#include "anf/anf_sr.h"
 +#include "anf/anf_types_vk.h"
 +
 +namespace gfx::detail {
@@ -1221,10 +1257,10 @@ index 0000000..37302eb
 +    Buffer                clips;                       // 4 slots x 128 bytes, host coherent
 +    std::array<VkDescriptorSet, kFramesInFlight> sets = {};
 +
-+    std::array<VkSemaphore, kFramesInFlight> canon_done = {}; // the canonical submit's signal
-+    std::array<VkSemaphore, kFramesInFlight> fg_done = {};    // ANF's dispatch signal
-+    std::array<VkSemaphore, 2>               acquire = {};    // second swapchain image's acquire
-+    std::array<bool, kFramesInFlight>        dispatched = {}; // fg_done[slot] is meaningful
++    std::array<VkSemaphore, kFramesInFlight> canon_done = {};  // the canonical submit's signal
++    std::array<VkSemaphore, kFramesInFlight> fg_done_present = {}; // ANF done: the generated frame's present waits
++    std::array<VkSemaphore, kFramesInFlight> fg_done_render = {};  // ANF done: the next canonical render waits
++    std::array<bool, kFramesInFlight>        dispatched = {}; // fg_done_render[slot] is meaningful
 +
 +    uint32_t slot = 0;
 +    uint64_t dispatch_serial = 0;  // canonical commit serial the pending output was generated from
@@ -1236,8 +1272,16 @@ index 0000000..37302eb
 +
 +FgState fg;
 +
-+AnfFormat MapVulkanFormat(VkFormat format) {
-+    switch (format) {
++const char *ResultName(AnfResult result) {
++    switch (result) {
++    case ANF_RESULT_SUCCESS: return "success";
++    case ANF_RESULT_NOT_SUPPORTED: return "not supported";
++    case ANF_RESULT_ERROR_INVALID_PARAMETER: return "invalid parameter";
++    default: return "error";
++    }
++}
++
++AnfFormat MapVulkanFormat(VkFormat format) {    switch (format) {
 +    case VK_FORMAT_R8G8B8A8_UNORM: return ANF_FORMAT_R8G8B8A8_UNORM;
 +    case VK_FORMAT_R16G16_SFLOAT: return ANF_FORMAT_R16G16_FLOAT;
 +    case VK_FORMAT_D32_SFLOAT_S8_UINT: return ANF_FORMAT_D32_FLOAT;
@@ -1247,8 +1291,12 @@ index 0000000..37302eb
 +}
 +
 +// Reads a label's resource requirements; picks the Vulkan format from the returned list and
-+// collects the usage the resource must carry.
++// collects the usage the resource must carry. The wanted format is per label: depth wants the
++// renderer's depth format, colors the RGBA8 target, motion vectors half-float RG.
 +bool QueryResource(AnfResourceLabel label, AnfFormat &anf_format, VkImageUsageFlags &usage) {
++    const AnfFormat wanted = label == ANF_RESOURCE_LABEL_DEPTH  ? MapVulkanFormat(g.depth_format)
++                             : label == ANF_RESOURCE_LABEL_MOTION_VECTORS ? ANF_FORMAT_R16G16_FLOAT
++                                                                          : MapVulkanFormat(kColorFormat);
 +    const AnfResourceRequirements *resource = nullptr;
 +    if (fg.fns.QueryTechniqueResourceRequirements(fg.instance, ANF_TECHNIQUE_ID_FG_TEMPORAL, label, &resource) !=
 +        ANF_RESULT_SUCCESS) {
@@ -1266,8 +1314,7 @@ index 0000000..37302eb
 +        return false;
 +    }
 +    for (uint32_t index = 0; index < resource->numSupportedFormats; ++index) {
-+        if (resource->pSupportedFormats[index] == MapVulkanFormat(label == ANF_RESOURCE_LABEL_DEPTH ? g.depth_format
-+                                                                                                   : kColorFormat)) {
++        if (resource->pSupportedFormats[index] == wanted) {
 +            anf_format = resource->pSupportedFormats[index];
 +            return true;
 +        }
@@ -1289,8 +1336,43 @@ index 0000000..37302eb
 +        fg.pool = VK_NULL_HANDLE;
 +        fg.sets.fill(VK_NULL_HANDLE);
 +    }
++    // The semaphores go with the technique: a dispatch that never got its present or render wait
++    // would leave one signaled, and the next technique's first dispatch must not signal it again.
++    for (VkSemaphore &semaphore : fg.canon_done) {
++        if (semaphore != VK_NULL_HANDLE) {
++            vkDestroySemaphore(g.device, semaphore, nullptr);
++            semaphore = VK_NULL_HANDLE;
++        }
++    }
++    for (VkSemaphore &semaphore : fg.fg_done_present) {
++        if (semaphore != VK_NULL_HANDLE) {
++            vkDestroySemaphore(g.device, semaphore, nullptr);
++            semaphore = VK_NULL_HANDLE;
++        }
++    }
++    for (VkSemaphore &semaphore : fg.fg_done_render) {
++        if (semaphore != VK_NULL_HANDLE) {
++            vkDestroySemaphore(g.device, semaphore, nullptr);
++            semaphore = VK_NULL_HANDLE;
++        }
++    }
++    fg.dispatched.fill(false);
 +    fg.width = 0;
 +    fg.height = 0;
++}
++
++void EnsureSemaphores() {
++    VkSemaphoreCreateInfo info = {};
++    info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
++    for (VkSemaphore &semaphore : fg.canon_done) {
++        Check(vkCreateSemaphore(g.device, &info, nullptr, &semaphore), "anf semaphore");
++    }
++    for (VkSemaphore &semaphore : fg.fg_done_present) {
++        Check(vkCreateSemaphore(g.device, &info, nullptr, &semaphore), "anf semaphore");
++    }
++    for (VkSemaphore &semaphore : fg.fg_done_render) {
++        Check(vkCreateSemaphore(g.device, &info, nullptr, &semaphore), "anf semaphore");
++    }
 +}
 +
 +void DestroyTechnique() {
@@ -1393,6 +1475,38 @@ index 0000000..37302eb
 +        return;
 +    }
 +
++    // Super resolution: the same adapter check, logged for the SR dynamic-scale mode. Done before
++    // the FG decision so the answer is in the log either way.
++    {
++        const AnfResult sr_supported =
++            fg.fns.IsTechniqueSupported(fg.instance, ANF_TECHNIQUE_ID_SR_TEMPORAL, &adapter.header);
++        kz::Logf(kz::LogLevel::Info, "gfx", "anf: SR temporal supported={} ({})",
++                 sr_supported == ANF_RESULT_SUCCESS ? "yes" : "no", ResultName(sr_supported));
++        const AnfTechniqueRequirements *sr_requirements = nullptr;
++        if (sr_supported == ANF_RESULT_SUCCESS &&
++            fg.fns.QueryTechniqueRequirements(fg.instance, ANF_TECHNIQUE_ID_SR_TEMPORAL, &sr_requirements) ==
++                ANF_RESULT_SUCCESS &&
++            sr_requirements != nullptr) {
++            const AnfStructHeader *group = sr_requirements->pTechniqueGroupRequirements;
++            if (group != nullptr && group->type == ANF_STYPE_SR_REQUIREMENTS) {
++                const auto *sr = reinterpret_cast<const AnfSRRequirements *>(group);
++                kz::Logf(kz::LogLevel::Info, "gfx", "anf: SR quality modes {:#x}", sr->supportedQualityModes);
++            }
++            for (uint32_t index = 0; index < sr_requirements->numRequiredResources; ++index) {
++                const AnfResourceLabel label = sr_requirements->pRequiredResources[index];
++                AnfFormat       format = ANF_FORMAT_UNKNOWN;
++                VkImageUsageFlags usage = 0;
++                const bool      ok = QueryResource(label, format, usage);
++                const char *name = label == ANF_RESOURCE_LABEL_DEPTH      ? "depth"
++                                   : label == ANF_RESOURCE_LABEL_MOTION_VECTORS ? "motion vectors"
++                                   : label == ANF_RESOURCE_LABEL_INPUT_COLOR ? "input color"
++                                                                             : "output color";
++                kz::Logf(kz::LogLevel::Info, "gfx", "anf:   SR {} format {} usage {:#x} ({})", name,
++                         static_cast<int>(format), usage, ok ? "accepted" : "rejected");
++            }
++        }
++    }
++
 +    const AnfTechniqueRequirements *requirements = nullptr;
 +    if (fg.fns.IsTechniqueSupported(fg.instance, ANF_TECHNIQUE_ID_FG_TEMPORAL, &adapter.header) !=
 +            ANF_RESULT_SUCCESS ||
@@ -1432,7 +1546,7 @@ index 0000000..37302eb
 +    // The motion pass: one set per frame in flight, each pointing at its own clip constants and
 +    // the shared depth view.
 +    VkDescriptorSetLayoutBinding bindings[2] = {};
-+    bindings[0] = {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr};
++    bindings[0] = {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr};
 +    bindings[1] = {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr};
 +    VkDescriptorSetLayoutCreateInfo layout_info = {};
 +    layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -1452,56 +1566,8 @@ index 0000000..37302eb
 +    sampler_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 +    sampler_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 +    Check(vkCreateSampler(g.device, &sampler_info, nullptr, &fg.sampler), "anf motion sampler");
-+    VkImageViewCreateInfo view_info = {};
-+    view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-+    view_info.image = g.main_depth.image;
-+    view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-+    view_info.format = g.depth_format;
-+    view_info.subresourceRange = {VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1};
-+    Check(vkCreateImageView(g.device, &view_info, nullptr, &fg.depth_view), "anf depth view");
 +
 +    fg.clips = CreateBuffer(sizeof(ClipConstants) * kFramesInFlight, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, true);
-+    VkDescriptorPoolSize sizes[2] = {{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, kFramesInFlight},
-+                                     {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, kFramesInFlight}};
-+    VkDescriptorPoolCreateInfo pool_info = {};
-+    pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-+    pool_info.maxSets = kFramesInFlight;
-+    pool_info.poolSizeCount = 2;
-+    pool_info.pPoolSizes = sizes;
-+    Check(vkCreateDescriptorPool(g.device, &pool_info, nullptr, &fg.pool), "anf motion pool");
-+    for (uint32_t slot = 0; slot < kFramesInFlight; slot++) {
-+        VkDescriptorSetAllocateInfo allocate = {};
-+        allocate.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-+        allocate.descriptorPool = fg.pool;
-+        allocate.descriptorSetCount = 1;
-+        allocate.pSetLayouts = &fg.set_layout;
-+        Check(vkAllocateDescriptorSets(g.device, &allocate, &fg.sets[slot]), "anf motion set");
-+        VkDescriptorBufferInfo buffer_info = {fg.clips.buffer, slot * sizeof(ClipConstants),
-+                                              sizeof(ClipConstants)};
-+        VkDescriptorImageInfo image_info = {fg.sampler, fg.depth_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
-+        VkWriteDescriptorSet write[2] = {};
-+        write[0] = {VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, fg.sets[slot], 0, 0, 1,
-+                    VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, nullptr, &buffer_info, nullptr};
-+        write[1] = {VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, fg.sets[slot], 1, 0, 1,
-+                    VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_info, nullptr, nullptr};
-+        vkUpdateDescriptorSets(g.device, 2, write, 0, nullptr);
-+    }
-+
-+    for (VkSemaphore &semaphore : fg.canon_done) {
-+        VkSemaphoreCreateInfo info = {};
-+        info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-+        Check(vkCreateSemaphore(g.device, &info, nullptr, &semaphore), "anf semaphore");
-+    }
-+    for (VkSemaphore &semaphore : fg.fg_done) {
-+        VkSemaphoreCreateInfo info = {};
-+        info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-+        Check(vkCreateSemaphore(g.device, &info, nullptr, &semaphore), "anf semaphore");
-+    }
-+    for (VkSemaphore &semaphore : fg.acquire) {
-+        VkSemaphoreCreateInfo info = {};
-+        info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-+        Check(vkCreateSemaphore(g.device, &info, nullptr, &semaphore), "anf acquire semaphore");
-+    }
 +
 +    // The motion pipeline: a fullscreen triangle with no vertex input, dynamic viewport/scissor,
 +    // no depth, no blend.
@@ -1601,13 +1667,13 @@ index 0000000..37302eb
 +            semaphore = VK_NULL_HANDLE;
 +        }
 +    }
-+    for (VkSemaphore &semaphore : fg.fg_done) {
++    for (VkSemaphore &semaphore : fg.fg_done_present) {
 +        if (semaphore != VK_NULL_HANDLE) {
 +            vkDestroySemaphore(g.device, semaphore, nullptr);
 +            semaphore = VK_NULL_HANDLE;
 +        }
 +    }
-+    for (VkSemaphore &semaphore : fg.acquire) {
++    for (VkSemaphore &semaphore : fg.fg_done_render) {
 +        if (semaphore != VK_NULL_HANDLE) {
 +            vkDestroySemaphore(g.device, semaphore, nullptr);
 +            semaphore = VK_NULL_HANDLE;
@@ -1627,6 +1693,7 @@ index 0000000..37302eb
 +        return;
 +    }
 +    DestroyTargets();
++    EnsureSemaphores();
 +    fg.width = width;
 +    fg.height = height;
 +    fg.motion_format = VK_FORMAT_R16G16_SFLOAT;
@@ -1635,6 +1702,59 @@ index 0000000..37302eb
 +    fg.output = CreateImage(width, height, 1, kColorFormat,
 +                            fg.output_usage | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
 +                                VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
++    // The depth view and the sets that sample it exist only once the main targets do; on a resize
++    // the view is rebuilt against the new depth image.
++    if (fg.depth_view == VK_NULL_HANDLE && fg.pool == VK_NULL_HANDLE) {
++        VkImageViewCreateInfo view_info = {};
++        view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
++        view_info.image = g.main_depth.image;
++        view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
++        view_info.format = g.depth_format;
++        view_info.subresourceRange = {VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1};
++        Check(vkCreateImageView(g.device, &view_info, nullptr, &fg.depth_view), "anf depth view");
++        VkDescriptorPoolSize sizes[2] = {{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, kFramesInFlight},
++                                         {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, kFramesInFlight}};
++        VkDescriptorPoolCreateInfo pool_info = {};
++        pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
++        pool_info.maxSets = kFramesInFlight;
++        pool_info.poolSizeCount = 2;
++        pool_info.pPoolSizes = sizes;
++        Check(vkCreateDescriptorPool(g.device, &pool_info, nullptr, &fg.pool), "anf motion pool");
++        for (uint32_t slot = 0; slot < kFramesInFlight; slot++) {
++            VkDescriptorSetAllocateInfo allocate = {};
++            allocate.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
++            allocate.descriptorPool = fg.pool;
++            allocate.descriptorSetCount = 1;
++            allocate.pSetLayouts = &fg.set_layout;
++            Check(vkAllocateDescriptorSets(g.device, &allocate, &fg.sets[slot]), "anf motion set");
++            VkDescriptorBufferInfo buffer_info = {fg.clips.buffer, slot * sizeof(ClipConstants),
++                                                  sizeof(ClipConstants)};
++            VkDescriptorImageInfo image_info = {fg.sampler, fg.depth_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
++            VkWriteDescriptorSet write[2] = {};
++            write[0] = {VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, fg.sets[slot], 0, 0, 1,
++                        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, nullptr, &buffer_info, nullptr};
++            write[1] = {VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, fg.sets[slot], 1, 0, 1,
++                        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_info, nullptr, nullptr};
++            vkUpdateDescriptorSets(g.device, 2, write, 0, nullptr);
++        }
++    } else if (fg.depth_view != VK_NULL_HANDLE) {
++        // A resize rebuilt the depth image: point every set's sampler at the new view.
++        vkDestroyImageView(g.device, fg.depth_view, nullptr);
++        VkImageViewCreateInfo view_info = {};
++        view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
++        view_info.image = g.main_depth.image;
++        view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
++        view_info.format = g.depth_format;
++        view_info.subresourceRange = {VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1};
++        Check(vkCreateImageView(g.device, &view_info, nullptr, &fg.depth_view), "anf depth view");
++        VkDescriptorImageInfo image_info = {fg.sampler, fg.depth_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
++        VkWriteDescriptorSet write = {VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, VK_NULL_HANDLE, 1, 0, 1,
++                                      VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_info, nullptr, nullptr};
++        for (VkDescriptorSet set : fg.sets) {
++            write.dstSet = set;
++            vkUpdateDescriptorSets(g.device, 1, &write, 0, nullptr);
++        }
++    }
 +    if (!fg.available) {
 +        fg.available = CreateTechnique();
 +        if (!fg.available) {
@@ -1706,8 +1826,8 @@ index 0000000..37302eb
 +    general_state.access = VK_ACCESS_2_MEMORY_WRITE_BIT | VK_ACCESS_2_MEMORY_READ_BIT;
 +    Transition(cmd, fg.output, general_state);
 +
-+    wait = fg.dispatched[(slot + kFramesInFlight - 1) % kFramesInFlight] ? fg.fg_done[(slot + kFramesInFlight - 1) % kFramesInFlight]
-+                                                                          : VK_NULL_HANDLE;
++    const uint32_t previous_slot = (slot + kFramesInFlight - 1) % kFramesInFlight;
++    wait = fg.dispatched[previous_slot] ? fg.fg_done_render[previous_slot] : VK_NULL_HANDLE;
 +    signal = fg.canon_done[slot];
 +}
 +
@@ -1748,13 +1868,14 @@ index 0000000..37302eb
 +        }
 +    }
 +    AnfClientSyncObject wait_objects[] = {reinterpret_cast<AnfClientSyncObject>(fg.canon_done[slot])};
-+    AnfClientSyncObject signal_objects[] = {reinterpret_cast<AnfClientSyncObject>(fg.fg_done[slot])};
++    AnfClientSyncObject signal_objects[] = {reinterpret_cast<AnfClientSyncObject>(fg.fg_done_present[slot]),
++                                            reinterpret_cast<AnfClientSyncObject>(fg.fg_done_render[slot])};
 +    AnfTechniqueDispatchImmediateInfo immediate = {};
 +    immediate.header.type = ANF_STYPE_TECHNIQUE_DISPATCH_IMMEDIATE_INFO;
 +    immediate.pWaitSyncObjects = wait_objects;
 +    immediate.numWaitSyncObjects = 1;
 +    immediate.pSignalSyncObjects = signal_objects;
-+    immediate.numSignalSyncObjects = 1;
++    immediate.numSignalSyncObjects = 2;
 +    AnfFGDispatch group = {};
 +    group.header.type = ANF_STYPE_FG_DISPATCH;
 +    AnfTechniqueDispatchInfo dispatch = {};
@@ -1783,11 +1904,7 @@ index 0000000..37302eb
 +}
 +
 +VkSemaphore FrameGenOutputDone() {
-+    return fg.available ? fg.fg_done[fg.slot] : VK_NULL_HANDLE;
-+}
-+
-+VkSemaphore FrameGenAcquireSemaphore() {
-+    return fg.acquire[fg.slot & 1];
++    return fg.available ? fg.fg_done_present[fg.slot] : VK_NULL_HANDLE;
 +}
 +
 +Image &FrameGenOutputImage() {
@@ -1813,7 +1930,6 @@ index 0000000..37302eb
 +bool FrameGenHasOutput() { return false; }
 +void FrameGenNotePresented() {}
 +VkSemaphore FrameGenOutputDone() { return VK_NULL_HANDLE; }
-+VkSemaphore FrameGenAcquireSemaphore() { return VK_NULL_HANDLE; }
 +Image      &FrameGenOutputImage() { static Image never; return never; }
 +void FrameGenSetClip(const float *) {}
 +} // namespace gfx::detail
@@ -1848,9 +1964,15 @@ index 2a1355b..1a4e762 100644
                  const auto start = std::chrono::steady_clock::now();
                  OpenListFrame(true, false, false);
 diff --git a/src/cpp/gfx/renderer.cpp b/src/cpp/gfx/renderer.cpp
-index bf424c4..18a4e52 100644
+index bf424c4..e48c550 100644
 --- a/src/cpp/gfx/renderer.cpp
 +++ b/src/cpp/gfx/renderer.cpp
+@@ -1,4 +1,4 @@
+-#include <SDL3/SDL.h>
++﻿#include <SDL3/SDL.h>
+ #include <SDL3/SDL_vulkan.h>
+ 
+ #include <algorithm>
 @@ -24,6 +24,7 @@
  #include <android/log.h>
  #endif
@@ -1859,7 +1981,17 @@ index bf424c4..18a4e52 100644
  #include "gfx/context.hpp"
  #include "gfx/displaylist.hpp"
  #include "gfx/profile.hpp"
-@@ -553,6 +554,19 @@ void CreateDevice() {
+@@ -35,6 +36,9 @@ namespace detail {
+ 
+ Context g;
+ 
++// Defined beside DesiredMainExtent; the resize paths above need it first.
++VkExtent2D MainExtentFor(VkExtent2D output);
++
+ namespace {
+ 
+ // Validation and performance messages seen, from any thread the driver reports on.
+@@ -553,6 +557,19 @@ void CreateDevice() {
      if (!g.bindless) {
          extensions.push_back(VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME);
      }
@@ -1879,7 +2011,7 @@ index bf424c4..18a4e52 100644
      VkPhysicalDevicePipelineExecutablePropertiesFeaturesKHR executable = {};
      executable.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_EXECUTABLE_PROPERTIES_FEATURES_KHR;
      if (!g.perf.stats.empty()) {
-@@ -579,6 +593,11 @@ void CreateDevice() {
+@@ -579,6 +596,11 @@ void CreateDevice() {
      LoadCoreDeviceCommands(g.device);
  #endif
      vkGetDeviceQueue(g.device, g.queue_family, 0, &g.queue);
@@ -1891,7 +2023,25 @@ index bf424c4..18a4e52 100644
      if (g.dynamic_color_write_mask) {
          g.cmd_set_color_write_mask = reinterpret_cast<PFN_vkCmdSetColorWriteMaskEXT>(
              vkGetDeviceProcAddr(g.device, "vkCmdSetColorWriteMaskEXT"));
-@@ -832,6 +851,9 @@ void SyncMainTargets() {
+@@ -810,7 +832,7 @@ bool ResizeOffscreen() {
+     }
+     VkExtent2D extent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
+     g.swapchain.extent = extent;
+-    const VkExtent2D desired = DesiredMainExtent(extent, g.config.main_height_limit);
++    const VkExtent2D desired = MainExtentFor(extent);
+     if (g.main_color[0].width != desired.width || g.main_color[0].height != desired.height) {
+         vkDeviceWaitIdle(g.device);
+         DestroyMainTargets();
+@@ -824,7 +846,7 @@ bool ResizeOffscreen() {
+ // The main targets follow the swapchain's size, losing their contents.
+ void SyncMainTargets() {
+     const Image     &main = g.main_color[0];
+-    const VkExtent2D desired = DesiredMainExtent(g.swapchain.extent, g.config.main_height_limit);
++    const VkExtent2D desired = MainExtentFor(g.swapchain.extent);
+     if (main.width != desired.width || main.height != desired.height) {
+         vkDeviceWaitIdle(g.device);
+         DestroyMainTargets();
+@@ -832,6 +854,9 @@ void SyncMainTargets() {
          RecreateSharedTargets();
          RecreateRenderTargets();
      }
@@ -1901,7 +2051,7 @@ index bf424c4..18a4e52 100644
  }
  
  // Without targets the main targets keep their size until a frame that draws the game's state
-@@ -1216,7 +1238,8 @@ void AdvanceSlot() {
+@@ -1216,7 +1241,8 @@ void AdvanceSlot() {
      }
  }
  
@@ -1911,7 +2061,7 @@ index bf424c4..18a4e52 100644
      AssertDeviceThread(__func__);
      KZ_PROFILE_ZONE("Kazarov Submit");
      Frame                                 &frame = CurrentFrame();
-@@ -1231,23 +1254,45 @@ void Submit(bool with_draw, VkSemaphore wait, VkSemaphore signal) {
+@@ -1231,23 +1257,45 @@ void Submit(bool with_draw, VkSemaphore wait, VkSemaphore signal) {
          commands.push_back({VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO, nullptr, frame.draw_cmd, 0});
      }
  
@@ -1969,7 +2119,33 @@ index bf424c4..18a4e52 100644
      Check(vkResetFences(g.device, 1, &frame.fence), "vkResetFences");
      Check(vkQueueSubmit2(g.queue, 1, &submit, frame.fence), "vkQueueSubmit2");
      frame.pending = true;
-@@ -1610,6 +1655,9 @@ void RendererShutdown() {
+@@ -1393,6 +1441,16 @@ Image &CurrentMainColor() { return g.main_color[g.main_current]; }
+ 
+ Image &PreviousMainColor() { return g.main_color[g.main_current ^ 1]; }
+ 
++// The main raster's extent: the height limit's cap, then the dynamic-scale fraction.
++VkExtent2D MainExtentFor(VkExtent2D output) {
++    VkExtent2D extent = DesiredMainExtent(output, g.config.main_height_limit);
++    if (g.main_scale > 0.0f && g.main_scale < 1.0f) {
++        extent.width = std::max(1u, static_cast<uint32_t>(extent.width * g.main_scale + 0.5f));
++        extent.height = std::max(1u, static_cast<uint32_t>(extent.height * g.main_scale + 0.5f));
++    }
++    return extent;
++}
++
+ VkExtent2D DesiredMainExtent(VkExtent2D output, uint32_t height_limit) {
+     if (output.width == 0 || output.height == 0 || height_limit == 0 || height_limit >= output.height) {
+         return output;
+@@ -1414,7 +1472,7 @@ void CreateMainTargets() {
+     if (trace_init) {
+         std::fprintf(stderr, "perf init: allocating main targets\n");
+     }
+-    const VkExtent2D extent = DesiredMainExtent(g.swapchain.extent, g.config.main_height_limit);
++    const VkExtent2D extent = MainExtentFor(g.swapchain.extent);
+     const uint32_t   width = extent.width;
+     const uint32_t   height = extent.height;
+     ++g.canonical_target_generation;
+@@ -1610,6 +1668,9 @@ void RendererShutdown() {
          RunDeletions(frame);
      }
      DestroyPipelines();
@@ -1979,7 +2155,27 @@ index bf424c4..18a4e52 100644
      ShutdownResources();
      for (Frame &frame : g.frames) {
          DestroyTransients(frame);
-@@ -1836,13 +1884,14 @@ void PlotFrameCounters() {
+@@ -1770,8 +1831,8 @@ bool AcquireImage(bool targets) {
+ }
+ 
+ // Ends the frame's draw commands with source blitted onto the acquired swapchain image, submits
+-// and presents.
+-void PresentImage(Frame &frame, VkCommandBuffer cmd, Image &source) {
++// and presents. extra_wait: a semaphore the blit must wait on (frame generation's completion).
++void PresentImage(Frame &frame, VkCommandBuffer cmd, Image &source, VkSemaphore extra_wait = VK_NULL_HANDLE) {
+     AssertDeviceThread(__func__);
+     KZ_PROFILE_ZONE("Kazarov PresentImage");
+     VkImage swapchain = g.swapchain.images[g.image_index];
+@@ -1799,7 +1860,7 @@ void PresentImage(Frame &frame, VkCommandBuffer cmd, Image &source) {
+     Check(vkEndCommandBuffer(cmd), "vkEndCommandBuffer");
+ 
+     VkSemaphore render_finished = g.swapchain.render_finished[g.image_index];
+-    Submit(true, frame.image_available, render_finished);
++    Submit(true, frame.image_available, render_finished, extra_wait);
+     g.in_frame = false;
+     g_game_frame_open.store(false);
+ 
+@@ -1836,13 +1897,14 @@ void PlotFrameCounters() {
      KZ_PROFILE_PLOT("Kazarov transient bytes", g.counters.transient_bytes);
  }
  
@@ -1996,7 +2192,16 @@ index bf424c4..18a4e52 100644
      NoteFrameCpu(false);
      g.in_frame = false;
      g_game_frame_open.store(false);
-@@ -1933,11 +1982,20 @@ void CloseListFrame(bool canonical, bool present) {
+@@ -1863,7 +1925,7 @@ void PrepareRecordingFromCaller() {
+     // from the swapchain. The idle hook never recreates the swapchain, so the extents change only on
+     // the game thread; the pending flag is atomic.
+     const Image     &main = g.main_color[0];
+-    const VkExtent2D desired = DesiredMainExtent(g.swapchain.extent, g.config.main_height_limit);
++    const VkExtent2D desired = MainExtentFor(g.swapchain.extent);
+     const bool       same_size = main.width == desired.width && main.height == desired.height;
+     if (!g_resize_pending.load() && (g.offscreen || same_size)) {
+         return;
+@@ -1933,11 +1995,20 @@ void CloseListFrame(bool canonical, bool present) {
              KZ_PROFILE_GPU_ZONE(cmd, "Kazarov depth queries");
              RecordDepthQueries(cmd);
          }
@@ -2018,134 +2223,76 @@ index bf424c4..18a4e52 100644
          return;
      }
      if (present && !g.offscreen) {
-@@ -2006,6 +2064,87 @@ void EndFrame() {
+@@ -2006,6 +2077,8 @@ void EndFrame() {
      });
  }
  
-+// Frame generation's two-image present: the generated between-frame lands on the first swapchain
-+// image, the canonical on the second; the FIFO shows them on consecutive vblanks.
-+void PresentPair(Frame &frame, Image &generated, Image &canonical, uint32_t index_generated,
-+                 VkSemaphore acquire_generated, uint32_t index_canonical, VkSemaphore acquire_canonical,
-+                 VkSemaphore fg_done) {
-+    AssertDeviceThread(__func__);
-+    VkCommandBuffer cmd = frame.draw_cmd;
-+    auto            blit_to_swapchain = [&](Image &source, uint32_t index) {
-+        VkImage swapchain = g.swapchain.images[index];
-+        Transition(cmd, source, TransferSrc());
-+        SwapchainBarrier(cmd, swapchain, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-+                         VK_PIPELINE_STAGE_2_ALL_TRANSFER_BIT, VK_ACCESS_2_NONE,
-+                         VK_PIPELINE_STAGE_2_ALL_TRANSFER_BIT, VK_ACCESS_2_TRANSFER_WRITE_BIT);
-+        VkImageBlit region = {};
-+        region.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
-+        region.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
-+        region.srcOffsets[1] = {static_cast<int32_t>(source.width), static_cast<int32_t>(source.height), 1};
-+        region.dstOffsets[1] = {static_cast<int32_t>(g.swapchain.extent.width),
-+                                static_cast<int32_t>(g.swapchain.extent.height), 1};
-+        vkCmdBlitImage(cmd, source.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, swapchain,
-+                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region, VK_FILTER_NEAREST);
-+        SwapchainBarrier(cmd, swapchain, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-+                         VK_PIPELINE_STAGE_2_ALL_TRANSFER_BIT, VK_ACCESS_2_TRANSFER_WRITE_BIT,
-+                         VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT, VK_ACCESS_2_NONE);
-+        ToRest(cmd, source);
-+    };
-+    blit_to_swapchain(generated, index_generated);
-+    blit_to_swapchain(canonical, index_canonical);
-+    CloseTimestamps(cmd, true);
-+    Check(vkEndCommandBuffer(cmd), "vkEndCommandBuffer");
 +
-+    VkSemaphoreSubmitInfo waits[3] = {};
-+    waits[0] = {VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO, nullptr, frame.image_available,
-+                VK_PIPELINE_STAGE_2_ALL_TRANSFER_BIT, 0};
-+    waits[1] = {VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO, nullptr, fg_done,
-+                VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT, 0};
-+    waits[2] = {VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO, nullptr, acquire_generated,
-+                VK_PIPELINE_STAGE_2_ALL_TRANSFER_BIT, 0};
-+    VkSemaphoreSubmitInfo signals[2] = {};
-+    signals[0] = {VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO, nullptr, g.swapchain.render_finished[index_generated],
-+                  VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT, 0};
-+    signals[1] = {VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO, nullptr, g.swapchain.render_finished[index_canonical],
-+                  VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT, 0};
-+    VkCommandBufferSubmitInfo command = {VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO, nullptr, cmd, 0};
-+    VkSubmitInfo2             submit = {};
-+    submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2;
-+    submit.waitSemaphoreInfoCount = 3;
-+    submit.pWaitSemaphoreInfos = waits;
-+    submit.commandBufferInfoCount = 1;
-+    submit.pCommandBufferInfos = &command;
-+    submit.signalSemaphoreInfoCount = 2;
-+    submit.pSignalSemaphoreInfos = signals;
-+    Check(vkResetFences(g.device, 1, &frame.fence), "vkResetFences");
-+    Check(vkQueueSubmit2(g.queue, 1, &submit, frame.fence), "vkQueueSubmit2");
-+    frame.pending = true;
-+    g.in_frame = false;
-+    g_game_frame_open.store(false);
-+
-+    auto present = [&](uint32_t index, VkSemaphore finished) {
-+        VkPresentInfoKHR info = {};
-+        info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-+        info.waitSemaphoreCount = 1;
-+        info.pWaitSemaphores = &finished;
-+        info.swapchainCount = 1;
-+        info.pSwapchains = &g.swapchain.handle;
-+        info.pImageIndices = &index;
-+        VkResult result = vkQueuePresentKHR(g.queue, &info);
-+        if (result == VK_SUBOPTIMAL_KHR) {
-+            if (SuboptimalNeedsRecreate()) {
-+                g_resize_pending.store(true);
-+            }
-+        } else if (SwapchainLost(result)) {
-+            g_resize_pending.store(true);
-+        } else {
-+            Check(result, "vkQueuePresentKHR");
-+        }
-+    };
-+    present(index_generated, g.swapchain.render_finished[index_generated]);
-+    present(index_canonical, g.swapchain.render_finished[index_canonical]);
-+}
 +
  bool PresentCanonical() {
      // Read on the game thread: the worker must not look at the list the game thread records.
      const bool recording = RecordingCalls();
-@@ -2019,12 +2158,39 @@ bool PresentCanonical() {
-             presented = true;
-             return;
-         }
-+        const bool generated = FrameGenHasOutput();
-         if (!AcquireImage(false)) {
-             return;
-         }
-         g.presented_display = false;
-         OpenFrame();
-         Frame &frame = CurrentFrame();
-+        if (generated) {
-+            // The first acquire came through frame.image_available: that image shows the generated
-+            // frame. A second acquire with a frame-generation semaphore takes the image that shows
-+            // the canonical, one vblank later.
-+            const uint32_t index_generated = g.image_index;
-+            const uint32_t index_canonical = 0;
-+            VkSemaphore    acquire_canonical = FrameGenAcquireSemaphore();
-+            VkResult       second = vkAcquireNextImageKHR(g.device, g.swapchain.handle, UINT64_MAX,
-+                                                          acquire_canonical, VK_NULL_HANDLE,
-+                                                          &const_cast<uint32_t &>(index_canonical));
-+            if ((second == VK_SUCCESS || second == VK_SUBOPTIMAL_KHR) && index_canonical != index_generated) {
-+                if (second == VK_SUBOPTIMAL_KHR && SuboptimalNeedsRecreate()) {
-+                    g_resize_pending.store(true);
-+                }
-+                PresentPair(frame, FrameGenOutputImage(), PreviousMainColor(), index_generated,
-+                            frame.image_available, index_canonical, acquire_canonical, FrameGenOutputDone());
-+                FrameGenNotePresented();
-+                g.target = kMainTarget;
-+                AdvanceSlot();
-+                presented = true;
-+                return;
-+            }
-+            // The second image did not come: show the canonical alone and retire the generated
-+            // frame so a stale one is never shown later.
-+            FrameGenNotePresented();
+@@ -2033,6 +2106,34 @@ bool PresentCanonical() {
+     return presented;
+ }
+ 
++namespace detail {
++
++// The generated between-frame's own display cycle, in the sample's shape: one acquire, one blit
++// of ANF's output, one present. ANF's completion gates the blit; the port paces this slot.
++bool PresentFrameGenerated() {
++    const bool recording = RecordingCalls();
++    bool       presented = false;
++    RunOnRenderThread([&] {
++        if (g.offscreen || g.in_frame || recording || !FrameGenHasOutput()) {
++            return;
 +        }
-         PresentImage(frame, frame.draw_cmd, PreviousMainColor());
-         g.target = kMainTarget;
-         AdvanceSlot();
++        if (!AcquireImage(false)) {
++            return;
++        }
++        g.presented_display = false;
++        OpenFrame();
++        Frame &frame = CurrentFrame();
++        PresentImage(frame, frame.draw_cmd, FrameGenOutputImage(), FrameGenOutputDone());
++        FrameGenNotePresented();
++        g.target = kMainTarget;
++        AdvanceSlot();
++        presented = true;
++    });
++    return presented;
++}
++
++} // namespace detail
++
+ std::optional<CanonicalImageToken> CaptureCanonicalImage() {
+     const bool                         recording = RecordingCalls();
+     std::optional<CanonicalImageToken> result;
+@@ -2159,4 +2260,25 @@ void SetRenderScale(float scale) {
+     });
+ }
+ 
++void SetMainRasterScale(float scale) {
++    // Read on the game thread: the worker must not look at the list the game thread records.
++    const bool recording = RecordingCalls();
++    RunOnRenderThread([&] {
++        if (!std::isfinite(scale) || scale < 0.0f || scale > 1.0f || scale == g.main_scale || g.in_frame ||
++            recording) {
++            return;
++        }
++        g.main_scale = scale;
++        if (g.device != VK_NULL_HANDLE) {
++            // The dynamic-scale governor steps this a few times a minute; the recreation syncs the
++            // main targets, the frame-generation technique and the render-target textures.
++            if (g.offscreen) {
++                ResizeOffscreen();
++            } else {
++                SyncMainTargets();
++            }
++        }
++    });
++}
++
+ } // namespace gfx
 diff --git a/src/cpp/gfx/shaders/anf_motion.frag b/src/cpp/gfx/shaders/anf_motion.frag
 new file mode 100644
 index 0000000..9e15194

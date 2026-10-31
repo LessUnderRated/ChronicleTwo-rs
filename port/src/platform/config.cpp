@@ -66,6 +66,7 @@ constexpr auto kUnit = [](auto value) { return value >= 0 && value <= 1; };
 constexpr const char *kPresentModeNames[] = {"fifo", "mailbox", "immediate"};
 constexpr const char *kRenderThreadNames[] = {"off", "lockstep", "async"};
 constexpr const char *kAspectNames[] = {"auto", "4:3"};
+constexpr const char *kDynamicScaleNames[] = {"off", "fps", "watts"};
 constexpr const char *kFpsDetailNames[] = {"fps", "ticks", "all"};
 constexpr const char *kHapticsNames[] = {"off", "vibration", "full"};
 constexpr const char *kGyroNames[] = {"off", "always", "first_person", "held"};
@@ -312,6 +313,12 @@ bool Apply(Config &config, std::string_view name, const Json &value) {
     }
     if (name == "video.render_scale") {
         return ReadNumber(value, config.render_scale, [](float scale) { return scale >= 0.0f && scale <= 8.0f; });
+    }
+    if (name == "video.dynamic_scale") {
+        return ReadEnum(value, kDynamicScaleNames, config.dynamic_scale);
+    }
+    if (name == "video.power_target") {
+        return ReadNumber(value, config.power_target, [](float watts) { return watts >= 2.0f && watts <= 12.0f; });
     }
     if (name == "video.frame_timing_log") {
         return ReadBool(value, config.log_perf);
@@ -573,6 +580,8 @@ std::string ConfigSerialize(const Config &config) {
     root["video"]["aspect"] = kAspectNames[static_cast<std::size_t>(config.aspect)];
     root["video"]["ui_scale"] = Shortest(config.ui_scale);
     root["video"]["render_scale"] = Shortest(config.render_scale);
+    root["video"]["dynamic_scale"] = kDynamicScaleNames[static_cast<std::size_t>(config.dynamic_scale)];
+    root["video"]["power_target"] = Shortest(config.power_target);
     root["video"]["frame_timing_log"] = config.log_perf;
     root["video"]["text_font"] = config.font_sharp ? "sharp" : "original";
     root["video"]["show_fps"] = s.show_fps;

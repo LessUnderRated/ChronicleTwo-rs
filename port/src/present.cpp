@@ -19,10 +19,12 @@
 #include "log/log.hpp"
 #include "menu_mouse.hpp"
 #include "platform/clock.hpp"
+#include "platform/config.hpp"
 #include "platform/frame_timing.hpp"
 #include "platform/input.hpp"
 #include "platform/mouse.hpp"
 #include "platform/overlay.hpp"
+#include "platform/power.hpp"
 #include "platform/window.hpp"
 #include "present_timing.hpp"
 #include "profile.hpp"
@@ -51,13 +53,8 @@ int               wait_frames = 0;
 
 /**
  * Enables intermediate displays for game frames below the requested presentation cadence.
- * With ANF frame generation active the renderer interpolates at present time instead, so the
- * port shows the canonical once per tick and lets the generated frame take the other slot.
  */
 bool InterpolateFrame([[maybe_unused]] int frames) {
-    if (gfx::detail::FrameGenActive()) {
-        return false;
-    }
 #ifdef __SWITCH__
     return settings.interpolation && frames > 1;
 #else
@@ -164,12 +161,85 @@ void LogPresentRates(Clock::time_point now) {
     }
 }
 
+void DynamicScaleTick(Clock::time_point now, double fps);
+
 void NotePresented() {
     ++stats.presented;
     CT_PROFILE_FRAME("Display");
     const Clock::time_point now = Clock::now();
     overlay.frames.Count(now);
     LogPresentRates(now);
+    DynamicScaleTick(now, overlay.frames.PerSecond());
+}
+
+// The dynamic-scale governor. Every step window it weighs the display rate or the whole-device
+// watts against the mode's target and steps the 3D view's render resolution: down when the frame
+// rate sags or the watts run over, up when there is headroom. Steps are small and spaced out so a
+// scene's momentary load does not yo-yo the scale.
+struct DynamicScaleGovernor {
+    int               mode = -1;   // the applied mode; -1 = nothing applied yet
+    float             scale = 0.75f;
+    int               slow = 0;    // consecutive samples short of the target
+    int               fast = 0;    // consecutive samples with headroom
+    Clock::time_point last_step{};
+};
+DynamicScaleGovernor governor;
+
+void DynamicScaleTick(Clock::time_point now, double fps) {
+    const auto &config = ConfigGet();
+    const int   mode = static_cast<int>(config.dynamic_scale);
+    if (mode != governor.mode) {
+        governor.mode = mode;
+        governor.slow = governor.fast = 0;
+        governor.last_step = now;
+        gfx::SetMainRasterScale(mode == 0 ? 0.0f : governor.scale);
+        return;
+    }
+    if (mode == 0 || now - governor.last_step < std::chrono::milliseconds(1500)) {
+        return;
+    }
+    float step = 0.0f;
+    if (mode == 1) {
+        const bool short_of_target = fps < 56.0;
+        const bool headroom = fps >= 59.5;
+        governor.slow = short_of_target ? governor.slow + 1 : 0;
+        governor.fast = headroom ? governor.fast + 1 : 0;
+        if (governor.slow >= 2) {
+            step = -0.05f;
+        } else if (governor.fast >= 4) {
+            step = 0.05f;
+        }
+    } else {
+        const float watts = DeviceWatts();
+        if (watts < 0.0f) {
+            return;
+        }
+        const float target = config.power_target;
+        if (watts > target + 0.3f) {
+            governor.slow++;
+            governor.fast = 0;
+            if (governor.slow >= 2) {
+                step = -0.05f;
+            }
+        } else if (watts < target - 0.5f) {
+            governor.fast++;
+            governor.slow = 0;
+            if (governor.fast >= 3) {
+                step = 0.05f;
+            }
+        } else {
+            governor.slow = governor.fast = 0;
+        }
+    }
+    if (step != 0.0f) {
+        const float next = std::clamp(governor.scale + step, 0.4f, 1.0f);
+        if (next != governor.scale) {
+            governor.scale = next;
+            gfx::SetMainRasterScale(next);
+        }
+        governor.slow = governor.fast = 0;
+        governor.last_step = now;
+    }
 }
 
 double DisplaySeconds(bool intermediate = false) {
@@ -230,7 +300,7 @@ bool PresentCanonicalFrame() {
         options.host = true;
         shown = pacer.Present([&] { return gfx::RenderList(*overlay_list, 1.0f, options); }, Clock::now);
     } else {
-        shown = pacer.Present(gfx::PresentCanonical, Clock::now);
+        shown = pacer.Present([] { return gfx::PresentCanonical(); }, Clock::now);
     }
 
     if (shown) {
@@ -338,10 +408,20 @@ void NoteAsyncPresented(Clock::time_point now) {
     if (render_frames.Count(now)) {
         async_fps.store(render_frames.PerSecond());
     }
+    DynamicScaleTick(now, async_fps.load());
 }
+
+// The canonical present of the published tick, as PresentCanonicalFrame makes it with no mouse-fixed look or pointer.
+bool PresentPublishedCanonical(const Published &frame);
 
 // The published tick at alpha, as DisplayFrame renders it, with the overlay recorded on the game thread.
 bool RenderPublished(const Published &frame, float alpha) {
+    if (gfx::detail::FrameGenActive() && !frame.mouse_fixed && !frame.mouse_pointer) {
+        // The tick's first display slot shows the generated between-frame through its own normal
+        // swapchain cycle; when it is already shown this tick, the canonical takes the slot, in
+        // the reference sample's deferred-present shape.
+        return gfx::detail::PresentFrameGenerated() || PresentPublishedCanonical(frame);
+    }
     gfx::RenderOptions options;
     options.previous = frame.settings.interpolation ? frame.previous.get() : nullptr;
     options.present = true;
@@ -361,7 +441,7 @@ bool PresentPublishedCanonical(const Published &frame) {
         options.host = true;
         return render_pacer.Present([&] { return gfx::RenderList(*frame.overlay, 1.0f, options); }, Clock::now);
     }
-    return render_pacer.Present(gfx::PresentCanonical, Clock::now);
+    return render_pacer.Present([] { return gfx::PresentCanonical(); }, Clock::now);
 }
 
 void SelectPublication(const Published &frame) {
@@ -642,7 +722,8 @@ void PresentPublishTick(int start, int frames, bool canonical_endpoint_allowed) 
                                               canonical_image->SharesStorageWith(*published.canonical_image);
         const bool      eligible_source = endpoint_enabled && canonical_endpoint_allowed && canonical_image && list &&
                                           frames == 2 && InterpolateFrame(frames) && !ClockUnbounded() && settings.display_per_tick == 0 &&
-                                          std::abs(tick_rate - 60.0) < .1 && std::abs(settings.max_fps - 60.0) < .1 && !fixed && !pointer && suppressed_key == 0;
+                                          std::abs(tick_rate - 60.0) < .1 && std::abs(settings.max_fps - 60.0) < .1 && !fixed && !pointer && suppressed_key == 0 &&
+                                          !gfx::detail::FrameGenActive();
         const bool      endpoint = eligible_source && previous_compatible && previous &&
                                    list->instance == previous->instance && list->cut_generation == previous->cut_generation;
         published.canonical_endpoint_source = eligible_source;
@@ -703,6 +784,12 @@ std::string PresentFpsText() {
     if (settings.fps_detail == ConfigFpsDetail::All) {
         std::snprintf(piece, sizeof piece, "  DRAWS %u", stats.last_draws);
         text += piece;
+        // Whole-device watts from the battery node, when the platform exposes one.
+        const float watts = DeviceWatts();
+        if (watts >= 0.0f) {
+            std::snprintf(piece, sizeof piece, "  %.1f W", watts);
+            text += piece;
+        }
     }
 
     return text;
