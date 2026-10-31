@@ -762,7 +762,7 @@ TEST_F(CostumeMenu, ReloadingOnlyTheSkinIsRefused) {
     LoadCostume();
     std::string error;
     EXPECT_FALSE(Load(1, error));
-    EXPECT_EQ(error, "character profile requires live prior resources or an empty character");
+    EXPECT_EQ(error, "character profile requires live prior resources and clone inputs or an empty character");
 }
 
 TEST_F(NativeModel, ExternalMotionPlaysActionsPublishedIntoTheCharacterModelAndBlendsAcrossSets) {
