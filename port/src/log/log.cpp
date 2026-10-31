@@ -441,7 +441,7 @@ quill::BackendOptions PortBackendOptions() {
     return options;
 }
 
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__SWITCH__)
 /** Whether the parent process restarts the backend after a fork. */
 bool g_restart_after_fork = false;
 
@@ -493,7 +493,7 @@ public:
 
 void Start() {
     quill::Backend::start(PortBackendOptions());
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__SWITCH__)
     InstallForkHandlers();
 #endif
 
@@ -822,10 +822,15 @@ std::string_view LogSessionId() {
 #endif
         char              text[32];
         const std::size_t size = std::strftime(text, sizeof text, "%Y%m%d-%H%M%S", &local);
+#ifdef __SWITCH__
+        const auto suffix = static_cast<std::uint64_t>(std::chrono::steady_clock::now().time_since_epoch().count());
+        return std::format("{}-{:04x}", std::string_view(text, size), suffix & 0xffff);
+#else
         std::random_device random;
         // The written characters only: Android's libc++ formats a char array to its full length, the bytes past
         // the terminator too, which made the log file's name unopenable.
         return std::format("{}-{:04x}", std::string_view(text, size), random() & 0xffff);
+#endif
     }();
     return id;
 }

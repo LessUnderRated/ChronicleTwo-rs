@@ -106,6 +106,11 @@ public:
     [[nodiscard]] const mgCMemory *Owner() const noexcept { return owner; }
 
     /**
+     * Compares exact captured owners, allocation identity and byte extent without rebinding storage.
+     */
+    [[nodiscard]] bool SameIdentity(const ArenaBuffer &other) const noexcept;
+
+    /**
      * Reports whether an operation would retire this currently live allocation view.
      */
     [[nodiscard]] bool WouldRetireOnReset(const mgCMemory &memory, ArenaResetKind kind = ArenaResetKind::Stack) const;
@@ -649,6 +654,14 @@ T *NewArray(mgCMemory &memory, std::size_t count) {
     }
     return ::new (static_cast<void *>(storage)) T[count];
 }
+
+/**
+ *
+ * Copies bounded text and its terminator into a checked arena allocation.
+ *
+ */
+char *CopyText(mgCMemory &memory, std::string_view text);
+
 } // namespace dc2::memory
 
 /**

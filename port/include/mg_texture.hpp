@@ -678,7 +678,7 @@ public:
      * @address 0x12CB80
      * @size 0x50
      */
-    int hash(char *name);
+    int hash(const char *name);
 
     /**
      *
@@ -709,7 +709,7 @@ public:
      * @address 0x12CDA0
      * @size 0xB0
      */
-    mgCTexture *SearchHash(char *name, int mode);
+    mgCTexture *SearchHash(const char *name, int mode);
 
     /**
      *
@@ -720,7 +720,7 @@ public:
      * @address 0x12CE50
      * @size 0x70
      */
-    mgCTexture *SearchTextureName(char *name, int block);
+    mgCTexture *SearchTextureName(const char *name, int block);
 
     /**
      *
@@ -731,7 +731,7 @@ public:
      * @address 0x12CEC0
      * @size 0xA0
      */
-    mgCTexture *SearchTexture(char *name);
+    mgCTexture *SearchTexture(const char *name);
 
     /**
      *
@@ -742,7 +742,7 @@ public:
      * @address 0x12CF60
      * @size 0x20
      */
-    mgCTexture *GetTexture(char *name, int block);
+    mgCTexture *GetTexture(const char *name, int block);
 
     /**
      *
@@ -821,7 +821,7 @@ public:
      * @address 0x12E4F0
      * @size 0x50
      */
-    void DeleteTexture(char *name, int block);
+    void DeleteTexture(const char *name, int block);
 
     /**
      *

@@ -60,8 +60,27 @@ index 6662c0e..2dee227 100644
  [features]
  # The desktop setup window; iOS builds without it.
  default = ["desktop-ui"]
+diff --git a/cmake/KazarovPort.cmake b/cmake/KazarovPort.cmake
+index 1e71a62..18310dd 100644
+--- a/cmake/KazarovPort.cmake
++++ b/cmake/KazarovPort.cmake
+@@ -202,7 +202,13 @@ function(_kz_port_test_diagnostics target)
+             string(REPLACE "$<SEMICOLON>" ";" directories "${directories}")
+             list(APPEND search_dirs ${directories})
+         endforeach()
+-        find_path(gtest_headers NAMES gtest/gtest.h PATHS ${search_dirs} NO_DEFAULT_PATH NO_CACHE REQUIRED)
++        find_path(gtest_headers NAMES gtest/gtest.h PATHS ${search_dirs} NO_DEFAULT_PATH NO_CACHE)
++        if(NOT gtest_headers)
++            # The generated-diagnostics scoping is a development nicety: a host whose GTest include
++            # expression does not resolve here still gets its tests, so do not fail the configure.
++            message(STATUS "Kazarov: skipping GoogleTest diagnostics scoping")
++            return()
++        endif()
+         set(script "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../scripts/build/gtest-diagnostics.py")
+         execute_process(COMMAND "${Python3_EXECUTABLE}" "${script}" --include-dir "${gtest_headers}" --describe
+             RESULT_VARIABLE result OUTPUT_VARIABLE key OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_VARIABLE error)
 diff --git a/cmake/KazarovRust.cmake b/cmake/KazarovRust.cmake
-index ab4ec57..a342465 100644
+index d3c4647..de991e0 100644
 --- a/cmake/KazarovRust.cmake
 +++ b/cmake/KazarovRust.cmake
 @@ -17,8 +17,8 @@ set(CORROSION_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -76,10 +95,10 @@ index ab4ec57..a342465 100644
  else()
      corrosion_import_crate(MANIFEST_PATH ${KZ_RUST_MANIFEST} CRATES kazarov_core)
 diff --git a/src/cpp/gfx/renderer.cpp b/src/cpp/gfx/renderer.cpp
-index e9f097a..fa8a05d 100644
+index 163800f..091209e 100644
 --- a/src/cpp/gfx/renderer.cpp
 +++ b/src/cpp/gfx/renderer.cpp
-@@ -567,6 +567,17 @@ bool CreateSwapchain() {
+@@ -719,6 +719,17 @@ bool CreateSwapchain() {
          extent.height = std::clamp(static_cast<uint32_t>(std::max(height, 0)),
                                     capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
      }
@@ -98,10 +117,10 @@ index e9f097a..fa8a05d 100644
          return false;
      }
 diff --git a/src/cpp/platform/paths.cpp b/src/cpp/platform/paths.cpp
-index 54560d7..f8b37ff 100644
+index d836c3b..a9eab2a 100644
 --- a/src/cpp/platform/paths.cpp
 +++ b/src/cpp/platform/paths.cpp
-@@ -146,7 +146,8 @@ fs::path PathsExecutable() {
+@@ -154,7 +154,8 @@ fs::path PathsExecutable() {
      if (size > 0 && size < path.size()) {
          return fs::path(std::wstring_view(path.data(), size));
      }
@@ -736,6 +755,75 @@ index cf1295a..3c76d98 100644
      Ok(StageGuard {
          path: path.to_path_buf(),
          _lock: lock,
+diff --git a/src/rust/setup.rs b/src/rust/setup.rs
+index 692b0ec..491b96d 100644
+--- a/src/rust/setup.rs
++++ b/src/rust/setup.rs
+@@ -139,36 +139,38 @@ impl eframe::App for Setup {
+                 ui.horizontal(|ui| {
+                     ui.add(egui::TextEdit::singleline(&mut self.source)
+                         .desired_width((ui.available_width() - 235.0).max(100.0)));
+-                    if ui.button("Choose image").clicked() {
+-                        let mut dialog = rfd::FileDialog::new()
+-                            .set_title("Choose game disc image")
+-                            .add_filter("Disc image", &["iso"]);
+-                        if let Some(folder) = Path::new(&self.source).parent().filter(|folder| folder.is_dir()) {
+-                            dialog = dialog.set_directory(folder);
+-                        }
+-                        if let Some(path) = dialog.pick_file() {
+-                            if let Some(path) = path.to_str() {
+-                                self.source = path.into();
+-                                self.error = None;
+-                            } else {
+-                                self.error = Some("This path cannot be displayed as Unicode. Please choose another image.".into());
++                    #[cfg(not(target_os = "android"))]
++    if ui.button("Choose image").clicked() {
++                            let mut dialog = rfd::FileDialog::new()
++                                .set_title("Choose game disc image")
++                                .add_filter("Disc image", &["iso"]);
++                            if let Some(folder) = Path::new(&self.source).parent().filter(|folder| folder.is_dir()) {
++                                dialog = dialog.set_directory(folder);
++                            }
++                            if let Some(path) = dialog.pick_file() {
++                                if let Some(path) = path.to_str() {
++                                    self.source = path.into();
++                                    self.error = None;
++                                } else {
++                                    self.error = Some("This path cannot be displayed as Unicode. Please choose another image.".into());
++                                }
+                             }
+                         }
+-                    }
+-                    if ui.button("Choose folder").clicked() {
+-                        let mut dialog = rfd::FileDialog::new().set_title("Choose game disc folder");
+-                        if Path::new(&self.source).is_dir() {
+-                            dialog = dialog.set_directory(&self.source);
+-                        }
+-                        if let Some(path) = dialog.pick_folder() {
+-                            if let Some(path) = path.to_str() {
+-                                self.source = path.into();
+-                                self.error = None;
+-                            } else {
+-                                self.error = Some("This path cannot be displayed as Unicode. Please choose another folder.".into());
++                    #[cfg(not(target_os = "android"))]
++    if ui.button("Choose folder").clicked() {
++                            let mut dialog = rfd::FileDialog::new().set_title("Choose game disc folder");
++                            if Path::new(&self.source).is_dir() {
++                                dialog = dialog.set_directory(&self.source);
++                            }
++                            if let Some(path) = dialog.pick_folder() {
++                                if let Some(path) = path.to_str() {
++                                    self.source = path.into();
++                                    self.error = None;
++                                } else {
++                                    self.error = Some("This path cannot be displayed as Unicode. Please choose another folder.".into());
++                                }
+                             }
+                         }
+-                    }
+                 });
+             });
+             ui.add_space(12.0);
 diff --git a/src/rust/spill.rs b/src/rust/spill.rs
 index 843d000..cfc279e 100644
 --- a/src/rust/spill.rs
@@ -765,32 +853,35 @@ index e768ae1..0470ca6 100644
          let file = File::open(path).map_err(|e| context(e.into()))?;
          let length = file.metadata().map_err(|e| context(e.into()))?.len();
 diff --git a/tools/ffmpeg/kz-ffmpeg b/tools/ffmpeg/kz-ffmpeg
-index b4a778e..3752359 100644
+index b33d4bf..70a13f7 100644
 --- a/tools/ffmpeg/kz-ffmpeg
 +++ b/tools/ffmpeg/kz-ffmpeg
-@@ -7,6 +7,7 @@ The build provides lossless MPEG-2/ALAC MP4 extraction and MP4 playback through
- static codec, format, resampling and scaling libraries plus the FFmpeg command.
+@@ -8,6 +8,7 @@ static codec, format, resampling and scaling libraries plus the FFmpeg command.
  The Linux image and macOS hosts use it; Windows takes BtbN's LGPL-shared bundle.
  --target ios-arm64 cross-compiles the libraries for iOS on a macOS host, without the command.
+ --target switch-arm64 cross-compiles the libraries with devkitA64/libnx, without the command.
 +--target android-arm64 cross-compiles them for Android with the NDK in ANDROID_NDK_ROOT, also without it.
  scripts/build/kz-ffmpeg launches this shared FFmpeg tool; the image uses it directly.
  """
  
-@@ -58,8 +59,12 @@ CONFIGURE_FLAGS = [
- GPL_FLAGS = ('--enable-gpl', '--enable-nonfree', '--enable-version3')
- 
- 
+@@ -32,6 +33,7 @@ STAMP = 'kz-ffmpeg.json'
+ LIBRARIES = ('lib/libavcodec.a', 'lib/libavformat.a', 'lib/libavutil.a',
+              'lib/libswresample.a', 'lib/libswscale.a', 'include/libavcodec/avcodec.h')
+ IOS_MIN_VERSION = '16.0'
 +ANDROID_API = 33
-+MOBILE = ('ios-arm64', 'android-arm64')
-+
-+
+ CONFIGURE_FLAGS = [
+     '--disable-everything',
+     '--disable-programs',
+@@ -60,7 +62,7 @@ GPL_FLAGS = ('--enable-gpl', '--enable-nonfree', '--enable-version3')
+ 
+ 
  def products(target):
--    return LIBRARIES if target == 'ios-arm64' else LIBRARIES + ('bin/ffmpeg',)
-+    return LIBRARIES if target in MOBILE else LIBRARIES + ('bin/ffmpeg',)
+-    return LIBRARIES if target in ('ios-arm64', 'switch-arm64') else LIBRARIES + ('bin/ffmpeg',)
++    return LIBRARIES if target in ('ios-arm64', 'switch-arm64', 'android-arm64') else LIBRARIES + ('bin/ffmpeg',)
  
  
  def ios_flags():
-@@ -71,11 +76,25 @@ def ios_flags():
+@@ -72,6 +74,20 @@ def ios_flags():
              f'--sysroot={sysroot}', f'--extra-cflags={target}', f'--extra-ldflags={target}']
  
  
@@ -808,22 +899,25 @@ index b4a778e..3752359 100644
 +            f'--sysroot={prebuilt / "sysroot"}']
 +
 +
- def configure_flags(target=None):
-     flags = list(CONFIGURE_FLAGS)
--    if target == 'ios-arm64':
-+    if target in MOBILE:
+ def switch_flags():
+     devkitpro = Path(os.environ.get('DEVKITPRO', '/opt/devkitpro'))
+     libnx = devkitpro / 'libnx'
+@@ -92,6 +108,9 @@ def configure_flags(target=None):
+     elif target == 'switch-arm64':
          flags.remove('--enable-ffmpeg')
--        flags += ios_flags()
-+        flags += ios_flags() if target == 'ios-arm64' else android_flags()
+         flags += switch_flags()
++    elif target == 'android-arm64':
++        flags.remove('--enable-ffmpeg')
++        flags += android_flags()
      # configure aborts without nasm unless x86 assembly is disabled explicitly.
      elif shutil.which('nasm') is None:
          flags.append('--disable-x86asm')
-@@ -160,7 +179,7 @@ def configure_and_build(src, out, jobs, target):
+@@ -179,7 +198,7 @@ def configure_and_build(src, out, jobs, target):
  def main():
      parser = argparse.ArgumentParser(description=f'Build a minimal LGPL-only FFmpeg {VERSION} for the Kazarov image.')
      parser.add_argument('--out', metavar='DIR')
--    parser.add_argument('--target', choices=['ios-arm64'], help='cross-compile the libraries for this target')
-+    parser.add_argument('--target', choices=list(MOBILE), help='cross-compile the libraries for this target')
+-    parser.add_argument('--target', choices=['ios-arm64', 'switch-arm64'], help='cross-compile the libraries for this target')
++    parser.add_argument('--target', choices=['ios-arm64', 'switch-arm64', 'android-arm64'], help='cross-compile the libraries for this target')
      parser.add_argument('--tarball', metavar='FILE')
      parser.add_argument('--sha256', metavar='HEX')
      parser.add_argument('--jobs', type=int, default=os.cpu_count() or 1, metavar='N')
