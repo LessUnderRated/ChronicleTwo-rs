@@ -653,13 +653,6 @@ public:
     void SetTableBuffer(int texture_count, int block_total, mgCMemory *memory);
 
     /**
-     * The arena the texture table was allocated from, while its bindings are live; null when the
-     * table is not bound. Animation records allocate from it, so they retire together with the
-     * blocks that reference them instead of with whichever load stack entered them.
-     */
-    mgCMemory *TableArena();
-
-    /**
      *
      * Empties every texture block, the pools and the hash table, and sets
      * the VRAM range textures are placed in.

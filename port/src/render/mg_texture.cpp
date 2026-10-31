@@ -40,6 +40,17 @@
 #include "text/bounded.hpp"
 #include "texture_source.hpp"
 
+namespace {
+
+/**
+ * The arena the texture animations' records allocate from: a slice of the table's own storage,
+ * reserved by SetTableBuffer so no loader's scratch can reach it. Re-bound with every table.
+ */
+mgCMemory anime_stack;
+
+} // namespace
+
+
 /**
  *
  * Gives the quadwords a buffer of the given bytes takes, rounded up.
@@ -1437,15 +1448,13 @@ bool ValidAnimationNumbers(const texture_catalog::Entry &entry) {
 
 void ApplyAnimation(mgCTextureManager *manager, const texture_catalog::Source &source, const texture_catalog::Entry &entry,
                     mgCMemory *load_stack [[maybe_unused]], int base_block) {
-    // Animation records must live as long as the blocks that play them. Allocating them from the
-    // caller's load stack leaves block->anime dangling once sceneload resets that stack, and the
-    // next ReloadTexture block switch then reads retired memory; the table's own arena retires
-    // together with the blocks through ValidateTableStorage instead.
-    mgCMemory *table_arena = manager->TableArena();
-    if (table_arena == nullptr || !ValidAnimationNumbers(entry)) {
+    // Animation records must live as long as the blocks that play them and stay clear of every
+    // loader's scratch: they allocate from the table's reserved slice, which retires with the
+    // table and is unreachable by the load buffers carved beside it.
+    if (anime_stack.stack == nullptr || !ValidAnimationNumbers(entry)) {
         return;
     }
-    mgCMemory *const stack = table_arena;
+    mgCMemory *const stack = &anime_stack;
     // Animation groups share the set's arena, so their pictures must belong to the set's blocks.
     std::vector<int> own_blocks;
     for (const auto &picture : source.entries) {
@@ -2090,11 +2099,6 @@ MgTextureHandles MgTextureLookupTex0(uint64_t tex0) {
     return handles;
 }
 
-mgCMemory *mgCTextureManager::TableArena() {
-    const auto &anchor = table_storage[0];
-    return anchor.Bytes().empty() ? nullptr : const_cast<mgCMemory *>(anchor.Owner());
-}
-
 void mgCTextureManager::SetTableBuffer(int texture_count, int block_total, mgCMemory *memory) {
     if (memory == nullptr || memory->lock != 0 || texture_count <= 0 || block_total <= 0) {
         throw std::invalid_argument("texture table needs positive counts and an unlocked arena");
@@ -2165,6 +2169,20 @@ void mgCTextureManager::SetTableBuffer(int texture_count, int block_total, mgCMe
     last_block = -1;
     for (auto &block : std::span(blocks, static_cast<std::size_t>(block_max))) {
         block.Initialize();
+    }
+
+    // The animation records need a home that outlives every load stack and never doubles as load
+    // scratch: the title enters its map with the map's file buffer pointing into the table's own
+    // arena, and each file's decompressed bytes overwrite everything the texture entry allocated
+    // past the captured scratch pointer. Reserving a slice here, before any scratch is captured,
+    // keeps the records out of every loader's way while they retire with the table.
+    const auto remaining_quads = dc2::memory::RemainingBytes(*memory).size() / sizeof(u_long128);
+    const auto reserve_quads = std::min<std::size_t>(0x1000, std::max<std::size_t>(remaining_quads / 8, 64));
+    auto *reserve = dc2::memory::NewArray<u_long128>(*memory, reserve_quads);
+    if (reserve != nullptr) {
+        anime_stack.stSetBuffer(reserve, static_cast<int>(reserve_quads));
+    } else {
+        anime_stack.stSetBuffer(nullptr, 0);
     }
 }
 

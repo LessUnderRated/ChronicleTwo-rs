@@ -1072,6 +1072,19 @@ TEST(MgTexture, AnimationsSurviveTheLoadArenaThatEnteredThem) {
     EXPECT_GE(dc2::memory::AllocationBytes(h.memory, h.manager.GetTexAnime(0)).size(), sizeof(mgCTextureAnime));
     EXPECT_GE(dc2::memory::AllocationBytes(h.memory, h.manager.GetTexAnime(0)->list[0]).size(),
               sizeof(CList<mgCTexAnimeData>));
+
+    // The title enters its map with the map's file buffer pointing into the table arena's tail, and
+    // the files' decompressed bytes overwrite everything allocated there; the records must sit in a
+    // slice no loader's scratch can reach.
+    const auto tail = dc2::memory::RemainingBytes(h.memory);
+    if (!tail.empty()) {
+        std::memset(tail.data(), 0x22, std::min<std::size_t>(tail.size(), 4096));
+    }
+    h.manager.ReloadTexture(0, static_cast<sceVif1Packet *>(nullptr));
+    ASSERT_NE(h.manager.GetTexAnime(0), nullptr);
+    EXPECT_GE(dc2::memory::AllocationBytes(h.memory, h.manager.GetTexAnime(0)).size(), sizeof(mgCTextureAnime));
+    EXPECT_GE(dc2::memory::AllocationBytes(h.memory, h.manager.GetTexAnime(0)->list[0]).size(),
+              sizeof(CList<mgCTexAnimeData>));
 }
 
 TEST(MgTexture, NativeSetScriptsAnimateTheirOwnPicturesOverEarlierPicturesOfTheSameName) {
