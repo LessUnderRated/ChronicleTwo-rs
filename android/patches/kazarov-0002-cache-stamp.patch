@@ -1,0 +1,1543 @@
+diff --git a/include/gfx/displaylist.hpp b/include/gfx/displaylist.hpp
+index ccd21c0..6d37ca8 100644
+--- a/include/gfx/displaylist.hpp
++++ b/include/gfx/displaylist.hpp
+@@ -3,6 +3,7 @@
+ #include <array>
+ #include <cmath>
+ #include <cstdint>
++#include <fstream>
+ #include <memory_resource>
+ #include <optional>
+ #include <unordered_map>
+@@ -245,6 +246,24 @@ bool InterpolateSprite(const Draw2DEntry &before, const SpriteScene &before_scen
+ void BlendProg0Bones(const Prog0Palette &before, const Prog0Palette &after, float alpha, float teleport_distance,
+                      Prog0Palette &out);
+ 
++// The pipeline cache file's stamp: the magic, then the renderer build's pipeline-set identity (a
++// hash of the embedded shader blobs and the specialization shape). A cache written by another
++// renderer build is refused wholesale: drivers key the entries on the shader modules, and on
++// Adreno a skinned pipeline was handed the unskinned variant's compiled vertex shader, leaving
++// every character in its bind pose.
++void WriteCacheStamp(uint8_t (&stamp)[16]);
++bool CacheStampMatches(std::ifstream &file);
++
++// The pushed-descriptor path's skin-palette ring: one RGBA32F texture per slot, filled at each
++// skinned draw with its bone matrices for the vertex stage's texel fetch.
++void CreateSkinPaletteRing();
++// The ring slot the next skinned placement would take, for tests that inspect the delivered bytes.
++uint32_t SkinPaletteCursorForTest();
++// The ring texture the last placement filled, for tests that inspect the delivered bytes.
++TextureHandle SkinPaletteTextureForTest();
++// The ring texture the last placement filled, for tests that inspect the delivered bytes.
++TextureHandle SkinPaletteTextureForTest();
++
+ } // namespace detail
+ 
+ } // namespace gfx
+diff --git a/include/gfx/gfx.hpp b/include/gfx/gfx.hpp
+index 4190669..c91542c 100644
+--- a/include/gfx/gfx.hpp
++++ b/include/gfx/gfx.hpp
+@@ -274,6 +274,10 @@ inline constexpr TextureHandle kPreviousFrame = 2;
+ enum class TextureFormat : uint8_t {
+     Rgba8,
+     Index8,
++    // Raw 32-bit float texels; the skin palette rides one so the vertex stage fetches bones
++    // through the texture pipe, which Adreno's compiler handles, instead of a storage buffer it
++    // misreads (the costume menu's characters drew their bind pose).
++    FloatRgba,
+ };
+ 
+ struct TextureDesc {
+diff --git a/src/cpp/gfx/draw.cpp b/src/cpp/gfx/draw.cpp
+index cf58b1b..a7ea41e 100644
+--- a/src/cpp/gfx/draw.cpp
++++ b/src/cpp/gfx/draw.cpp
+@@ -595,6 +595,16 @@ bool Prepare(PipelineFamily family, VkPrimitiveTopology topology, const TextureB
+         }
+     }
+ 
++    // A skinned draw's bone palette rides the palette binding through the texture pipe on this
++    // path: the vertex stage fetches its rows by texel, which Adreno's compiler handles, instead
++    // of the storage buffer it misreads. The fragment stage ignores the binding for RGBA draws.
++    if (!g.bindless && family == kFamilyMeshProg0Skinned && binding.palette != kNullTexture) {
++        if (Texture *bones = LookupTexture(binding.palette)) {
++            bones->last_draw_use = g.frame_serial;
++        }
++        push.palette_slot = binding.palette & kSlotMask;
++    }
++
+     Target target;
+     EnsureRendering(target);
+     VkCommandBuffer cmd = DrawCommands();
+@@ -1888,6 +1898,67 @@ void DrawPrepared(Primitive primitive, std::span<const Vertex2D> vertices, const
+ 
+ } // namespace
+ 
++// The skin-palette ring, used on the pushed-descriptor path only. The bone matrices travel through
++// the texture pipe there: Adreno's compiler misreads the vertex stage's dynamically indexed storage
++// buffer the bindless path delivers them through, and every skinned character drew its bind pose.
++// Each placement takes the next ring texture, uploads its 96 texels (32 bones, 3 rows each) and the
++// draw's pushed palette slot names it; the fragment stage never reads it for an RGBA draw.
++constexpr uint32_t kSkinPaletteRingSize = 64;
++constexpr uint32_t kSkinPaletteWidth = static_cast<uint32_t>(kProg0Bones) * 3;
++
++TextureHandle SkinPaletteRing[kSkinPaletteRingSize] = {};
++uint32_t      SkinPaletteCursor = 0;
++
++void CreateSkinPaletteRing() {
++    TextureDesc desc{};
++    desc.width = kSkinPaletteWidth;
++    desc.height = 1;
++    desc.format = TextureFormat::FloatRgba;
++    for (TextureHandle &slot : SkinPaletteRing) {
++        slot = CreateTexture(desc);
++    }
++}
++
++TextureHandle SkinPaletteTexture(const Prog0Palette &palette) {
++    const uint32_t slot = SkinPaletteCursor++ % kSkinPaletteRingSize;
++    Texture       *texture = LookupTexture(SkinPaletteRing[slot]);
++    if (texture == nullptr) {
++        return kNullTexture;
++    }
++    // TEMP skin-palette probe
++    static int logged = 0;
++    if (logged < 8) {
++        ++logged;
++        kz::Logf(kz::LogLevel::Info, "gfx", "skinring {}: slot={} handle={:#x} bone{}x={:.2f} frame={}", logged, slot,
++                 SkinPaletteRing[slot], SkinPaletteCursor - 1, palette.bones[SkinPaletteCursor - 1][0][3], g.frame_serial);
++    }
++    // Inline upload: the draw path already runs on the device thread with the frame's commands
++    // open, and a dispatched update would land behind the draw that samples the texture. The copy
++    // records into the draw command buffer itself, ahead of the draw, so the ordering holds
++    // whatever phase of the frame the draw runs in.
++    texture->last_draw_use = g.frame_serial;
++    TransientSpan staging = AllocateStaging(static_cast<VkDeviceSize>(kSkinPaletteWidth) * 16);
++    std::memcpy(staging.data, &palette, sizeof(Prog0Palette));
++    EndRendering();
++    VkCommandBuffer cmd = DrawCommands();
++    Transition(cmd, texture->image, TransferDst());
++    VkBufferImageCopy region = {};
++    region.bufferOffset = staging.offset;
++    region.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
++    region.imageExtent = {kSkinPaletteWidth, 1, 1};
++    vkCmdCopyBufferToImage(cmd, staging.buffer, texture->image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
++                           1, &region);
++    ToRest(cmd, texture->image);
++    return SkinPaletteRing[slot];
++}
++
++uint32_t SkinPaletteCursorForTest() { return SkinPaletteCursor; }
++
++// The ring texture the last placement filled, for tests that inspect the delivered bytes.
++TextureHandle SkinPaletteTextureForTest() {
++    return SkinPaletteRing[(SkinPaletteCursor + kSkinPaletteRingSize - 1) % kSkinPaletteRingSize];
++}
++
+ namespace {
+ 
+ // The state DrawDepthPlanes2D is exact for: the feathered haze blend (A = source, B = zero, C = FIX 0x80,
+@@ -2194,11 +2265,20 @@ void DrawIndexedMesh(MeshHandle handle, uint32_t first_index, uint32_t index_cou
+         if (index_count == 0) {
+             return;
+         }
++        // On the pushed-descriptor path the bone palette rides a texture: Adreno's compiler misreads
++        // the storage buffer the bindless path delivers it through, and every character drew its
++        // bind pose. The recording and the palette interpolation keep working on the list's copy.
++        TextureBinding      local_binding = binding;
++        const Prog0Palette *skinned = SkinnedPalette(family, palette);
++        if (!g.bindless && family == kFamilyMeshProg0Skinned) {
++            local_binding.palette = SkinPaletteTexture(*skinned);
++            skinned = nullptr;
++        }
+         std::optional<MeshPhaseCall> phases;
+         if (MeasureMeshPhaseCall()) {
+             phases.emplace(family == kFamilyMesh ? MeshPhaseClass::RetainedPlain : MeshPhaseClass::RetainedProg0);
+         }
+-        if (!Prepare(family, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, binding, state, push,
++        if (!Prepare(family, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, local_binding, state, push,
+                      false, {}, {}, &constants, mesh, index_count)) {
+             return;
+         }
+@@ -2208,8 +2288,7 @@ void DrawIndexedMesh(MeshHandle handle, uint32_t first_index, uint32_t index_cou
+         }
+         mesh->last_draw_use = g.frame_serial;
+         VkCommandBuffer cmd = DrawCommands();
+-        BindConstants(PipelineLayoutOf(family), constants, family > kFamilyMesh ? prog0 : nullptr,
+-                      SkinnedPalette(family, palette));
++        BindConstants(PipelineLayoutOf(family), constants, family > kFamilyMesh ? prog0 : nullptr, skinned);
+         if (phases) {
+             phases->Advance(MeshPhase::Emit);
+         }
+@@ -2264,11 +2343,18 @@ void DrawImmediateMesh(std::span<const Vertex3D> vertices, std::span<const uint3
+         if (vertices.empty() || indices.empty()) {
+             return;
+         }
++        // The pushed-descriptor path's skin palette rides a texture, as the retained draw's does.
++        TextureBinding      local_binding = binding;
++        const Prog0Palette *skinned = SkinnedPalette(family, palette);
++        if (!g.bindless && family == kFamilyMeshProg0Skinned) {
++            local_binding.palette = SkinPaletteTexture(*skinned);
++            skinned = nullptr;
++        }
+         std::optional<MeshPhaseCall> phases;
+         if (MeasureMeshPhaseCall()) {
+             phases.emplace(MeshPhaseClass::Immediate);
+         }
+-        if (!Prepare(family, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, binding, state, push, false, {}, {}, &constants, nullptr,
++        if (!Prepare(family, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, local_binding, state, push, false, {}, {}, &constants, nullptr,
+                      static_cast<uint32_t>(indices.size()))) {
+             return;
+         }
+@@ -2285,8 +2371,7 @@ void DrawImmediateMesh(std::span<const Vertex3D> vertices, std::span<const uint3
+             phases->PayloadCopied(vertices.size_bytes() + indices.size_bytes());
+             phases->Advance(MeshPhase::Constants);
+         }
+-        BindConstants(PipelineLayoutOf(family), constants, family > kFamilyMesh ? prog0 : nullptr,
+-                      SkinnedPalette(family, palette));
++        BindConstants(PipelineLayoutOf(family), constants, family > kFamilyMesh ? prog0 : nullptr, skinned);
+         if (phases) {
+             phases->Advance(MeshPhase::Emit);
+         }
+diff --git a/src/cpp/gfx/pipelines.cpp b/src/cpp/gfx/pipelines.cpp
+index 6160c98..ca89774 100644
+--- a/src/cpp/gfx/pipelines.cpp
++++ b/src/cpp/gfx/pipelines.cpp
+@@ -1,4 +1,4 @@
+-#include <algorithm>
++﻿#include <algorithm>
+ #include <atomic>
+ #include <chrono>
+ #include <condition_variable>
+@@ -26,6 +26,9 @@
+ #include "shaders/draw_single.frag.spv.hpp"
+ #include "shaders/mesh.vert.spv.hpp"
+ #include "shaders/mesh_prog0.vert.spv.hpp"
++#include "shaders/mesh_prog0_bound.vert.spv.hpp"
++#include "shaders/mesh_prog0_skinned.vert.spv.hpp"
++#include "shaders/mesh_prog0_bound_skinned.vert.spv.hpp"
+ 
+ namespace gfx {
+ 
+@@ -217,12 +220,75 @@ uint32_t CanonicalFragmentFeatures(TextureMode mode, uint32_t features) {
+     return features;
+ }
+ 
++} // namespace
++
++// The renderer's pipeline-set identity, hashed from the embedded shader blobs and the
++// specialization/pipeline shape. A cache file from another renderer build must never be loaded:
++// the entries key on the shader modules, and a driver may hand back compiled code whose
++// specialization does not match the requesting pipeline's - on Adreno the skinned pipelines came
++// back running the unskinned variant's vertex shader, so every character drew its bind pose.
++constexpr uint8_t kCacheMagic[8] = {'K', 'Z', 'P', 'C', '1', 0, 0, 0};
++
++std::uint64_t CacheIdentity() {
++    std::uint64_t         hash = 14695981039346656037ull;
++    const auto  mix = [&hash](const void *bytes, size_t size) {
++        const auto *cursor = static_cast<const uint8_t *>(bytes);
++        for (size_t i = 0; i < size; i++) {
++            hash = (hash ^ cursor[i]) * 1099511628211ull;
++        }
++    };
++    mix(draw2d_vert, sizeof(draw2d_vert));
++    mix(mesh_vert, sizeof(mesh_vert));
++    mix(mesh_prog0_vert, sizeof(mesh_prog0_vert));
++    mix(mesh_prog0_bound_vert, sizeof(mesh_prog0_bound_vert));
++    mix(mesh_prog0_skinned_vert, sizeof(mesh_prog0_skinned_vert));
++    mix(mesh_prog0_bound_skinned_vert, sizeof(mesh_prog0_bound_skinned_vert));
++    mix(draw_frag, sizeof(draw_frag));
++    mix(draw_bound_frag, sizeof(draw_bound_frag));
++    mix(draw_single_frag, sizeof(draw_single_frag));
++    mix(draw_bound_single_frag, sizeof(draw_bound_single_frag));
++    // The descriptor mode changes which shader variant every prog0 family runs, so a cache from
++    // the other mode must not be reused either.
++    const uint8_t bindless = g.bindless ? 1 : 0;
++    mix(&bindless, sizeof(bindless));
++    const std::uint64_t shape = (static_cast<std::uint64_t>(kFamilyCount) << 48) |
++                                (static_cast<std::uint64_t>(kAlphaVariantCount) << 32) |
++                                (static_cast<std::uint64_t>(kFragmentFeatureCount) << 16) | sizeof(PushConstants);
++    mix(&shape, sizeof(shape));
++    return hash;
++}
++
++/** The 16-byte stamp a cache file opens with: the magic and the pipeline-set identity. */
++void WriteCacheStamp(uint8_t (&stamp)[16]) {
++    std::memcpy(stamp, kCacheMagic, sizeof(kCacheMagic));
++    const std::uint64_t identity = CacheIdentity();
++    std::memcpy(stamp + sizeof(kCacheMagic), &identity, sizeof(identity));
++}
++
++/** Reads a cache file's stamp and reports whether it belongs to this renderer build. */
++bool CacheStampMatches(std::ifstream &file) {
++    uint8_t stamp[16] = {};
++    if (!file.read(reinterpret_cast<char *>(stamp), sizeof(stamp)) ||
++        std::memcmp(stamp, kCacheMagic, sizeof(kCacheMagic)) != 0) {
++        return false;
++    }
++    std::uint64_t stored = 0;
++    std::memcpy(&stored, stamp + sizeof(kCacheMagic), sizeof(stored));
++    return stored == CacheIdentity();
++}
++
++namespace {
++
+ std::vector<uint8_t> LoadCache(const std::filesystem::path &path) {
+     std::ifstream file(path, std::ios::binary);
+     if (!file) {
+         return {};
+     }
+-    // Some drivers misbehave on a cache from another device or driver, so it is checked here first.
++    // Some drivers misbehave on a cache from another device or driver, so it is checked here first;
++    // a cache from another renderer build is refused before the driver ever sees it.
++    if (!CacheStampMatches(file)) {
++        return {};
++    }
+     VkPipelineCacheHeaderVersionOne header = {};
+     if (!file.read(reinterpret_cast<char *>(&header), sizeof(header))) {
+         return {};
+@@ -234,12 +300,13 @@ std::vector<uint8_t> LoadCache(const std::filesystem::path &path) {
+     }
+     file.seekg(0, std::ios::end);
+     const auto size = file.tellg();
+-    if (size < static_cast<std::streamoff>(header.headerSize)) {
++    constexpr auto stamp_bytes = static_cast<std::streamoff>(sizeof(uint64_t) + sizeof(kCacheMagic));
++    if (size < stamp_bytes + static_cast<std::streamoff>(header.headerSize)) {
+         return {};
+     }
+-    std::vector<uint8_t> data(static_cast<size_t>(size));
+-    file.seekg(0, std::ios::beg);
+-    if (!file.read(reinterpret_cast<char *>(data.data()), size)) {
++    std::vector<uint8_t> data(static_cast<size_t>(size) - static_cast<size_t>(stamp_bytes));
++    file.seekg(stamp_bytes, std::ios::beg);
++    if (!file.read(reinterpret_cast<char *>(data.data()), static_cast<std::streamsize>(data.size()))) {
+         return {};
+     }
+     return data;
+@@ -263,7 +330,15 @@ void SaveCache(const std::filesystem::path &path, const std::vector<uint8_t> &in
+         if (path.has_parent_path()) {
+             std::filesystem::create_directories(path.parent_path(), error);
+         }
+-        if (FilesWrite(path, data.data(), size, true) != FilesResult::kWritten) {
++        // The stamp travels ahead of the payload, so a cache this renderer build did not write is
++        // refused wholesale at the next load instead of being trusted entry by entry.
++        uint8_t stamp[16];
++        WriteCacheStamp(stamp);
++        std::vector<uint8_t> stamped;
++        stamped.reserve(sizeof(stamp) + data.size());
++        stamped.insert(stamped.end(), stamp, stamp + sizeof(stamp));
++        stamped.insert(stamped.end(), data.begin(), data.end());
++        if (FilesWrite(path, stamped.data(), stamped.size(), true) != FilesResult::kWritten) {
+             Error("cannot write the pipeline cache to %s", PathsDisplay(path).c_str());
+         }
+     }
+@@ -341,7 +416,9 @@ void CreateBindlessTextureSet() {
+ }
+ 
+ // Set 0 without the bindless array, pushed by each draw: its texture, its palette, its sampler and
+-// the palette's sampler, which never changes.
++// the palette's sampler, which never changes. The palette's bindings are also read by the vertex
++// stage: a skinned draw's bone palette rides the palette texture there, because Adreno's compiler
++// misreads the storage buffer the bindless path delivers it through.
+ void CreatePushedTextureLayout() {
+     VkDescriptorSetLayoutBinding bindings[4] = {};
+     for (uint32_t binding = 0; binding < 4; binding++) {
+@@ -350,6 +427,9 @@ void CreatePushedTextureLayout() {
+         bindings[binding].descriptorCount = 1;
+         bindings[binding].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+     }
++    // The skin palette is fetched by texel in the vertex stage on this path.
++    bindings[1].stageFlags |= VK_SHADER_STAGE_VERTEX_BIT;
++    bindings[3].stageFlags |= VK_SHADER_STAGE_VERTEX_BIT;
+     bindings[3].pImmutableSamplers = &g.samplers[0];
+ 
+     VkDescriptorSetLayoutCreateInfo layout = {};
+@@ -612,6 +692,20 @@ void CreatePipelines() {
+                                             : CreateShader(draw_bound_single_frag, sizeof(draw_bound_single_frag));
+     VkShaderModule prog0_module =
+         g.config.prog0_meshes ? CreateShader(mesh_prog0_vert, sizeof(mesh_prog0_vert)) : VK_NULL_HANDLE;
++    // The pushed-descriptor path's prog0 vertex shader fetches the skin palette by texel: Adreno's
++    // compiler misreads the storage buffer the bindless path delivers it through.
++    VkShaderModule prog0_bound_module = g.config.prog0_meshes && !g.bindless
++                                            ? CreateShader(mesh_prog0_bound_vert, sizeof(mesh_prog0_bound_vert))
++                                            : VK_NULL_HANDLE;
++    // The skinned pipelines' shaders decide the skinning in the source, not a specialization
++    // constant: Adreno's compiler miscompiles the pipeline when a spec constant selects the
++    // skinning, and every skinned character drew its bind pose.
++    VkShaderModule prog0_skinned_module = g.config.prog0_meshes && g.bindless
++                                              ? CreateShader(mesh_prog0_skinned_vert, sizeof(mesh_prog0_skinned_vert))
++                                              : VK_NULL_HANDLE;
++    VkShaderModule prog0_bound_skinned_module =
++        g.config.prog0_meshes && !g.bindless ? CreateShader(mesh_prog0_bound_skinned_vert, sizeof(mesh_prog0_bound_skinned_vert))
++                                             : VK_NULL_HANDLE;
+ 
+     VkVertexInputBindingDescription   binding_2d = {0, sizeof(Vertex2D), VK_VERTEX_INPUT_RATE_VERTEX};
+     VkVertexInputAttributeDescription attributes_2d[4] = {
+@@ -798,13 +892,6 @@ void CreatePipelines() {
+         }
+     }
+ 
+-    VkBool32                 skinned_data[2] = {VK_FALSE, VK_TRUE};
+-    VkSpecializationMapEntry skinned_entry = {0, 0, sizeof(VkBool32)};
+-    VkSpecializationInfo     skinned_info[2] = {
+-        {1, &skinned_entry, sizeof(VkBool32), &skinned_data[0]},
+-        {1, &skinned_entry, sizeof(VkBool32), &skinned_data[1]},
+-    };
+-
+     // Writing no colour never blends. With nothing to discard, the fragment stage is dropped too and
+     // one pipeline per family does for every such draw, with or without a dynamic mask. An alpha
+     // test still needs the shader; without a dynamic mask that is a pipeline per family and mode.
+@@ -829,10 +916,13 @@ void CreatePipelines() {
+         stage[0] = {};
+         stage[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+         stage[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+-        stage[0].module = family == kFamilyMesh ? mesh_module : family > kFamilyMesh ? prog0_module
+-                                                                                     : draw2d_module;
+-        stage[0].pSpecializationInfo =
+-            family > kFamilyMesh ? &skinned_info[family == kFamilyMeshProg0Skinned] : nullptr;
++        stage[0].module = family == kFamilyMesh                     ? mesh_module
++                          : family == kFamilyMeshProg0Skinned       ? (g.bindless ? prog0_skinned_module
++                                                                                      : prog0_bound_skinned_module)
++                          : family > kFamilyMesh                    ? (g.bindless ? prog0_module : prog0_bound_module)
++                                                                    : draw2d_module;
++        // The skinned decision lives in the skinned variants' source; no specialization here at all.
++        stage[0].pSpecializationInfo = nullptr;
+         stage[0].pName = "main";
+         stage[1] = stage[0];
+         stage[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+diff --git a/src/cpp/gfx/readback.cpp b/src/cpp/gfx/readback.cpp
+index cf36c35..57291cb 100644
+--- a/src/cpp/gfx/readback.cpp
++++ b/src/cpp/gfx/readback.cpp
+@@ -233,7 +233,10 @@ bool ReadbackTexture(TextureHandle handle, std::vector<uint8_t> &pixels, uint32_
+         }
+         width = image->width;
+         height = image->height;
+-        read = ReadImage(*image, image->format == kColorFormat ? 4 : 1, pixels);
++        const uint32_t texel = image->format == kColorFormat                    ? 4
++                               : image->format == VK_FORMAT_R32G32B32A32_SFLOAT ? 16
++                                                                                : 1;
++        read = ReadImage(*image, texel, pixels);
+     });
+     return read;
+ }
+diff --git a/src/cpp/gfx/renderer.cpp b/src/cpp/gfx/renderer.cpp
+index 091209e..e515a9a 100644
+--- a/src/cpp/gfx/renderer.cpp
++++ b/src/cpp/gfx/renderer.cpp
+@@ -1571,6 +1571,11 @@ void RendererInit(SDL_Window *window, const RendererConfig &config) {
+             ? config.render_scale
+             : std::max(1.0f, std::round(static_cast<float>(g.swapchain.extent.height) / g.config.logical_height));
+     CreatePipelines();
++    // The pushed-descriptor path's skinned draws fetch their bone palettes from the ring textures;
++    // created here, on the device thread, because a draw-path creation would land after its draw.
++    if (!g.bindless && g.config.prog0_meshes) {
++        CreateSkinPaletteRing();
++    }
+     StartRenderThread(g.config.render_thread);
+ }
+ 
+diff --git a/src/cpp/gfx/resources.cpp b/src/cpp/gfx/resources.cpp
+index 5932b9c..4460629 100644
+--- a/src/cpp/gfx/resources.cpp
++++ b/src/cpp/gfx/resources.cpp
+@@ -34,10 +34,14 @@ uint32_t MakeHandle(uint16_t generation, uint32_t slot) {
+ 
+ uint16_t NextGeneration(uint16_t generation) { return generation == 0xFFFF ? 1 : generation + 1; }
+ 
+-uint32_t TexelSize(TextureFormat format) { return format == TextureFormat::Index8 ? 1 : 4; }
++uint32_t TexelSize(TextureFormat format) {
++    return format == TextureFormat::Index8 ? 1 : format == TextureFormat::FloatRgba ? 16 : 4;
++}
+ 
+ VkFormat VulkanFormat(TextureFormat format) {
+-    return format == TextureFormat::Index8 ? VK_FORMAT_R8_UNORM : kColorFormat;
++    return format == TextureFormat::Index8    ? VK_FORMAT_R8_UNORM
++           : format == TextureFormat::FloatRgba ? VK_FORMAT_R32G32B32A32_SFLOAT
++                                                : kColorFormat;
+ }
+ 
+ void WriteTextureDescriptor(uint32_t slot, VkImageView view) {
+diff --git a/src/cpp/gfx/shaders/mesh_prog0_bound.vert b/src/cpp/gfx/shaders/mesh_prog0_bound.vert
+new file mode 100644
+index 0000000..06c7394
+--- /dev/null
++++ b/src/cpp/gfx/shaders/mesh_prog0_bound.vert
+@@ -0,0 +1,269 @@
++#version 460
++
++// Dark Chronicle's Vu_prog0 for the pushed-descriptor path, where the skin palette rides a texture:
++// each placement takes the next ring texture of 96 RGBA32F texels (32 bones, 3 rows each) and the
++// draw's pushed palette slot names it. The vertex stage fetches its rows by texel, which Adreno's
++// compiler handles, instead of the storage buffer it misreads - there every skinned character drew
++// its bind pose. Everything else matches mesh_prog0.vert; see it for the O-n notes.
++
++layout(constant_id = 0) const bool kSkinned = false;
++
++layout(location = 0) in vec3 a_position;
++layout(location = 1) in vec3 a_normal;
++layout(location = 2) in vec2 a_uv;
++layout(location = 3) in vec4 a_color;
++layout(location = 4) in vec4 a_skin_weight;
++layout(location = 5) in uvec4 a_skin_bone;
++
++layout(set = 0, binding = 1) uniform texture2D u_skin_palette;
++layout(set = 0, binding = 3) uniform sampler u_skin_palette_sampler;
++
++layout(push_constant, std430) uniform Push {
++    vec4 xform;
++    vec4 uv_xform;
++    uint texture_slot;
++    uint palette_slot;
++    uint sampler_slot;
++    uint flags;
++    uint alpha;
++    uint fog_color;
++    uint face;
++    uint mesh_index;
++    uint prog0_index;
++    uint palette_index;
++}
++pc;
++
++// gfx::MeshConstants, identical to mesh.vert's records. Each chunk's records form one array;
++// the draw's record is at pc.mesh_index.
++struct MeshConstantsData {
++    mat4 mvp;
++    mat3 normal_matrix;
++    vec4 light_direction[4];
++    vec4 light_color[4];
++    vec4 ambient;
++    vec4 diffuse;
++    vec4 ambient_material;
++    vec4 specular;
++    vec4 fog;
++    vec4 clip_plane[2];
++    vec4 world_uv[2];
++    uint flags;
++    uint light_count;
++};
++
++layout(set = 1, binding = 0, std430) readonly buffer MeshConstantsArray {
++    MeshConstantsData meshes[];
++};
++
++#define mc meshes[pc.mesh_index]
++
++// gfx::Prog0Constants in the VU's units (128 is 1.0). The draw's record is at pc.prog0_index.
++struct Prog0Data {
++    mat4 model_world;
++    vec4 light_direction[3];
++    vec4 light_color[4];
++    vec4 ambient;
++    vec4 object_color;
++    vec4 eye;
++    mat4 clip_or_view;
++    vec4 diffuse;
++    vec4 specular;
++    vec4 point_light[4];
++    vec4 point_color[4];
++    vec4 fog;
++    uint flags;
++    uint pad0;
++    uint specular_power;
++    uint pad;
++};
++
++layout(set = 1, binding = 1, std430) readonly buffer Prog0Array {
++    Prog0Data prog0_blocks[];
++};
++
++#define p0 prog0_blocks[pc.prog0_index]
++
++// Row r of bone b of the draw's skin palette: texel b * 3 + r of the ring texture.
++vec4 palette_row(uint bone, uint row) {
++    return texelFetch(sampler2D(u_skin_palette, u_skin_palette_sampler),
++                      ivec2(int(bone * 3u + row), 0), 0);
++}
++
++const uint kScissor      = 0x002u;
++const uint kReal         = 0x008u;
++const uint kPointLights  = 0x010u;
++const uint kUnlit        = 0x020u;
++const uint kBlend        = 0x040u;
++const uint kColorAdd     = 0x080u;
++const uint kRefSphere    = 0x100u;
++
++const uint kFaceColor    = 0x100u;
++const uint kFaceNoNormal = 0x200u;
++
++// A vertex colour byte of 0x80 is the VU's 1.0.
++const float kModulate = 255.0 / 128.0;
++const float kVuMax    = 3.40282347e38;
++
++layout(location = 0) out vec4 v_color;
++layout(location = 1) out vec2 v_uv;
++layout(location = 2) out vec4 v_fog;
++layout(location = 3) flat out vec4 v_fog_mode;
++
++out float gl_ClipDistance[6];
++
++// VU rsqrt(0) is a finite maximum; anything scaled by it is zero.
++float vu_rsqrt(float s) {
++    return s > 0.0 ? inversesqrt(s) : 0.0;
++}
++
++vec3 vu_unit(vec3 v) {
++    return v * vu_rsqrt(dot(v, v));
++}
++
++void blend(inout vec3 position, inout vec3 normal) {
++    vec3 P = vec3(0.0);
++    vec3 N = vec3(0.0);
++    for (int i = 0; i < 4; i++) {
++        float w = a_skin_weight[i];
++        uint bone = min(a_skin_bone[i], 31u);
++        vec4 r0 = palette_row(bone, 0u);
++        vec4 r1 = palette_row(bone, 1u);
++        vec4 r2 = palette_row(bone, 2u);
++
++        vec4 pw = vec4(position * w, w);
++        P += vec3(dot(r0, pw), dot(r1, pw), dot(r2, pw));
++
++        vec3 nw = normal * w;
++        vec3 c0 = vec3(r0.x, r1.x, r2.x);
++        vec3 c1 = vec3(r0.y, r1.y, r2.y);
++        vec3 c2 = vec3(r0.z, r1.z, r2.z);
++        // O-8: retail reads column 1 for the z term of influence 3 (0x013E).
++        N += c0 * nw.x + c1 * nw.y + (i == 3 ? c1 : c2) * nw.z;
++    }
++    position = P;
++    normal = N;
++}
++
++void main() {
++    uint F = p0.flags;
++    uint T = pc.face;
++
++    vec3 position = a_position;
++    vec3 normal = a_normal;
++    vec2 uv = a_uv;
++
++    if ((F & kRefSphere) != 0u) {
++        // O-9: env UV is taken from the unblended normal, before VERTEX_BLEND, as retail.
++        vec3 nh = vu_unit(mat3(p0.clip_or_view) * a_normal);
++        uv = (nh.xy + 1.0) * 0.5;
++    }
++
++    if (kSkinned && (F & kBlend) != 0u) {
++        blend(position, normal);
++    }
++
++    mat3 W = mat3(p0.model_world);
++    vec3 L[4];
++    // progmain's MSCAL 0 setup: world directions into model space, each normalised.
++    for (int c = 0; c < 4; c++) {
++        vec3 lw = vec3(p0.light_direction[0][c], p0.light_direction[1][c],
++                       p0.light_direction[2][c]);
++        L[c] = vu_unit(vec3(dot(lw, W[0]), dot(lw, W[1]), dot(lw, W[2])));
++    }
++
++    vec4 D = p0.diffuse;
++    vec4 color;
++    if ((F & kUnlit) != 0u || (T & kFaceNoNormal) != 0u) {
++        color = min(p0.object_color * D, vec4(255.0));
++    } else {
++        color = p0.ambient * D;
++        float s[4];
++        for (int c = 0; c < 4; c++) {
++            s[c] = max(0.0, dot(L[c], normal));
++            color += p0.light_color[c] * D * s[c];
++        }
++
++        if ((F & kPointLights) != 0u) {
++            vec3 pw = W * position;
++            vec3 nw = W * normal;
++            float inv_n = vu_rsqrt(dot(nw, nw));
++            for (int k = 0; k < 4; k++) {
++                vec3 d = p0.point_light[k].xyz - pw;
++                float inv_d = vu_rsqrt(dot(d, d));
++                float cosine = max(0.0, dot(d, nw)) * inv_d * inv_n;
++                float a = p0.point_light[k].w * inv_d;
++                // O-4: power enters squared, so a negative power acts as its magnitude.
++                float att = min(1.0, a * a);
++                color += p0.point_color[k] * D * (cosine * att);
++            }
++        } else if ((F & kReal) != 0u) {
++            vec3 V = p0.eye.xyz - position;
++            float inv_v = vu_rsqrt(dot(V, V));
++            float vn = dot(V, normal);
++            // Power 0 is the VU's 65536-pass loop; 32 passes reach the same saturated result.
++            uint n = p0.specular_power == 0u ? 32u : min(p0.specular_power, 32u);
++            for (int c = 0; c < 4; c++) {
++                float lit = min(1.0, 1.0e4 * s[c]);
++                float r = max(0.0, 2.0 * vn * dot(L[c], normal) - dot(L[c], V)) * inv_v;
++                float x = r * r;
++                for (uint j = 0u; j < n; j++) {
++                    // Saturates at the VU's largest float; keeps lit * x finite.
++                    x = min(x * x, kVuMax);
++                }
++                color += p0.light_color[c] * p0.specular * (lit * x);
++            }
++        }
++        color = min(color, vec4(255.0));
++    }
++
++    if ((T & kFaceColor) != 0u) {
++        vec4 vc = a_color * kModulate;
++        if ((F & kColorAdd) != 0u) {
++            // O-10: retail squares vertex alpha and drops the lit alpha.
++            color.rgb = min(color.rgb + 128.0 * vc.rgb, vec3(255.0));
++            color.a = min(128.0 * vc.a * vc.a, 255.0);
++        } else {
++            color = min(color * vc, vec4(255.0));
++        }
++    }
++
++    vec4 clip = mc.mvp * vec4(position, 1.0);
++    gl_Position = clip;
++
++    if ((F & kScissor) != 0u) {
++        vec4 c = p0.clip_or_view * vec4(position, 1.0);
++        gl_ClipDistance[0] = c.w - c.x;
++        gl_ClipDistance[1] = c.w + c.x;
++        gl_ClipDistance[2] = c.w - c.y;
++        gl_ClipDistance[3] = c.w + c.y;
++        gl_ClipDistance[4] = c.w - c.z;
++        gl_ClipDistance[5] = c.w + c.z;
++    } else {
++        for (int i = 0; i < 6; i++) {
++            gl_ClipDistance[i] = 1.0;
++        }
++    }
++
++    // ftoi0 truncates the VU's colour channels.
++    v_color = floor(clamp(color, 0.0, 255.0)) / 255.0;
++    v_uv = uv;
++    v_fog_mode = vec4(p0.fog.y, p0.fog.z, 1.0, 0.0);
++    if (p0.fog.w == 0.0) {
++        // A constant factor needs no perspective correction; clamp before truncating as VU1 does.
++        float fog = floor(max(max(min(p0.fog.x, p0.fog.y), p0.fog.z), 0.0)) / 255.0;
++        v_fog = vec4(fog, 0.0, 0.0, 0.0);
++        v_fog_mode.z = -2.0;
++        v_fog_mode.w = fog;
++    } else {
++        // Reverse-Z: only near/eye crossings need fresh fog; far-plane vertices retain their F.
++        // The full homogeneous norm keeps the weight continuous at z=w=0 with nonzero x/y.
++        float clip_scale = max(max(abs(clip.x), abs(clip.y)), max(abs(clip.z), abs(clip.w)));
++        float marker = clip.z > clip.w ? min((clip.z - clip.w) / clip_scale, 1.0) : 0.0;
++        float fog = clip.w <= 0.0 ? 0.0 : p0.fog.x + p0.fog.w / clip.w;
++        fog = floor(max(max(min(fog, p0.fog.y), p0.fog.z), 0.0));
++        // Retain weighted vertex F and its weight alongside the unlimited homogeneous numerator.
++        float weight = max(clip.w, 0.0) * (1.0 - marker);
++        v_fog = vec4(fog * weight, p0.fog.x * clip.w + p0.fog.w, marker, weight);
++    }
++}
+diff --git a/src/cpp/gfx/shaders/mesh_prog0_bound_skinned.vert b/src/cpp/gfx/shaders/mesh_prog0_bound_skinned.vert
+new file mode 100644
+index 0000000..dc78c15
+--- /dev/null
++++ b/src/cpp/gfx/shaders/mesh_prog0_bound_skinned.vert
+@@ -0,0 +1,269 @@
++﻿#version 460
++
++// Dark Chronicle's Vu_prog0 for the pushed-descriptor path's skinned pipeline, where the skin
++// palette rides a texture: each placement takes the next ring texture of 96 RGBA32F texels (32
++// bones, 3 rows each) and the draw's pushed palette slot names it. The vertex stage fetches its
++// rows by texel, which Adreno's compiler handles, instead of the storage buffer it misreads - and
++// the skinning is decided in the source rather than a specialization constant, which Adreno
++// miscompiles (the costume menu's characters drew their bind pose). Everything else matches
++// mesh_prog0.vert; see it for the O-n notes.
++
++layout(location = 0) in vec3 a_position;
++layout(location = 1) in vec3 a_normal;
++layout(location = 2) in vec2 a_uv;
++layout(location = 3) in vec4 a_color;
++layout(location = 4) in vec4 a_skin_weight;
++layout(location = 5) in uvec4 a_skin_bone;
++
++layout(set = 0, binding = 1) uniform texture2D u_skin_palette;
++layout(set = 0, binding = 3) uniform sampler u_skin_palette_sampler;
++
++layout(push_constant, std430) uniform Push {
++    vec4 xform;
++    vec4 uv_xform;
++    uint texture_slot;
++    uint palette_slot;
++    uint sampler_slot;
++    uint flags;
++    uint alpha;
++    uint fog_color;
++    uint face;
++    uint mesh_index;
++    uint prog0_index;
++    uint palette_index;
++}
++pc;
++
++// gfx::MeshConstants, identical to mesh.vert's records. Each chunk's records form one array;
++// the draw's record is at pc.mesh_index.
++struct MeshConstantsData {
++    mat4 mvp;
++    mat3 normal_matrix;
++    vec4 light_direction[4];
++    vec4 light_color[4];
++    vec4 ambient;
++    vec4 diffuse;
++    vec4 ambient_material;
++    vec4 specular;
++    vec4 fog;
++    vec4 clip_plane[2];
++    vec4 world_uv[2];
++    uint flags;
++    uint light_count;
++};
++
++layout(set = 1, binding = 0, std430) readonly buffer MeshConstantsArray {
++    MeshConstantsData meshes[];
++};
++
++#define mc meshes[pc.mesh_index]
++
++// gfx::Prog0Constants in the VU's units (128 is 1.0). The draw's record is at pc.prog0_index.
++struct Prog0Data {
++    mat4 model_world;
++    vec4 light_direction[3];
++    vec4 light_color[4];
++    vec4 ambient;
++    vec4 object_color;
++    vec4 eye;
++    mat4 clip_or_view;
++    vec4 diffuse;
++    vec4 specular;
++    vec4 point_light[4];
++    vec4 point_color[4];
++    vec4 fog;
++    uint flags;
++    uint pad0;
++    uint specular_power;
++    uint pad;
++};
++
++layout(set = 1, binding = 1, std430) readonly buffer Prog0Array {
++    Prog0Data prog0_blocks[];
++};
++
++#define p0 prog0_blocks[pc.prog0_index]
++
++// Row r of bone b of the draw's skin palette: texel b * 3 + r of the ring texture.
++vec4 palette_row(uint bone, uint row) {
++    return texelFetch(sampler2D(u_skin_palette, u_skin_palette_sampler),
++                      ivec2(int(bone * 3u + row), 0), 0);
++}
++
++const uint kScissor      = 0x002u;
++const uint kReal         = 0x008u;
++const uint kPointLights  = 0x010u;
++const uint kUnlit        = 0x020u;
++const uint kBlend        = 0x040u;
++const uint kColorAdd     = 0x080u;
++const uint kRefSphere    = 0x100u;
++
++const uint kFaceColor    = 0x100u;
++const uint kFaceNoNormal = 0x200u;
++
++// A vertex colour byte of 0x80 is the VU's 1.0.
++const float kModulate = 255.0 / 128.0;
++const float kVuMax    = 3.40282347e38;
++
++layout(location = 0) out vec4 v_color;
++layout(location = 1) out vec2 v_uv;
++layout(location = 2) out vec4 v_fog;
++layout(location = 3) flat out vec4 v_fog_mode;
++
++out float gl_ClipDistance[6];
++
++// VU rsqrt(0) is a finite maximum; anything scaled by it is zero.
++float vu_rsqrt(float s) {
++    return s > 0.0 ? inversesqrt(s) : 0.0;
++}
++
++vec3 vu_unit(vec3 v) {
++    return v * vu_rsqrt(dot(v, v));
++}
++
++void blend(inout vec3 position, inout vec3 normal) {
++    vec3 P = vec3(0.0);
++    vec3 N = vec3(0.0);
++    for (int i = 0; i < 4; i++) {
++        float w = a_skin_weight[i];
++        uint bone = min(a_skin_bone[i], 31u);
++        vec4 r0 = palette_row(bone, 0u);
++        vec4 r1 = palette_row(bone, 1u);
++        vec4 r2 = palette_row(bone, 2u);
++
++        vec4 pw = vec4(position * w, w);
++        P += vec3(dot(r0, pw), dot(r1, pw), dot(r2, pw));
++
++        vec3 nw = normal * w;
++        vec3 c0 = vec3(r0.x, r1.x, r2.x);
++        vec3 c1 = vec3(r0.y, r1.y, r2.y);
++        vec3 c2 = vec3(r0.z, r1.z, r2.z);
++        // O-8: retail reads column 1 for the z term of influence 3 (0x013E).
++        N += c0 * nw.x + c1 * nw.y + (i == 3 ? c1 : c2) * nw.z;
++    }
++    position = P;
++    normal = N;
++}
++
++void main() {
++    uint F = p0.flags;
++    uint T = pc.face;
++
++    vec3 position = a_position;
++    vec3 normal = a_normal;
++    vec2 uv = a_uv;
++
++    if ((F & kRefSphere) != 0u) {
++        // O-9: env UV is taken from the unblended normal, before VERTEX_BLEND, as retail.
++        vec3 nh = vu_unit(mat3(p0.clip_or_view) * a_normal);
++        uv = (nh.xy + 1.0) * 0.5;
++    }
++
++    if ((F & kBlend) != 0u) {
++        blend(position, normal);
++    }
++
++    mat3 W = mat3(p0.model_world);
++    vec3 L[4];
++    // progmain's MSCAL 0 setup: world directions into model space, each normalised.
++    for (int c = 0; c < 4; c++) {
++        vec3 lw = vec3(p0.light_direction[0][c], p0.light_direction[1][c],
++                       p0.light_direction[2][c]);
++        L[c] = vu_unit(vec3(dot(lw, W[0]), dot(lw, W[1]), dot(lw, W[2])));
++    }
++
++    vec4 D = p0.diffuse;
++    vec4 color;
++    if ((F & kUnlit) != 0u || (T & kFaceNoNormal) != 0u) {
++        color = min(p0.object_color * D, vec4(255.0));
++    } else {
++        color = p0.ambient * D;
++        float s[4];
++        for (int c = 0; c < 4; c++) {
++            s[c] = max(0.0, dot(L[c], normal));
++            color += p0.light_color[c] * D * s[c];
++        }
++
++        if ((F & kPointLights) != 0u) {
++            vec3 pw = W * position;
++            vec3 nw = W * normal;
++            float inv_n = vu_rsqrt(dot(nw, nw));
++            for (int k = 0; k < 4; k++) {
++                vec3 d = p0.point_light[k].xyz - pw;
++                float inv_d = vu_rsqrt(dot(d, d));
++                float cosine = max(0.0, dot(d, nw)) * inv_d * inv_n;
++                float a = p0.point_light[k].w * inv_d;
++                // O-4: power enters squared, so a negative power acts as its magnitude.
++                float att = min(1.0, a * a);
++                color += p0.point_color[k] * D * (cosine * att);
++            }
++        } else if ((F & kReal) != 0u) {
++            vec3 V = p0.eye.xyz - position;
++            float inv_v = vu_rsqrt(dot(V, V));
++            float vn = dot(V, normal);
++            // Power 0 is the VU's 65536-pass loop; 32 passes reach the same saturated result.
++            uint n = p0.specular_power == 0u ? 32u : min(p0.specular_power, 32u);
++            for (int c = 0; c < 4; c++) {
++                float lit = min(1.0, 1.0e4 * s[c]);
++                float r = max(0.0, 2.0 * vn * dot(L[c], normal) - dot(L[c], V)) * inv_v;
++                float x = r * r;
++                for (uint j = 0u; j < n; j++) {
++                    // Saturates at the VU's largest float; keeps lit * x finite.
++                    x = min(x * x, kVuMax);
++                }
++                color += p0.light_color[c] * p0.specular * (lit * x);
++            }
++        }
++        color = min(color, vec4(255.0));
++    }
++
++    if ((T & kFaceColor) != 0u) {
++        vec4 vc = a_color * kModulate;
++        if ((F & kColorAdd) != 0u) {
++            // O-10: retail squares vertex alpha and drops the lit alpha.
++            color.rgb = min(color.rgb + 128.0 * vc.rgb, vec3(255.0));
++            color.a = min(128.0 * vc.a * vc.a, 255.0);
++        } else {
++            color = min(color * vc, vec4(255.0));
++        }
++    }
++
++    vec4 clip = mc.mvp * vec4(position, 1.0);
++    gl_Position = clip;
++
++    if ((F & kScissor) != 0u) {
++        vec4 c = p0.clip_or_view * vec4(position, 1.0);
++        gl_ClipDistance[0] = c.w - c.x;
++        gl_ClipDistance[1] = c.w + c.x;
++        gl_ClipDistance[2] = c.w - c.y;
++        gl_ClipDistance[3] = c.w + c.y;
++        gl_ClipDistance[4] = c.w - c.z;
++        gl_ClipDistance[5] = c.w + c.z;
++    } else {
++        for (int i = 0; i < 6; i++) {
++            gl_ClipDistance[i] = 1.0;
++        }
++    }
++
++    // ftoi0 truncates the VU's colour channels.
++    v_color = floor(clamp(color, 0.0, 255.0)) / 255.0;
++    v_uv = uv;
++    v_fog_mode = vec4(p0.fog.y, p0.fog.z, 1.0, 0.0);
++    if (p0.fog.w == 0.0) {
++        // A constant factor needs no perspective correction; clamp before truncating as VU1 does.
++        float fog = floor(max(max(min(p0.fog.x, p0.fog.y), p0.fog.z), 0.0)) / 255.0;
++        v_fog = vec4(fog, 0.0, 0.0, 0.0);
++        v_fog_mode.z = -2.0;
++        v_fog_mode.w = fog;
++    } else {
++        // Reverse-Z: only near/eye crossings need fresh fog; far-plane vertices retain their F.
++        // The full homogeneous norm keeps the weight continuous at z=w=0 with nonzero x/y.
++        float clip_scale = max(max(abs(clip.x), abs(clip.y)), max(abs(clip.z), abs(clip.w)));
++        float marker = clip.z > clip.w ? min((clip.z - clip.w) / clip_scale, 1.0) : 0.0;
++        float fog = clip.w <= 0.0 ? 0.0 : p0.fog.x + p0.fog.w / clip.w;
++        fog = floor(max(max(min(fog, p0.fog.y), p0.fog.z), 0.0));
++        // Retain weighted vertex F and its weight alongside the unlimited homogeneous numerator.
++        float weight = max(clip.w, 0.0) * (1.0 - marker);
++        v_fog = vec4(fog * weight, p0.fog.x * clip.w + p0.fog.w, marker, weight);
++    }
++}
+diff --git a/src/cpp/gfx/shaders/mesh_prog0_skinned.vert b/src/cpp/gfx/shaders/mesh_prog0_skinned.vert
+new file mode 100644
+index 0000000..870adfd
+--- /dev/null
++++ b/src/cpp/gfx/shaders/mesh_prog0_skinned.vert
+@@ -0,0 +1,270 @@
++#version 460
++
++// Dark Chronicle's Vu_prog0 for the skinned pipeline, bindless storage-buffer palette. This is
++// mesh_prog0.vert with the skinning decided in the source instead of a specialization constant:
++// Adreno's compiler miscompiles the skinned pipeline when its shader is selected by a spec
++// constant (the costume menu's characters drew their bind pose), so this variant has no spec
++// machinery at all and skins every draw the kBlend flag marks. See mesh_prog0.vert for the O-n
++// notes.
++
++layout(location = 0) in vec3 a_position;
++layout(location = 1) in vec3 a_normal;
++layout(location = 2) in vec2 a_uv;
++layout(location = 3) in vec4 a_color;
++layout(location = 4) in vec4 a_skin_weight;
++layout(location = 5) in uvec4 a_skin_bone;
++
++layout(push_constant, std430) uniform Push {
++    vec4 xform;
++    vec4 uv_xform;
++    uint texture_slot;
++    uint palette_slot;
++    uint sampler_slot;
++    uint flags;
++    uint alpha;
++    uint fog_color;
++    uint face;
++    uint mesh_index;
++    uint prog0_index;
++    uint palette_index;
++}
++pc;
++
++// gfx::MeshConstants, identical to mesh.vert's records. Each chunk's records form one array;
++// the draw's record is at pc.mesh_index.
++struct MeshConstantsData {
++    mat4 mvp;
++    mat3 normal_matrix;
++    vec4 light_direction[4];
++    vec4 light_color[4];
++    vec4 ambient;
++    vec4 diffuse;
++    vec4 ambient_material;
++    vec4 specular;
++    vec4 fog;
++    vec4 clip_plane[2];
++    vec4 world_uv[2];
++    uint flags;
++    uint light_count;
++};
++
++layout(set = 1, binding = 0, std430) readonly buffer MeshConstantsArray {
++    MeshConstantsData meshes[];
++};
++
++#define mc meshes[pc.mesh_index]
++
++// gfx::Prog0Constants in the VU's units (128 is 1.0). The draw's record is at pc.prog0_index.
++struct Prog0Data {
++    mat4 model_world;
++    vec4 light_direction[3];
++    vec4 light_color[4];
++    vec4 ambient;
++    vec4 object_color;
++    vec4 eye;
++    mat4 clip_or_view;
++    vec4 diffuse;
++    vec4 specular;
++    vec4 point_light[4];
++    vec4 point_color[4];
++    vec4 fog;
++    uint flags;
++    uint pad0;
++    uint specular_power;
++    uint pad;
++};
++
++layout(set = 1, binding = 1, std430) readonly buffer Prog0Array {
++    Prog0Data prog0_blocks[];
++};
++
++#define p0 prog0_blocks[pc.prog0_index]
++
++// gfx::Prog0Palette of a skinned draw, at pc.palette_index.
++struct Prog0PaletteData {
++    vec4 bones[96];
++};
++
++layout(set = 1, binding = 2, std430) readonly buffer Prog0PaletteArray {
++    Prog0PaletteData palettes[];
++};
++
++#define palette palettes[pc.palette_index]
++
++const uint kScissor      = 0x002u;
++const uint kReal         = 0x008u;
++const uint kPointLights  = 0x010u;
++const uint kUnlit        = 0x020u;
++const uint kBlend        = 0x040u;
++const uint kColorAdd     = 0x080u;
++const uint kRefSphere    = 0x100u;
++
++const uint kFaceColor    = 0x100u;
++const uint kFaceNoNormal = 0x200u;
++
++// A vertex colour byte of 0x80 is the VU's 1.0.
++const float kModulate = 255.0 / 128.0;
++const float kVuMax    = 3.40282347e38;
++
++layout(location = 0) out vec4 v_color;
++layout(location = 1) out vec2 v_uv;
++layout(location = 2) out vec4 v_fog;
++layout(location = 3) flat out vec4 v_fog_mode;
++
++out float gl_ClipDistance[6];
++
++// VU rsqrt(0) is a finite maximum; anything scaled by it is zero.
++float vu_rsqrt(float s) {
++    return s > 0.0 ? inversesqrt(s) : 0.0;
++}
++
++vec3 vu_unit(vec3 v) {
++    return v * vu_rsqrt(dot(v, v));
++}
++
++void blend(inout vec3 position, inout vec3 normal) {
++    vec3 P = vec3(0.0);
++    vec3 N = vec3(0.0);
++    for (int i = 0; i < 4; i++) {
++        float w = a_skin_weight[i];
++        uint b = min(a_skin_bone[i], 31u) * 3u;
++        vec4 r0 = palette.bones[b];
++        vec4 r1 = palette.bones[b + 1u];
++        vec4 r2 = palette.bones[b + 2u];
++
++        vec4 pw = vec4(position * w, w);
++        P += vec3(dot(r0, pw), dot(r1, pw), dot(r2, pw));
++
++        vec3 nw = normal * w;
++        vec3 c0 = vec3(r0.x, r1.x, r2.x);
++        vec3 c1 = vec3(r0.y, r1.y, r2.y);
++        vec3 c2 = vec3(r0.z, r1.z, r2.z);
++        // O-8: retail reads column 1 for the z term of influence 3 (0x013E).
++        N += c0 * nw.x + c1 * nw.y + (i == 3 ? c1 : c2) * nw.z;
++    }
++    position = P;
++    normal = N;
++}
++
++void main() {
++    uint F = p0.flags;
++    uint T = pc.face;
++
++    vec3 position = a_position;
++    vec3 normal = a_normal;
++    vec2 uv = a_uv;
++
++    if ((F & kRefSphere) != 0u) {
++        // O-9: env UV is taken from the unblended normal, before VERTEX_BLEND, as retail.
++        vec3 nh = vu_unit(mat3(p0.clip_or_view) * a_normal);
++        uv = (nh.xy + 1.0) * 0.5;
++    }
++
++    if ((F & kBlend) != 0u) {
++        blend(position, normal);
++    }
++
++    mat3 W = mat3(p0.model_world);
++    vec3 L[4];
++    // progmain's MSCAL 0 setup: world directions into model space, each normalised.
++    for (int c = 0; c < 4; c++) {
++        vec3 lw = vec3(p0.light_direction[0][c], p0.light_direction[1][c],
++                       p0.light_direction[2][c]);
++        L[c] = vu_unit(vec3(dot(lw, W[0]), dot(lw, W[1]), dot(lw, W[2])));
++    }
++
++    vec4 D = p0.diffuse;
++    vec4 color;
++    if ((F & kUnlit) != 0u || (T & kFaceNoNormal) != 0u) {
++        color = min(p0.object_color * D, vec4(255.0));
++    } else {
++        color = p0.ambient * D;
++        float s[4];
++        for (int c = 0; c < 4; c++) {
++            s[c] = max(0.0, dot(L[c], normal));
++            color += p0.light_color[c] * D * s[c];
++        }
++
++        if ((F & kPointLights) != 0u) {
++            vec3 pw = W * position;
++            vec3 nw = W * normal;
++            float inv_n = vu_rsqrt(dot(nw, nw));
++            for (int k = 0; k < 4; k++) {
++                vec3 d = p0.point_light[k].xyz - pw;
++                float inv_d = vu_rsqrt(dot(d, d));
++                float cosine = max(0.0, dot(d, nw)) * inv_d * inv_n;
++                float a = p0.point_light[k].w * inv_d;
++                // O-4: power enters squared, so a negative power acts as its magnitude.
++                float att = min(1.0, a * a);
++                color += p0.point_color[k] * D * (cosine * att);
++            }
++        } else if ((F & kReal) != 0u) {
++            vec3 V = p0.eye.xyz - position;
++            float inv_v = vu_rsqrt(dot(V, V));
++            float vn = dot(V, normal);
++            // Power 0 is the VU's 65536-pass loop; 32 passes reach the same saturated result.
++            uint n = p0.specular_power == 0u ? 32u : min(p0.specular_power, 32u);
++            for (int c = 0; c < 4; c++) {
++                float lit = min(1.0, 1.0e4 * s[c]);
++                float r = max(0.0, 2.0 * vn * dot(L[c], normal) - dot(L[c], V)) * inv_v;
++                float x = r * r;
++                for (uint j = 0u; j < n; j++) {
++                    // Saturates at the VU's largest float; keeps lit * x finite.
++                    x = min(x * x, kVuMax);
++                }
++                color += p0.light_color[c] * p0.specular * (lit * x);
++            }
++        }
++        color = min(color, vec4(255.0));
++    }
++
++    if ((T & kFaceColor) != 0u) {
++        vec4 vc = a_color * kModulate;
++        if ((F & kColorAdd) != 0u) {
++            // O-10: retail squares vertex alpha and drops the lit alpha.
++            color.rgb = min(color.rgb + 128.0 * vc.rgb, vec3(255.0));
++            color.a = min(128.0 * vc.a * vc.a, 255.0);
++        } else {
++            color = min(color * vc, vec4(255.0));
++        }
++    }
++
++    vec4 clip = mc.mvp * vec4(position, 1.0);
++    gl_Position = clip;
++
++    if ((F & kScissor) != 0u) {
++        vec4 c = p0.clip_or_view * vec4(position, 1.0);
++        gl_ClipDistance[0] = c.w - c.x;
++        gl_ClipDistance[1] = c.w + c.x;
++        gl_ClipDistance[2] = c.w - c.y;
++        gl_ClipDistance[3] = c.w + c.y;
++        gl_ClipDistance[4] = c.w - c.z;
++        gl_ClipDistance[5] = c.w + c.z;
++    } else {
++        for (int i = 0; i < 6; i++) {
++            gl_ClipDistance[i] = 1.0;
++        }
++    }
++
++    // ftoi0 truncates the VU's colour channels.
++    v_color = floor(clamp(color, 0.0, 255.0)) / 255.0;
++    v_uv = uv;
++    v_fog_mode = vec4(p0.fog.y, p0.fog.z, 1.0, 0.0);
++    if (p0.fog.w == 0.0) {
++        // A constant factor needs no perspective correction; clamp before truncating as VU1 does.
++        float fog = floor(max(max(min(p0.fog.x, p0.fog.y), p0.fog.z), 0.0)) / 255.0;
++        v_fog = vec4(fog, 0.0, 0.0, 0.0);
++        v_fog_mode.z = -2.0;
++        v_fog_mode.w = fog;
++    } else {
++        // Reverse-Z: only near/eye crossings need fresh fog; far-plane vertices retain their F.
++        // The full homogeneous norm keeps the weight continuous at z=w=0 with nonzero x/y.
++        float clip_scale = max(max(abs(clip.x), abs(clip.y)), max(abs(clip.z), abs(clip.w)));
++        float marker = clip.z > clip.w ? min((clip.z - clip.w) / clip_scale, 1.0) : 0.0;
++        float fog = clip.w <= 0.0 ? 0.0 : p0.fog.x + p0.fog.w / clip.w;
++        fog = floor(max(max(min(fog, p0.fog.y), p0.fog.z), 0.0));
++        // Retain weighted vertex F and its weight alongside the unlimited homogeneous numerator.
++        float weight = max(clip.w, 0.0) * (1.0 - marker);
++        v_fog = vec4(fog * weight, p0.fog.x * clip.w + p0.fog.w, marker, weight);
++    }
++}
+diff --git a/src/cpp/tests/gfx_pipeline_cache_test.cpp b/src/cpp/tests/gfx_pipeline_cache_test.cpp
+new file mode 100644
+index 0000000..27dc6bc
+--- /dev/null
++++ b/src/cpp/tests/gfx_pipeline_cache_test.cpp
+@@ -0,0 +1,249 @@
++#include <gtest/gtest.h>
++
++#include <array>
++#include <chrono>
++#include <cmath>
++#include <cstring>
++#include <filesystem>
++#include <fstream>
++#include <string>
++#include <system_error>
++
++#include "gfx/displaylist.hpp"
++#include "tests/gfx_fixture.hpp"
++
++using namespace dc::test;
++
++namespace {
++
++GfxOptions Prog0Options() {
++    GfxOptions options;
++    options.prog0_meshes = true;
++    options.pipeline_cache = std::filesystem::temp_directory_path() / "dc_gfx_test" / "pipeline_cache_stamp.bin";
++    return options;
++}
++
++const std::array<uint8_t, 4> kClear = {0, 0, 0, 0x80};
++
++void Identity(float (&m)[16]) {
++    std::memset(m, 0, sizeof m);
++    m[0] = m[5] = m[10] = m[15] = 1.0f;
++}
++
++} // namespace
++
++// The pipeline cache file carries the renderer build's pipeline-set identity. A cache written by
++// another build (an older renderer's entries under a bumped shader set) is refused wholesale, so a
++// driver that matches cache entries loosely - Adreno handed skinned pipelines the unskinned
++// variant's compiled vertex shader, leaving every character in its bind pose - can never
++// resurrect the mismatched code.
++TEST(GfxPipelineCache, StampRoundTripAndRefusal) {
++    namespace detail = gfx::detail;
++
++    uint8_t stamp[16];
++    detail::WriteCacheStamp(stamp);
++    EXPECT_EQ(stamp[0], 'K');
++    EXPECT_EQ(stamp[1], 'Z');
++    EXPECT_EQ(stamp[4], '1');
++
++    const auto path = std::filesystem::temp_directory_path() /
++                      ("chronicle_cache_stamp_" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) + ".bin");
++    {
++        std::ofstream out(path, std::ios::binary);
++        out.write(reinterpret_cast<const char *>(stamp), sizeof(stamp));
++        out << "payload";
++    }
++    {
++        std::ifstream in(path, std::ios::binary);
++        EXPECT_TRUE(detail::CacheStampMatches(in));
++    }
++
++    // One flipped identity byte stands for another renderer build's cache: refused.
++    stamp[15] = static_cast<uint8_t>(stamp[15] ^ 0x40);
++    {
++        std::ofstream out(path, std::ios::binary | std::ios::trunc);
++        out.write(reinterpret_cast<const char *>(stamp), sizeof(stamp));
++        out << "payload";
++    }
++    {
++        std::ifstream in(path, std::ios::binary);
++        EXPECT_FALSE(detail::CacheStampMatches(in));
++    }
++
++    // An unstamped file, the format the older renderer wrote, is refused as well.
++    {
++        std::ofstream out(path, std::ios::binary | std::ios::trunc);
++        out << "raw driver cache bytes";
++    }
++    {
++        std::ifstream in(path, std::ios::binary);
++        EXPECT_FALSE(detail::CacheStampMatches(in));
++    }
++    std::error_code error;
++    std::filesystem::remove(path, error);
++}
++
++// The renderer's own round trip: a cache seeded with foreign bytes is not loaded, and the file it
++// writes back carries this build's stamp, so the next run loads only what this build produced.
++TEST(GfxGpuPipelineCache, RendererRefusesAForeignCacheAndRewritesItsOwn) {
++    const auto path = std::filesystem::temp_directory_path() /
++                      ("chronicle_cache_foreign_" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) + ".bin");
++    {
++        std::ofstream out(path, std::ios::binary);
++        out << "stale bytes another renderer build wrote";
++    }
++    GfxOptions options;
++    options.pipeline_cache = path;
++    {
++        GfxFixture fixture(64, 48, 1.0f, options);
++    }
++    std::ifstream in(path, std::ios::binary);
++    char magic[4] = {};
++    in.read(magic, 4);
++    EXPECT_EQ(std::memcmp(magic, "KZPC", 4), 0) << "the renderer must stamp the cache it writes";
++    std::error_code error;
++    std::filesystem::remove(path, error);
++}
++
++// The delivered palette's bytes, inspected in the ring texture a real skinned draw filled: every
++// bone's rows must sit at their texels exactly as the storage-buffer path would read them.
++namespace {
++
++std::vector<gfx::Vertex3D> ProbeSkinned(const std::array<float, 4> &weight, const std::array<uint8_t, 4> &bone) {
++    gfx::Prog0Skin skin = {};
++    for (size_t i = 0; i < 4; i++) {
++        skin.weight[i] = weight[i];
++        skin.bone[i] = bone[i];
++    }
++    gfx::Vertex3D pair = {};
++    std::memcpy(&pair, &skin, sizeof(gfx::Vertex3D));
++    std::vector<gfx::Vertex3D> out;
++    for (const gfx::Vertex3D &vertex : {gfx::Vertex3D{{-0.2f, -0.2f, 0.5f}}, gfx::Vertex3D{{0.2f, -0.2f, 0.5f}},
++                                        gfx::Vertex3D{{0.0f, 0.2f, 0.5f}}}) {
++        out.push_back(vertex);
++        out.push_back(pair);
++    }
++    return out;
++}
++
++// The mean x of the drawn pixels: a translating bone must move the mesh with it.
++double DrawnMeanX(dc::test::GfxFixture &fixture) {
++    EXPECT_TRUE(gfx::ReadbackFrame(fixture.pixels, fixture.width, fixture.height));
++    double sum = 0.0;
++    int    count = 0;
++    for (uint32_t y = 0; y < fixture.height; y++) {
++        for (uint32_t x = 0; x < fixture.width; x++) {
++            if (fixture.Pixel(x, y)[0] > 100) {
++                sum += x;
++                count++;
++            }
++        }
++    }
++    return count > 0 ? sum / count : -1.0;
++}
++
++// A bone's translation must move the mesh no matter which slot it sits in: a fetch that collapses
++// to bone 0 leaves every later bone's motion behind.
++void RenderTracksBoneTranslation(uint8_t bone_slot) {
++    dc::test::GfxFixture fixture(64, 48, 1.0f, Prog0Options());
++    gfx::detail::CreateSkinPaletteRing();
++    gfx::Prog0Palette palette = {};
++    const auto translate = [&palette](uint32_t slot, float x) {
++        const float rows[3][4] = {{1.0f, 0.0f, 0.0f, x}, {0.0f, 1.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f, 0.0f}};
++        for (uint32_t r = 0; r < 3; r++) {
++            for (uint32_t c = 0; c < 4; c++) {
++                palette.bones[slot][r][c] = rows[r][c];
++            }
++        }
++    };
++    translate(bone_slot, 0.0f);
++    const std::vector<uint32_t>  indices = {0, 1, 2};
++    gfx::MeshConstants           constants = {};
++    Identity(constants.mvp);
++    gfx::MeshTransform  transform = gfx::IdentityMeshTransform();
++    gfx::Prog0Constants block = {};
++    block.flags = gfx::kProg0Unlit | gfx::kProg0Skinned;
++    for (uint32_t k = 0; k < 4; k++) {
++        block.object_color[k] = k == 3 ? 128.0f : 200.0f;
++        block.diffuse[k] = 1.0f;
++    }
++    const std::array<float, 4>    weight = {1.0f, 0.0f, 0.0f, 0.0f};
++    const std::array<uint8_t, 4>  bones = {bone_slot, 0, 0, 0};
++    const auto at = [&](float x) {
++        translate(bone_slot, x);
++        gfx::BeginRecording();
++        gfx::Clear(true, kClear.data(), true, 0);
++        gfx::DrawMeshImmediateProg0(ProbeSkinned(weight, bones), indices, constants, block, {}, {}, &transform,
++                                    &palette);
++        const auto list = gfx::EndRecording();
++        EXPECT_TRUE(gfx::RenderList(*list, 1.0f, {.canonical = true}));
++        return DrawnMeanX(fixture);
++    };
++    const double home = at(0.0f);
++    const double moved = at(0.3f);
++    ASSERT_GE(home, 0.0) << "bone slot " << static_cast<int>(bone_slot);
++    EXPECT_NEAR(moved - home, 0.3f * 32.0f, 2.0) << "bone slot " << static_cast<int>(bone_slot);
++}
++
++TEST(GfxGpuPipelineCache, SkinnedRenderTracksBone0) { RenderTracksBoneTranslation(0); }
++TEST(GfxGpuPipelineCache, SkinnedRenderTracksBone1) { RenderTracksBoneTranslation(1); }
++TEST(GfxGpuPipelineCache, SkinnedRenderTracksBone2) { RenderTracksBoneTranslation(2); }
++TEST(GfxGpuPipelineCache, SkinnedRenderTracksBone3) { RenderTracksBoneTranslation(3); }
++TEST(GfxGpuPipelineCache, SkinnedRenderTracksBone7) { RenderTracksBoneTranslation(7); }
++
++} // namespace
++
++TEST(GfxGpuPipelineCache, SkinPaletteRingHoldsEveryBonesRows) {
++    GfxFixture fixture(64, 48, 1.0f, Prog0Options());
++    gfx::detail::CreateSkinPaletteRing();
++    gfx::Prog0Palette palette = {};
++    // Distinct values per texel so a misplaced or truncated upload cannot pass for the right one.
++    for (uint32_t bone = 0; bone < 32; ++bone) {
++        for (uint32_t r = 0; r < 3; ++r) {
++            auto &value = palette.bones[bone][r];
++            for (int component = 0; component < 4; ++component) {
++                value[component] = static_cast<float>(bone * 12 + r * 4 + component);
++            }
++        }
++    }
++    // One real skinned draw, so the placement happens inside a frame the way the draw path runs it.
++    const std::vector<gfx::Vertex3D> vertices = ProbeSkinned({1.0f, 0.0f, 0.0f, 0.0f}, {0, 0, 0, 0});
++    const std::vector<uint32_t>       indices = {0, 1, 2};
++    gfx::MeshConstants                constants = {};
++    Identity(constants.mvp);
++    gfx::MeshTransform  transform = gfx::IdentityMeshTransform();
++    gfx::Prog0Constants block = {};
++    block.flags = gfx::kProg0Unlit | gfx::kProg0Skinned;
++    for (uint32_t k = 0; k < 4; k++) {
++        block.object_color[k] = k == 3 ? 128.0f : 200.0f;
++        block.diffuse[k] = 1.0f;
++    }
++    gfx::BeginRecording();
++    gfx::Clear(true, kClear.data(), true, 0);
++    gfx::DrawMeshImmediateProg0(vertices, indices, constants, block, {}, {}, &transform, &palette);
++    const auto list = gfx::EndRecording();
++    const uint32_t before = gfx::detail::SkinPaletteCursorForTest();
++    ASSERT_TRUE(gfx::RenderList(*list, 1.0f, {.canonical = true}));
++    if (gfx::detail::SkinPaletteCursorForTest() == before) {
++        // The bindless path delivers the palette through its storage buffer and never touches the
++        // ring; the ring's bytes are the pushed-descriptor path's contract.
++        GTEST_SKIP() << "the bindless path delivers the palette through its storage buffer";
++    }
++    const auto delivered = gfx::detail::SkinPaletteTextureForTest();
++    ASSERT_NE(delivered, gfx::kNullTexture);
++    std::vector<uint8_t> pixels;
++    uint32_t             width = 0;
++    uint32_t             height = 0;
++    ASSERT_TRUE(gfx::ReadbackTexture(delivered, pixels, width, height));
++    ASSERT_EQ(width, 96u);
++    ASSERT_EQ(height, 1u);
++    ASSERT_EQ(pixels.size(), 96u * 16u);
++    for (uint32_t texel = 0; texel < 96; ++texel) {
++        float values[4];
++        std::memcpy(values, pixels.data() + texel * 16, sizeof(values));
++        for (int component = 0; component < 4; ++component) {
++            EXPECT_NEAR(values[component], static_cast<float>(texel * 4 + component), 0.01f)
++                << "texel " << texel << " component " << component;
++        }
++    }
++}

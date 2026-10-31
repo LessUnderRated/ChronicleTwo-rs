@@ -15,6 +15,9 @@ include(GoogleTest)
 add_test(NAME PalettePaths.Check
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/port/check_palette_paths.py
         ${CMAKE_SOURCE_DIR}/port/src)
+add_test(NAME SkinnedShaders.Check
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/port/check_skinned_shaders.py
+        ${CMAKE_SOURCE_DIR})
 add_test(NAME NativeArchitecture.Check
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/port/native_architecture.py
         --root ${CMAKE_SOURCE_DIR} --build ${CMAKE_BINARY_DIR})

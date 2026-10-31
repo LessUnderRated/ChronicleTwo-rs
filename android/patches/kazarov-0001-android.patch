@@ -94,6 +94,70 @@ index d3c4647..de991e0 100644
      corrosion_import_crate(MANIFEST_PATH ${KZ_RUST_MANIFEST} CRATES kazarov_core NO_DEFAULT_FEATURES)
  else()
      corrosion_import_crate(MANIFEST_PATH ${KZ_RUST_MANIFEST} CRATES kazarov_core)
+diff --git a/include/gfx/gfx.hpp b/include/gfx/gfx.hpp
+index b4ce76a..4190669 100644
+--- a/include/gfx/gfx.hpp
++++ b/include/gfx/gfx.hpp
+@@ -247,6 +247,9 @@ bool InFrame();
+ // Validation-layer messages seen so far (validation and performance types, warning or worse).
+ uint32_t ValidationMessageCount();
+ uint32_t PipelineCount();
++// Threads CreatePipelines spreads vkCreateGraphicsPipelines over. Android is 1: Adreno's
++// compiler has SIGSEGV'd under concurrent creates (Snapdragon SM8850 / Adreno 840).
++uint32_t PipelineCompileWorkerCount();
+ // Pipelines created during init versus found in the loaded pipeline cache are not
+ // distinguishable through Vulkan, so this is only the time RendererInit spent creating them.
+ double PipelineCompileSeconds();
+diff --git a/src/cpp/gfx/pipelines.cpp b/src/cpp/gfx/pipelines.cpp
+index 13c3f12..6160c98 100644
+--- a/src/cpp/gfx/pipelines.cpp
++++ b/src/cpp/gfx/pipelines.cpp
+@@ -580,6 +580,14 @@ void LogShaderStats() {
+     }
+ }
+ 
++uint32_t CompileWorkerCount() {
++#ifdef __ANDROID__
++    return 1;
++#else
++    return std::clamp(std::thread::hardware_concurrency(), 1u, 8u);
++#endif
++}
++
+ void CreatePipelines() {
+     auto start = std::chrono::steady_clock::now();
+     BuildBlendTable();
+@@ -880,8 +888,10 @@ void CreatePipelines() {
+         describe(DepthOnlyPipelineIndex(kind), family, VK_NULL_HANDLE, nullptr, &no_color, &dynamic_no_mask);
+     }
+ 
+-    // Pipeline creation is thread-safe against one cache, and on a cold cache it is the whole
+-    // cost of starting up, so it is spread over the cores while the caller reports progress.
++    // Pipeline creation is thread-safe against one cache on desktop, and on a cold cache it is the
++    // whole cost of starting up, so it is spread over the cores while the caller reports progress.
++    // Android compiles on one thread: Adreno's vkCreateGraphicsPipelines has SIGSEGV'd with
++    // several workers on the same cache (21k pipelines, Adreno 840).
+     g.pipelines.assign(total, VK_NULL_HANDLE);
+     g.pipeline_count = creation_count;
+     const auto              described = trace_init ? std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+@@ -910,7 +920,7 @@ void CreatePipelines() {
+         }
+         return result;
+     };
+-    uint32_t workers = std::clamp(std::thread::hardware_concurrency(), 1u, 8u);
++    uint32_t workers = CompileWorkerCount();
+     {
+         // std::thread rather than std::jthread, which Android's libc++ keeps experimental.
+         std::vector<std::thread> threads;
+@@ -1152,6 +1162,8 @@ std::string DescribePipeline(uint32_t index) {
+ 
+ uint32_t PipelineCount() { return detail::g.pipeline_count; }
+ 
++uint32_t PipelineCompileWorkerCount() { return detail::CompileWorkerCount(); }
++
+ double PipelineCompileSeconds() { return detail::g.pipeline_seconds; }
+ 
+ } // namespace gfx
 diff --git a/src/cpp/gfx/renderer.cpp b/src/cpp/gfx/renderer.cpp
 index 163800f..091209e 100644
 --- a/src/cpp/gfx/renderer.cpp

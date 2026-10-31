@@ -765,6 +765,321 @@ TEST_F(CostumeMenu, ReloadingOnlyTheSkinIsRefused) {
     EXPECT_EQ(error, "character profile requires live prior resources and clone inputs or an empty character");
 }
 
+/**
+ * The new-game costume select (CMenuCostumeSel) loads Max's skinned body (menu/chara4/c01b_menu) and then a
+ * costume skin (mainchr/c01fukuN) onto it through the commands the converted profiles carry: the body's MOTION
+ * binds a pose and vertex weights, the skin's MOTION rebuilds the skinned visuals on the body's frames and
+ * rewrites the body's bind matrices through Rebind. Whatever the skin does, the body's registered idle motion
+ * must keep posing the model — a pose that stops applying reads as the costume menu's T-pose.
+ */
+class CostumeSkinPose : public NativeModel {
+protected:
+    static constexpr int   kBlock = 2;
+    std::vector<u_long128> pool_storage = std::vector<u_long128>(1 << 16);
+    std::vector<u_long128> texture_storage = std::vector<u_long128>(4096);
+    mgCMemory              pool;
+    mgCMemory              slots[2];
+    mgCMemory              rest;
+    mgCMemory              texture_memory;
+    mgCTextureManager      textures;
+    CCharacter2            body;
+
+    static Json Mesh(int frame) {
+        return {
+            {"frame", frame}, {"vertex_count", 3}, {"normal_count", 0}, {"uv_count", 0}, {"colour_count", 0},
+            {"primitives",    Json::array({{{"type", 531}, {"material", 0}, {"source_vertices", {0, 1, 2}}, {"source_normals", Json::array()}, {"source_uvs", Json::array()}, {"source_colours", Json::array()}}})          },
+            {"materials",     Json::array({{{"texture", ""}, {"diffuse", {1, 1, 1, 1}}, {"ambient", {0, 0, 0, 0}}}})                                                                                                                 },
+        };
+    }
+
+    /** Frame metadata whose skinned meshes sit on skin1 and skin2, the body profile's vertex-animated frames. */
+    static Json Metadata(const char *texture) {
+        Json model = {
+            {"schema_version",  1                  },
+            {"source",          "fixture/model.mds"},
+            {"frames",          Json::array({
+                {{"id", 0}, {"name", "root"}, {"parent", -1}, {"mdt", nullptr}},
+                {{"id", 1}, {"name", "skin1"}, {"parent", 0}, {"mdt", 0}},
+                {{"id", 2}, {"name", "skin2"}, {"parent", 0}, {"mdt", 1}},
+                {{"id", 3}, {"name", "skin3"}, {"parent", 0}, {"mdt", nullptr}},
+                {{"id", 4}, {"name", "R_te"}, {"parent", 0}, {"mdt", nullptr}},
+                {{"id", 5}, {"name", "L_te"}, {"parent", 0}, {"mdt", nullptr}},
+                {{"id", 6}, {"name", "kami"}, {"parent", 0}, {"mdt", nullptr}},
+                {{"id", 7}, {"name", "kao"}, {"parent", 0}, {"mdt", nullptr}},
+                {{"id", 8}, {"name", "atoramiria"}, {"parent", 0}, {"mdt", nullptr}},
+                {{"id", 9}, {"name", "bone"}, {"parent", 0}, {"mdt", nullptr}},
+            })                                                                                                        },
+            {"meshes",          Json::array({Mesh(1), Mesh(2)})                                                       },
+            {"motion_channels", Json::array()                                                                         },
+            {"weights",         Json::array()                                                                         },
+            {"bind_poses",      Json::array()                                                                         },
+            {"texture_sets",    {0}                                                                                   },
+        };
+        model["meshes"][0]["materials"][0]["texture"] = texture;
+        model["meshes"][1]["materials"][0]["texture"] = texture;
+        return model;
+    }
+
+    static Json Pictures(const char *name) {
+        return {
+            {"schema_version", 3              },
+            {"groups",         {0}            },
+            {"entries",        Json::array({{{"name", name}, {"pictures", Json::array({{{"canvas", {{"width", 2}, {"height", 2}}}}})}}})}
+        };
+    }
+
+    /** The converted c01b_menu profile's command sequence, on the fixture's frame set. */
+    static Json BodyCommands() {
+        const Json model_set   = {{"type", "resource"}, {"kind", "model"},      {"index", 0}};
+        const Json anim_set    = {{"type", "resource"}, {"kind", "animation"},  {"index", 0}};
+        const Json bind_set    = {{"type", "resource"}, {"kind", "bind_pose"},  {"index", 0}};
+        const Json weight_set  = {{"type", "resource"}, {"kind", "weights"},    {"index", 0}};
+        const Json texture_set = {{"type", "resource"}, {"kind", "texture_set"}, {"index", 0}};
+        return Json::array({
+            {{"command", "MODEL"},          {"args", Json::array({model_set})}},
+            {{"command", "MATERIAL_ANIME"}, {"args", Json::array({IntegerArgument(0)})}},
+            {{"command", "VERTEX_ANIME"},   {"args", Json::array({TextArgument("skin1"), TextArgument("skin2"), TextArgument("skin3"), TextArgument("R_te"), TextArgument("L_te")})}},
+            {{"command", "OUTLINE"},        {"args", Json::array({TextArgument(""), RealArgument(2)})}},
+            {{"command", "OUTLINE"},        {"args", Json::array({TextArgument("skin2"), RealArgument(2)})}},
+            {{"command", "BODY_SIZE"},      {"args", Json::array({RealArgument(17), RealArgument(7), RealArgument(60)})}},
+            {{"command", "MOTION"},         {"args", Json::array({IntegerArgument(0), anim_set, bind_set, weight_set})}},
+            {{"command", "KEY_START"},      {"args", Json::array()}},
+            {{"command", "KEY"},            {"args", Json::array({TextArgument("idle"), RealArgument(.02f)})}},
+            {{"command", "KEY_END"},        {"args", Json::array()}},
+            {{"command", "MOTION_END"},     {"args", Json::array()}},
+            {{"command", "POSITION"},       {"args", Json::array({RealArgument(-15), RealArgument(-14), RealArgument(-40)})}},
+            {{"command", "ROTATION"},       {"args", Json::array({RealArgument(0), RealArgument(0), RealArgument(0)})}},
+            {{"command", "START_MOTION"},   {"args", Json::array({TextArgument("")})}},
+            {{"command", "IMG"},            {"args", Json::array({IntegerArgument(0), texture_set})}},
+            {{"command", "IMG_END"},        {"args", Json::array()}},
+        });
+    }
+
+    /** The converted c01fukuN profile's command sequence: the skin restates the body's weights on its own binds. */
+    static Json SkinCommands() {
+        const Json model_set   = {{"type", "resource"}, {"kind", "model"},      {"index", 0}};
+        const Json bind_set    = {{"type", "resource"}, {"kind", "bind_pose"},  {"index", 0}};
+        const Json weight_set  = {{"type", "resource"}, {"kind", "weights"},    {"index", 0}};
+        const Json texture_set = {{"type", "resource"}, {"kind", "texture_set"}, {"index", 0}};
+        return Json::array({
+            {{"command", "NAME"},           {"args", Json::array({TextArgument("skin")})}},
+            {{"command", "IMG"},            {"args", Json::array({texture_set})}},
+            {{"command", "IMG_END"},        {"args", Json::array()}},
+            {{"command", "MATERIAL_ANIME"}, {"args", Json::array({IntegerArgument(0)})}},
+            {{"command", "VERTEX_ANIME"},   {"args", Json::array({TextArgument("skin1"), TextArgument("skin2"), TextArgument("R_te"), TextArgument("L_te")})}},
+            {{"command", "MODEL"},          {"args", Json::array({model_set})}},
+            {{"command", "OUTLINE"},        {"args", Json::array({TextArgument(""), RealArgument(2)})}},
+            {{"command", "OUTLINE"},        {"args", Json::array({TextArgument("skin2"), RealArgument(2)})}},
+            {{"command", "BODY_SIZE"},      {"args", Json::array({RealArgument(16), RealArgument(4), RealArgument(0)})}},
+            {{"command", "MOTION"},         {"args", Json::array({IntegerArgument(0), TextArgument(""), bind_set, weight_set})}},
+        });
+    }
+
+    static Json Weights() {
+        return Json::array({
+            {{"frame", 1}, {"target", 9}, {"type", 20}, {"keys", Json::array({{{"frame", 0}, {"value", {100, 0, 0, 0}}}})}},
+            {{"frame", 2}, {"target", 9}, {"type", 20}, {"keys", Json::array({{{"frame", 0}, {"value", {100, 0, 0, 0}}}})}},
+        });
+    }
+
+    void SetUp() override {
+        directory = std::filesystem::temp_directory_path() /
+                    ("chronicle_costume_skin_" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+        std::filesystem::create_directories(directory / "data/models");
+        storage.resize(1 << 17);
+        memory.stSetBuffer(storage.data(), static_cast<int>(storage.size()));
+
+        // Two skinned triangle meshes, one bone joint, and a clip that slides the root one unit per frame.
+        const std::vector<float> values{
+            0, 0, 0, 2, 0, 0, 0, 2, 0,           // positions
+            0, 1,                                 // times
+            0, 0, 0, 30, 0, 0,                    // translation keys
+            1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0,   // weights
+        };
+        std::vector<unsigned char> bytes(values.size() * sizeof(float) + 24);
+        std::memcpy(bytes.data(), values.data(), values.size() * sizeof(float));  // JOINTS_0 stay zero: joint 0
+        const auto buffer_view = [](int offset, int length) {
+            return Json::object({{"buffer", 0}, {"byteOffset", offset}, {"byteLength", length}});
+        };
+        const auto primitive = Json::object({
+            {"attributes", Json::object({{"POSITION", 0}, {"WEIGHTS_0", 3}, {"JOINTS_0", 4}})},
+            {"mode",       4                                                                },
+            {"material",   0                                                                },
+        });
+        const auto skinned_mesh = Json::object({{"primitives", Json::array({primitive})}});
+        const auto skin_node    = [](const char *name, int mesh) {
+            return Json::object({{"name", name}, {"mesh", mesh}, {"skin", 0}});
+        };
+        const auto plain_node = [](const char *name) {
+            return Json::object({{"name", name}});
+        };
+        gltf = Json::object({
+            {"asset",  Json::object({{"version", "2.0"}})},
+            {"scene",  0                                 },
+            {"scenes", Json::array({Json::object({{"nodes", Json::array({0})}})})},
+            {"nodes",  Json::array({
+                Json::object({{"name", "root"}, {"children", Json::array({1, 2, 3, 4, 5, 6, 7, 8, 9})}}),
+                skin_node("skin1", 0),
+                skin_node("skin2", 1),
+                plain_node("skin3"),
+                plain_node("R_te"),
+                plain_node("L_te"),
+                plain_node("kami"),
+                plain_node("kao"),
+                plain_node("atoramiria"),
+                plain_node("bone"),
+            })},
+            {"meshes",      Json::array({skinned_mesh, skinned_mesh})},
+            {"materials",   Json::array({Json::object({{"pbrMetallicRoughness", Json::object({{"baseColorFactor", Json::array({1, 1, 1, 1})}})}})})},
+            {"buffers",     Json::array({Json::object({{"byteLength", bytes.size()}, {"uri", "data:application/octet-stream;base64," + Base64(bytes)}})})},
+            {"bufferViews", Json::array({buffer_view(0, 36), buffer_view(36, 8), buffer_view(44, 24), buffer_view(68, 48), buffer_view(116, 24)})},
+            {"accessors",   Json::array({
+                Json::object({
+                    {"bufferView",    0                      },
+                    {"componentType", 5126                   },
+                    {"count",         3                      },
+                    {"type",          "VEC3"                 },
+                    {"min",           Json::array({0, 0, 0}) },
+                    {"max",           Json::array({2, 2, 0}) },
+                }),
+                Json::object({
+                    {"bufferView",    1                },
+                    {"componentType", 5126             },
+                    {"count",         2                },
+                    {"type",          "SCALAR"         },
+                    {"min",           Json::array({0}) },
+                    {"max",           Json::array({1}) },
+                }),
+                Json::object({{"bufferView", 2}, {"componentType", 5126}, {"count", 2}, {"type", "VEC3"}}),
+                Json::object({{"bufferView", 3}, {"componentType", 5126}, {"count", 3}, {"type", "VEC4"}}),
+                Json::object({{"bufferView", 4}, {"componentType", 5123}, {"count", 3}, {"type", "VEC4"}}),
+            })},
+            {"animations",  Json::array({Json::object({
+                {"name",     "fixture/model.mot"},
+                {"samplers", Json::array({Json::object({{"input", 1}, {"output", 2}, {"interpolation", "LINEAR"}})})},
+                {"channels", Json::array({Json::object({{"sampler", 0}, {"target", Json::object({{"node", 0}, {"path", "translation"}})}})})},
+            })})},
+            {"skins", Json::array({Json::object({{"joints", Json::array({9})}})})},
+        });
+        const Json identity = Json::array({1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1});
+        const Json dropped  = Json::array({1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, -5, 1});
+        const Json matrices = Json::array({identity, dropped, dropped, identity, identity, identity, identity, identity, identity, identity});
+        const Json body_document = Json::object({
+            {"schema_version",  1          },
+            {"kind",            "character"},
+            {"default_profile", "info"     },
+            {"models",          Json::array({Metadata("body")})},
+            {"game_names",      Json::object({{"idle", TextArgument("\xE7\xAB\x8B\xE3\x81\xA1")}})},
+            {"profiles",        Json::object({{"info", Json::object({{"commands", BodyCommands()}})}})},
+            {"resources",       Json::object({
+                {"texture_sets", Json::array({Json::object({{"document", Pictures("body")}})})},
+                {"animations",   Json::array({Json::object({
+                    {"actions",  Json::array({Json::object({{"name", "idle"}, {"duration", 10}})})},
+                    {"variants", Json::array({Json::object({{"model", 0}, {"node_offset", 0}, {"animations", Json::array({0})}})})},
+                })})},
+                {"bind_poses",   Json::array({Json::object({{"matrices", matrices}})})},
+                {"weights",      Json::array({Json::object({{"channels", Weights()}})})},
+            })},
+        });
+        // The skin binds its frames where the body's binds do not: Rebind rewrites those entries on the body.
+        const Json skin_document = Json::object({
+            {"schema_version",  1          },
+            {"kind",            "character"},
+            {"default_profile", "info"     },
+            {"models",          Json::array({Metadata("skin")})},
+            {"profiles",        Json::object({{"info", Json::object({{"commands", SkinCommands()}})}})},
+            {"resources",       Json::object({
+                {"texture_sets", Json::array({Json::object({{"document", Pictures("skin")}})})},
+                {"bind_poses",   Json::array({Json::object({{"matrices", matrices}})})},
+                {"weights",      Json::array({Json::object({{"channels", Weights()}})})},
+            })},
+        });
+        const auto write = [this](const char *name, const Json &document) {
+            std::ofstream(directory / "data/models" / (std::string(name) + ".gltf")) << gltf.dump(2);
+            std::ofstream(directory / "data/models" / (std::string(name) + ".game.json")) << document.dump(2);
+        };
+        write("body", body_document);
+        write("skin", skin_document);
+        datapacks::Load(directory / "data");
+        texture_memory.stSetBuffer(texture_storage.data(), static_cast<int>(texture_storage.size()));
+        textures.SetTableBuffer(8, 8, &texture_memory);
+        textures.Initialize(0x1000, -1);
+        body.Initialize();
+    }
+
+    void Carve(int slot_quadwords) {
+        pool.stSetBuffer(pool_storage.data(), static_cast<int>(pool_storage.size()));
+        u_long128 *cursor = pool.stGetTop();
+        for (auto &slot : slots) {
+            ASSERT_TRUE(slot.stShareBuffer(pool, std::span(cursor, static_cast<std::size_t>(slot_quadwords))));
+            cursor += slot_quadwords;
+        }
+        ASSERT_TRUE(rest.stShareBuffer(pool, std::span(cursor, static_cast<std::size_t>(1024))));
+    }
+
+    // One part as EndCheck loads it (MenuItemCharaDataLoadPack): its slot reset and sized, then the body built
+    // again or the skin applied onto it.
+    bool Load(int part, std::string &error) {
+        auto &slot = slots[part];
+        slot.stReset();
+        const char *path = part == 0 ? "models/body.gltf" : "models/skin.gltf";
+        if (!menu_character::PrepareArena(slot, path, "info", error)) {
+            return false;
+        }
+        model_assets::CharacterLoadOptions options{.model_memory = &slot, .motion_memory = &slot, .image_memory = &slot, .textures = &textures, .texture_block = kBlock};
+        if (part == 0) {
+            menu_character::PrepareBody(body);
+            body.Initialize();
+            return model_assets::LoadCharacter(body, path, "info", options, error);
+        }
+        return model_assets::LoadSkin(body, std::filesystem::path(path), "info", "", options, error);
+    }
+
+    // The root's translation at one game frame of the idle action, the pose the costume menu shows.
+    float Posed(float frame) {
+        SetMotionTime(body.CObjectFrame::frame, &body.motion[0], frame, nullptr);
+        return body.CObjectFrame::frame->trans_matrix[3][0];
+    }
+};
+
+TEST_F(CostumeSkinPose, SkinLoadKeepsTheBodyMotionPosing) {
+    Carve(64);
+    std::string error;
+    ASSERT_TRUE(Load(0, error)) << error;
+    ASSERT_NE(body.motion[0].motion_list, nullptr);
+    ASSERT_FALSE(character_motion::Actions(body.motion[0]).empty());
+    const auto *bare = body.GetFrame()->SearchFrame("skin1")->visual;
+    ASSERT_NE(bare, nullptr);
+
+    const float before_early = Posed(2);
+    const float before_late  = Posed(8);
+    EXPECT_NE(before_early, before_late) << "the fixture clip must move the root";
+
+    ASSERT_TRUE(Load(1, error)) << error;
+    ASSERT_TRUE(dc2::character::ResourcesLive(body));
+    EXPECT_NE(body.GetFrame()->SearchFrame("skin1")->visual, bare);
+    ASSERT_NE(body.motion[0].motion_list, nullptr);
+    EXPECT_FALSE(character_motion::Actions(body.motion[0]).empty());
+    EXPECT_NEAR(Posed(2), before_early, 1e-4f);
+    EXPECT_NEAR(Posed(8), before_late, 1e-4f);
+}
+
+TEST_F(CostumeSkinPose, CostumeChangeKeepsTheBodyMotionPosing) {
+    Carve(64);
+    std::string error;
+    ASSERT_TRUE(Load(0, error)) << error;
+    ASSERT_TRUE(Load(1, error)) << error;
+    const float before_late = Posed(8);
+
+    // KeyStep's phase 1 resets the read stack before the reads EndCheck consumes.
+    rest.stReset();
+    rest.Alloc(16);
+    textures.DeleteBlock(kBlock);
+    ASSERT_TRUE(Load(0, error)) << error;
+    ASSERT_TRUE(Load(1, error)) << error;
+    EXPECT_NEAR(Posed(8), before_late, 1e-4f);
+}
+
 TEST_F(NativeModel, ExternalMotionPlaysActionsPublishedIntoTheCharacterModelAndBlendsAcrossSets) {
     const Json  base_commands = Json::array({
         {{"command", "MODEL"},     {"args", {{{"type", "resource"}, {"kind", "model"}, {"index", 0}}}}},
@@ -2504,6 +2819,158 @@ TEST(NativeCharacterRetail, LoadsConvertedC01ProfileAndEvaluatesItsNativeMotion)
             }
         }
     }
+}
+
+// The new-game costume select loads the converted menu body (menu/chara4/c01b_menu) and then a costume skin
+// (mainchr/c01fukuN) onto it, as MenuItemCharaDataLoadPack does. Whatever the skin's MOTION rebind does to the
+// body's frames and bind matrices, the body's registered idle motion must keep posing the model: a pose that
+// stops applying reads as the costume menu's T-pose.
+TEST(NativeCharacterRetail, CostumeMenuSkinLoadKeepsTheBodyMotionPosing) {
+    const auto *data = std::getenv("DC2_DATA");
+    if (data == nullptr || *data == '\0') {
+        GTEST_SKIP() << "DC2_DATA supplies the converted character and gameplay documents";
+    }
+    std::vector<u_long128> texture_arena(65536);
+    mgCMemory              texture_memory;
+
+    struct AssetCleanup {
+        ~AssetCleanup() {
+            mgTexManager.Initialize(0x1000, -1);
+            model_assets::Clear();
+            datapacks::Clear();
+        }
+    } cleanup;
+
+    texture_memory.stSetBuffer(texture_arena.data(), static_cast<int>(texture_arena.size()));
+    mgTexManager.SetTableBuffer(1024, 64, &texture_memory);
+    mgTexManager.Initialize(0x1000, -1);
+    std::string error;
+    DataReadIndex(data);
+
+    CActionChara          body;
+    std::vector<u_long128> slot_storage[2];
+    mgCMemory              slots[2];
+    for (int slot = 0; slot < 2; ++slot) {
+        slot_storage[slot].resize(1024 * 1024);
+        slots[slot].stSetBuffer(slot_storage[slot].data(), static_cast<int>(slot_storage[slot].size()));
+    }
+    const auto load = [&](int part) {
+        auto       &slot = slots[part];
+        slot.stReset();
+        const char *path = part == 0 ? "menu/chara4/c01b_menu.gltf" : "mainchr/c01fuku1.gltf";
+        if (!menu_character::PrepareArena(slot, path, "info", error)) {
+            return false;
+        }
+        model_assets::CharacterLoadOptions options{.model_memory = &slot, .motion_memory = &slot, .image_memory = &slot, .textures = &mgTexManager, .texture_block = 2, .outline = false};
+        if (part == 0) {
+            menu_character::PrepareBody(body);
+            body.Initialize(&slot);
+            return model_assets::LoadCharacter(body, path, "info", options, error);
+        }
+        return model_assets::LoadSkin(body, std::filesystem::path(path), "info", "", options, error);
+    };
+    const auto pose_at = [&](float frame) {
+        SetMotionTime(body.CObjectFrame::frame, &body.motion[0], frame, nullptr);
+    };
+    const auto snapshot = [&]() {
+        std::vector<std::array<float, 16>> matrices(static_cast<std::size_t>(body.CObjectFrame::frame->frame_num));
+        for (int index = 0; index < body.CObjectFrame::frame->frame_num; ++index) {
+            std::memcpy(matrices[static_cast<std::size_t>(index)].data(), body.CObjectFrame::frame->GetFrame(index)->trans_matrix, sizeof(sceVu0FMATRIX));
+        }
+        return matrices;
+    };
+
+    ASSERT_TRUE(load(0)) << error;
+    ASSERT_NE(body.CObjectFrame::frame, nullptr);
+    ASSERT_NE(body.motion[0].motion_list, nullptr);
+    ASSERT_FALSE(character_motion::Actions(body.motion[0]).empty());
+    auto *idle = body.GetKeyListIndexPtr(0, nullptr);
+    ASSERT_NE(idle, nullptr);
+    const float frame = static_cast<float>(idle->start_frame) + .5f;
+
+    const auto bind = snapshot();
+    pose_at(frame);
+    const auto posed = snapshot();
+    int        moved = 0;
+    for (std::size_t index = 0; index < bind.size(); ++index) {
+        moved += bind[index] != posed[index] ? 1 : 0;
+    }
+    EXPECT_GT(moved, 0) << "the body's idle motion must pose the model";
+
+    ASSERT_TRUE(load(1)) << error;
+    ASSERT_TRUE(dc2::character::ResourcesLive(body));
+    ASSERT_NE(body.motion[0].motion_list, nullptr);
+    ASSERT_FALSE(character_motion::Actions(body.motion[0]).empty());
+    pose_at(frame);
+    const auto after = snapshot();
+    for (std::size_t index = 0; index < posed.size(); ++index) {
+        for (int element = 0; element < 16; ++element) {
+            EXPECT_NEAR(after[index][static_cast<std::size_t>(element)], posed[index][static_cast<std::size_t>(element)], 1e-4f)
+                << "the skin load must not disturb the body's pose at frame " << index;
+        }
+    }
+
+    // Cycling the costume reloads both parts, as KeyStep's phases do.
+    ASSERT_TRUE(load(0)) << error;
+    ASSERT_TRUE(load(1)) << error;
+    pose_at(frame);
+    const auto reloaded = snapshot();
+    for (std::size_t index = 0; index < posed.size(); ++index) {
+        for (int element = 0; element < 16; ++element) {
+            EXPECT_NEAR(reloaded[index][static_cast<std::size_t>(element)], posed[index][static_cast<std::size_t>(element)], 1e-4f)
+                << "the costume change must not disturb the body's pose at frame " << index;
+        }
+    }
+
+    // The menu steps the model every frame from the load onward (model->Step()); stepping must keep the
+    // registered idle motion posing the model.
+    const auto stepped_baseline = snapshot();
+    bool       ever_moved = false;
+    for (int step = 0; step < 90; ++step) {
+        body.Step();
+        const auto now = snapshot();
+        for (std::size_t index = 0; index < now.size(); ++index) {
+            ever_moved = ever_moved || now[index] != stepped_baseline[static_cast<std::size_t>(index)];
+        }
+    }
+    EXPECT_TRUE(ever_moved) << "stepping must keep the body's motion posing";
+
+    // The costume menu's T-pose is the mesh drawing at its bind pose: the skinned visual must build a bone
+    // palette from the posed bones, not stay at the identity the packet preset leaves.
+    auto *dressed = body.CObjectFrame::frame->SearchFrame("skin1");
+    ASSERT_NE(dressed, nullptr);
+    ASSERT_NE(dressed->visual, nullptr);
+    ASSERT_EQ(dressed->visual->Iam(), MG_VISUAL_KIND_MOTION_MDT);
+    auto *motion_visual = static_cast<mgCVisualMotionMDT *>(dressed->visual);
+    pose_at(frame);
+    float object[4][4];
+    sceVu0UnitMatrix(object);
+    motion_visual->CreateExtRenderInfoPacket(nullptr, object, &mgRenderInfo);
+    auto                      &palette = mgVisualPortCurrentPalette().bones;
+    int                        posed_bones = 0;
+    static const gfx::Prog0Palette identity = [] {
+        gfx::Prog0Palette value{};
+        for (auto &bone : value.bones) {
+            for (int row = 0; row < 3; ++row) {
+                for (int column = 0; column < 4; ++column) {
+                    bone[row][column] = row == column ? 1.0f : 0.0f;
+                }
+            }
+        }
+        return value;
+    }();
+    for (int slot = 0; slot < 32; ++slot) {
+        for (int row = 0; row < 3; ++row) {
+            for (int column = 0; column < 4; ++column) {
+                if (palette[slot][row][column] != identity.bones[slot][row][column]) {
+                    ++posed_bones;
+                    row = 3;
+                    break;
+                }
+            }
+        }
+    }
+    EXPECT_GT(posed_bones, 0) << "the posed mesh must skin from the posed bones";
 }
 
 TEST(NativeModelBounds, MapPieceCharacterCopyRejectsAnArenaTooSmallForTheHostController) {

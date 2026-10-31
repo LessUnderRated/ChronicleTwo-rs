@@ -22,14 +22,28 @@ endif()
 if(NOT kz_stamp_old STREQUAL kz_stamp_text)
     file(REMOVE_RECURSE ${kz_copy})
     file(COPY ${KZ_ROOT}/ DESTINATION ${kz_copy} PATTERN .git EXCLUDE)
+    # The submodule's .git is a pointer file the copy's exclude can leave behind; a git init beside
+    # it follows the pointer into the parent's modules and fails, so it goes before the init.
+    file(REMOVE_RECURSE ${kz_copy}/.git)
     # Its own repository: inside another's work tree (the Gradle build's is in the checkout) git apply
     # takes a patch's paths from that one's root and skips them, reporting success.
-    execute_process(COMMAND git init -q WORKING_DIRECTORY ${kz_copy} RESULT_VARIABLE initialised)
+    if(NOT KZ_GIT_EXECUTABLE)
+        find_program(KZ_GIT_EXECUTABLE git DOC "git for the Kazarov copy's patch application")
+        if(NOT KZ_GIT_EXECUTABLE AND EXISTS "C:/Program Files/Git/cmd/git.exe")
+            # AGP's native build environment can drop the system tools from PATH; git lives here.
+            set(KZ_GIT_EXECUTABLE "C:/Program Files/Git/cmd/git.exe")
+        endif()
+    endif()
+    if(NOT KZ_GIT_EXECUTABLE)
+        message(FATAL_ERROR "kazarov.cmake: git not found for the Kazarov copy's patch application")
+    endif()
+    execute_process(COMMAND ${KZ_GIT_EXECUTABLE} init -q WORKING_DIRECTORY ${kz_copy} RESULT_VARIABLE initialised
+        ERROR_VARIABLE init_error OUTPUT_VARIABLE init_output)
     if(NOT initialised EQUAL 0)
-        message(FATAL_ERROR "git init in ${kz_copy} failed")
+        message(FATAL_ERROR "git init in ${kz_copy} failed (result ${initialised}): ${init_error}${init_output}")
     endif()
     foreach(patch IN LISTS kz_patches)
-        execute_process(COMMAND git apply --verbose --whitespace=nowarn ${patch}
+        execute_process(COMMAND ${KZ_GIT_EXECUTABLE} apply --verbose --whitespace=nowarn ${patch}
             WORKING_DIRECTORY ${kz_copy} RESULT_VARIABLE applied OUTPUT_QUIET ERROR_VARIABLE applied_files)
         if(applied EQUAL 0 AND NOT applied_files MATCHES "Applied patch")
             set(applied 1)

@@ -1,5 +1,6 @@
 # The disc image and what is extracted from it; only their checksums are
 # tracked.
+*.iso
 /rom/*
 !/rom/pal/
 /rom/pal/*
