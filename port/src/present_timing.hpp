@@ -94,6 +94,11 @@ public:
     void Begin() { phase = Phase::Intermediate; }
 
     /**
+     * Whether the current publication has shown both of its images, or was retired.
+     */
+    [[nodiscard]] bool Finished() const { return phase == Phase::Done; }
+
+    /**
      * Retires an obsolete frame without accumulating presentation debt.
      */
     void Cancel() { phase = Phase::Done; }
