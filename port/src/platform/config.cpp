@@ -310,6 +310,12 @@ bool Apply(Config &config, std::string_view name, const Json &value) {
     if (name == "video.aspect") {
         return ReadEnum(value, kAspectNames, config.aspect);
     }
+    if (name == "video.render_scale") {
+        return ReadNumber(value, config.render_scale, [](float scale) { return scale >= 0.0f && scale <= 8.0f; });
+    }
+    if (name == "video.frame_timing_log") {
+        return ReadBool(value, config.log_perf);
+    }
     if (name == "video.ui_scale") {
         return ReadNumber(value, config.ui_scale, [](float scale) { return scale >= 0.25f && scale <= 4.0f; });
     }
@@ -566,6 +572,8 @@ std::string ConfigSerialize(const Config &config) {
     root["video"]["fullscreen"] = s.fullscreen;
     root["video"]["aspect"] = kAspectNames[static_cast<std::size_t>(config.aspect)];
     root["video"]["ui_scale"] = Shortest(config.ui_scale);
+    root["video"]["render_scale"] = Shortest(config.render_scale);
+    root["video"]["frame_timing_log"] = config.log_perf;
     root["video"]["text_font"] = config.font_sharp ? "sharp" : "original";
     root["video"]["show_fps"] = s.show_fps;
     root["video"]["fps_detail"] = kFpsDetailNames[static_cast<std::size_t>(s.fps_detail)];

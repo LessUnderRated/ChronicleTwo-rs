@@ -473,6 +473,10 @@ int Run(int argc, const char **argv) {
     renderer.main_height_limit = 480;
 #endif
     renderer.validation = renderer.validation || SettingsEnv("VULKAN_VALIDATION") != nullptr;
+    // video.render_scale: pixels per PS2 line of the render targets, 0 for the window's height over 480.
+    if (ConfigGet().render_scale > 0.0f) {
+        renderer.render_scale = ConfigGet().render_scale;
+    }
     // DC2_RENDER_SCALE: pixels per PS2 line of the render targets, 0 for the window's height over 480.
     if (const char *setting = SettingsEnv("RENDER_SCALE")) {
         char       *end = nullptr;
@@ -482,6 +486,11 @@ int Run(int argc, const char **argv) {
         }
     }
     renderer.render_thread = RenderThread(ConfigGet().render_thread);
+#ifdef __ANDROID__
+    // video.interpolation: Smooth Motion. When the device's ANF offers frame generation the
+    // renderer uses it for the between-frames instead of the interpolated replays.
+    renderer.frame_gen = ConfigGet().interpolation;
+#endif
     if (const char *setting = SettingsEnv("RENDER_THREAD")) {
         if (auto mode = gfx::ParseRenderThreadMode(setting)) {
             renderer.render_thread = *mode;
@@ -497,6 +506,8 @@ int Run(int argc, const char **argv) {
     if (const char *timing = std::getenv("KZ_PERF_LOG")) {
         gfx::SetFrameTimingEnabled(std::string_view(timing) == "1");
     }
+    // video.frame_timing_log: the periodic present-rate and GPU timing summary, with the device counters.
+    gfx::SetFrameTimingEnabled(gfx::FrameTimingEnabled() || ConfigGet().log_perf);
     gfx::RendererInit(WindowHandle(), renderer);
 #ifdef __SWITCH__
     SwitchConfigureThreads();
@@ -504,6 +515,9 @@ int Run(int argc, const char **argv) {
     host_renderer_initialized = true;
     std::atexit(ShutdownRenderer);
     PresentSetSettings(PresentSettingsFor(ConfigGet(), g_options));
+    CT_LOG_INFO(Gfx, "video: interpolation={} max_fps={} render_scale={} frame_timing_log={}",
+                PresentGetSettings().interpolation, PresentGetSettings().max_fps, ConfigGet().render_scale,
+                ConfigGet().log_perf);
 #ifdef __SWITCH__
     if (const char *trace = std::getenv("DC2_SWITCH_MODEL_TRACE"); trace != nullptr && std::string_view(trace) == "1") {
         CT_LOG_INFO(Gfx, "switch: model trace enabled; canonical-only={}", !PresentGetSettings().interpolation);

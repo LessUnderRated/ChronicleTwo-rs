@@ -1,0 +1,2205 @@
+diff --git a/include/gfx/anf_fg.hpp b/include/gfx/anf_fg.hpp
+new file mode 100644
+index 0000000..5818a9e
+--- /dev/null
++++ b/include/gfx/anf_fg.hpp
+@@ -0,0 +1,42 @@
++// ANF frame generation lifecycle for the Android renderer. Qualcomm's Adreno Neural
++// Fusion interpolates a display frame between two rendered canonical frames; the
++// renderer keeps its canonical colour double-buffered, so the current colour, the
++// shared depth and a camera-reprojected motion pass are the inputs, and the generated
++// frame lands in a dedicated image the canonical present shows first.
++#ifndef GFX_ANF_FG_HPP
++#define GFX_ANF_FG_HPP
++
++#include "gfx/context.hpp"
++
++namespace gfx::detail {
++
++// One-time setup after the device and queue exist; safe to call again. Android only:
++// without libanf.so this turns the whole module off.
++void FrameGenInit();
++void FrameGenShutdown();
++// Creates or resizes the motion-vector and generated-frame images at the canonical size.
++void FrameGenEnsureTargets(uint32_t width, uint32_t height);
++bool FrameGenActive();
++// Records the motion pass and prepares the input layouts inside the canonical frame's
++// command buffer; the caller submits it with the returned pair wired as extra wait/signal
++// semaphores (the previous generation's output, this generation's completion).
++void FrameGenRecordCanonical(VkCommandBuffer cmd, Image &color, Image &depth, VkSemaphore &wait,
++                             VkSemaphore &signal);
++// Immediately after the canonical submit: hands the images to ANF, which generates the
++// between-frame into its own submission.
++void FrameGenDispatch();
++// True while a generated frame for the newest canonical waits to be shown.
++bool FrameGenHasOutput();
++// The generated frame is being presented this canonical commit: mark it consumed.
++void FrameGenNotePresented();
++// The semaphore ANF signals when the pending generated frame is ready; the frame itself; and the
++// spare semaphore for the second swapchain-image acquire at present time.
++VkSemaphore FrameGenOutputDone();
++VkSemaphore FrameGenAcquireSemaphore();
++Image      &FrameGenOutputImage();
++// displaylist.cpp reports the canonical camera's world-to-clip each canonical frame.
++void FrameGenSetClip(const float *world_to_clip);
++
++} // namespace gfx::detail
++
++#endif
+diff --git a/include/gfx/gfx.hpp b/include/gfx/gfx.hpp
+index e100835..cddc894 100644
+--- a/include/gfx/gfx.hpp
++++ b/include/gfx/gfx.hpp
+@@ -102,6 +102,9 @@ struct RendererConfig {
+     // pixel size, and EndFrame presents nothing. The window then needs no SDL_WINDOW_VULKAN. For
+     // headless runs where the Vulkan loader has no VK_EXT_headless_surface.
+     bool offscreen = false;
++    // Android: let Qualcomm's Adreno Neural Fusion generate the between-frame when the device
++    // supports it, in place of the renderer's interpolated display replays.
++    bool frame_gen = false;
+     // False draws triangle fans as indexed lists, as on a VK_KHR_portability_subset device without
+     // triangleFans, so that path can be exercised on any device.
+     bool triangle_fans = true;
+diff --git a/src/cpp/gfx/anf/anf.h b/src/cpp/gfx/anf/anf.h
+new file mode 100644
+index 0000000..3b14d6f
+--- /dev/null
++++ b/src/cpp/gfx/anf/anf.h
+@@ -0,0 +1,320 @@
++//============================================================================================================
++//
++//
++//       Copyright (c) 2026, Qualcomm Technologies, Inc. and/or its subsidiaries. All rights reserved.
++//                              SPDX-License-Identifier: BSD-3-Clause
++//
++//============================================================================================================
++
++/**
++********************************************************************************************************************************
++* @file  anf.h
++* @brief ANF API Header
++********************************************************************************************************************************
++*/
++
++#ifndef ANF_H
++#define ANF_H
++
++#ifdef __cplusplus
++    #ifndef ANF_ENTRY
++        #if defined(_WIN32) || defined(_WIN64)
++            #define ANF_ENTRY __declspec(dllimport)
++        #elif defined(__ANDROID__) || defined (_LINUX)
++            #define ANF_ENTRY __attribute__((visibility ("default")))
++        #else
++            // Other platforms not supported
++        #endif
++    #endif
++#endif
++
++#ifndef ANF_ENTRY
++    #define ANF_ENTRY
++#endif
++
++#include "anf_sr.h"
++#include "anf_fg.h"
++#include "anf_types.h"
++
++#ifdef __cplusplus
++extern "C"
++{
++#endif
++
++/**
++ * AnfQueryAnfVersion
++ *
++ * Query the version of the ANF implementation
++ *
++ * @param pVersion Returned version of the ANF implementation
++ *
++ *
++ * @return AnfResult result of query operation
++ */
++AnfResult AnfQueryAnfVersion(
++    AnfVersion*                         pVersion);          ///< Returned version of the ANF implementation
++
++typedef AnfResult (*PfnAnfQueryAnfVersion)(
++    AnfVersion*                         pVersion);          ///< Returned version of the ANF implementation
++
++/**
++ * AnfCreateInstance
++ *
++ * Create the ANF instance
++ *
++ * @param pInstance   Pointer to the created instance handle
++ * @param pCreateInfo Create info for the instance
++ *
++ * @return AnfResult result of creating the instance
++ */
++AnfResult AnfCreateInstance(
++    const AnfInstanceCreateInfo* pCreateInfo,        ///< Create info for instance
++    AnfInstance*                 pInstance);         ///< Pointer to the created instance handle
++
++typedef AnfResult (*PfnAnfCreateInstance)(
++    const AnfInstanceCreateInfo* pCreateInfo,        ///< Create info for instance
++    AnfInstance*                 pInstance);         ///< Pointer to the created instance handle
++
++/**
++ * AnfDestroyInstance
++ *
++ * Destroy the ANF instance
++ *
++ * @param instance Instance to destroy 
++ *
++ *
++ * @return AnfResult result of destroy operation
++ */
++AnfResult AnfDestroyInstance(
++    AnfInstance                        instance);          ///< Instance to destroy
++
++typedef AnfResult (*PfnAnfDestroyInstance)(
++    AnfInstance                        instance);          ///< Instance to destroy
++
++/**
++ * AnfSetInstanceClientAPIAdapterInfo
++ * 
++ * Sets the client API device info for the ANF instance
++ *  
++ * This MUST be called before any calls to AnfCreateTechnique, AnfDestroyTechnique, and AnfDispatchTechnique
++ * 
++ * An AnfInstance can only be associated with a single client API device
++ * 
++ * This lets the ANF instance know the client API handles for making internal client API calls
++ * 
++ * @param instance             AnfInstance handle for which to set the client API device info.
++ * @param pClientApiDeviceInfo Pointer to a struct describing the device info for the given client API
++ *                             For Vulkan the struct must be AnfAdapterInfoVulkan.
++ * 
++ * @return AnfResult result of validating the device info
++ */
++AnfResult AnfSetInstanceClientAPIAdapterInfo(
++    AnfInstance             instance,              ///< ANF Instance handle
++    const AnfStructHeader*  pClientApiDeviceInfo); ///< Pointer to struct for given client API
++
++typedef AnfResult (*PfnAnfSetInstanceClientAPIAdapterInfo)(
++    AnfInstance             instance,              ///< ANF Instance handle
++    const AnfStructHeader*  pClientApiDeviceInfo); ///< Pointer to struct for given client API
++
++/**
++ * AnfQueryTechniques
++ *
++ * Query what techniques are supported by this instance
++ *
++ * @param ppTechniqueIds Will update to point to array of technique IDs
++ * @param ppTechniqueIds Will update variable at address to the number of techniques
++ * @param instance       Instance handle
++ *
++ * @return AnfResult result of query operation
++ */
++AnfResult AnfQueryTechniques(
++    AnfInstance                        instance,           ///< Instance handle
++    uint32_t*                          pNumTechniques,     ///< Will set *pNumTechniques to number of techniques
++    AnfTechniqueId**                   ppTechniqueIds);    ///< Will point *ppTechniques to array of technique IDs
++
++typedef AnfResult (*PfnAnfQueryTechniques)(
++    AnfInstance                        instance,           ///< Instance handle
++    uint32_t*                          pNumTechniques,     ///< Will set *pNumTechniques to number of techniques
++    AnfTechniqueId**                   ppTechniqueIds);    ///< Will point *ppTechniques to array of technique IDs
++
++/**
++ * AnfQueryTechniqueRequirements
++ *
++ * Query the requirements for the given technique
++ *
++ * @param ppTechniqueRequirements Where to set the address of the returned data
++ * @param instance                Instance handle
++ * @param techniqueId             Id of technique to query requirements of
++ *
++ * @return AnfResult result of query operation
++ */
++AnfResult AnfQueryTechniqueRequirements(
++    AnfInstance                        instance,                  ///< Instance handle
++    AnfTechniqueId                     techniqueId,               ///< Technique ID
++    const AnfTechniqueRequirements**   ppTechniqueRequirements);  ///< *ppTechniqueRequirements set to address of returned data
++
++typedef AnfResult (*PfnAnfQueryTechniqueRequirements)(
++    AnfInstance                        instance,                  ///< Instance handle
++    AnfTechniqueId                     techniqueId,               ///< Technique ID
++    const AnfTechniqueRequirements**   ppTechniqueRequirements);  ///< *ppTechniqueRequirements set to address of returned data
++
++/**
++ * AnfIsTechniqueSupported
++ *
++ * Indicates whether the technique is supported for the given adapter.
++ *
++ * @param instance      A valid AnfInstance.
++ * @param techniqueId   ID of the technique we are checking support for.
++ * @param pAdapterInfo  Must point to an Anf struct that contains adapter
++ *                      info as indicated in the ANF spec.
++ *                      For Vulkan, this must be AnfAdapterInfoVulkan.
++ *
++ *
++ * @return AnfResult    Will indicate whether the technique is supported or
++ *                      not for the given ANF instance.
++ *                      Explanation of some return values:
++ *                      - ANF_RESULT_SUCCESS       - the technique is supported
++ *                      - ANF_RESULT_NOT_SUPPORTED - the technique is not supported
++ *                      - An error return type      - the corresponding error occurred
++ */
++AnfResult AnfIsTechniqueSupported(
++    AnfInstance             instance,                               ///< ANF instance
++    AnfTechniqueId          techniqueId,                            ///< Technique ID
++    const AnfStructHeader*  pAdapterInfo);                          ///< Adapter info
++
++typedef AnfResult (*PfnAnfIsTechniqueSupported)(
++    AnfInstance             instance,                               ///< ANF instance
++    AnfTechniqueId          techniqueId,                            ///< Technique ID
++    const AnfStructHeader*  pAdapterInfo);                          ///< Adapter info
++
++/**
++ * AnfQueryTechniqueResourceRequirements
++ *
++ * For a given technique, query the requirements for a resource, e.g. supported resource formats
++ *
++ * @param ppResourceRequirements Where to set to the address of returned data
++ * @param instance               Instance handle
++ * @param techniqueId            Id of technique to query resource requirements from
++ * @param resourceLabel          Lable of resource to query requirements of
++ *
++ *
++ * @return AnfResult result of query operation
++ */
++AnfResult AnfQueryTechniqueResourceRequirements(
++    AnfInstance                        instance,                   ///< Instance handle
++    AnfTechniqueId                     techniqueId,                ///< Technique ID
++    AnfResourceLabel                   resourceLabel,              ///< Label for resource we're querying about
++    const AnfResourceRequirements**    ppResourceRequirements);    ///< *ppResourceRequirements set to address of returned data
++
++typedef AnfResult (*PfnAnfQueryTechniqueResourceRequirements)(
++    AnfInstance                        instance,                   ///< Instance handle
++    AnfTechniqueId                     techniqueId,                ///< Technique ID
++    AnfResourceLabel                   resourceLabel,              ///< Label for resource we're querying about
++    const AnfResourceRequirements**    ppResourceRequirements);    ///< *ppResourceRequirements set to address of returned data
++
++/**
++ * AnfCreateTechnique
++ *
++ * Creates a technique
++ *
++ * @param pTechnique  Pointer to the created technique handle
++ * @param instance    Instance handle
++ * @param pCreateInfo Create info for new technique
++ *
++ *
++ * @return AnfResult result of create operation
++ */
++AnfResult AnfCreateTechnique(
++    AnfInstance                     instance,                   ///< Instance handle
++    const AnfTechniqueCreateInfo*   pCreateInfo,                ///< Create info
++    AnfTechnique*                   pTechnique);                ///< Pointer to the created technique handle
++
++typedef AnfResult (*PfnAnfCreateTechnique)(
++    AnfInstance                     instance,                   ///< Instance handle
++    const AnfTechniqueCreateInfo*   pCreateInfo,                ///< Create info
++    AnfTechnique*                   pTechnique);                ///< Pointer to the created technique handle
++
++/**
++ * AnfDispatchTechnique
++ *
++ * Dispatches a technique
++ *
++ * @param technique     Handle of technique to dispatch
++ * @param pDispatchInfo Pointer to Dispatch Info
++ *
++ *
++ * @return AnfResult result of dispatch operation
++ */
++AnfResult AnfDispatchTechnique(
++    AnfTechnique                      technique,                    ///< Technique handle
++    const AnfTechniqueDispatchInfo*   pDispatchInfo);               ///< Dispatch info
++
++typedef AnfResult (*PfnAnfDispatchTechnique)(
++    AnfTechnique                      technique,                    ///< Technique handle
++    const AnfTechniqueDispatchInfo*   pDispatchInfo);               ///< Dispatch info
++
++/**
++ * AnfDestroyTechnique
++ *
++ * Destroy an AnfTechnique
++ *
++ * @param technique Handle of technique to destroy
++ * @param instance  Handle of instance used to create the technique
++ *
++ * @return AnfResult result of destroy operation
++ */
++AnfResult AnfDestroyTechnique(
++    AnfInstance                       instance,                     ///< Instance handle
++    AnfTechnique                      technique);                   ///< Technique handle
++
++typedef AnfResult (*PfnAnfDestroyTechnique)(
++    AnfInstance                       instance,                     ///< Instance handle
++    AnfTechnique                      technique);                   ///< Technique handle
++
++// The standard types etc. for the ANF implementation interface
++struct AnfFunctions
++{
++    // Main interface
++    PfnAnfQueryAnfVersion                    QueryAnfVersion;
++    PfnAnfCreateInstance                     CreateInstance;
++    PfnAnfDestroyInstance                    DestroyInstance;
++    PfnAnfSetInstanceClientAPIAdapterInfo    SetInstanceClientAPIAdapterInfo;
++    PfnAnfIsTechniqueSupported               IsTechniqueSupported;
++    PfnAnfQueryTechniqueRequirements         QueryTechniqueRequirements;
++    PfnAnfQueryTechniqueResourceRequirements QueryTechniqueResourceRequirements;
++    PfnAnfCreateTechnique                    CreateTechnique;
++    PfnAnfDestroyTechnique                   DestroyTechnique;
++    PfnAnfDispatchTechnique                  DispatchTechnique;
++};
++
++/*
++    Expected procedure is to get the function pointers with GetAnfFunctions, and
++    then use those functions to use the interface.
++
++    For example:
++
++    AnfFunctions m_anf = {};
++
++    GetAnfFunctions(&m_anf);
++
++    m_anf.CreateInstance(...);
++    m_anf.CreateTechnique(...);
++ */
++
++/**
++ * GetAnfFunctions
++ *
++ * Call this to get the functions
++ *
++ * @param pFunctions pointer to AnfFunctions struct to fill function pointers
++ *
++ * @return None
++ */
++ANF_ENTRY void GetAnfFunctions(
++    AnfFunctions* pFunctions);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif // ANF_H
+diff --git a/src/cpp/gfx/anf/anf_fg.h b/src/cpp/gfx/anf/anf_fg.h
+new file mode 100644
+index 0000000..d0d3711
+--- /dev/null
++++ b/src/cpp/gfx/anf/anf_fg.h
+@@ -0,0 +1,50 @@
++//============================================================================================================
++//
++//
++//       Copyright (c) 2026, Qualcomm Technologies, Inc. and/or its subsidiaries. All rights reserved.
++//                              SPDX-License-Identifier: BSD-3-Clause
++//
++//============================================================================================================
++
++/**
++********************************************************************************************************************************
++* @file  anf_fg.h
++* @brief ANF Frame Generation Header
++********************************************************************************************************************************
++*/
++
++#ifndef ANF_FG_H
++#define ANF_FG_H
++
++#include "anf_types.h"
++
++/*******************************************************************************************************************************
++*   @brief
++*       Frame generation technique group create info
++*******************************************************************************************************************************/
++struct AnfFGCreateInfo
++{
++    AnfStructHeader             header;             ///< Standard struct header
++
++    AnfDim2D                    inputSize;          ///< The size of the input resources. The output resources must match size.
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       Frame generation dispatch information
++*******************************************************************************************************************************/
++struct AnfFGDispatch
++{
++    AnfStructHeader                  header;                     ///< Standard struct header
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       Frame generation technique requirements
++*******************************************************************************************************************************/
++struct AnfFGRequirements
++{
++    AnfStructHeader                  header;                     ///< Standard struct header
++};
++
++#endif // ANF_FG_H
+diff --git a/src/cpp/gfx/anf/anf_sr.h b/src/cpp/gfx/anf/anf_sr.h
+new file mode 100644
+index 0000000..53c2ccd
+--- /dev/null
++++ b/src/cpp/gfx/anf/anf_sr.h
+@@ -0,0 +1,65 @@
++//============================================================================================================
++//
++//
++//       Copyright (c) 2026, Qualcomm Technologies, Inc. and/or its subsidiaries. All rights reserved.
++//                              SPDX-License-Identifier: BSD-3-Clause
++//
++//============================================================================================================
++
++/**
++********************************************************************************************************************************
++* @file  anf_sr.h
++* @brief ANF Super Resolution Header
++********************************************************************************************************************************
++*/
++
++#ifndef ANF_SR_H
++#define ANF_SR_H
++
++#include "anf_types.h"
++
++/*******************************************************************************************************************************
++*   @brief
++*       Super resolution quality mode
++*******************************************************************************************************************************/
++enum AnfSRQualityMode : uint32_t
++{
++    ANF_SR_QUALITY_MODE_PERFORMANCE                = 0,    ///< Per-dimension super resolution ratio of 2.0x.
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       Super resolution technique group create info
++*******************************************************************************************************************************/
++struct AnfSRCreateInfo
++{
++    AnfStructHeader             header;             ///< Standard struct header
++
++    AnfDim2D                    inputSize;          ///< The size of the input resources.
++    AnfDim2D                    outputSize;         ///< The size of the output resource.
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       Super resolution dispatch information
++*******************************************************************************************************************************/
++struct AnfSRDispatch
++{
++    AnfStructHeader                  header;                     ///< Standard struct header
++
++    AnfFloat2                        jitterOffset;               ///< The subpixel jitter offset applied to the camera. Values
++                                                                  ///< are in range [-0.5, 0.5] in x and y dimensions.
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       Super resolution technique requirements
++*******************************************************************************************************************************/
++struct AnfSRRequirements
++{
++    AnfStructHeader                  header;                     ///< Standard struct header
++
++    uint32_t                         supportedQualityModes;      ///< Bitfield of supported quality modes
++};
++
++#endif // ANF_SR_H
+diff --git a/src/cpp/gfx/anf/anf_types.h b/src/cpp/gfx/anf/anf_types.h
+new file mode 100644
+index 0000000..4a710cd
+--- /dev/null
++++ b/src/cpp/gfx/anf/anf_types.h
+@@ -0,0 +1,520 @@
++//============================================================================================================
++//
++//
++//       Copyright (c) 2026, Qualcomm Technologies, Inc. and/or its subsidiaries. All rights reserved.
++//                              SPDX-License-Identifier: BSD-3-Clause
++//
++//============================================================================================================
++
++/**
++********************************************************************************************************************************
++* @file  anf_types.h
++* @brief ANF API Types Header
++********************************************************************************************************************************
++*/
++
++#ifndef ANF_TYPES_H
++#define ANF_TYPES_H
++
++#include <stdint.h>
++#include <vulkan/vulkan.h>
++
++/*******************************************************************************************************************************
++*   @brief
++*       Convenient for checking whether an enum index is set in the given bitfield.
++*       Returns a logical boolean.
++*******************************************************************************************************************************/
++#define ANF_IS_BIT_INDEX_SET(_bitfield, _index)   ((( (1 << (_index)) ) & (_bitfield)) != 0)
++#define ANF_TYPED_HANDLE(objectType) typedef struct objectType##_T* objectType;
++
++#define ANF_FALSE    0
++#define ANF_TRUE     1
++
++typedef     uint32_t        AnfBool;               ///< Boolean value, should be one of ANF_FALSE or ANF_TRUE
++typedef     uint64_t        AnfGpuAddr;            ///< GPU address
++typedef     uint32_t        AnfFlags32;            ///< 32-bit bitfield of flags
++typedef     uint64_t        AnfFlags64;            ///< 64-bit bitfield of flags
++
++ANF_TYPED_HANDLE(AnfInstance);                    ///< ANF instance handle
++ANF_TYPED_HANDLE(AnfTechnique);                   ///< ANF technique handle
++
++typedef     void*           AnfHandle;             ///< ANF general handle type
++/// (Client API specific handle types)
++typedef     AnfHandle       AnfClientSyncObject;   ///< ANF sync object - 
++                                                    ///< Vulkan: VkSemaphore
++
++typedef     AnfHandle       AnfClientCommandList;  ///< ANF command list -
++                                                    ///< Vulkan: VkCommandBuffer
++
++typedef     AnfHandle       AnfClientResource;     ///< ANF resource -
++                                                    ///< Vulkan: VkImage, VkBuffer, VkTensorARM
++
++/*******************************************************************************************************************************
++*   @brief
++*       Structure type
++*******************************************************************************************************************************/
++enum AnfStructType : uint32_t
++{
++    ANF_STYPE_SR_CREATE_INFO,
++    ANF_STYPE_SR_DISPATCH,
++    ANF_STYPE_SR_REQUIREMENTS,
++    ANF_STYPE_FG_CREATE_INFO,
++    ANF_STYPE_FG_DISPATCH,
++    ANF_STYPE_FG_REQUIREMENTS,
++    ANF_STYPE_ADAPTER_INFO_VULKAN,
++    ANF_STYPE_TECHNIQUE_VULKAN_API_REQUIREMENTS,
++    ANF_STYPE_INSTANCE_CREATE_INFO,
++    ANF_STYPE_TECHNIQUE_REQUIREMENTS,
++    ANF_STYPE_RESOURCE_REQUIREMENTS,
++    ANF_STYPE_RESOURCE_DESC,
++    ANF_STYPE_RESOURCE_PARAM_DESC,
++    ANF_STYPE_DISPATCH_IMMEDIATE_RESOURCE_INFO_VK_IMAGE,
++    ANF_STYPE_TECHNIQUE_VULKAN_CREATE_INFO,
++    ANF_STYPE_TECHNIQUE_CREATE_INFO,
++    ANF_STYPE_MODEL_WEIGHTS_INFO,
++    ANF_STYPE_RESOURCE_VULKAN_API_REQUIREMENTS,
++    ANF_STYPE_QUEUE_INFO_VULKAN,
++    ANF_STYPE_DEBUG_OVERLAY_CONFIG,
++    ANF_STYPE_TECHNIQUE_DISPATCH_INFO,
++    ANF_STYPE_TECHNIQUE_DISPATCH_IMMEDIATE_INFO,
++    ANF_STYPE_APPLICATION_INFO,
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       Base struct header. Most structs must have this at the start of their declaration.
++*******************************************************************************************************************************/
++struct AnfStructHeader
++{
++    AnfStructType      type;       ///< The structure type. Must be the correct type for the given structure.
++    AnfStructHeader*   pNext;      ///< Pointer to the next structure. Can be used to extend the current structure. Can be
++                                    ///< NULL.
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       Format.
++*
++*       Some general definitions:
++*       - UNORM  - unsigned normalized
++*       - FLOAT  - signed floating point
++*       - UFLOAT - unsigned floating point
++*******************************************************************************************************************************/
++enum AnfFormat : uint32_t
++{
++    ANF_FORMAT_UNKNOWN,                        ///< Unknown format
++    ANF_FORMAT_R8G8B8A8_UNORM,                 ///< 8-bit unsigned normalized RGBA
++    ANF_FORMAT_B10G11R11_UFLOAT,               ///< Unsigned floating point values; B 10 bits, G 11 bits, R 11 bits - same as
++                                                ///< VK_FORMAT_B10G11R11_UFLOAT_PACK32
++    ANF_FORMAT_D32_FLOAT,                      ///< 32-bit float depth
++    ANF_FORMAT_D24S8_UNORM,                    ///< 24-bit unsigned normalized depth and 8 bit unsigned normalized stencil
++    ANF_FORMAT_R16G16_FLOAT,                   ///< 16-bit float RG
++    ANF_FORMAT_R16G16B16A16_FLOAT,             ///< 16-bit float RGBA
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       Resource type
++*******************************************************************************************************************************/
++enum AnfResourceType : uint32_t
++{
++    ANF_RESOURCE_TYPE_BUFFER,                       ///< Buffer
++    ANF_RESOURCE_TYPE_TEXTURE1D,                    ///< Texture 1D
++    ANF_RESOURCE_TYPE_TEXTURE2D,                    ///< Texture 2D
++    ANF_RESOURCE_TYPE_TEXTURE_CUBE,                 ///< Texture cubemap
++    ANF_RESOURCE_TYPE_TEXTURE3D,                    ///< Texture 3D
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       Technique ID
++*******************************************************************************************************************************/
++enum AnfTechniqueId : uint32_t
++{
++    ANF_TECHNIQUE_ID_SR_TEMPORAL           = 0,        ///< ANF Temporal Super Resolution
++    ANF_TECHNIQUE_ID_FG_TEMPORAL           = 1         ///< ANF Temporal Frame Generation
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       ANF return result
++*******************************************************************************************************************************/
++enum AnfResult : uint32_t
++{
++    ANF_RESULT_SUCCESS                         = 0,        ///< Success
++    ANF_RESULT_ERROR                           = 1,        ///< Error: error type is unspecified
++    ANF_RESULT_ERROR_UNKNOWN_STYPE             = 2,        ///< Error: unknown structure type encountered.
++    ANF_RESULT_ERROR_CLIENT_API                = 3,        ///< Error in the client API (Vulkan, GLES, etc.)
++    ANF_RESULT_ERROR_MEMORY                    = 4,        ///< Error: memory allocation failure
++    ANF_RESULT_ERROR_INVALID_PARAMETER         = 5,        ///< Error: invalid parameter
++    ANF_RESULT_NOT_SUPPORTED                   = 6,        ///< Something is not supported
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       Client API
++*******************************************************************************************************************************/
++enum AnfClientApi : uint32_t
++{
++    ANF_CLIENT_API_VULKAN              = 0,            ///< Vulkan
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       Log level
++*******************************************************************************************************************************/
++enum AnfLogLevel : uint32_t
++{
++    ANF_LOG_LEVEL_NONE             = 0,           ///< None; used only for specifying log level at create time
++    ANF_LOG_LEVEL_ERROR            = 1,           ///< Error
++    ANF_LOG_LEVEL_WARNING          = 2,           ///< Warning
++    ANF_LOG_LEVEL_INFO             = 3,           ///< Info
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       Version information
++*******************************************************************************************************************************/
++struct AnfVersion
++{
++    uint32_t            major;              ///< Major version
++    uint32_t            minor;              ///< Minor version
++    uint32_t            build;              ///< Build version
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       Log message callback function
++*******************************************************************************************************************************/
++typedef void (*AnfLogMessageCb)(
++    AnfLogLevel     logLevel,                   ///< Log level passed to the callback; will never be ANF_LOG_LEVEL_NONE
++    const char*     pMessage);                  ///< Message passed to the callback
++
++typedef AnfFlags32 AnfInstanceCreateFlags;    ///< ANF instance create flags bitfield
++
++/*******************************************************************************************************************************
++*   @brief
++*       ANF application info
++*******************************************************************************************************************************/
++struct AnfApplicationInfo
++{
++    AnfStructHeader         header;             ///< Standard struct header
++
++    const char*             pApplicationName;   ///< NULL or string containing the name of the application
++    uint32_t                applicationVersion; ///< Version of the application
++    const char*             pEngineName;        ///< NULL or string containing the name of the engine the application uses
++    uint32_t                engineVersion;      ///< Version of the engine the application uses
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       ANF instance create flags
++*******************************************************************************************************************************/
++enum AnfInstanceCreateFlag : AnfInstanceCreateFlags
++{
++    ANF_INSTANCE_CREATE_FLAG_IS_SYSTEM            = (1 << 0),   ///< Indicates if ANF is being used in a system service
++    ANF_INSTANCE_CREATE_FLAG_ENABLE_DEBUG_OVERLAY = (1 << 1),  ///< Enable the debug visualization overlay.
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       ANF instance create info
++*******************************************************************************************************************************/
++struct AnfInstanceCreateInfo
++{
++    AnfStructHeader             header;                 ///< Standard struct header
++    AnfLogMessageCb             logMessageCallback;     ///< Log message callback
++    AnfLogLevel                 logLevel;               ///< Write all logs for this level and below; use
++                                                         ///< ANF_LOG_LEVEL_NONE to turn off all logging.
++    AnfInstanceCreateFlags      flags;                  ///< Instance creation flags
++    AnfClientApi                clientApi;              ///< Client API which this instance will be used with.
++                                                         ///< Determines which client API structs will be expected elsewhere.
++    const AnfApplicationInfo*   pApplicationInfo;       ///< NULL or pointer to the application info
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       Resource label - indicates how a resource is used in the technique
++*******************************************************************************************************************************/
++enum AnfResourceLabel : uint32_t
++{
++    ANF_RESOURCE_LABEL_DEPTH                     = 0,        ///< Depth buffer
++    ANF_RESOURCE_LABEL_MOTION_VECTORS            = 1,        ///< Motion vectors
++    ANF_RESOURCE_LABEL_INPUT_COLOR               = 2,        ///< Input color
++    ANF_RESOURCE_LABEL_OUTPUT_COLOR              = 3,        ///< Output color
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       Common structure for technique requirements
++*******************************************************************************************************************************/
++struct AnfTechniqueRequirements
++{
++    AnfStructHeader                 header;                         ///< Standard struct header
++
++    AnfVersion                      version;                        ///< Technique implementation version
++
++    const AnfResourceLabel*         pRequiredResources;             ///< Array of required resource labels of size
++                                                                     ///< numRequiredResources
++    uint32_t                        numRequiredResources;           ///< Number of required resource labels
++
++    const AnfResourceLabel*         pOptionalResources;             ///< Array of optional resource labels of size
++                                                                     ///< numOptionalResources
++    uint32_t                        numOptionalResources;           ///< Number of optional resource labels
++
++    const AnfStructHeader*          pClientApiRequirements;         ///< Requirements specific to the particular client API
++                                                                     ///< as determined by AnfInstance
++
++    const AnfStructHeader*          pTechniqueGroupRequirements;    ///< Pointer to struct of requirements for the techniquue
++                                                                     ///< group that this technique belongs to.
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       Requirements for a given resource
++*******************************************************************************************************************************/
++struct AnfResourceRequirements
++{
++    AnfStructHeader                 header;                    ///< Standard struct header
++
++    AnfResourceType                 resourceType;              ///< Resource type
++
++    const AnfFormat*                pSupportedFormats;         ///< Array of supported formats for this resource
++    uint32_t                        numSupportedFormats;       ///< Number of supported formats for this resource
++
++    const AnfStructHeader*          pClientApiRequirements;    ///< Pointer to struct filling out additional requirements for a
++                                                                ///< particular client API
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       2D (width, height)
++*******************************************************************************************************************************/
++struct AnfDim2D
++{
++    uint32_t    width;      ///< Width
++    uint32_t    height;     ///< Height
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       2D floating point coordinate
++*******************************************************************************************************************************/
++struct AnfFloat2
++{
++    float   x;          ///< X coordinate
++    float   y;          ///< Y coordinate
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       Debug visualization overlay mode. Selects what the overlay composites onto the technique output.
++*       Technique-agnostic (currently only supports SR).
++*******************************************************************************************************************************/
++enum AnfDebugOverlayMode : uint32_t
++{
++    // Per-mode knobs are noted below; hudCorner/hudFlipY apply to every mode.
++    ANF_DEBUG_OVERLAY_MODE_NONE              = 0,  ///< No overlay drawn this dispatch.
++    ANF_DEBUG_OVERLAY_MODE_INPUT_COLOR       = 1,  ///< Bilinear-upsampled jittered input color, replacing the output (technique still runs). Knobs: none.
++    ANF_DEBUG_OVERLAY_MODE_MV_HEATMAP        = 2,  ///< HSV heatmap of the motion-vector field blended over the output. Knobs: mvHeatmapScale, showRawMv, mvValueScale.
++    ANF_DEBUG_OVERLAY_MODE_DEPTH_VIS         = 3,  ///< Depth buffer color ramp. Shows depth discontinuities. Knobs: depthInvert, depthScale.
++    ANF_DEBUG_OVERLAY_MODE_WARP_PREDICT      = 4,  ///< Previous output warped by MVs. Shows warp geometry. Knobs: mvValueScale.
++    ANF_DEBUG_OVERLAY_MODE_REPROJECT_ERROR   = 5,  ///< Warp-vs-current error heat map: blue=good MVs, red=bad. Knobs: mvValueScale.
++    ANF_DEBUG_OVERLAY_MODE_JITTER_PLOT       = 6,  ///< Scatter plot of recent jitter offsets. Knobs: none.
++    ANF_DEBUG_OVERLAY_MODE_JITTER_ACCUMULATE = 7,  ///< Phase-based jitter accumulation; shows sub-pixel coverage correctness. Static camera only; camera motion resets it. Knobs: jitterAccumAlpha, jitterScale (sign only).
++    ANF_DEBUG_OVERLAY_MODE_SR_JITTER_SCALE   = 8,  ///< Output with jitter scaled by jitterScale before neural dispatch. Knobs: jitterScale (value).
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       HUD corner position for the debug overlay.
++*******************************************************************************************************************************/
++enum AnfDebugOverlayHudCorner : uint32_t
++{
++    ANF_DEBUG_OVERLAY_HUD_CORNER_TOP_LEFT     = 0,
++    ANF_DEBUG_OVERLAY_HUD_CORNER_TOP_RIGHT    = 1,
++    ANF_DEBUG_OVERLAY_HUD_CORNER_BOTTOM_LEFT  = 2,
++    ANF_DEBUG_OVERLAY_HUD_CORNER_BOTTOM_RIGHT = 3,
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       Debug visualization overlay configuration. Optional; chain onto a technique dispatch struct's
++*       pNext (e.g. AnfSRDispatch, AnfFGDispatch). Settings persist across dispatches: if present, it replaces
++*       the current settings, absent keeps the last-applied ones; mode = ANF_DEBUG_OVERLAY_MODE_NONE
++*       stops drawing. Ignored unless the overlay was enabled at create time via ANF_INSTANCE_CREATE_FLAG_ENABLE_DEBUG_OVERLAY.
++*******************************************************************************************************************************/
++struct AnfDebugOverlayConfig
++{
++    AnfStructHeader          header;             ///< Standard struct header
++
++    AnfDebugOverlayMode      mode;               ///< NONE = stop drawing; 1-8 = visualization mode
++    float                    mvHeatmapScale;     ///< MV_HEATMAP color saturation scale
++    AnfBool                  showRawMv;          ///< MV_HEATMAP: raw direction-colored channels instead of blended heatmap
++    AnfFloat2                mvValueScale;       ///< Per-axis multiplier on raw MV (x,y). Modes 2/4/5.
++    AnfFloat2                jitterScale;        ///< Jitter sign/scale (x,y). Modes 7 (sign) and 8 (value).
++    float                    jitterAccumAlpha;   ///< JITTER_ACCUMULATE blend alpha (0..1)
++    AnfDebugOverlayHudCorner hudCorner;          ///< HUD corner position (TOP_LEFT default)
++    AnfBool                  hudFlipY;           ///< Flip HUD text for Y-inverted framebuffers
++    AnfBool                  depthInvert;        ///< DEPTH_VIS: invert depth before colorizing
++    uint32_t                 depthScale;         ///< DEPTH_VIS: integer depth multiplier (1-99)
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       Buffer resource size and layout information
++*******************************************************************************************************************************/
++struct AnfResourceBufferDims
++{
++    uint32_t    sizeInBytes;            ///< The size of the buffer resource in bytes.
++    uint32_t    strideInBytes;          ///< The stride of the buffer resource in bytes.
++    uint32_t    alignmentInBytes;       ///< The alignment of the buffer resource in bytes.
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       Texture resource size information
++*******************************************************************************************************************************/
++struct AnfResourceTextureDims
++{
++    uint32_t width;                 ///< Texture width
++    uint32_t height;                ///< Texture height
++
++    union
++    {
++        uint32_t depth;             ///< 3D texture depth
++        uint32_t numArrayLayers;    ///< Number of array layers
++    };
++
++    uint32_t mipCount;              ///< Number of mips, or 0 if doing a full mip chain
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       Resource description
++*******************************************************************************************************************************/
++struct AnfResourceDesc
++{
++    AnfStructHeader                 header;                 ///< Standard struct header
++
++    AnfResourceType                 type;                   ///< The type of the resource.
++    AnfFormat                       format;                 ///< The resource format.
++    uint32_t                        layout;                 ///< If a texture, the layout.
++                                                             ///< For Vulkan this is interpretted as VkImageLayout
++
++    union
++    {
++        AnfResourceBufferDims       bufferDims;             ///< If a buffer, the size info
++        AnfResourceTextureDims      textureDims;            ///< If a texture, the size info
++    };
++
++    AnfClientResource               resource;               ///< Handle for the resource; one of: VkBuffer, VkImage
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       Description of a resource when used as a parameter.
++*******************************************************************************************************************************/
++struct AnfResourceParamDesc
++{
++    AnfStructHeader          header;             ///< Standard struct header
++
++    AnfResourceLabel         resourceLabel;      ///< Indicates how this resource will be used.
++    AnfResourceDesc          resourceDesc;       ///< Resource description
++};
++
++typedef AnfFlags64 AnfTechniqueCreateFlags;   ///< Technique create flags bitfield; empty for now
++
++/*******************************************************************************************************************************
++*   @brief
++*       Technique create flags
++*******************************************************************************************************************************/
++enum AnfTechniqueCreateBit : AnfTechniqueCreateFlags
++{
++    ANF_TECHNIQUE_CREATE_FLAG_DISPATCH_IMMEDIATE = (1 << 0),   ///< Technique will dispatch in immediate mode instead of
++                                                                ///  writing inline to command lists. If set, then for
++                                                                ///  later dispatches the command list handle will be
++                                                                ///  ignored.
++                                                                ///
++                                                                ///  NOTE - This is the only mode currently supported for
++                                                                ///         ANF_TECHNIQUE_ID_FG_TEMPORAL.
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       Common create info struct for techniques.
++*
++*       This contains create info common to all technique groups.
++*******************************************************************************************************************************/
++struct AnfTechniqueCreateInfo
++{
++    AnfStructHeader             header;                     ///< Standard struct header
++
++    AnfTechniqueId              techniqueId;                ///< Technique ID of technique to create
++    AnfTechniqueCreateFlags     flags;                      ///< Common technique create flags
++    uint32_t                    maxInFlight;                ///< Maximum number of dispatches allowed to be in progress at once
++
++    const AnfStructHeader*      pClientApiCreateInfo;       ///< Pointer to technique create info that is specific to the client
++                                                             ///< API indicated in "clientApi" used for the instance.
++                                                             ///< For Vulkan, this struct must be AnfTechniqueVulkanCreateInfo
++
++    const AnfStructHeader*      pTechniqueGroupCreateInfo;  ///< Create info specific to the technique group
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       Common dispatch info info struct for techniques.
++*
++*       This contains create info common to all technique groups.
++*******************************************************************************************************************************/
++struct AnfTechniqueDispatchInfo
++{
++    AnfStructHeader                 header;                         ///< Standard struct header
++
++    AnfClientCommandList             commandList;                    ///< "Command list" to record this techniques commands
++                                                                     ///< into. The type of handle passed differs depending on
++                                                                     ///< the client API. For Vulkan, should be a VkCommandBuffer
++                                                                     ///< If in immediate dispatch mode, this should be NULL.
++
++    const AnfResourceParamDesc*     pResources;                     ///< Resources for the dispatch
++    uint32_t                        numResources;                   ///< Num resources
++
++    AnfBool                         reset;                          ///< When ANF_TRUE, this indicates that the technique state
++                                                                     ///< can be reset.
++
++    const AnfStructHeader*          pTechniqueGroupDispatchInfo;    ///< Info specific to this technique group
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       Sync objects for the technique dispatch to wait on and signal when using ANF_TECHNIQUE_CREATE_FLAG_IMMEDIATE_DISPATCH
++*
++*       This struct extends AnfTechniqueDispatchInfo
++*******************************************************************************************************************************/
++struct AnfTechniqueDispatchImmediateInfo
++{
++    AnfStructHeader                 header;                         ///< Standard struct header
++
++    // For dispatch immediate mode, the array of sync objects that the dispatch should wait on before executing
++    const AnfClientSyncObject*      pWaitSyncObjects;
++    uint32_t                        numWaitSyncObjects;
++
++    // For dispatch immediate mode, the array of sync objects that the dispatch should signal after executing
++    const AnfClientSyncObject*      pSignalSyncObjects;
++    uint32_t                        numSignalSyncObjects;
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       Model weights info for using fine tuned weights
++*
++*       This struct extends AnfTechniqueCreateInfo (should be in the pNext pointer of AnfTechniqueCreateInfo)
++*******************************************************************************************************************************/
++struct AnfModelWeightsInfo
++{
++    AnfStructHeader             header;                     ///< Standard struct header
++
++    const char*                 pWeightsPath;               ///< Path to updated weights on device
++};
++
++#endif // ANF_TYPES_H
+diff --git a/src/cpp/gfx/anf/anf_types_vk.h b/src/cpp/gfx/anf/anf_types_vk.h
+new file mode 100644
+index 0000000..b4d3b76
+--- /dev/null
++++ b/src/cpp/gfx/anf/anf_types_vk.h
+@@ -0,0 +1,101 @@
++//============================================================================================================
++//
++//
++//       Copyright (c) 2026, Qualcomm Technologies, Inc. and/or its subsidiaries. All rights reserved.
++//                              SPDX-License-Identifier: BSD-3-Clause
++//
++//============================================================================================================
++
++/**
++********************************************************************************************************************************
++* @file  anf_types_vk.h
++* @brief ANF API Vulkan specific types
++********************************************************************************************************************************
++*/
++
++#ifndef ANF_TYPES_VK_H
++#define ANF_TYPES_VK_H
++
++#include "anf_types.h"
++#include <vulkan/vulkan.h>
++
++/*******************************************************************************************************************************
++*   @brief
++*       Adapter info for Vulkan
++*******************************************************************************************************************************/
++struct AnfAdapterInfoVulkan
++{
++    AnfStructHeader     header;             ///< Standard struct header
++    VkInstance          instance;           ///< Vulkan instance
++    VkPhysicalDevice    physicalDevice;     ///< Vulkan physical device
++    VkDevice            device;             ///< Vulkan logical device
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       Queue info for Vulkan.  Extends AnfAdapterInfoVulkan
++*******************************************************************************************************************************/
++struct AnfQueueInfoVulkan
++{
++    AnfStructHeader     header;              ///< Standard struct header
++    uint32_t            numQueues;           ///< Number of queues provided
++    VkQueue*            pQueues;             ///< Array of size numQueues. Contains VkQueue handles this instance will submit to.
++    uint32_t*           pQueueFamilyIndices; ///< Array of size numQueues. Contains the queue family index of the corresponding 
++                                              ///< VkQueue in pQueues.
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       Requirements for a given technique that are specific to the Vulkan client API
++*******************************************************************************************************************************/
++struct AnfTechniqueVulkanApiRequirements
++{
++    AnfStructHeader     header;                 ///< Standard struct header
++
++    // Required Vulkan instance extensions
++    uint32_t            numInstanceExtensions;  ///< Number of required Vulkan instance extensions
++    const char* const*  ppInstanceExtensions;   ///< Array of char* values, each pointing to a null-terminated char array string
++                                                 ///< with the name of a required Vulkan instance extension
++
++    // Required Vulkan device extensions
++    uint32_t            numDeviceExtensions;    ///< Number of required Vulkan device extensions
++    const char* const*  ppDeviceExtensions;     ///< Array of char* values, each pointing to a null-terminated char array string
++                                                 ///< with the name of a required Vulkan device extension
++
++    VkQueueFlags        techniqueQueueFlags;    ///< The queue flags this technique's operations require.  
++                                                 ///< The VkCommandBuffer provided to DispatchTechnique must be submitted to a
++                                                 ///< queue whose QueueFamilyIndex supports all of these flags.
++                                                 ///< If using the flag ANF_TECHNIQUE_CREATE_FLAG_DISPATCH_IMMEDIATE, then an
++                                                 ///< AnfVulkanQueueInfo struct must have been in the pNext chain of the 
++                                                 ///< AnfSetClientAdapterInfo and for each bit set in techniqueQueueFlags, 
++                                                 ///< contain a queue supporting that flag.
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       Requirements for a given resource to be used in the queried technique that are specific to the Vulkan client API
++*******************************************************************************************************************************/
++struct AnfResourceVulkanApiRequirements
++{
++    AnfStructHeader     header;                             ///< Standard struct header
++
++    union /// usage flags depending on resource type
++    {
++        VkImageUsageFlags               imageUsageFlags;    ///< Image usage flags
++        VkBufferUsageFlags              bufferUsageFlags;   ///< Buffer usage flags
++    };
++
++    VkExternalMemoryHandleTypeFlags     externalMemoryType; ///< External memory type.  If != 0 the resource must be bound to
++                                                             ///< external memory
++};
++
++/*******************************************************************************************************************************
++*   @brief
++*       Technique create info specific to Vulkan
++*******************************************************************************************************************************/
++struct AnfTechniqueVulkanCreateInfo
++{
++    AnfStructHeader     header;                 ///< Standard struct header
++};
++
++#endif // ANF_TYPES_VK_H
+diff --git a/src/cpp/gfx/anf_fg.cpp b/src/cpp/gfx/anf_fg.cpp
+new file mode 100644
+index 0000000..37302eb
+--- /dev/null
++++ b/src/cpp/gfx/anf_fg.cpp
+@@ -0,0 +1,666 @@
++#include "gfx/anf_fg.hpp"
++
++#ifdef __ANDROID__
++#include <dlfcn.h>
++
++#include <algorithm>
++#include <cstring>
++
++#include "gfx/displaylist.hpp"
++#include "kazarov/log.hpp"
++#include "shaders/anf_motion.frag.spv.hpp"
++#include "shaders/anf_motion.vert.spv.hpp"
++
++#include "anf/anf.h"
++#include "anf/anf_types_vk.h"
++
++namespace gfx::detail {
++
++namespace {
++
++VkShaderModule MakeShaderModule(const uint32_t *code, size_t bytes) {
++    VkShaderModuleCreateInfo info = {};
++    info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
++    info.codeSize = bytes;
++    info.pCode = code;
++    VkShaderModule module = VK_NULL_HANDLE;
++    Check(vkCreateShaderModule(g.device, &info, nullptr, &module), "anf shader module");
++    return module;
++}
++
++// Two world-to-clip matrices per slot: the canonical camera's this tick and last tick.
++struct ClipConstants {
++    Mat4 cur_world_to_clip;
++    Mat4 prev_world_to_clip;
++};
++static_assert(sizeof(ClipConstants) == 128);
++
++struct FgState {
++    bool         tried = false;     // the dlopen + support check ran
++    bool         available = false; // the technique is live and dispatching
++    void        *library = nullptr;
++    AnfFunctions fns = {};
++    AnfInstance  instance = nullptr;
++    AnfTechnique technique = nullptr;
++    uint32_t     width = 0;
++    uint32_t     height = 0;
++
++    // The ANF formats and usages the device's requirements query returned, mapped to Vulkan.
++    AnfFormat           anf_color = ANF_FORMAT_R8G8B8A8_UNORM;
++    AnfFormat           anf_depth = ANF_FORMAT_D32_FLOAT;
++    AnfFormat           anf_motion = ANF_FORMAT_R16G16_FLOAT;
++    VkImageUsageFlags   color_usage = 0;
++    VkImageUsageFlags   depth_usage = 0;
++    VkImageUsageFlags   motion_usage = 0;
++    VkImageUsageFlags   output_usage = 0;
++
++    Image motion;   // camera-only motion vectors, written by the fullscreen pass
++    Image output;   // the generated between-frame, blitted to the swapchain at present
++    VkFormat motion_format = VK_FORMAT_R16G16_SFLOAT;
++
++    VkDescriptorSetLayout set_layout = VK_NULL_HANDLE;
++    VkPipelineLayout      pipeline_layout = VK_NULL_HANDLE;
++    VkPipeline            pipeline = VK_NULL_HANDLE;
++    VkDescriptorPool      pool = VK_NULL_HANDLE;
++    VkSampler             sampler = VK_NULL_HANDLE;
++    VkImageView           depth_view = VK_NULL_HANDLE; // main_depth's depth-aspect view
++    Buffer                clips;                       // 4 slots x 128 bytes, host coherent
++    std::array<VkDescriptorSet, kFramesInFlight> sets = {};
++
++    std::array<VkSemaphore, kFramesInFlight> canon_done = {}; // the canonical submit's signal
++    std::array<VkSemaphore, kFramesInFlight> fg_done = {};    // ANF's dispatch signal
++    std::array<VkSemaphore, 2>               acquire = {};    // second swapchain image's acquire
++    std::array<bool, kFramesInFlight>        dispatched = {}; // fg_done[slot] is meaningful
++
++    uint32_t slot = 0;
++    uint64_t dispatch_serial = 0;  // canonical commit serial the pending output was generated from
++    uint64_t presented_serial = 0; // serial whose generated frame has been shown
++    Mat4     cur_clip = {};
++    Mat4     prev_clip = {};
++    bool     have_clip = false;
++};
++
++FgState fg;
++
++AnfFormat MapVulkanFormat(VkFormat format) {
++    switch (format) {
++    case VK_FORMAT_R8G8B8A8_UNORM: return ANF_FORMAT_R8G8B8A8_UNORM;
++    case VK_FORMAT_R16G16_SFLOAT: return ANF_FORMAT_R16G16_FLOAT;
++    case VK_FORMAT_D32_SFLOAT_S8_UINT: return ANF_FORMAT_D32_FLOAT;
++    case VK_FORMAT_D24_UNORM_S8_UINT: return ANF_FORMAT_D24S8_UNORM;
++    default: return ANF_FORMAT_UNKNOWN;
++    }
++}
++
++// Reads a label's resource requirements; picks the Vulkan format from the returned list and
++// collects the usage the resource must carry.
++bool QueryResource(AnfResourceLabel label, AnfFormat &anf_format, VkImageUsageFlags &usage) {
++    const AnfResourceRequirements *resource = nullptr;
++    if (fg.fns.QueryTechniqueResourceRequirements(fg.instance, ANF_TECHNIQUE_ID_FG_TEMPORAL, label, &resource) !=
++        ANF_RESULT_SUCCESS) {
++        return false;
++    }
++    const AnfStructHeader *api = resource != nullptr ? resource->pClientApiRequirements : nullptr;
++    if (resource == nullptr || api == nullptr || api->type != ANF_STYPE_RESOURCE_VULKAN_API_REQUIREMENTS) {
++        return false;
++    }
++    const auto *vulkan = reinterpret_cast<const AnfResourceVulkanApiRequirements *>(api);
++    usage = vulkan->imageUsageFlags;
++    if (vulkan->externalMemoryType != 0) {
++        kz::Logf(kz::LogLevel::Info, "gfx", "anf: frame generation off, label {} needs external memory",
++                 static_cast<int>(label));
++        return false;
++    }
++    for (uint32_t index = 0; index < resource->numSupportedFormats; ++index) {
++        if (resource->pSupportedFormats[index] == MapVulkanFormat(label == ANF_RESOURCE_LABEL_DEPTH ? g.depth_format
++                                                                                                   : kColorFormat)) {
++            anf_format = resource->pSupportedFormats[index];
++            return true;
++        }
++    }
++    kz::Logf(kz::LogLevel::Info, "gfx", "anf: frame generation off, label {} rejects the renderer's format",
++             static_cast<int>(label));
++    return false;
++}
++
++void DestroyTargets() {
++    DestroyImage(fg.motion);
++    DestroyImage(fg.output);
++    if (fg.depth_view != VK_NULL_HANDLE) {
++        vkDestroyImageView(g.device, fg.depth_view, nullptr);
++        fg.depth_view = VK_NULL_HANDLE;
++    }
++    if (fg.pool != VK_NULL_HANDLE) {
++        vkDestroyDescriptorPool(g.device, fg.pool, nullptr);
++        fg.pool = VK_NULL_HANDLE;
++        fg.sets.fill(VK_NULL_HANDLE);
++    }
++    fg.width = 0;
++    fg.height = 0;
++}
++
++void DestroyTechnique() {
++    if (fg.technique != nullptr) {
++        fg.fns.DestroyTechnique(fg.instance, fg.technique);
++        fg.technique = nullptr;
++    }
++    fg.available = false;
++}
++
++// The technique is created (again) at the canonical size: FG's inputs and output all share it.
++bool CreateTechnique() {
++    DestroyTechnique();
++    AnfTechniqueVulkanCreateInfo vulkan = {};
++    vulkan.header.type = ANF_STYPE_TECHNIQUE_VULKAN_CREATE_INFO;
++    AnfFGCreateInfo group = {};
++    group.header.type = ANF_STYPE_FG_CREATE_INFO;
++    group.inputSize.width = fg.width;
++    group.inputSize.height = fg.height;
++    AnfTechniqueCreateInfo create = {};
++    create.header.type = ANF_STYPE_TECHNIQUE_CREATE_INFO;
++    create.techniqueId = ANF_TECHNIQUE_ID_FG_TEMPORAL;
++    create.flags = ANF_TECHNIQUE_CREATE_FLAG_DISPATCH_IMMEDIATE;
++    create.maxInFlight = kFramesInFlight;
++    create.pClientApiCreateInfo = &vulkan.header;
++    create.pTechniqueGroupCreateInfo = &group.header;
++    if (fg.fns.CreateTechnique(fg.instance, &create, &fg.technique) != ANF_RESULT_SUCCESS) {
++        kz::Logf(kz::LogLevel::Info, "gfx", "anf: the frame generation technique failed at {}x{}", fg.width,
++                 fg.height);
++        return false;
++    }
++    kz::Logf(kz::LogLevel::Info, "gfx", "anf: frame generation technique ready at {}x{}", fg.width, fg.height);
++    return true;
++}
++
++} // namespace
++
++void FrameGenInit() {
++    if (fg.tried) {
++        return;
++    }
++    fg.tried = true;
++    if (!g.config.frame_gen) {
++        return;
++    }
++    fg.library = dlopen("libanf.so", RTLD_NOW | RTLD_LOCAL);
++    if (fg.library == nullptr) {
++        kz::Logf(kz::LogLevel::Info, "gfx", "anf: frame generation off, libanf.so not packaged");
++        return;
++    }
++    auto *get_functions = reinterpret_cast<void (*)(AnfFunctions *)>(dlsym(fg.library, "GetAnfFunctions"));
++    if (get_functions == nullptr) {
++        kz::Logf(kz::LogLevel::Info, "gfx", "anf: frame generation off, no GetAnfFunctions");
++        dlclose(fg.library);
++        fg.library = nullptr;
++        return;
++    }
++    get_functions(&fg.fns);
++    if (fg.fns.CreateInstance == nullptr || fg.fns.DestroyInstance == nullptr ||
++        fg.fns.SetInstanceClientAPIAdapterInfo == nullptr || fg.fns.QueryTechniqueRequirements == nullptr ||
++        fg.fns.QueryTechniqueResourceRequirements == nullptr || fg.fns.CreateTechnique == nullptr ||
++        fg.fns.DestroyTechnique == nullptr || fg.fns.DispatchTechnique == nullptr) {
++        kz::Logf(kz::LogLevel::Info, "gfx", "anf: frame generation off, incomplete function table");
++        dlclose(fg.library);
++        fg.library = nullptr;
++        return;
++    }
++
++    AnfInstanceCreateInfo create = {};
++    create.header.type = ANF_STYPE_INSTANCE_CREATE_INFO;
++    create.logMessageCallback = [](AnfLogLevel, const char *message) {
++        kz::Logf(kz::LogLevel::Info, "gfx", "anf: {}", message);
++    };
++    create.logLevel = ANF_LOG_LEVEL_WARNING;
++    create.clientApi = ANF_CLIENT_API_VULKAN;
++    if (fg.fns.CreateInstance(&create, &fg.instance) != ANF_RESULT_SUCCESS) {
++        kz::Logf(kz::LogLevel::Info, "gfx", "anf: frame generation off, instance creation failed");
++        dlclose(fg.library);
++        fg.library = nullptr;
++        return;
++    }
++
++    AnfQueueInfoVulkan queue_info = {};
++    queue_info.header.type = ANF_STYPE_QUEUE_INFO_VULKAN;
++    queue_info.numQueues = 1;
++    queue_info.pQueues = &g.queue;
++    queue_info.pQueueFamilyIndices = &g.queue_family;
++    AnfAdapterInfoVulkan adapter = {};
++    adapter.header.type = ANF_STYPE_ADAPTER_INFO_VULKAN;
++    adapter.header.pNext = &queue_info.header;
++    adapter.instance = g.instance;
++    adapter.physicalDevice = g.physical_device;
++    adapter.device = g.device;
++    if (fg.fns.SetInstanceClientAPIAdapterInfo(fg.instance, &adapter.header) != ANF_RESULT_SUCCESS) {
++        kz::Logf(kz::LogLevel::Info, "gfx", "anf: frame generation off, the queue was rejected");
++        fg.fns.DestroyInstance(fg.instance);
++        fg.instance = nullptr;
++        dlclose(fg.library);
++        fg.library = nullptr;
++        return;
++    }
++
++    const AnfTechniqueRequirements *requirements = nullptr;
++    if (fg.fns.IsTechniqueSupported(fg.instance, ANF_TECHNIQUE_ID_FG_TEMPORAL, &adapter.header) !=
++            ANF_RESULT_SUCCESS ||
++        fg.fns.QueryTechniqueRequirements(fg.instance, ANF_TECHNIQUE_ID_FG_TEMPORAL, &requirements) !=
++            ANF_RESULT_SUCCESS ||
++        requirements == nullptr) {
++        kz::Logf(kz::LogLevel::Info, "gfx", "anf: frame generation off, FG not supported on this device");
++        fg.fns.DestroyInstance(fg.instance);
++        fg.instance = nullptr;
++        dlclose(fg.library);
++        fg.library = nullptr;
++        return;
++    }
++    bool formats_ok = true;
++    for (uint32_t index = 0; index < requirements->numRequiredResources && formats_ok; ++index) {
++        switch (requirements->pRequiredResources[index]) {
++        case ANF_RESOURCE_LABEL_DEPTH: formats_ok = QueryResource(ANF_RESOURCE_LABEL_DEPTH, fg.anf_depth, fg.depth_usage); break;
++        case ANF_RESOURCE_LABEL_MOTION_VECTORS:
++            formats_ok = QueryResource(ANF_RESOURCE_LABEL_MOTION_VECTORS, fg.anf_motion, fg.motion_usage);
++            break;
++        case ANF_RESOURCE_LABEL_INPUT_COLOR: formats_ok = QueryResource(ANF_RESOURCE_LABEL_INPUT_COLOR, fg.anf_color, fg.color_usage); break;
++        case ANF_RESOURCE_LABEL_OUTPUT_COLOR:
++            formats_ok = QueryResource(ANF_RESOURCE_LABEL_OUTPUT_COLOR, fg.anf_color, fg.output_usage);
++            break;
++        default: formats_ok = false; break;
++        }
++    }
++    if (!formats_ok) {
++        fg.fns.DestroyInstance(fg.instance);
++        fg.instance = nullptr;
++        dlclose(fg.library);
++        fg.library = nullptr;
++        return;
++    }
++    fg.motion_format = VK_FORMAT_R16G16_SFLOAT;
++
++    // The motion pass: one set per frame in flight, each pointing at its own clip constants and
++    // the shared depth view.
++    VkDescriptorSetLayoutBinding bindings[2] = {};
++    bindings[0] = {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr};
++    bindings[1] = {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr};
++    VkDescriptorSetLayoutCreateInfo layout_info = {};
++    layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
++    layout_info.bindingCount = 2;
++    layout_info.pBindings = bindings;
++    Check(vkCreateDescriptorSetLayout(g.device, &layout_info, nullptr, &fg.set_layout), "anf motion set layout");
++    VkPipelineLayoutCreateInfo pipeline_info = {};
++    pipeline_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
++    pipeline_info.setLayoutCount = 1;
++    pipeline_info.pSetLayouts = &fg.set_layout;
++    Check(vkCreatePipelineLayout(g.device, &pipeline_info, nullptr, &fg.pipeline_layout), "anf motion layout");
++
++    VkSamplerCreateInfo sampler_info = {};
++    sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
++    sampler_info.magFilter = VK_FILTER_LINEAR;
++    sampler_info.minFilter = VK_FILTER_LINEAR;
++    sampler_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
++    sampler_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
++    Check(vkCreateSampler(g.device, &sampler_info, nullptr, &fg.sampler), "anf motion sampler");
++    VkImageViewCreateInfo view_info = {};
++    view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
++    view_info.image = g.main_depth.image;
++    view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
++    view_info.format = g.depth_format;
++    view_info.subresourceRange = {VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1};
++    Check(vkCreateImageView(g.device, &view_info, nullptr, &fg.depth_view), "anf depth view");
++
++    fg.clips = CreateBuffer(sizeof(ClipConstants) * kFramesInFlight, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, true);
++    VkDescriptorPoolSize sizes[2] = {{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, kFramesInFlight},
++                                     {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, kFramesInFlight}};
++    VkDescriptorPoolCreateInfo pool_info = {};
++    pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
++    pool_info.maxSets = kFramesInFlight;
++    pool_info.poolSizeCount = 2;
++    pool_info.pPoolSizes = sizes;
++    Check(vkCreateDescriptorPool(g.device, &pool_info, nullptr, &fg.pool), "anf motion pool");
++    for (uint32_t slot = 0; slot < kFramesInFlight; slot++) {
++        VkDescriptorSetAllocateInfo allocate = {};
++        allocate.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
++        allocate.descriptorPool = fg.pool;
++        allocate.descriptorSetCount = 1;
++        allocate.pSetLayouts = &fg.set_layout;
++        Check(vkAllocateDescriptorSets(g.device, &allocate, &fg.sets[slot]), "anf motion set");
++        VkDescriptorBufferInfo buffer_info = {fg.clips.buffer, slot * sizeof(ClipConstants),
++                                              sizeof(ClipConstants)};
++        VkDescriptorImageInfo image_info = {fg.sampler, fg.depth_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
++        VkWriteDescriptorSet write[2] = {};
++        write[0] = {VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, fg.sets[slot], 0, 0, 1,
++                    VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, nullptr, &buffer_info, nullptr};
++        write[1] = {VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, fg.sets[slot], 1, 0, 1,
++                    VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_info, nullptr, nullptr};
++        vkUpdateDescriptorSets(g.device, 2, write, 0, nullptr);
++    }
++
++    for (VkSemaphore &semaphore : fg.canon_done) {
++        VkSemaphoreCreateInfo info = {};
++        info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
++        Check(vkCreateSemaphore(g.device, &info, nullptr, &semaphore), "anf semaphore");
++    }
++    for (VkSemaphore &semaphore : fg.fg_done) {
++        VkSemaphoreCreateInfo info = {};
++        info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
++        Check(vkCreateSemaphore(g.device, &info, nullptr, &semaphore), "anf semaphore");
++    }
++    for (VkSemaphore &semaphore : fg.acquire) {
++        VkSemaphoreCreateInfo info = {};
++        info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
++        Check(vkCreateSemaphore(g.device, &info, nullptr, &semaphore), "anf acquire semaphore");
++    }
++
++    // The motion pipeline: a fullscreen triangle with no vertex input, dynamic viewport/scissor,
++    // no depth, no blend.
++    VkShaderModule vert = MakeShaderModule(anf_motion_vert, sizeof(anf_motion_vert));
++    VkShaderModule frag = MakeShaderModule(anf_motion_frag, sizeof(anf_motion_frag));
++    VkPipelineShaderStageCreateInfo stages[2] = {};
++    stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
++    stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
++    stages[0].module = vert;
++    stages[0].pName = "main";
++    stages[1] = stages[0];
++    stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
++    stages[1].module = frag;
++    VkPipelineInputAssemblyStateCreateInfo assembly = {};
++    assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
++    assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
++    VkPipelineViewportStateCreateInfo viewport = {};
++    viewport.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
++    viewport.viewportCount = 1;
++    viewport.scissorCount = 1;
++    VkPipelineRasterizationStateCreateInfo raster = {};
++    raster.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
++    raster.polygonMode = VK_POLYGON_MODE_FILL;
++    raster.cullMode = VK_CULL_MODE_NONE;
++    raster.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
++    raster.lineWidth = 1.0f;
++    VkPipelineMultisampleStateCreateInfo multisample = {};
++    multisample.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
++    multisample.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
++    VkPipelineDepthStencilStateCreateInfo depth_state = {};
++    depth_state.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
++    VkPipelineColorBlendStateCreateInfo blend = {};
++    blend.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
++    VkPipelineColorBlendAttachmentState attachment = {};
++    attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT;
++    blend.attachmentCount = 1;
++    blend.pAttachments = &attachment;
++    VkDynamicState dynamics[] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
++    VkPipelineDynamicStateCreateInfo dynamic = {};
++    dynamic.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
++    dynamic.dynamicStateCount = 2;
++    dynamic.pDynamicStates = dynamics;
++    VkPipelineRenderingCreateInfo rendering = {};
++    rendering.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
++    rendering.colorAttachmentCount = 1;
++    rendering.pColorAttachmentFormats = &fg.motion_format;
++    VkGraphicsPipelineCreateInfo pipeline = {};
++    pipeline.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
++    pipeline.pNext = &rendering;
++    pipeline.stageCount = 2;
++    pipeline.pStages = stages;
++    pipeline.pInputAssemblyState = &assembly;
++    pipeline.pViewportState = &viewport;
++    pipeline.pRasterizationState = &raster;
++    pipeline.pMultisampleState = &multisample;
++    pipeline.pDepthStencilState = &depth_state;
++    pipeline.pColorBlendState = &blend;
++    pipeline.pDynamicState = &dynamic;
++    pipeline.layout = fg.pipeline_layout;
++    Check(vkCreateGraphicsPipelines(g.device, g.pipeline_cache, 1, &pipeline, nullptr, &fg.pipeline),
++          "anf motion pipeline");
++    vkDestroyShaderModule(g.device, vert, nullptr);
++    vkDestroyShaderModule(g.device, frag, nullptr);
++
++    kz::Logf(kz::LogLevel::Info, "gfx", "anf: frame generation armed");
++}
++
++void FrameGenShutdown() {
++    if (fg.library == nullptr) {
++        return;
++    }
++    DestroyTargets();
++    DestroyTechnique();
++    if (fg.pipeline != VK_NULL_HANDLE) {
++        vkDestroyPipeline(g.device, fg.pipeline, nullptr);
++        fg.pipeline = VK_NULL_HANDLE;
++    }
++    if (fg.pipeline_layout != VK_NULL_HANDLE) {
++        vkDestroyPipelineLayout(g.device, fg.pipeline_layout, nullptr);
++        fg.pipeline_layout = VK_NULL_HANDLE;
++    }
++    if (fg.set_layout != VK_NULL_HANDLE) {
++        vkDestroyDescriptorSetLayout(g.device, fg.set_layout, nullptr);
++        fg.set_layout = VK_NULL_HANDLE;
++    }
++    if (fg.sampler != VK_NULL_HANDLE) {
++        vkDestroySampler(g.device, fg.sampler, nullptr);
++        fg.sampler = VK_NULL_HANDLE;
++    }
++    if (fg.clips.buffer != VK_NULL_HANDLE) {
++        DestroyBuffer(fg.clips);
++        fg.clips = {};
++    }
++    for (VkSemaphore &semaphore : fg.canon_done) {
++        if (semaphore != VK_NULL_HANDLE) {
++            vkDestroySemaphore(g.device, semaphore, nullptr);
++            semaphore = VK_NULL_HANDLE;
++        }
++    }
++    for (VkSemaphore &semaphore : fg.fg_done) {
++        if (semaphore != VK_NULL_HANDLE) {
++            vkDestroySemaphore(g.device, semaphore, nullptr);
++            semaphore = VK_NULL_HANDLE;
++        }
++    }
++    for (VkSemaphore &semaphore : fg.acquire) {
++        if (semaphore != VK_NULL_HANDLE) {
++            vkDestroySemaphore(g.device, semaphore, nullptr);
++            semaphore = VK_NULL_HANDLE;
++        }
++    }
++    if (fg.instance != nullptr) {
++        fg.fns.DestroyInstance(fg.instance);
++        fg.instance = nullptr;
++    }
++    dlclose(fg.library);
++    fg.library = nullptr;
++    fg.available = false;
++}
++
++void FrameGenEnsureTargets(uint32_t width, uint32_t height) {
++    if (!fg.instance || (fg.width == width && fg.height == height && fg.pipeline != VK_NULL_HANDLE)) {
++        return;
++    }
++    DestroyTargets();
++    fg.width = width;
++    fg.height = height;
++    fg.motion_format = VK_FORMAT_R16G16_SFLOAT;
++    fg.motion = CreateImage(width, height, 1, fg.motion_format,
++                            fg.motion_usage | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
++    fg.output = CreateImage(width, height, 1, kColorFormat,
++                            fg.output_usage | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
++                                VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
++    if (!fg.available) {
++        fg.available = CreateTechnique();
++        if (!fg.available) {
++            // Retire the module for the process: every later attempt would fail the same way.
++            DestroyTargets();
++            fg.instance = nullptr;
++            fg.available = false;
++        }
++    }
++}
++
++bool FrameGenActive() {
++    return fg.available;
++}
++
++void FrameGenRecordCanonical(VkCommandBuffer cmd, Image &color, Image &depth, VkSemaphore &wait,
++                             VkSemaphore &signal) {
++    if (!fg.available) {
++        return;
++    }
++    fg.slot = (fg.slot + 1) % kFramesInFlight;
++    const uint32_t slot = fg.slot;
++    // The camera matrices this canonical was drawn with, and the previous canonical's.
++    auto &constants = reinterpret_cast<ClipConstants *>(fg.clips.memory.mapped)[slot];
++    constants.cur_world_to_clip = fg.cur_clip;
++    constants.prev_world_to_clip = fg.have_clip ? fg.prev_clip : fg.cur_clip;
++    fg.prev_clip = fg.cur_clip;
++    fg.have_clip = true;
++
++    // The motion pass: read the canonical depth, write camera-only motion vectors.
++    ImageState render_state = {};
++    render_state.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
++    render_state.stage = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
++    render_state.access = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
++    Transition(cmd, fg.motion, render_state);
++    VkRenderingAttachmentInfo attachment = {};
++    attachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
++    attachment.imageView = fg.motion.view;
++    attachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
++    attachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
++    attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
++    VkRenderingInfo rendering = {};
++    rendering.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
++    rendering.renderArea = {{0, 0}, {fg.width, fg.height}};
++    rendering.layerCount = 1;
++    rendering.colorAttachmentCount = 1;
++    rendering.pColorAttachments = &attachment;
++    vkCmdBeginRendering(cmd, &rendering);
++    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, fg.pipeline);
++    VkViewport viewport = {0.0f, 0.0f, static_cast<float>(fg.width), static_cast<float>(fg.height), 0.0f, 1.0f};
++    VkRect2D scissor = {{0, 0}, {fg.width, fg.height}};
++    vkCmdSetViewport(cmd, 0, 1, &viewport);
++    vkCmdSetScissor(cmd, 0, 1, &scissor);
++    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, fg.pipeline_layout, 0, 1, &fg.sets[slot], 0, nullptr);
++    vkCmdDraw(cmd, 3, 1, 0, 0);
++    vkCmdEndRendering(cmd);
++    ImageState read_state = {};
++    read_state.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
++    read_state.stage = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;
++    read_state.access = VK_ACCESS_2_SHADER_READ_BIT;
++    Transition(cmd, fg.motion, read_state);
++    // The depth rests as an attachment; ANF samples it, so hand it over shader-readable. The next
++    // canonical render's own transition starts from the state recorded here.
++    Transition(cmd, depth, read_state);
++    // ANF writes the generated frame in the general layout.
++    ImageState general_state = {};
++    general_state.layout = VK_IMAGE_LAYOUT_GENERAL;
++    general_state.stage = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
++    general_state.access = VK_ACCESS_2_MEMORY_WRITE_BIT | VK_ACCESS_2_MEMORY_READ_BIT;
++    Transition(cmd, fg.output, general_state);
++
++    wait = fg.dispatched[(slot + kFramesInFlight - 1) % kFramesInFlight] ? fg.fg_done[(slot + kFramesInFlight - 1) % kFramesInFlight]
++                                                                          : VK_NULL_HANDLE;
++    signal = fg.canon_done[slot];
++}
++
++void FrameGenDispatch() {
++    if (!fg.available) {
++        return;
++    }
++    const uint32_t slot = fg.slot;
++    AnfResourceParamDesc resources[4] = {};
++    const AnfResourceLabel labels[4] = {ANF_RESOURCE_LABEL_DEPTH, ANF_RESOURCE_LABEL_MOTION_VECTORS,
++                                        ANF_RESOURCE_LABEL_INPUT_COLOR, ANF_RESOURCE_LABEL_OUTPUT_COLOR};
++    const VkImage images[4] = {g.main_depth.image, fg.motion.image, g.main_color[g.main_current].image,
++                               fg.output.image};
++    const AnfFormat formats[4] = {fg.anf_depth, fg.anf_motion, fg.anf_color, fg.anf_color};
++    const uint32_t layouts[4] = {VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
++                                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL};
++    for (uint32_t index = 0; index < 4; index++) {
++        resources[index].header.type = ANF_STYPE_RESOURCE_PARAM_DESC;
++        resources[index].resourceLabel = labels[index];
++        resources[index].resourceDesc.header.type = ANF_STYPE_RESOURCE_DESC;
++        resources[index].resourceDesc.type = ANF_RESOURCE_TYPE_TEXTURE2D;
++        resources[index].resourceDesc.format = formats[index];
++        resources[index].resourceDesc.layout = layouts[index];
++        resources[index].resourceDesc.textureDims.width = fg.width;
++        resources[index].resourceDesc.textureDims.height = fg.height;
++        resources[index].resourceDesc.textureDims.numArrayLayers = 1;
++        resources[index].resourceDesc.textureDims.mipCount = 1;
++        resources[index].resourceDesc.resource = reinterpret_cast<AnfClientResource>(const_cast<VkImage>(images[index]));
++    }
++    // A camera cut leaves the previous frame unrelated; a big matrix jump resets the history.
++    bool reset = !fg.have_clip;
++    if (!reset) {
++        for (uint32_t i = 0; i < 16; i++) {
++            if (std::abs(fg.cur_clip[i] - fg.prev_clip[i]) > 2.0f) {
++                reset = true;
++                break;
++            }
++        }
++    }
++    AnfClientSyncObject wait_objects[] = {reinterpret_cast<AnfClientSyncObject>(fg.canon_done[slot])};
++    AnfClientSyncObject signal_objects[] = {reinterpret_cast<AnfClientSyncObject>(fg.fg_done[slot])};
++    AnfTechniqueDispatchImmediateInfo immediate = {};
++    immediate.header.type = ANF_STYPE_TECHNIQUE_DISPATCH_IMMEDIATE_INFO;
++    immediate.pWaitSyncObjects = wait_objects;
++    immediate.numWaitSyncObjects = 1;
++    immediate.pSignalSyncObjects = signal_objects;
++    immediate.numSignalSyncObjects = 1;
++    AnfFGDispatch group = {};
++    group.header.type = ANF_STYPE_FG_DISPATCH;
++    AnfTechniqueDispatchInfo dispatch = {};
++    dispatch.header.type = ANF_STYPE_TECHNIQUE_DISPATCH_INFO;
++    dispatch.header.pNext = &immediate.header;
++    dispatch.pResources = resources;
++    dispatch.numResources = 4;
++    dispatch.reset = reset ? ANF_TRUE : ANF_FALSE;
++    dispatch.pTechniqueGroupDispatchInfo = &group.header;
++    if (fg.fns.DispatchTechnique(fg.technique, &dispatch) != ANF_RESULT_SUCCESS) {
++        kz::Logf(kz::LogLevel::Info, "gfx", "anf: frame generation dispatch failed; falling back");
++        fg.available = false;
++        return;
++    }
++    fg.dispatched[slot] = true;
++    fg.dispatch_serial = g.canonical_commit_serial;
++}
++
++bool FrameGenHasOutput() {
++    return fg.available && fg.dispatch_serial != fg.presented_serial &&
++           fg.dispatch_serial == g.canonical_commit_serial;
++}
++
++void FrameGenNotePresented() {
++    fg.presented_serial = fg.dispatch_serial;
++}
++
++VkSemaphore FrameGenOutputDone() {
++    return fg.available ? fg.fg_done[fg.slot] : VK_NULL_HANDLE;
++}
++
++VkSemaphore FrameGenAcquireSemaphore() {
++    return fg.acquire[fg.slot & 1];
++}
++
++Image &FrameGenOutputImage() {
++    return fg.output;
++}
++
++void FrameGenSetClip(const float *world_to_clip) {
++    std::memcpy(fg.cur_clip.data(), world_to_clip, sizeof(Mat4));
++}
++
++} // namespace gfx::detail
++#endif // __ANDROID__
++
++// Non-Android builds: the module compiles empty so callers need no guards.
++#ifndef __ANDROID__
++namespace gfx::detail {
++void FrameGenInit() {}
++void FrameGenShutdown() {}
++void FrameGenEnsureTargets(uint32_t, uint32_t) {}
++bool FrameGenActive() { return false; }
++void FrameGenRecordCanonical(VkCommandBuffer, Image &, Image &, VkSemaphore &, VkSemaphore &) {}
++void FrameGenDispatch() {}
++bool FrameGenHasOutput() { return false; }
++void FrameGenNotePresented() {}
++VkSemaphore FrameGenOutputDone() { return VK_NULL_HANDLE; }
++VkSemaphore FrameGenAcquireSemaphore() { return VK_NULL_HANDLE; }
++Image      &FrameGenOutputImage() { static Image never; return never; }
++void FrameGenSetClip(const float *) {}
++} // namespace gfx::detail
++#endif
+diff --git a/src/cpp/gfx/displaylist.cpp b/src/cpp/gfx/displaylist.cpp
+index 2a1355b..1a4e762 100644
+--- a/src/cpp/gfx/displaylist.cpp
++++ b/src/cpp/gfx/displaylist.cpp
+@@ -12,6 +12,7 @@
+ #include <unordered_map>
+ #include <unordered_set>
+ 
++#include "gfx/anf_fg.hpp"
+ #include "gfx/context.hpp"
+ #include "gfx/profile.hpp"
+ #include "kazarov/log.hpp"
+@@ -2158,6 +2159,16 @@ bool RenderList(const DisplayList &list, float alpha, const RenderOptions &optio
+     bool rendered = false;
+     RunOnRenderThread([&] {
+         if (options.canonical) {
++            // The frame-generation motion pass reprojects the canonical depth with this camera's
++            // world-to-clip matrix: the first transformed mesh's camera, projection and middle
++            // define it, the same product the interpolated replay builds per camera.
++            for (const MeshRecord &record : list.records) {
++                if (record.has_transform) {
++                    detail::FrameGenSetClip(
++                        Multiply(Multiply(record.projection, list.cameras[record.camera]), record.middle).data());
++                    break;
++                }
++            }
+             if (ReplayPhasesEnabled()) {
+                 const auto start = std::chrono::steady_clock::now();
+                 OpenListFrame(true, false, false);
+diff --git a/src/cpp/gfx/renderer.cpp b/src/cpp/gfx/renderer.cpp
+index bf424c4..18a4e52 100644
+--- a/src/cpp/gfx/renderer.cpp
++++ b/src/cpp/gfx/renderer.cpp
+@@ -24,6 +24,7 @@
+ #include <android/log.h>
+ #endif
+ 
++#include "gfx/anf_fg.hpp"
+ #include "gfx/context.hpp"
+ #include "gfx/displaylist.hpp"
+ #include "gfx/profile.hpp"
+@@ -553,6 +554,19 @@ void CreateDevice() {
+     if (!g.bindless) {
+         extensions.push_back(VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME);
+     }
++#ifdef __ANDROID__
++    // Qualcomm's Adreno Neural Fusion frame generation submits through external semaphores and
++    // reads the canonical images across process-external handles; both are Adreno-supported, and
++    // enabling them unconditionally is harmless on devices where ANF is absent.
++    if (g.config.frame_gen) {
++        if (HasExtension(g.physical_device, VK_KHR_EXTERNAL_SEMAPHORE_FD_EXTENSION_NAME)) {
++            extensions.push_back(VK_KHR_EXTERNAL_SEMAPHORE_FD_EXTENSION_NAME);
++        }
++        if (HasExtension(g.physical_device, VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME)) {
++            extensions.push_back(VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME);
++        }
++    }
++#endif
+     VkPhysicalDevicePipelineExecutablePropertiesFeaturesKHR executable = {};
+     executable.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_EXECUTABLE_PROPERTIES_FEATURES_KHR;
+     if (!g.perf.stats.empty()) {
+@@ -579,6 +593,11 @@ void CreateDevice() {
+     LoadCoreDeviceCommands(g.device);
+ #endif
+     vkGetDeviceQueue(g.device, g.queue_family, 0, &g.queue);
++#ifdef __ANDROID__
++    // Qualcomm's Adreno Neural Fusion frame generation: arm the module (probe, technique) once the
++    // device and queue exist. Informational when unsupported.
++    FrameGenInit();
++#endif
+     if (g.dynamic_color_write_mask) {
+         g.cmd_set_color_write_mask = reinterpret_cast<PFN_vkCmdSetColorWriteMaskEXT>(
+             vkGetDeviceProcAddr(g.device, "vkCmdSetColorWriteMaskEXT"));
+@@ -832,6 +851,9 @@ void SyncMainTargets() {
+         RecreateSharedTargets();
+         RecreateRenderTargets();
+     }
++#ifdef __ANDROID__
++    FrameGenEnsureTargets(g.main_color[0].width, g.main_color[0].height);
++#endif
+ }
+ 
+ // Without targets the main targets keep their size until a frame that draws the game's state
+@@ -1216,7 +1238,8 @@ void AdvanceSlot() {
+     }
+ }
+ 
+-void Submit(bool with_draw, VkSemaphore wait, VkSemaphore signal) {
++void Submit(bool with_draw, VkSemaphore wait, VkSemaphore signal, VkSemaphore extra_wait = VK_NULL_HANDLE,
++            VkSemaphore extra_signal = VK_NULL_HANDLE) {
+     AssertDeviceThread(__func__);
+     KZ_PROFILE_ZONE("Kazarov Submit");
+     Frame                                 &frame = CurrentFrame();
+@@ -1231,23 +1254,45 @@ void Submit(bool with_draw, VkSemaphore wait, VkSemaphore signal) {
+         commands.push_back({VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO, nullptr, frame.draw_cmd, 0});
+     }
+ 
+-    VkSemaphoreSubmitInfo wait_info = {};
+-    wait_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO;
+-    wait_info.semaphore = wait;
+-    wait_info.stageMask = VK_PIPELINE_STAGE_2_ALL_TRANSFER_BIT;
+-    VkSemaphoreSubmitInfo signal_info = {};
+-    signal_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO;
+-    signal_info.semaphore = signal;
+-    signal_info.stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
++    VkSemaphoreSubmitInfo wait_info[2] = {};
++    uint32_t              wait_count = 0;
++    if (wait != VK_NULL_HANDLE) {
++        wait_info[wait_count].sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO;
++        wait_info[wait_count].semaphore = wait;
++        wait_info[wait_count].stageMask = VK_PIPELINE_STAGE_2_ALL_TRANSFER_BIT;
++        wait_count++;
++    }
++    if (extra_wait != VK_NULL_HANDLE) {
++        // Frame generation's completion gates the whole submission: the next canonical render must
++        // not touch the colour or depth ANF is still reading.
++        wait_info[wait_count].sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO;
++        wait_info[wait_count].semaphore = extra_wait;
++        wait_info[wait_count].stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
++        wait_count++;
++    }
++    VkSemaphoreSubmitInfo signal_info[2] = {};
++    uint32_t              signal_count = 0;
++    if (signal != VK_NULL_HANDLE) {
++        signal_info[signal_count].sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO;
++        signal_info[signal_count].semaphore = signal;
++        signal_info[signal_count].stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
++        signal_count++;
++    }
++    if (extra_signal != VK_NULL_HANDLE) {
++        signal_info[signal_count].sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO;
++        signal_info[signal_count].semaphore = extra_signal;
++        signal_info[signal_count].stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
++        signal_count++;
++    }
+ 
+     VkSubmitInfo2 submit = {};
+     submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2;
+-    submit.waitSemaphoreInfoCount = wait != VK_NULL_HANDLE ? 1 : 0;
+-    submit.pWaitSemaphoreInfos = &wait_info;
++    submit.waitSemaphoreInfoCount = wait_count;
++    submit.pWaitSemaphoreInfos = wait_info;
+     submit.commandBufferInfoCount = static_cast<uint32_t>(commands.size());
+     submit.pCommandBufferInfos = commands.data();
+-    submit.signalSemaphoreInfoCount = signal != VK_NULL_HANDLE ? 1 : 0;
+-    submit.pSignalSemaphoreInfos = &signal_info;
++    submit.signalSemaphoreInfoCount = signal_count;
++    submit.pSignalSemaphoreInfos = signal_info;
+     Check(vkResetFences(g.device, 1, &frame.fence), "vkResetFences");
+     Check(vkQueueSubmit2(g.queue, 1, &submit, frame.fence), "vkQueueSubmit2");
+     frame.pending = true;
+@@ -1610,6 +1655,9 @@ void RendererShutdown() {
+         RunDeletions(frame);
+     }
+     DestroyPipelines();
++#ifdef __ANDROID__
++    FrameGenShutdown();
++#endif
+     ShutdownResources();
+     for (Frame &frame : g.frames) {
+         DestroyTransients(frame);
+@@ -1836,13 +1884,14 @@ void PlotFrameCounters() {
+     KZ_PROFILE_PLOT("Kazarov transient bytes", g.counters.transient_bytes);
+ }
+ 
+-void SubmitWithoutPresent(VkCommandBuffer cmd, Image &main) {
++void SubmitWithoutPresent(VkCommandBuffer cmd, Image &main, VkSemaphore extra_wait = VK_NULL_HANDLE,
++                          VkSemaphore extra_signal = VK_NULL_HANDLE) {
+     // Every colour image rests shader-readable between operations; the next frame samples this
+     // one as kPreviousFrame.
+     ToRest(cmd, main);
+     CloseTimestamps(cmd, false);
+     Check(vkEndCommandBuffer(cmd), "vkEndCommandBuffer");
+-    Submit(true, VK_NULL_HANDLE, VK_NULL_HANDLE);
++    Submit(true, VK_NULL_HANDLE, VK_NULL_HANDLE, extra_wait, extra_signal);
+     NoteFrameCpu(false);
+     g.in_frame = false;
+     g_game_frame_open.store(false);
+@@ -1933,11 +1982,20 @@ void CloseListFrame(bool canonical, bool present) {
+             KZ_PROFILE_GPU_ZONE(cmd, "Kazarov depth queries");
+             RecordDepthQueries(cmd);
+         }
+-        SubmitWithoutPresent(cmd, CurrentMainColor());
++        // Frame generation: the motion pass rides this submission, which then signals ANF's work.
++        VkSemaphore fg_wait = VK_NULL_HANDLE;
++        VkSemaphore fg_signal = VK_NULL_HANDLE;
++        if (FrameGenActive()) {
++            FrameGenRecordCanonical(cmd, CurrentMainColor(), g.main_depth, fg_wait, fg_signal);
++        }
++        SubmitWithoutPresent(cmd, CurrentMainColor(), fg_wait, fg_signal);
+         FinishFrame();
+         ++g.canonical_commit_serial;
+         g.canonical_newest = true;
+         g.presented_display = false;
++        if (fg_signal != VK_NULL_HANDLE) {
++            FrameGenDispatch();
++        }
+         return;
+     }
+     if (present && !g.offscreen) {
+@@ -2006,6 +2064,87 @@ void EndFrame() {
+     });
+ }
+ 
++// Frame generation's two-image present: the generated between-frame lands on the first swapchain
++// image, the canonical on the second; the FIFO shows them on consecutive vblanks.
++void PresentPair(Frame &frame, Image &generated, Image &canonical, uint32_t index_generated,
++                 VkSemaphore acquire_generated, uint32_t index_canonical, VkSemaphore acquire_canonical,
++                 VkSemaphore fg_done) {
++    AssertDeviceThread(__func__);
++    VkCommandBuffer cmd = frame.draw_cmd;
++    auto            blit_to_swapchain = [&](Image &source, uint32_t index) {
++        VkImage swapchain = g.swapchain.images[index];
++        Transition(cmd, source, TransferSrc());
++        SwapchainBarrier(cmd, swapchain, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
++                         VK_PIPELINE_STAGE_2_ALL_TRANSFER_BIT, VK_ACCESS_2_NONE,
++                         VK_PIPELINE_STAGE_2_ALL_TRANSFER_BIT, VK_ACCESS_2_TRANSFER_WRITE_BIT);
++        VkImageBlit region = {};
++        region.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
++        region.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
++        region.srcOffsets[1] = {static_cast<int32_t>(source.width), static_cast<int32_t>(source.height), 1};
++        region.dstOffsets[1] = {static_cast<int32_t>(g.swapchain.extent.width),
++                                static_cast<int32_t>(g.swapchain.extent.height), 1};
++        vkCmdBlitImage(cmd, source.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, swapchain,
++                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region, VK_FILTER_NEAREST);
++        SwapchainBarrier(cmd, swapchain, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
++                         VK_PIPELINE_STAGE_2_ALL_TRANSFER_BIT, VK_ACCESS_2_TRANSFER_WRITE_BIT,
++                         VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT, VK_ACCESS_2_NONE);
++        ToRest(cmd, source);
++    };
++    blit_to_swapchain(generated, index_generated);
++    blit_to_swapchain(canonical, index_canonical);
++    CloseTimestamps(cmd, true);
++    Check(vkEndCommandBuffer(cmd), "vkEndCommandBuffer");
++
++    VkSemaphoreSubmitInfo waits[3] = {};
++    waits[0] = {VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO, nullptr, frame.image_available,
++                VK_PIPELINE_STAGE_2_ALL_TRANSFER_BIT, 0};
++    waits[1] = {VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO, nullptr, fg_done,
++                VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT, 0};
++    waits[2] = {VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO, nullptr, acquire_generated,
++                VK_PIPELINE_STAGE_2_ALL_TRANSFER_BIT, 0};
++    VkSemaphoreSubmitInfo signals[2] = {};
++    signals[0] = {VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO, nullptr, g.swapchain.render_finished[index_generated],
++                  VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT, 0};
++    signals[1] = {VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO, nullptr, g.swapchain.render_finished[index_canonical],
++                  VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT, 0};
++    VkCommandBufferSubmitInfo command = {VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO, nullptr, cmd, 0};
++    VkSubmitInfo2             submit = {};
++    submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2;
++    submit.waitSemaphoreInfoCount = 3;
++    submit.pWaitSemaphoreInfos = waits;
++    submit.commandBufferInfoCount = 1;
++    submit.pCommandBufferInfos = &command;
++    submit.signalSemaphoreInfoCount = 2;
++    submit.pSignalSemaphoreInfos = signals;
++    Check(vkResetFences(g.device, 1, &frame.fence), "vkResetFences");
++    Check(vkQueueSubmit2(g.queue, 1, &submit, frame.fence), "vkQueueSubmit2");
++    frame.pending = true;
++    g.in_frame = false;
++    g_game_frame_open.store(false);
++
++    auto present = [&](uint32_t index, VkSemaphore finished) {
++        VkPresentInfoKHR info = {};
++        info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
++        info.waitSemaphoreCount = 1;
++        info.pWaitSemaphores = &finished;
++        info.swapchainCount = 1;
++        info.pSwapchains = &g.swapchain.handle;
++        info.pImageIndices = &index;
++        VkResult result = vkQueuePresentKHR(g.queue, &info);
++        if (result == VK_SUBOPTIMAL_KHR) {
++            if (SuboptimalNeedsRecreate()) {
++                g_resize_pending.store(true);
++            }
++        } else if (SwapchainLost(result)) {
++            g_resize_pending.store(true);
++        } else {
++            Check(result, "vkQueuePresentKHR");
++        }
++    };
++    present(index_generated, g.swapchain.render_finished[index_generated]);
++    present(index_canonical, g.swapchain.render_finished[index_canonical]);
++}
++
+ bool PresentCanonical() {
+     // Read on the game thread: the worker must not look at the list the game thread records.
+     const bool recording = RecordingCalls();
+@@ -2019,12 +2158,39 @@ bool PresentCanonical() {
+             presented = true;
+             return;
+         }
++        const bool generated = FrameGenHasOutput();
+         if (!AcquireImage(false)) {
+             return;
+         }
+         g.presented_display = false;
+         OpenFrame();
+         Frame &frame = CurrentFrame();
++        if (generated) {
++            // The first acquire came through frame.image_available: that image shows the generated
++            // frame. A second acquire with a frame-generation semaphore takes the image that shows
++            // the canonical, one vblank later.
++            const uint32_t index_generated = g.image_index;
++            const uint32_t index_canonical = 0;
++            VkSemaphore    acquire_canonical = FrameGenAcquireSemaphore();
++            VkResult       second = vkAcquireNextImageKHR(g.device, g.swapchain.handle, UINT64_MAX,
++                                                          acquire_canonical, VK_NULL_HANDLE,
++                                                          &const_cast<uint32_t &>(index_canonical));
++            if ((second == VK_SUCCESS || second == VK_SUBOPTIMAL_KHR) && index_canonical != index_generated) {
++                if (second == VK_SUBOPTIMAL_KHR && SuboptimalNeedsRecreate()) {
++                    g_resize_pending.store(true);
++                }
++                PresentPair(frame, FrameGenOutputImage(), PreviousMainColor(), index_generated,
++                            frame.image_available, index_canonical, acquire_canonical, FrameGenOutputDone());
++                FrameGenNotePresented();
++                g.target = kMainTarget;
++                AdvanceSlot();
++                presented = true;
++                return;
++            }
++            // The second image did not come: show the canonical alone and retire the generated
++            // frame so a stale one is never shown later.
++            FrameGenNotePresented();
++        }
+         PresentImage(frame, frame.draw_cmd, PreviousMainColor());
+         g.target = kMainTarget;
+         AdvanceSlot();
+diff --git a/src/cpp/gfx/shaders/anf_motion.frag b/src/cpp/gfx/shaders/anf_motion.frag
+new file mode 100644
+index 0000000..9e15194
+--- /dev/null
++++ b/src/cpp/gfx/shaders/anf_motion.frag
+@@ -0,0 +1,37 @@
++#version 450
++// ANF frame-generation motion vectors: camera-only reprojection of the canonical depth.
++// World position comes from the current inverse view-projection at the stored depth; the
++// previous view-projection projects it back. Moving objects inherit camera-only motion for
++// now; the interpolation machinery's per-object poses can refine this later.
++layout(location = 0) in vec2 uv;
++layout(location = 0) out vec2 motion;
++
++layout(set = 0, binding = 0) uniform Clips {
++    mat4 cur_inv_view_proj;
++    mat4 prev_view_proj;
++} clips;
++layout(set = 0, binding = 1) uniform sampler2D depth_tex;
++
++void main() {
++    float depth = texture(depth_tex, uv).r;
++    if (depth >= 1.0) {
++        // Sky and cleared pixels: nothing to reproject.
++        motion = vec2(0.0);
++        return;
++    }
++    vec4 clip = vec4(uv * 2.0 - 1.0, depth, 1.0);
++    vec4 world = clips.cur_inv_view_proj * clip;
++    if (world.w == 0.0) {
++        motion = vec2(0.0);
++        return;
++    }
++    world /= world.w;
++    vec4 prev = clips.prev_view_proj * vec4(world.xyz, 1.0);
++    if (prev.w <= 0.0) {
++        motion = vec2(0.0);
++        return;
++    }
++    vec2 prev_ndc = prev.xy / prev.w;
++    // Half the NDC displacement is the UV displacement ANF expects.
++    motion = 0.5 * (prev_ndc - clip.xy);
++}
+diff --git a/src/cpp/gfx/shaders/anf_motion.vert b/src/cpp/gfx/shaders/anf_motion.vert
+new file mode 100644
+index 0000000..00b835e
+--- /dev/null
++++ b/src/cpp/gfx/shaders/anf_motion.vert
+@@ -0,0 +1,8 @@
++#version 450
++// Fullscreen triangle for the ANF frame-generation motion pass.
++layout(location = 0) out vec2 uv;
++void main() {
++    vec2 p = vec2(float((gl_VertexIndex << 1) & 2), float(gl_VertexIndex & 2));
++    uv = p;
++    gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0);
++}

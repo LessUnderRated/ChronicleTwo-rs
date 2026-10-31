@@ -318,7 +318,9 @@ std::vector<Page> MakePages() {
                                 Resolution(),
                                 Choice<&Config::present_mode>("video.present_mode", "Present mode", "FIFO prevents tearing. Mailbox keeps the newest frame.\nUnsupported modes fall back to FIFO.", {"FIFO", "Mailbox", "Immediate"}),
                                 Number<&Config::max_fps>("video.max_fps", "Frame cap", "Limits display frames, not game speed.", {0, 30, 50, 60, 75, 90, 100, 120, 144, 165, 180, 240, 360}, 1, " FPS"),
-                                Choice<&Config::interpolation>("video.interpolation", "Interpolation", "Smooths display frames between game ticks.", {"Off", "On"}),
+                                Choice<&Config::interpolation>("video.interpolation", "Interpolation", "Smooths display frames between game ticks. Each interpolated\nframe replays every draw; turning it off halves the device's work.", {"Off", "On"}),
+                                Number<&Config::render_scale>("video.render_scale", "Render scale", "Pixels per PS2 line of the 3D view. Lower values render\nfaster; 0% follows the window height. Applies at the next start.", {0, .5, .75, .9, 1, 1.25, 1.5, 2}, 100, "%"),
+                                Choice<&Config::log_perf>("video.frame_timing_log", "Performance log", "Writes the frame rates and the GPU's per-pass timings\nto the log every few seconds.", {"Off", "On"}),
                                 Choice<&Config::aspect>("video.aspect", "Aspect ratio", "Auto fills the window. 4:3 adds black side bars.", {"Auto", "4:3"}),
                                 Number<&Config::ui_scale>("video.ui_scale", "UI scale", "Scales menus and HUD. Large values can crop the UI.\nUse Left to reduce the scale if it no longer fits.", {0.5, 0.65, 0.75, 0.85, 1, 1.1, 1.25, 1.5}, 100, "%"),
                                 Choice<&Config::font_sharp>("video.text_font", "Text font", "Sharp draws the letters as outlines, clear at any\n"

@@ -35,7 +35,10 @@ enum class ConfigRenderThread {
 
 // video.interpolation's default. On iOS each interpolated display frame costs the render thread a full replay
 // through MoltenVK, which cannot keep up in a busy dungeon, so the game presents its logic frames directly by default.
+// Android pays the same price through Adreno, which also runs hot under the doubled draw load, so it defaults off too.
 #if defined(__APPLE__) && TARGET_OS_IPHONE
+inline constexpr bool kConfigInterpolationDefault = false;
+#elif defined(__ANDROID__)
 inline constexpr bool kConfigInterpolationDefault = false;
 #else
 inline constexpr bool kConfigInterpolationDefault = true;
@@ -67,6 +70,14 @@ struct Config : HostSettings {
     ConfigAspect aspect = ConfigAspect::Auto;
     float        ui_scale = 1.0f;
     bool         font_sharp = true;
+    // video.render_scale: pixels per PS2 line of the render targets; 0 picks the window's height over
+    // 480. Applies at the next start. On a phone this is the cheapest big fill-rate lever.
+    float render_scale = 0.0f;
+    // video.frame_timing_log: the periodic present-rate and GPU timing summary in the log, plus the device
+    // counters (draws, transient uploads, constant-record bytes) that point at where the watts go.
+    // Formerly video.log_perf; renamed so old configs that saved it on stop forcing the per-second
+    // timing spam back on. The ANF probe's one-time startup lines are unaffected.
+    bool log_perf = false;
     bool         mouse_fixed_look = true;
     float        menu_pointer_speed = 1.5f;        /**< Captured menu hand travel per mouse count in window pixels. */
     bool         menu_pointer_acceleration = true; /**< Enables up to twice the menu hand gain for fast captured motion. */

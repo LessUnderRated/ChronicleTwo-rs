@@ -15,6 +15,7 @@
 #include "exitcodes.hpp"
 #include "gfx/displaylist.hpp"
 #include "gfx/gfx.hpp"
+#include "gfx/anf_fg.hpp"
 #include "log/log.hpp"
 #include "menu_mouse.hpp"
 #include "platform/clock.hpp"
@@ -50,8 +51,13 @@ int               wait_frames = 0;
 
 /**
  * Enables intermediate displays for game frames below the requested presentation cadence.
+ * With ANF frame generation active the renderer interpolates at present time instead, so the
+ * port shows the canonical once per tick and lets the generated frame take the other slot.
  */
 bool InterpolateFrame([[maybe_unused]] int frames) {
+    if (gfx::detail::FrameGenActive()) {
+        return false;
+    }
 #ifdef __SWITCH__
     return settings.interpolation && frames > 1;
 #else

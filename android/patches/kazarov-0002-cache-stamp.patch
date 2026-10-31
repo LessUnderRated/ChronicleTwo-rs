@@ -1,3 +1,17 @@
+diff --git a/include/gfx/context.hpp b/include/gfx/context.hpp
+index ad1b6d0..1b23f41 100644
+--- a/include/gfx/context.hpp
++++ b/include/gfx/context.hpp
+@@ -402,6 +402,9 @@ struct FrameCounters {
+     uint32_t grab_precopies = 0;
+     uint32_t descriptor_binds = 0;
+     uint64_t transient_bytes = 0;
++    // The mesh constant records (MeshConstants, Prog0Constants and palettes) the CPU rewrote this
++    // frame, whether or not the dedup skipped their upload: the frame's per-draw CPU memcpy volume.
++    uint64_t constant_record_bytes = 0;
+ };
+ 
+ struct Context {
 diff --git a/include/gfx/displaylist.hpp b/include/gfx/displaylist.hpp
 index ccd21c0..6d37ca8 100644
 --- a/include/gfx/displaylist.hpp
@@ -36,10 +50,24 @@ index ccd21c0..6d37ca8 100644
  
  } // namespace gfx
 diff --git a/include/gfx/gfx.hpp b/include/gfx/gfx.hpp
-index 4190669..c91542c 100644
+index 4190669..e100835 100644
 --- a/include/gfx/gfx.hpp
 +++ b/include/gfx/gfx.hpp
-@@ -274,6 +274,10 @@ inline constexpr TextureHandle kPreviousFrame = 2;
+@@ -211,6 +211,13 @@ struct FrameTimings {
+     uint32_t interval_buckets[4] = {};
+     uint32_t sync_waits = 0; // one-shot submissions that wait for the GPU
+ 
++    // The device counters of the last completed canonical frame: the draw volume and the bytes the
++    // CPU pushed through the transient chunks (uploads and the per-draw constant records).
++    uint64_t transient_bytes = 0;
++    uint64_t constant_record_bytes = 0;
++    uint32_t mesh_draws = 0;
++    uint32_t draws_2d = 0;
++
+     // KZ_GPU_SCOPES=pass or draw: GPU time between timestamps at the end of each pass, copy and the setup
+     // before a pass, and with draw at each pipeline change inside a pass. The timestamps do not wait, so a
+     // segment is the time from its predecessor's completion to its own.
+@@ -274,6 +281,10 @@ inline constexpr TextureHandle kPreviousFrame = 2;
  enum class TextureFormat : uint8_t {
      Rgba8,
      Index8,
@@ -50,11 +78,52 @@ index 4190669..c91542c 100644
  };
  
  struct TextureDesc {
+diff --git a/src/cpp/gfx/displaylist.cpp b/src/cpp/gfx/displaylist.cpp
+index 667fc59..2a1355b 100644
+--- a/src/cpp/gfx/displaylist.cpp
++++ b/src/cpp/gfx/displaylist.cpp
+@@ -1243,14 +1243,20 @@ void Interpolated(const DisplayList &list, const DisplayList &previous, float al
+                 if (earlier.prog0 >= 0 && earlier.palette >= 0 &&
+                     (previous.prog0_blocks[static_cast<size_t>(earlier.prog0)].flags & kProg0Skinned) != 0) {
+                     const Prog0Palette &newest_palette = list.palettes[static_cast<size_t>(mesh->palette)];
+-                    Prog0Palette       &blended = out.palettes.emplace_back();
+-                    if (phases.enabled) phases.palette_blends++;
+-                    BlendProg0Bones(previous.palettes[static_cast<size_t>(earlier.palette)], newest_palette, alpha,
+-                                    record.teleport_distance, blended);
+-                    if (std::memcmp(&blended, &newest_palette, sizeof blended) != 0) {
+-                        out.palette_index[mesh->record] = static_cast<int32_t>(out.palettes.size() - 1);
+-                    } else {
+-                        out.palettes.pop_back();
++                    // A pose the previous tick already holds needs no blend at all: the recorded
++                    // palette is the answer, and building an override for it would only be popped.
++                    // Idle characters and still menus skip the whole per-bone interpolation here.
++                    if (std::memcmp(&previous.palettes[static_cast<size_t>(earlier.palette)], &newest_palette,
++                                    sizeof(Prog0Palette)) != 0) {
++                        Prog0Palette &blended = out.palettes.emplace_back();
++                        if (phases.enabled) phases.palette_blends++;
++                        BlendProg0Bones(previous.palettes[static_cast<size_t>(earlier.palette)], newest_palette, alpha,
++                                        record.teleport_distance, blended);
++                        if (std::memcmp(&blended, &newest_palette, sizeof blended) != 0) {
++                            out.palette_index[mesh->record] = static_cast<int32_t>(out.palettes.size() - 1);
++                        } else {
++                            out.palettes.pop_back();
++                        }
+                     }
+                 }
+             }
 diff --git a/src/cpp/gfx/draw.cpp b/src/cpp/gfx/draw.cpp
-index cf58b1b..a7ea41e 100644
+index cf58b1b..686c4fc 100644
 --- a/src/cpp/gfx/draw.cpp
 +++ b/src/cpp/gfx/draw.cpp
-@@ -595,6 +595,16 @@ bool Prepare(PipelineFamily family, VkPrimitiveTopology topology, const TextureB
+@@ -124,6 +124,7 @@ void RecordMeshApiEvent(MeshApiEvent event) {
+ }
+ 
+ void RecordMeshConstantCopy(size_t bytes) {
++    g.counters.constant_record_bytes += bytes;
+     if (MeshPhaseContextActive() && mesh_phase_diagnostic.current_class != MeshPhaseClass::Count) {
+         mesh_phase_diagnostic.frame[static_cast<size_t>(mesh_phase_diagnostic.current_class)].constant_copy_bytes += bytes;
+     }
+@@ -595,6 +596,16 @@ bool Prepare(PipelineFamily family, VkPrimitiveTopology topology, const TextureB
          }
      }
  
@@ -71,7 +140,7 @@ index cf58b1b..a7ea41e 100644
      Target target;
      EnsureRendering(target);
      VkCommandBuffer cmd = DrawCommands();
-@@ -1888,6 +1898,67 @@ void DrawPrepared(Primitive primitive, std::span<const Vertex2D> vertices, const
+@@ -1888,6 +1899,67 @@ void DrawPrepared(Primitive primitive, std::span<const Vertex2D> vertices, const
  
  } // namespace
  
@@ -139,7 +208,7 @@ index cf58b1b..a7ea41e 100644
  namespace {
  
  // The state DrawDepthPlanes2D is exact for: the feathered haze blend (A = source, B = zero, C = FIX 0x80,
-@@ -2194,11 +2265,20 @@ void DrawIndexedMesh(MeshHandle handle, uint32_t first_index, uint32_t index_cou
+@@ -2194,11 +2266,20 @@ void DrawIndexedMesh(MeshHandle handle, uint32_t first_index, uint32_t index_cou
          if (index_count == 0) {
              return;
          }
@@ -161,7 +230,7 @@ index cf58b1b..a7ea41e 100644
                       false, {}, {}, &constants, mesh, index_count)) {
              return;
          }
-@@ -2208,8 +2288,7 @@ void DrawIndexedMesh(MeshHandle handle, uint32_t first_index, uint32_t index_cou
+@@ -2208,8 +2289,7 @@ void DrawIndexedMesh(MeshHandle handle, uint32_t first_index, uint32_t index_cou
          }
          mesh->last_draw_use = g.frame_serial;
          VkCommandBuffer cmd = DrawCommands();
@@ -171,7 +240,7 @@ index cf58b1b..a7ea41e 100644
          if (phases) {
              phases->Advance(MeshPhase::Emit);
          }
-@@ -2264,11 +2343,18 @@ void DrawImmediateMesh(std::span<const Vertex3D> vertices, std::span<const uint3
+@@ -2264,11 +2344,18 @@ void DrawImmediateMesh(std::span<const Vertex3D> vertices, std::span<const uint3
          if (vertices.empty() || indices.empty()) {
              return;
          }
@@ -191,7 +260,7 @@ index cf58b1b..a7ea41e 100644
                       static_cast<uint32_t>(indices.size()))) {
              return;
          }
-@@ -2285,8 +2371,7 @@ void DrawImmediateMesh(std::span<const Vertex3D> vertices, std::span<const uint3
+@@ -2285,8 +2372,7 @@ void DrawImmediateMesh(std::span<const Vertex3D> vertices, std::span<const uint3
              phases->PayloadCopied(vertices.size_bytes() + indices.size_bytes());
              phases->Advance(MeshPhase::Constants);
          }
@@ -424,10 +493,29 @@ index cf36c35..57291cb 100644
      return read;
  }
 diff --git a/src/cpp/gfx/renderer.cpp b/src/cpp/gfx/renderer.cpp
-index 091209e..e515a9a 100644
+index 091209e..bf424c4 100644
 --- a/src/cpp/gfx/renderer.cpp
 +++ b/src/cpp/gfx/renderer.cpp
-@@ -1571,6 +1571,11 @@ void RendererInit(SDL_Window *window, const RendererConfig &config) {
+@@ -1163,7 +1163,17 @@ void NoteFrameCpu(bool display) {
+     }
+     const double ms = MillisecondsSince(g_frame_opened);
+     g_frame_opened = {};
+-    RecordTiming([&](FrameTimings &timings) { (display ? timings.display_cpu : timings.canonical_cpu).Add(ms); });
++    RecordTiming([&](FrameTimings &timings) {
++        (display ? timings.display_cpu : timings.canonical_cpu).Add(ms);
++        if (!display) {
++            // The canonical frame's device counters: the draw volume and the CPU-side upload bytes
++            // the timing summary reports.
++            timings.transient_bytes = g.counters.transient_bytes;
++            timings.constant_record_bytes = g.counters.constant_record_bytes;
++            timings.mesh_draws = g.counters.mesh_draws;
++            timings.draws_2d = g.counters.draws_2d;
++        }
++    });
+ }
+ 
+ // Moves recording to the next slot once the GPU is done with what that slot last submitted.
+@@ -1571,6 +1581,11 @@ void RendererInit(SDL_Window *window, const RendererConfig &config) {
              ? config.render_scale
              : std::max(1.0f, std::round(static_cast<float>(g.swapchain.extent.height) / g.config.logical_height));
      CreatePipelines();
@@ -439,6 +527,21 @@ index 091209e..e515a9a 100644
      StartRenderThread(g.config.render_thread);
  }
  
+@@ -2081,6 +2096,14 @@ void LogFrameTimings(double elapsed_seconds) {
+              timing.display_gpu.Average(), timing.display_gpu.max_ms);
+     kz::Logf(kz::LogLevel::Info, "gfx", "timing display prepare count={} cpu={:.3f}/{:.3f}",
+              timing.display_prepare_cpu.count, timing.display_prepare_cpu.Average(), timing.display_prepare_cpu.max_ms);
++    // The canonical frame's device counters: the draw volume and the CPU-side upload bytes. On a
++    // phone these point at where the watts go: draws and transient traffic.
++    if (timing.canonical_cpu.count != 0) {
++        kz::Logf(kz::LogLevel::Info, "gfx",
++                 "device: mesh draws {} 2d draws {} transient KB {:.1f} constant records KB {:.1f} per canonical frame",
++                 timing.mesh_draws, timing.draws_2d, static_cast<double>(timing.transient_bytes) / 1024.0,
++                 static_cast<double>(timing.constant_record_bytes) / 1024.0);
++    }
+     kz::Logf(kz::LogLevel::Info, "gfx", "timing acquire={:.3f} present={:.3f} fence={:.3f} intervals={}/{}/{}/{} sync_waits={}",
+              timing.acquire.Average(), timing.queue_present.Average(), timing.fence_wait.Average(),
+              timing.interval_buckets[0], timing.interval_buckets[1], timing.interval_buckets[2], timing.interval_buckets[3],
 diff --git a/src/cpp/gfx/resources.cpp b/src/cpp/gfx/resources.cpp
 index 5932b9c..4460629 100644
 --- a/src/cpp/gfx/resources.cpp
