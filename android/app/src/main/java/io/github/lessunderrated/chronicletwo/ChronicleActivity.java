@@ -63,13 +63,24 @@ public class ChronicleActivity extends SDLActivity implements TouchOverlay.Liste
     @Override
     protected void onResume() {
         super.onResume();
+        background(false);
         power.start();
     }
 
     @Override
     protected void onPause() {
         power.stop();
+        background(true);
         super.onPause();
+    }
+
+    /** The game parks before SDL pauses, while its window surface is still there to drop. */
+    private static void background(boolean background) {
+        try {
+            Native.setBackground(background);
+        } catch (UnsatisfiedLinkError e) {
+            // The game's library did not load; SDL reports that itself.
+        }
     }
 
     private int dp(int value) {

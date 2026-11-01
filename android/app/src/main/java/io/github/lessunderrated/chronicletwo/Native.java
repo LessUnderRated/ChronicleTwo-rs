@@ -31,6 +31,12 @@ final class Native {
 
     static native void setPaused(boolean paused);
 
+    /**
+     * The activity leaving (true, before SDL's onPause) or coming back to the foreground (false, after SDL's
+     * onResume). Leaving waits briefly for the game to drop its window surface, which Android destroys next.
+     */
+    static native void setBackground(boolean background);
+
     /** The device's power draw in watts for the overlay (Power), or a negative value when unknown. */
     static native void setWatts(float watts);
 

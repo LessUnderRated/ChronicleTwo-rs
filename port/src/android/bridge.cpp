@@ -14,6 +14,8 @@
 
 #include <algorithm>
 #include <atomic>
+#include <chrono>
+#include <condition_variable>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -21,11 +23,13 @@
 #include <filesystem>
 #include <functional>
 #include <map>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <utility>
 
 #include "android/bridge.hpp"
+#include "gfx/gfx.hpp"
 #include "options/rows.hpp"
 #include "platform/audio.hpp"
 #include "platform/clock.hpp"
@@ -44,6 +48,14 @@ constexpr const char *kTag = "ChronicleTwo";
 
 std::atomic<bool>     g_paused{false};
 std::atomic<unsigned> g_speed{1};
+
+// The activity's onPause and onResume (SetBackground) and the game thread's answer: Android destroys the window's
+// surface soon after onPause, so the game thread drops its swapchain and surface first and holds still until
+// onResume. parked is the game thread's word that it has.
+std::mutex              g_background_mutex;
+std::condition_variable g_background_changed;
+bool                    g_background = false;
+bool                    g_parked = false;
 
 // stdout and stderr, which Android discards. stderr goes straight to logs/stderr.log in the game root: a Rust panic,
 // an allocation failure and a C++ terminate all write their last words there just before they abort, and a file
@@ -272,6 +284,17 @@ jint JNICALL ButtonBit(JNIEnv *, jclass, jint index) {
 
 void JNICALL SetPaused(JNIEnv *, jclass, jboolean paused) { g_paused = paused == JNI_TRUE; }
 
+// On the UI thread. Going to the background waits a while for the game thread to park, which it does between ticks;
+// one busy loading past the wait parks at its next tick, and Kazarov makes a lost surface again.
+void JNICALL SetBackground(JNIEnv *, jclass, jboolean background) {
+    std::unique_lock lock(g_background_mutex);
+    g_background = background == JNI_TRUE;
+    g_background_changed.notify_all();
+    if (g_background) {
+        g_background_changed.wait_for(lock, std::chrono::milliseconds(1500), [] { return g_parked; });
+    }
+}
+
 void JNICALL SetWatts(JNIEnv *, jclass, jfloat watts) { SetDeviceWatts(watts); }
 
 void JNICALL SetSpeed(JNIEnv *, jclass, jint speed) { g_speed = static_cast<unsigned>(std::clamp(speed, 1, 2)); }
@@ -339,13 +362,39 @@ std::vector<std::string> GameArguments() {
     return {(root / "darkchronicle").string(), "--run-dir", root.string()};
 }
 
+namespace {
+
+bool Background() {
+    std::lock_guard lock(g_background_mutex);
+    return g_background;
+}
+
+// In the background: the renderer suspended, its swapchain and surface dropped, until the activity resumes.
+void ParkInBackground() {
+    gfx::RendererSuspend();
+    {
+        std::unique_lock lock(g_background_mutex);
+        g_parked = true;
+        g_background_changed.notify_all();
+        g_background_changed.wait(lock, [] { return !g_background; });
+        g_parked = false;
+    }
+    gfx::RendererResume();
+}
+
+} // namespace
+
 void Pump() {
-    if (g_paused) {
-        // The game holds still under the app's menu: no ticks and no sound, and the clock starts again from
-        // where it is, so the time paused is not caught up.
+    if (g_paused || Background()) {
+        // The game holds still under the app's menu and in the background: no ticks and no sound, and the clock
+        // starts again from where it is, so the time paused is not caught up.
         AudioOutputPause(true);
-        while (g_paused) {
-            SDL_Delay(20);
+        while (g_paused || Background()) {
+            if (Background()) {
+                ParkInBackground();
+            } else {
+                SDL_Delay(20);
+            }
         }
         AudioOutputPause(false);
         ClockSetTickRate(ClockTickRate());
@@ -374,6 +423,7 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *) {
         Method("touchVisible", "()Z", reinterpret_cast<void *>(TouchVisible)),
         Method("buttonBit", "(I)I", reinterpret_cast<void *>(ButtonBit)),
         Method("setPaused", "(Z)V", reinterpret_cast<void *>(SetPaused)),
+        Method("setBackground", "(Z)V", reinterpret_cast<void *>(SetBackground)),
         Method("setWatts", "(F)V", reinterpret_cast<void *>(SetWatts)),
         Method("setSpeed", "(I)V", reinterpret_cast<void *>(SetSpeed)),
         Method("speed", "()I", reinterpret_cast<void *>(Speed)),

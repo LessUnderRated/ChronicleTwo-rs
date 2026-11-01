@@ -1,0 +1,31 @@
+diff --git a/include/gfx/gfx.hpp b/include/gfx/gfx.hpp
+index 3dad2d5..21b25e3 100644
+--- a/include/gfx/gfx.hpp
++++ b/include/gfx/gfx.hpp
+@@ -175,7 +175,9 @@ void RendererResize();
+ // For an app sent to the background, where iOS refuses GPU work and ends an app that submits it: on the thread
+ // that pumps the window's events, parks the render thread and waits for the GPU to finish everything submitted.
+ // Until RendererResume, called on the same thread, nothing else may record or present. Resuming recreates the
+-// swapchain at the next BeginFrame. Without a device, or already suspended, nothing happens.
++// swapchain at the next BeginFrame. Without a device, or already suspended, nothing happens. On Android the app's
++// activity has the game thread call these around onPause and onResume, and suspending also drops the window's
++// surface, which Android takes away in the background.
+ void RendererSuspend();
+ void RendererResume();
+ // The swapchain is recreated with the mode at the next BeginFrame or tick render.
+diff --git a/src/cpp/gfx/renderer.cpp b/src/cpp/gfx/renderer.cpp
+index bb0c488..024b0ac 100644
+--- a/src/cpp/gfx/renderer.cpp
++++ b/src/cpp/gfx/renderer.cpp
+@@ -2886,6 +2886,11 @@ void RendererSuspend() {
+     // The lease waits out queued commands and the idle hook's frame, then keeps both from starting.
+     g_suspend_lease.emplace();
+     vkDeviceWaitIdle(g.device);
++#ifdef __ANDROID__
++    // Android destroys the window's surface after the app leaves the foreground, and a swapchain left on it
++    // presents into a released window. Both go now; resuming makes them again once the window is back.
++    detail::DropSurface();
++#endif
+ }
+ 
+ void RendererResume() {
