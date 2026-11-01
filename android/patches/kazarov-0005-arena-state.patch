@@ -1,0 +1,225 @@
+diff --git a/include/platform/arena.hpp b/include/platform/arena.hpp
+index f55357a..81f1486 100644
+--- a/include/platform/arena.hpp
++++ b/include/platform/arena.hpp
+@@ -4,6 +4,8 @@
+ #include <cstdint>
+ #include <optional>
+ #include <span>
++#include <string>
++#include <vector>
+ 
+ #include "platform/memory.hpp"
+ 
+@@ -86,4 +88,36 @@ bool IsLive(const Region &region);
+  */
+ std::uint64_t Epoch();
+ 
++/**
++ *
++ * One active block as a save state holds it: where it is, its identity, and its writable bytes (lead included).
++ *
++ */
++struct SavedBlock {
++    const void               *owner = nullptr;   /**< Caller identity the block is kept for. */
++    const void               *root = nullptr;    /**< Canonical root address returned by ArenaBlock. */
++    std::size_t               lead = 0;          /**< Usable bytes before root. */
++    std::size_t               requested = 0;     /**< Largest payload the owner asked for. */
++    std::uint64_t             generation = 0;    /**< Mapping identity when saved. */
++    std::vector<unsigned char> bytes;            /**< lead + requested bytes from root - lead. */
++};
++
++/**
++ *
++ * Copies every active block, in the order they were made.
++ *
++ */
++std::vector<SavedBlock> SaveBlocks();
++
++/**
++ *
++ * Puts saved blocks back at their addresses, with their identities, so a pointer the game kept and a Region the host
++ * captured both mean again what they meant when the blocks were saved. A saved block's mapping must still exist in
++ * this process with room for it: active, or retired since (an owner that outgrew it), which becomes its owner's active
++ * block again. Active blocks the state does not hold are zeroed with new identities. Nothing changes and false comes
++ * back, with the reason in error, when a block has no mapping to go back into.
++ *
++ */
++bool RestoreBlocks(std::span<const SavedBlock> blocks, std::string *error);
++
+ } // namespace kz::arena
+diff --git a/src/cpp/platform/arena.cpp b/src/cpp/platform/arena.cpp
+index 1eee243..d967dd0 100644
+--- a/src/cpp/platform/arena.cpp
++++ b/src/cpp/platform/arena.cpp
+@@ -1,6 +1,8 @@
+ #include "platform/arena.hpp"
+ 
++#include <algorithm>
+ #include <atomic>
++#include <cstring>
+ #include <format>
+ #include <limits>
+ #include <mutex>
+@@ -143,6 +145,79 @@ bool kz::arena::IsLive(const Region &region) {
+     return false;
+ }
+ 
++std::vector<kz::arena::SavedBlock> kz::arena::SaveBlocks() {
++    const std::lock_guard<std::mutex> lock(blocks_mutex);
++    std::vector<SavedBlock>           saved;
++    saved.reserve(g_blocks.size());
++    for (const Block &block : g_blocks) {
++        const unsigned char *begin = block.memory.base - block.memory.lead;
++        saved.push_back({
++            .owner = block.owner,
++            .root = block.memory.base,
++            .lead = block.memory.lead,
++            .requested = block.requested_bytes,
++            .generation = block.generation,
++            .bytes = {begin, begin + block.memory.lead + block.requested_bytes},
++        });
++    }
++    return saved;
++}
++
++bool kz::arena::RestoreBlocks(std::span<const SavedBlock> blocks, std::string *error) {
++    const std::lock_guard<std::mutex> lock(blocks_mutex);
++    auto                              fits = [](const Block &block, const SavedBlock &saved) {
++        return block.memory.base == saved.root && block.memory.lead == saved.lead &&
++               block.memory.capacity >= saved.requested && saved.bytes.size() == saved.lead + saved.requested;
++    };
++    // Every saved block finds its mapping before anything is written.
++    std::vector<std::size_t> retired_back;
++    for (const SavedBlock &saved : blocks) {
++        const bool active = std::ranges::any_of(g_blocks, [&](const Block &block) { return fits(block, saved); });
++        if (active) {
++            continue;
++        }
++        const auto retired = std::ranges::find_if(g_retired, [&](const Block &block) { return fits(block, saved); });
++        if (retired == g_retired.end()) {
++            if (error != nullptr) {
++                *error = std::format("no mapping at {:p} for {} bytes", saved.root, saved.lead + saved.requested);
++            }
++            return false;
++        }
++        retired_back.push_back(static_cast<std::size_t>(retired - g_retired.begin()));
++    }
++    // A retired mapping becomes its owner's active one again; the mapping it replaces is retired, still mapped.
++    std::ranges::sort(retired_back, std::greater<>());
++    for (const std::size_t index : retired_back) {
++        Block back = g_retired[index];
++        g_retired.erase(g_retired.begin() + static_cast<std::ptrdiff_t>(index));
++        const auto current = std::ranges::find_if(g_blocks, [&](const Block &block) { return block.owner == back.owner; });
++        if (current != g_blocks.end()) {
++            ArenaMemoryZero(current->memory);
++            g_retired.push_back(*current);
++            *current = back;
++        } else {
++            g_blocks.push_back(back);
++        }
++    }
++    for (Block &block : g_blocks) {
++        const auto saved = std::ranges::find_if(blocks, [&](const SavedBlock &candidate) { return fits(block, candidate); });
++        if (saved == blocks.end()) {
++            ArenaMemoryZero(block.memory);
++            block.generation = NewGeneration();
++            continue;
++        }
++        // Past the saved extent the block holds nothing, as it did when it was saved.
++        ArenaMemoryZero(block.memory);
++        std::memcpy(block.memory.base - block.memory.lead, saved->bytes.data(), saved->bytes.size());
++        block.owner = saved->owner;
++        block.requested_bytes = saved->requested;
++        block.generation = saved->generation;
++    }
++    // Epoch moves so cached liveness answers are asked again.
++    NewGeneration();
++    return true;
++}
++
+ void ArenaRequireOneAbove4GiB(const void *const *bases, std::size_t count) {
+ #ifndef NDEBUG
+     for (std::size_t i = 0; i < count; i++) {
+diff --git a/src/cpp/tests/platform_arena_test.cpp b/src/cpp/tests/platform_arena_test.cpp
+index cee209f..870dd77 100644
+--- a/src/cpp/tests/platform_arena_test.cpp
++++ b/src/cpp/tests/platform_arena_test.cpp
+@@ -6,6 +6,7 @@
+ #include <cstring>
+ #include <format>
+ #include <string>
++#include <vector>
+ 
+ #include "platform/arena.hpp"
+ #include "platform/memory.hpp"
+@@ -129,3 +130,69 @@ TEST(PlatformArenaBlock, DebugBlocksLieAbove4GiB) {
+ TEST(PlatformArenaBlock, HeadroomIsFourTimes) {
+     EXPECT_EQ(kArenaHeadroom, 4);
+ }
++
++TEST(PlatformArenaState, RestoreBringsBackBytesAndIdentity) {
++    static char    key;
++    unsigned char *base = ArenaBlock(&key, 4096, 64);
++    std::memset(base - 64, 0x11, 64 + 4096);
++    const auto region = kz::arena::RegionFor(base);
++    ASSERT_TRUE(region.has_value());
++    const auto saved = kz::arena::SaveBlocks();
++
++    std::memset(base, 0x22, 4096);
++    ArenaClearAll();
++    ASSERT_FALSE(kz::arena::IsLive(*region));
++
++    std::string error;
++    ASSERT_TRUE(kz::arena::RestoreBlocks(saved, &error)) << error;
++    EXPECT_TRUE(std::all_of(base - 64, base + 4096, [](unsigned char byte) { return byte == 0x11; }));
++    EXPECT_TRUE(kz::arena::IsLive(*region));
++}
++
++TEST(PlatformArenaState, AnOwnerThatOutgrewItsBlockGetsTheSavedMappingBack) {
++    static char           key;
++    constexpr std::size_t kGrown = std::size_t{1} << 20;
++    unsigned char        *small = ArenaBlock(&key, 1000);
++    small[0] = 0x5A;
++    const auto saved = kz::arena::SaveBlocks();
++
++    unsigned char *grown = ArenaBlock(&key, kGrown);
++    ASSERT_NE(grown, small);
++    std::string error;
++    ASSERT_TRUE(kz::arena::RestoreBlocks(saved, &error)) << error;
++    EXPECT_EQ(small[0], 0x5A);
++    EXPECT_EQ(ArenaBlock(&key, 1000), small);
++    // The grown mapping stays mapped and reads zeroes, as a retired block does.
++    EXPECT_TRUE(ArenaContains(grown));
++    EXPECT_EQ(grown[kGrown - 1], 0);
++}
++
++TEST(PlatformArenaState, ABlockMadeAfterTheSaveIsZeroedWithANewIdentity) {
++    const auto     saved = kz::arena::SaveBlocks();
++    static char    key;
++    unsigned char *later = ArenaBlock(&key, 1000);
++    later[0] = 0x33;
++    const auto region = kz::arena::RegionFor(later);
++    ASSERT_TRUE(region.has_value());
++
++    std::string error;
++    ASSERT_TRUE(kz::arena::RestoreBlocks(saved, &error)) << error;
++    EXPECT_EQ(later[0], 0);
++    EXPECT_FALSE(kz::arena::IsLive(*region));
++}
++
++TEST(PlatformArenaState, ABlockWithNoMappingLeavesEverythingAsItWas) {
++    static char    key;
++    unsigned char *base = ArenaBlock(&key, 1000);
++    base[0] = 0x44;
++    auto saved = kz::arena::SaveBlocks();
++    static char foreign;
++    saved.push_back({.owner = &foreign, .root = &foreign, .lead = 0, .requested = 16, .generation = 1,
++                     .bytes = std::vector<unsigned char>(16)});
++    base[0] = 0x55;
++
++    std::string error;
++    EXPECT_FALSE(kz::arena::RestoreBlocks(saved, &error));
++    EXPECT_FALSE(error.empty());
++    EXPECT_EQ(base[0], 0x55);
++}
