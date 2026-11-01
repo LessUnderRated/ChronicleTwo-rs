@@ -193,9 +193,9 @@ int PreLoadSync() {
     return ReadBGSync();
 }
 
-void DeleteJumpMaps(CScene *scene) {
-    scene->DeleteMap(SubMapInfo.map_no, 1);
-    scene->DeleteMap(MainMapInfo.map_no, 1);
+void dc2::world::DeleteMapJumpMaps(CScene &scene) {
+    scene.DeleteMap(SubMapInfo.map_no, 1);
+    scene.DeleteMap(MainMapInfo.map_no, 1);
 }
 
 int MapJump(CScene *scene, SCN_LOADMAP_INFO2 *info, int map_index) {
@@ -214,7 +214,7 @@ int MapJump(CScene *scene, SCN_LOADMAP_INFO2 *info, int map_index) {
     save_data->prev_map_no = static_cast<s16>(NowMainMapNo);
     mgWaitFrame();
     mgInitLighting();
-    DeleteJumpMaps(scene);
+    dc2::world::DeleteMapJumpMaps(*scene);
     NowMainMapNo = -1;
     NowSubMapNo = -1;
 

@@ -124,14 +124,6 @@ int MapJump(CScene *scene, SCN_LOADMAP_INFO2 *info, int map_index);
 
 /**
  *
- * Deletes the scene's sub map and main map. A caller that reuses the maps' arena calls this first: an arena reset retires
- * the map slots, and a retired slot no longer knows the texture blocks, model lists and event handles to release.
- *
- */
-void DeleteJumpMaps(CScene *scene);
-
-/**
- *
  * Fills a map load description with the main map settings and the file names of a map and its added map; gives 1 on success and 0 for an unknown map.
  *
  * @mangled GetLoadMapInfo__FP17SCN_LOADMAP_INFO2i
@@ -269,3 +261,10 @@ void ExitInterior(CScene *scene, int *sub_map_no);
  * @size 0xF0
  */
 int InteriorMapJump(CScene *scene, int interior_no);
+
+namespace dc2::world {
+/**
+ * Releases the outgoing main and sub maps while their resource producers remain live.
+ */
+void DeleteMapJumpMaps(CScene &scene);
+} // namespace dc2::world

@@ -218,7 +218,7 @@ TEST(SceneMapLifetime, DeletingJumpMapsClearsTextureAnimationsInTheMapArena) {
     sub_map.map_no = 1;
     SetSubMapInfo(&sub_map);
 
-    DeleteJumpMaps(scene.get());
+    dc2::world::DeleteMapJumpMaps(*scene);
 
     EXPECT_EQ(mgTexManager.GetTexAnime(3), nullptr);
     EXPECT_EQ(scene->GetMap(0), nullptr);

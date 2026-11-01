@@ -235,8 +235,28 @@ void mgCTextureBlock::Initialize() {
     unk_4 = 0;
     unk_0 = 0;
     anime = nullptr;
+    animation_storage = {};
+    animation_storage_bound = false;
     texture = nullptr;
 }
+
+namespace {
+
+/**
+ * Detaches animation commands whose controller or list storage has been reclaimed.
+ */
+mgCTextureBlock *LiveAnimationBlock(mgCTextureBlock &block) {
+    if (block.anime != nullptr &&
+        ((block.animation_storage_bound && block.animation_storage.Bytes().empty()) ||
+         !dc2::render::TextureAnimationStorageLive(block.anime))) {
+        block.anime = nullptr;
+        block.animation_storage = {};
+        block.animation_storage_bound = false;
+    }
+    return &block;
+}
+
+} // namespace
 
 void mgCTextureBlock::Add(mgCTexture *texture) {
     texture->next = nullptr;
@@ -430,14 +450,14 @@ mgCTextureBlock *mgCTextureManager::GetTextureBlock(int block) {
         return nullptr;
     }
     if (block == MG_TEXTURE_BLOCK_FIX) {
-        return &fix_block;
+        return LiveAnimationBlock(fix_block);
     }
 
     if (blocks == nullptr || block < 0 || block >= block_max) {
         return nullptr;
     }
 
-    return &blocks[block];
+    return LiveAnimationBlock(blocks[block]);
 }
 
 static inline int FirstBlock(int block) { return block; }
@@ -1629,6 +1649,7 @@ void ApplyAnimation(mgCTextureManager *manager, const texture_catalog::Source &s
                 if (!block->anime) {
                     continue;
                 }
+                dc2::render::BindTextureAnimationStorage(*block, *stack);
             }
             auto      *anime = block->anime;
             auto       found = active_groups.find(anime);
@@ -1646,6 +1667,7 @@ void ApplyAnimation(mgCTextureManager *manager, const texture_catalog::Source &s
                 }
                 std::memcpy(name, group_name.c_str(), group_name.size() + 1);
                 anime->SetGroupName(group, name);
+                dc2::render::BindTextureAnimationGroupName(*anime, group, *stack, std::span(name, group_name.size() + 1));
                 if (enabled) {
                     anime->Enable(group);
                 } else {
@@ -2528,6 +2550,7 @@ void mgCTextureManager::ReloadTexture(int index, sceVif1Packet *packet) {
         return;
     }
 
+    LiveAnimationBlock(blocks[index]);
     ResolveBlock(blocks[index]);
 
     if (last_block != index && blocks[index].anime != nullptr) {
@@ -2545,6 +2568,7 @@ int mgCTextureManager::ReloadTexture(int block, u_int *packet) {
     const bool in_range = blocks != nullptr && block >= 0 && block < block_max;
 
     if (in_range) {
+        LiveAnimationBlock(blocks[block]);
         ResolveBlock(blocks[block]);
         if (packet != nullptr && last_block != block) {
             RestoreAnimatedTextures(blocks[block], block);
