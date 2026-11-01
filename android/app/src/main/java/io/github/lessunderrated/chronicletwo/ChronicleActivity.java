@@ -41,6 +41,7 @@ public class ChronicleActivity extends SDLActivity implements TouchOverlay.Liste
     private SeekBar editSize;
     private SeekBar editOpacity;
     private boolean menuOpen;
+    private Power power;
 
     @Override
     protected String[] getLibraries() {
@@ -56,6 +57,19 @@ public class ChronicleActivity extends SDLActivity implements TouchOverlay.Liste
         addContentView(overlay, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.MATCH_PARENT));
         buildEditPanel();
+        power = new Power(this);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        power.start();
+    }
+
+    @Override
+    protected void onPause() {
+        power.stop();
+        super.onPause();
     }
 
     private int dp(int value) {

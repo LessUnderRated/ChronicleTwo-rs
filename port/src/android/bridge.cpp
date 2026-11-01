@@ -32,6 +32,7 @@
 #include "platform/config.hpp"
 #include "platform/firstrun.hpp"
 #include "platform/input.hpp"
+#include "platform/power.hpp"
 
 namespace fs = std::filesystem;
 
@@ -271,6 +272,8 @@ jint JNICALL ButtonBit(JNIEnv *, jclass, jint index) {
 
 void JNICALL SetPaused(JNIEnv *, jclass, jboolean paused) { g_paused = paused == JNI_TRUE; }
 
+void JNICALL SetWatts(JNIEnv *, jclass, jfloat watts) { SetDeviceWatts(watts); }
+
 void JNICALL SetSpeed(JNIEnv *, jclass, jint speed) { g_speed = static_cast<unsigned>(std::clamp(speed, 1, 2)); }
 
 jint JNICALL Speed(JNIEnv *, jclass) { return static_cast<jint>(g_speed.load()); }
@@ -371,6 +374,7 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *) {
         Method("touchVisible", "()Z", reinterpret_cast<void *>(TouchVisible)),
         Method("buttonBit", "(I)I", reinterpret_cast<void *>(ButtonBit)),
         Method("setPaused", "(Z)V", reinterpret_cast<void *>(SetPaused)),
+        Method("setWatts", "(F)V", reinterpret_cast<void *>(SetWatts)),
         Method("setSpeed", "(I)V", reinterpret_cast<void *>(SetSpeed)),
         Method("speed", "()I", reinterpret_cast<void *>(Speed)),
         Method("settingsPageCount", "()I", reinterpret_cast<void *>(SettingsPageCount)),

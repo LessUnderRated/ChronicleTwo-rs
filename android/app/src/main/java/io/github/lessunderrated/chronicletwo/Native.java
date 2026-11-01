@@ -31,6 +31,9 @@ final class Native {
 
     static native void setPaused(boolean paused);
 
+    /** The device's power draw in watts for the overlay (Power), or a negative value when unknown. */
+    static native void setWatts(float watts);
+
     static native void setSpeed(int speed);
 
     static native int speed();
