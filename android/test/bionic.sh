@@ -108,7 +108,7 @@ sys.exit(f"not published: {missing}" if missing else print("models published: 24
 fi
 
 if [ "$what" = port ]; then
-    filter=${2:-'NativeModel.*:CostumeMenu.*:LuauRuntime.*:GfxPipelines.*:PresentTiming.*:EventCleanup*'}
+    filter=${2:-'NativeModel.*:CostumeMenu.*:LuauRuntime.*:GfxPipelines.*:PresentTiming.*:EventCleanup.*:SceneMapLifetime.*:SceneResourceLifetime.*'}
     build=${CT_BIONIC_PORT_BUILD:-$cache/port}
     cmake=$(ls "${ANDROID_HOME:-/opt/android-sdk}"/cmake/*/bin/cmake 2>/dev/null | sort -V | tail -1)
     cmake=${cmake:-cmake}
