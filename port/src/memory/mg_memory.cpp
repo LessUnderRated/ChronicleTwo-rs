@@ -25,6 +25,7 @@
 #include "mg_memory.hpp"
 #include "platform/arena.hpp"
 #include "platform/arena_usage.hpp"
+#include "profile.hpp"
 #include "texture_source.hpp"
 
 namespace {
@@ -371,9 +372,9 @@ void PruneResourcesLocked(GenerationRegistry &registry, const mgCMemory &changed
 } // namespace
 
 ArenaLifetime ArenaLifetime::Capture(const mgCMemory &memory) {
-    ArenaLifetime                     result;
-    auto                             &registry = Generations();
-    const std::lock_guard             lock(registry.mutex);
+    ArenaLifetime         result;
+    auto                 &registry = Generations();
+    const std::lock_guard lock(registry.mutex);
     if (!StorageLiveLocked(registry, &memory)) {
         return result;
     }
@@ -397,9 +398,9 @@ ArenaLifetime ArenaLifetime::Capture(const mgCMemory &memory) {
 }
 
 bool ArenaLifetime::IsLive() const {
-    auto                             &registry = Generations();
-    const std::lock_guard             lock(registry.mutex);
-    const auto                        entry = registry.values.find(owner);
+    auto                 &registry = Generations();
+    const std::lock_guard lock(registry.mutex);
+    const auto            entry = registry.values.find(owner);
     if (entry == registry.values.end() || entry->second.generation != generation || !StorageLiveLocked(registry, owner)) {
         return false;
     }
@@ -408,9 +409,9 @@ bool ArenaLifetime::IsLive() const {
 }
 
 bool ArenaLifetime::WouldRetireOnReset(const mgCMemory &memory, ArenaResetKind kind) const {
-    auto                             &registry = Generations();
-    const std::lock_guard             lock(registry.mutex);
-    const auto                        entry = registry.values.find(owner);
+    auto                 &registry = Generations();
+    const std::lock_guard lock(registry.mutex);
+    const auto            entry = registry.values.find(owner);
     if (entry == registry.values.end() || entry->second.generation != generation ||
         !StorageLiveLocked(registry, owner)) {
         return false;
@@ -700,8 +701,8 @@ void RetireArenaRange(const mgCMemory &memory, const void *start, std::size_t by
     auto                 &registry = Generations();
     const std::lock_guard lock(registry.mutex);
     EndLivenessLocked();
-    auto                 &leases = registry.values[&memory].leases;
-    const auto            begin = reinterpret_cast<std::uintptr_t>(start);
+    auto      &leases = registry.values[&memory].leases;
+    const auto begin = reinterpret_cast<std::uintptr_t>(start);
     std::erase_if(leases, [begin, bytes](const AllocationLease &lease) {
         return lease.start == begin ||
                (lease.start > begin ? lease.start - begin < bytes : begin - lease.start < lease.bytes);
@@ -718,9 +719,9 @@ void ResizeHeapBlock(const mgCMemory &memory, const void *start, std::size_t byt
     auto                 &registry = Generations();
     const std::lock_guard lock(registry.mutex);
     EndLivenessLocked();
-    auto                 &leases = registry.values[&memory].leases;
-    const auto            address = reinterpret_cast<std::uintptr_t>(start);
-    std::size_t           old_bytes = 0;
+    auto       &leases = registry.values[&memory].leases;
+    const auto  address = reinterpret_cast<std::uintptr_t>(start);
+    std::size_t old_bytes = 0;
     for (auto lease = leases.rbegin(); lease != leases.rend(); ++lease) {
         if (lease->kind == LeaseKind::HeapBlock && lease->start == address) {
             old_bytes = lease->bytes;
@@ -814,9 +815,9 @@ ArenaResource ArenaResource::StoreErased(const ArenaBuffer &anchor, std::shared_
     if (!value) {
         return {};
     }
-    auto                             &registry = Generations();
-    const std::lock_guard             lock(registry.mutex);
-    AuxiliaryResource                 candidate{anchor.owner, anchor.backing_owner, anchor.owner_generation, anchor.backing_generation, anchor.allocation, reinterpret_cast<std::uintptr_t>(anchor.storage.data()), anchor.storage.size(), 0, {}, std::move(value), type, {}};
+    auto                 &registry = Generations();
+    const std::lock_guard lock(registry.mutex);
+    AuxiliaryResource     candidate{anchor.owner, anchor.backing_owner, anchor.owner_generation, anchor.backing_generation, anchor.allocation, reinterpret_cast<std::uintptr_t>(anchor.storage.data()), anchor.storage.size(), 0, {}, std::move(value), type, {}};
     for (const auto &dependency : dependencies) {
         candidate.dependencies.push_back({dependency.owner, dependency.generation, dependency.heap_block});
     }
@@ -836,9 +837,9 @@ ArenaResource ArenaResource::StoreErased(const ArenaBuffer &anchor, std::shared_
 }
 
 std::shared_ptr<const void> ArenaResource::AcquireErased(const void *type) const {
-    auto                             &registry = Generations();
-    const std::lock_guard             lock(registry.mutex);
-    const auto                        state = registry.values.find(owner);
+    auto                 &registry = Generations();
+    const std::lock_guard lock(registry.mutex);
+    const auto            state = registry.values.find(owner);
     if (state == registry.values.end()) {
         return {};
     }
@@ -854,9 +855,9 @@ std::shared_ptr<const void> ArenaResource::AcquireErased(const void *type) const
 }
 
 bool ArenaResource::IsLive() const {
-    auto                             &registry = Generations();
-    const std::lock_guard             lock(registry.mutex);
-    const auto                        state = registry.values.find(owner);
+    auto                 &registry = Generations();
+    const std::lock_guard lock(registry.mutex);
+    const auto            state = registry.values.find(owner);
     if (state == registry.values.end()) {
         return false;
     }
@@ -865,9 +866,9 @@ bool ArenaResource::IsLive() const {
 }
 
 bool ArenaResource::WouldRetireOnReset(const mgCMemory &memory, ArenaResetKind kind) const {
-    auto                             &registry = Generations();
-    const std::lock_guard             lock(registry.mutex);
-    const auto                        state = registry.values.find(owner);
+    auto                 &registry = Generations();
+    const std::lock_guard lock(registry.mutex);
+    const auto            state = registry.values.find(owner);
     if (state == registry.values.end()) {
         return false;
     }
@@ -997,10 +998,10 @@ bool ArenaBuffer::WouldRetireOnReset(const mgCMemory &memory, ArenaResetKind kin
     if (storage.empty()) {
         return false;
     }
-    auto                             &registry = Generations();
-    const std::lock_guard             lock(registry.mutex);
-    const auto                        logical = registry.values.find(owner);
-    const auto                        source = registry.values.find(backing_owner);
+    auto                 &registry = Generations();
+    const std::lock_guard lock(registry.mutex);
+    const auto            logical = registry.values.find(owner);
+    const auto            source = registry.values.find(backing_owner);
     if (logical == registry.values.end() || source == registry.values.end() ||
         logical->second.generation != owner_generation || source->second.generation != backing_generation ||
         !StorageLiveLocked(registry, owner) || !StorageLiveLocked(registry, backing_owner) ||
@@ -1233,6 +1234,7 @@ enum class Contents {
 };
 
 u_long128 *AllocQuadwords(mgCMemory &memory, int size, Contents contents = Contents::Released) {
+    CT_PROFILE_ZONE("Allocate native packet quadwords");
     if (memory.lock != 0 || size <= 0 || memory.stack == nullptr || memory.stack_size <= 0 ||
         memory.stack_used < 0 || memory.stack_used > memory.stack_size || !dc2::memory::ArenaStorageLive(memory)) {
         return nullptr;
