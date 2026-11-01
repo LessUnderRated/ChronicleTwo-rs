@@ -1071,6 +1071,10 @@ void CommitStackBinding(mgCMemory &memory, u_long128 *buffer, int size) {
     memory.stack = buffer;
     memory.stack_used = 0;
     memory.stack_size = size;
+    // The new binding owns the whole region, and may fill it before allocating.
+    if (buffer != nullptr && size > 0) {
+        dc2::memory::UnpoisonArenaBytes(buffer, static_cast<std::size_t>(size) * sizeof(u_long128));
+    }
     ResetPeak(&memory, false, size);
 }
 
@@ -1134,6 +1138,7 @@ u_long128 *AllocQuadwords(mgCMemory &memory, int size, Contents contents = Conte
     }
 
     u_long128 *data = QuadwordsFrom(memory.stack, memory.stack_used);
+    dc2::memory::UnpoisonArenaBytes(data, static_cast<std::size_t>(size) * sizeof(u_long128));
     memory.stack_used = static_cast<int>(new_used);
     g_last_run = {.arena = &memory, .start = data, .quadwords = size, .generation = dc2::memory::ArenaGeneration(memory)};
     dc2::memory::RecordArenaAllocation(memory, data, static_cast<std::size_t>(size) * sizeof(u_long128));
@@ -1172,6 +1177,8 @@ void GrowLastRun(const u_long128 *buffer, std::size_t bytes) {
     }
 
     Reuse(QuadwordsFrom(run.start, run.quadwords), quadwords - run.quadwords);
+    dc2::memory::UnpoisonArenaBytes(QuadwordsFrom(run.start, run.quadwords),
+                                    static_cast<std::size_t>(quadwords - run.quadwords) * sizeof(u_long128));
     memory.stack_used = static_cast<int>(new_used);
     run.quadwords = quadwords;
     dc2::memory::GrowArenaAllocation(memory, run.start,
@@ -1271,6 +1278,7 @@ void mgCMemory::SetHeapMem(u_long128 *buffer, int size) {
     stack_block = nullptr;
     Reuse(buffer, kHeaderQuadwords);
     Reuse(BlockAt(buffer, size - kHeaderQuadwords), kHeaderQuadwords);
+    dc2::memory::UnpoisonArenaBytes(buffer, static_cast<std::size_t>(size) * sizeof(u_long128));
     heap = buffer;
     heap_size = static_cast<u_int>(size);
     heap_top = std::construct_at(reinterpret_cast<mgMEMORY_BLOCK *>(buffer));
@@ -1377,6 +1385,7 @@ u_long128 *mgCMemory::StartStackMode(int mode, int size) {
     }
 
     Reuse(chosen, kHeaderQuadwords);
+    dc2::memory::UnpoisonArenaBytes(chosen, static_cast<std::size_t>(chosen_count) * sizeof(u_long128));
     // Sized from the chosen gap. Retail sizes it from the last gap examined, so mode 2 can run the
     // stack region past the end of the gap it claimed and over the next header.
     stack_block = std::construct_at(chosen);
@@ -1586,6 +1595,10 @@ void MemoryForget(const mgCMemory &memory) {
 
 void mgCMemory::stClearUsed() {
     dc2::memory::ResetArenaStack(*this);
+    // Everything allocated here is gone; a pointer still holding any of it is a use after reset.
+    if (stack != nullptr && stack_used > 0 && stack_used <= stack_size) {
+        dc2::memory::PoisonArenaBytes(stack, static_cast<std::size_t>(stack_used) * sizeof(u_long128));
+    }
     stack_used = 0;
 }
 

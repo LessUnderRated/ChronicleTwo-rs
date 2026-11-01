@@ -102,6 +102,12 @@ Release, RelWithDebInfo and MinSizeRel link the game with ThinLTO (`port/cmake/o
 
 Every configuration keeps DWARF line tables in `darkchronicle`, so crash reports name `file:line`: Release and MinSizeRel build with `-gline-tables-only`, and Debug and RelWithDebInfo keep `-g`. Linux and Windows links write a build id, and Mach-O has its `LC_UUID`. On macOS, non-Debug builds run `dsymutil` after the link, and `darkchronicle.dSYM` must travel with the binary. `-DCT_SYMBOLS=split` also writes `darkchronicle.pdb` (Windows) or `darkchronicle.debug` (Linux), and a Debug dSYM on macOS. `-DCT_SYMBOLS=off` adds nothing. [SYMBOLS.md](SYMBOLS.md) describes the symbol artifacts CI uploads and `tools/crash/symbolize.py`, which re-resolves a report's raw frames.
 
+### AddressSanitizer
+
+The `linux-x64-asan` preset builds Debug with AddressSanitizer into `port/build/pc-asan`. In that build an arena reset (`stClearUsed`, `stReset`) poisons everything the arena had handed out, and allocating, growing the last allocation or taking `RemainingBytes` unpoisons only what is handed out again; binding an arena to a buffer unpoisons the buffer. A pointer the game still holds into a reset arena is then reported where it is read or written, with the reset that freed it, instead of corrupting whatever is allocated there next.
+
+`tools/crash/asan-replays.ps1 [-Data <data dir>] [replays...]` builds the `windows-x64-asan` configuration (`build.bat windows-x64-asan`) and runs the replays that reload characters, weapons and menus (by default the dungeon weapon swap, the town and dungeon Items and Character menus and the equipped-weapon views) offscreen on the host GPU with game data. A replay's first line names its launch arguments; a run fails on any AddressSanitizer report, and its log stays in `port/build/windows-x64-asan/replays`. `tools/crash/asan-replays.sh` does the same in the Linux preset where a GPU driver is available; under the container's software Vulkan the game's pipeline set does not fit in memory, so there the preset serves the unit tests (`ctest --preset linux-x64-asan`).
+
 ### The PS2 build
 
 ```sh

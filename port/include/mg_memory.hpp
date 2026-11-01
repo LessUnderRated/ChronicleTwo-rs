@@ -12,6 +12,18 @@
 #include <type_traits>
 #include <utility>
 
+#if defined(__has_feature)
+#if __has_feature(address_sanitizer)
+#define CT_ARENA_POISONING 1
+#endif
+#endif
+#if defined(__SANITIZE_ADDRESS__) && !defined(CT_ARENA_POISONING)
+#define CT_ARENA_POISONING 1
+#endif
+#ifdef CT_ARENA_POISONING
+#include <sanitizer/asan_interface.h>
+#endif
+
 class mgCMemory;
 
 namespace dc2::memory {
@@ -526,7 +538,29 @@ STATIC_ASSERT(sizeof(mgCMemory) == 0x30);
 namespace dc2::memory {
 /**
  *
- * Returns the writable bytes left in an arena's stack region.
+ * Under AddressSanitizer, marks arena bytes no allocation holds, so any access to them is reported.
+ *
+ */
+inline void PoisonArenaBytes([[maybe_unused]] const void *start, [[maybe_unused]] std::size_t bytes) {
+#ifdef CT_ARENA_POISONING
+    ASAN_POISON_MEMORY_REGION(start, bytes);
+#endif
+}
+
+/**
+ *
+ * Under AddressSanitizer, marks arena bytes an allocation or a caller now holds as addressable.
+ *
+ */
+inline void UnpoisonArenaBytes([[maybe_unused]] const void *start, [[maybe_unused]] std::size_t bytes) {
+#ifdef CT_ARENA_POISONING
+    ASAN_UNPOISON_MEMORY_REGION(start, bytes);
+#endif
+}
+
+/**
+ *
+ * Returns the writable bytes left in an arena's stack region, which the caller may fill before allocating them.
  *
  */
 inline std::span<u8> RemainingBytes(mgCMemory &memory) {
@@ -534,8 +568,10 @@ inline std::span<u8> RemainingBytes(mgCMemory &memory) {
         memory.stack_used > memory.stack_size) {
         return {};
     }
-    return {reinterpret_cast<u8 *>(memory.stack + memory.stack_used),
-            static_cast<std::size_t>(memory.stack_size - memory.stack_used) * sizeof(u_long128)};
+    const std::span<u8> remaining{reinterpret_cast<u8 *>(memory.stack + memory.stack_used),
+                                  static_cast<std::size_t>(memory.stack_size - memory.stack_used) * sizeof(u_long128)};
+    UnpoisonArenaBytes(remaining.data(), remaining.size());
+    return remaining;
 }
 
 /**

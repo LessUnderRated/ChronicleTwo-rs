@@ -10149,12 +10149,17 @@ int CMenuItemInfo::ModelReadStart(int mode, int check_item, int restart_read) {
         case MENU_ITEM_VIEW_FISHING_ROD: {
             mgCMemory stack;
             int       rest = MenuItemMemory.stGetRest();
-            stack.stSetBuffer(MenuItemMemory.stGetTop(), rest);
+            stack.stSetBorrowedBuffer(MenuItemMemory, std::span(MenuItemMemory.stGetTop(), static_cast<std::size_t>(rest)));
             MenuMemoryAdjust(&stack, &MenuCharaLoadStack, MenuActionCharaBuffer, 0);
-            MenuActionCharaBuffer[0].stSetBuffer(stack.stGetTop(), 0x5A00);
+            // The weapon and the load stack overlap the character partitions this view leaves unused.
+            if (!MenuActionCharaBuffer[0].stShareBuffer(stack, std::span(stack.stGetTop(), 0x5A00))) {
+                std::abort();
+            }
             stack.Alloc(0x5000);
             rest = stack.stGetRest();
-            load_stack->stSetBuffer(stack.stGetTop(), rest);
+            if (!load_stack->stShareBuffer(stack, std::span(stack.stGetTop(), static_cast<std::size_t>(rest)))) {
+                std::abort();
+            }
             result = MenuItemChrLoad(load_stack, view_chara, 1, MenuCharaBuild2[0], restart_read);
 
             if (result > 0) {
