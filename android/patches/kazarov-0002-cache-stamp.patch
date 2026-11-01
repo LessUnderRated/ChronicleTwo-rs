@@ -1,8 +1,8 @@
 diff --git a/include/gfx/context.hpp b/include/gfx/context.hpp
-index ad1b6d0..1b23f41 100644
+index 7bf2c97..4874c59 100644
 --- a/include/gfx/context.hpp
 +++ b/include/gfx/context.hpp
-@@ -402,6 +402,9 @@ struct FrameCounters {
+@@ -535,6 +535,9 @@ struct FrameCounters {
      uint32_t grab_precopies = 0;
      uint32_t descriptor_binds = 0;
      uint64_t transient_bytes = 0;
@@ -13,7 +13,7 @@ index ad1b6d0..1b23f41 100644
  
  struct Context {
 diff --git a/include/gfx/displaylist.hpp b/include/gfx/displaylist.hpp
-index ccd21c0..6d37ca8 100644
+index 2b82873..c970a31 100644
 --- a/include/gfx/displaylist.hpp
 +++ b/include/gfx/displaylist.hpp
 @@ -3,6 +3,7 @@
@@ -24,7 +24,7 @@ index ccd21c0..6d37ca8 100644
  #include <memory_resource>
  #include <optional>
  #include <unordered_map>
-@@ -245,6 +246,24 @@ bool InterpolateSprite(const Draw2DEntry &before, const SpriteScene &before_scen
+@@ -278,6 +279,24 @@ bool InterpolateSprite(const Draw2DEntry &before, const SpriteScene &before_scen
  void BlendProg0Bones(const Prog0Palette &before, const Prog0Palette &after, float alpha, float teleport_distance,
                       Prog0Palette &out);
  
@@ -50,7 +50,7 @@ index ccd21c0..6d37ca8 100644
  
  } // namespace gfx
 diff --git a/include/gfx/gfx.hpp b/include/gfx/gfx.hpp
-index 4190669..e100835 100644
+index b8a5406..32879f1 100644
 --- a/include/gfx/gfx.hpp
 +++ b/include/gfx/gfx.hpp
 @@ -211,6 +211,13 @@ struct FrameTimings {
@@ -67,7 +67,7 @@ index 4190669..e100835 100644
      // KZ_GPU_SCOPES=pass or draw: GPU time between timestamps at the end of each pass, copy and the setup
      // before a pass, and with draw at each pipeline change inside a pass. The timestamps do not wait, so a
      // segment is the time from its predecessor's completion to its own.
-@@ -274,6 +281,10 @@ inline constexpr TextureHandle kPreviousFrame = 2;
+@@ -331,6 +338,10 @@ inline constexpr TextureHandle kPreviousFrame = 2;
  enum class TextureFormat : uint8_t {
      Rgba8,
      Index8,
@@ -79,40 +79,28 @@ index 4190669..e100835 100644
  
  struct TextureDesc {
 diff --git a/src/cpp/gfx/displaylist.cpp b/src/cpp/gfx/displaylist.cpp
-index 667fc59..2a1355b 100644
+index a1a0667..aeb5f71 100644
 --- a/src/cpp/gfx/displaylist.cpp
 +++ b/src/cpp/gfx/displaylist.cpp
-@@ -1243,14 +1243,20 @@ void Interpolated(const DisplayList &list, const DisplayList &previous, float al
-                 if (earlier.prog0 >= 0 && earlier.palette >= 0 &&
-                     (previous.prog0_blocks[static_cast<size_t>(earlier.prog0)].flags & kProg0Skinned) != 0) {
-                     const Prog0Palette &newest_palette = list.palettes[static_cast<size_t>(mesh->palette)];
--                    Prog0Palette       &blended = out.palettes.emplace_back();
--                    if (phases.enabled) phases.palette_blends++;
--                    BlendProg0Bones(previous.palettes[static_cast<size_t>(earlier.palette)], newest_palette, alpha,
--                                    record.teleport_distance, blended);
--                    if (std::memcmp(&blended, &newest_palette, sizeof blended) != 0) {
--                        out.palette_index[mesh->record] = static_cast<int32_t>(out.palettes.size() - 1);
--                    } else {
--                        out.palettes.pop_back();
-+                    // A pose the previous tick already holds needs no blend at all: the recorded
-+                    // palette is the answer, and building an override for it would only be popped.
-+                    // Idle characters and still menus skip the whole per-bone interpolation here.
-+                    if (std::memcmp(&previous.palettes[static_cast<size_t>(earlier.palette)], &newest_palette,
-+                                    sizeof(Prog0Palette)) != 0) {
+@@ -1459,9 +1459,14 @@ void Interpolated(const DisplayList &list, const DisplayList &previous, float al
+                         if (phases.enabled) {
+                             phases.palette_reuses++;
+                         }
++                    } else if (const Prog0Palette &newest_palette = list.palettes[static_cast<size_t>(mesh->palette)];
++                               std::memcmp(&previous.palettes[static_cast<size_t>(earlier.palette)], &newest_palette,
++                                           sizeof(Prog0Palette)) == 0) {
++                        // A pose the previous tick already holds needs no blend at all: the recorded palette is the
++                        // answer, so idle characters and still menus skip the whole per-bone interpolation.
++                        palette_blends.emplace(key, blended_index);
+                     } else {
+-                        const Prog0Palette &newest_palette = list.palettes[static_cast<size_t>(mesh->palette)];
+-                        Prog0Palette       &blended = out.palettes.emplace_back();
 +                        Prog0Palette &blended = out.palettes.emplace_back();
-+                        if (phases.enabled) phases.palette_blends++;
-+                        BlendProg0Bones(previous.palettes[static_cast<size_t>(earlier.palette)], newest_palette, alpha,
-+                                        record.teleport_distance, blended);
-+                        if (std::memcmp(&blended, &newest_palette, sizeof blended) != 0) {
-+                            out.palette_index[mesh->record] = static_cast<int32_t>(out.palettes.size() - 1);
-+                        } else {
-+                            out.palettes.pop_back();
-+                        }
-                     }
-                 }
-             }
+                         if (phases.enabled) {
+                             phases.palette_blends++;
+                         }
 diff --git a/src/cpp/gfx/draw.cpp b/src/cpp/gfx/draw.cpp
-index cf58b1b..686c4fc 100644
+index 59b4044..ee3bd63 100644
 --- a/src/cpp/gfx/draw.cpp
 +++ b/src/cpp/gfx/draw.cpp
 @@ -124,6 +124,7 @@ void RecordMeshApiEvent(MeshApiEvent event) {
@@ -140,7 +128,7 @@ index cf58b1b..686c4fc 100644
      Target target;
      EnsureRendering(target);
      VkCommandBuffer cmd = DrawCommands();
-@@ -1888,6 +1899,67 @@ void DrawPrepared(Primitive primitive, std::span<const Vertex2D> vertices, const
+@@ -1945,6 +1956,67 @@ void DrawPrepared(Primitive primitive, std::span<const Vertex2D> vertices, const
  
  } // namespace
  
@@ -208,7 +196,7 @@ index cf58b1b..686c4fc 100644
  namespace {
  
  // The state DrawDepthPlanes2D is exact for: the feathered haze blend (A = source, B = zero, C = FIX 0x80,
-@@ -2194,11 +2266,20 @@ void DrawIndexedMesh(MeshHandle handle, uint32_t first_index, uint32_t index_cou
+@@ -2251,11 +2323,20 @@ void DrawIndexedMesh(MeshHandle handle, uint32_t first_index, uint32_t index_cou
          if (index_count == 0) {
              return;
          }
@@ -227,10 +215,10 @@ index cf58b1b..686c4fc 100644
          }
 -        if (!Prepare(family, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, binding, state, push,
 +        if (!Prepare(family, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, local_binding, state, push,
-                      false, {}, {}, &constants, mesh, index_count)) {
+                      false, {}, {}, &constants, mesh, index_count, prog0)) {
              return;
          }
-@@ -2208,8 +2289,7 @@ void DrawIndexedMesh(MeshHandle handle, uint32_t first_index, uint32_t index_cou
+@@ -2265,8 +2346,7 @@ void DrawIndexedMesh(MeshHandle handle, uint32_t first_index, uint32_t index_cou
          }
          mesh->last_draw_use = g.frame_serial;
          VkCommandBuffer cmd = DrawCommands();
@@ -240,7 +228,7 @@ index cf58b1b..686c4fc 100644
          if (phases) {
              phases->Advance(MeshPhase::Emit);
          }
-@@ -2264,11 +2344,18 @@ void DrawImmediateMesh(std::span<const Vertex3D> vertices, std::span<const uint3
+@@ -2321,11 +2401,18 @@ void DrawImmediateMesh(std::span<const Vertex3D> vertices, std::span<const uint3
          if (vertices.empty() || indices.empty()) {
              return;
          }
@@ -257,10 +245,10 @@ index cf58b1b..686c4fc 100644
          }
 -        if (!Prepare(family, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, binding, state, push, false, {}, {}, &constants, nullptr,
 +        if (!Prepare(family, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, local_binding, state, push, false, {}, {}, &constants, nullptr,
-                      static_cast<uint32_t>(indices.size()))) {
+                      static_cast<uint32_t>(indices.size()), prog0)) {
              return;
          }
-@@ -2285,8 +2372,7 @@ void DrawImmediateMesh(std::span<const Vertex3D> vertices, std::span<const uint3
+@@ -2342,8 +2429,7 @@ void DrawImmediateMesh(std::span<const Vertex3D> vertices, std::span<const uint3
              phases->PayloadCopied(vertices.size_bytes() + indices.size_bytes());
              phases->Advance(MeshPhase::Constants);
          }
@@ -271,16 +259,10 @@ index cf58b1b..686c4fc 100644
              phases->Advance(MeshPhase::Emit);
          }
 diff --git a/src/cpp/gfx/pipelines.cpp b/src/cpp/gfx/pipelines.cpp
-index 6160c98..ca89774 100644
+index 1def1a2..1f3eeaf 100644
 --- a/src/cpp/gfx/pipelines.cpp
 +++ b/src/cpp/gfx/pipelines.cpp
-@@ -1,4 +1,4 @@
--#include <algorithm>
-+﻿#include <algorithm>
- #include <atomic>
- #include <chrono>
- #include <condition_variable>
-@@ -26,6 +26,9 @@
+@@ -29,6 +29,9 @@
  #include "shaders/draw_single.frag.spv.hpp"
  #include "shaders/mesh.vert.spv.hpp"
  #include "shaders/mesh_prog0.vert.spv.hpp"
@@ -290,7 +272,7 @@ index 6160c98..ca89774 100644
  
  namespace gfx {
  
-@@ -217,12 +220,75 @@ uint32_t CanonicalFragmentFeatures(TextureMode mode, uint32_t features) {
+@@ -220,12 +223,75 @@ uint32_t CanonicalFragmentFeatures(TextureMode mode, uint32_t features) {
      return features;
  }
  
@@ -367,7 +349,7 @@ index 6160c98..ca89774 100644
      VkPipelineCacheHeaderVersionOne header = {};
      if (!file.read(reinterpret_cast<char *>(&header), sizeof(header))) {
          return {};
-@@ -234,12 +300,13 @@ std::vector<uint8_t> LoadCache(const std::filesystem::path &path) {
+@@ -237,12 +303,13 @@ std::vector<uint8_t> LoadCache(const std::filesystem::path &path) {
      }
      file.seekg(0, std::ios::end);
      const auto size = file.tellg();
@@ -385,9 +367,9 @@ index 6160c98..ca89774 100644
          return {};
      }
      return data;
-@@ -263,7 +330,15 @@ void SaveCache(const std::filesystem::path &path, const std::vector<uint8_t> &in
-         if (path.has_parent_path()) {
-             std::filesystem::create_directories(path.parent_path(), error);
+@@ -270,7 +337,15 @@ void SaveCache(const std::filesystem::path &path, const std::vector<uint8_t> &in
+                          PathsDisplay(path.parent_path()), error.value(), error.message());
+             }
          }
 -        if (FilesWrite(path, data.data(), size, true) != FilesResult::kWritten) {
 +        // The stamp travels ahead of the payload, so a cache this renderer build did not write is
@@ -402,7 +384,7 @@ index 6160c98..ca89774 100644
              Error("cannot write the pipeline cache to %s", PathsDisplay(path).c_str());
          }
      }
-@@ -341,7 +416,9 @@ void CreateBindlessTextureSet() {
+@@ -459,7 +534,9 @@ void CreateBindlessTextureSet() {
  }
  
  // Set 0 without the bindless array, pushed by each draw: its texture, its palette, its sampler and
@@ -413,7 +395,7 @@ index 6160c98..ca89774 100644
  void CreatePushedTextureLayout() {
      VkDescriptorSetLayoutBinding bindings[4] = {};
      for (uint32_t binding = 0; binding < 4; binding++) {
-@@ -350,6 +427,9 @@ void CreatePushedTextureLayout() {
+@@ -468,6 +545,9 @@ void CreatePushedTextureLayout() {
          bindings[binding].descriptorCount = 1;
          bindings[binding].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
      }
@@ -423,7 +405,7 @@ index 6160c98..ca89774 100644
      bindings[3].pImmutableSamplers = &g.samplers[0];
  
      VkDescriptorSetLayoutCreateInfo layout = {};
-@@ -612,6 +692,20 @@ void CreatePipelines() {
+@@ -737,6 +817,20 @@ void CreatePipelines() {
                                              : CreateShader(draw_bound_single_frag, sizeof(draw_bound_single_frag));
      VkShaderModule prog0_module =
          g.config.prog0_meshes ? CreateShader(mesh_prog0_vert, sizeof(mesh_prog0_vert)) : VK_NULL_HANDLE;
@@ -444,7 +426,7 @@ index 6160c98..ca89774 100644
  
      VkVertexInputBindingDescription   binding_2d = {0, sizeof(Vertex2D), VK_VERTEX_INPUT_RATE_VERTEX};
      VkVertexInputAttributeDescription attributes_2d[4] = {
-@@ -798,13 +892,6 @@ void CreatePipelines() {
+@@ -923,13 +1017,6 @@ void CreatePipelines() {
          }
      }
  
@@ -458,7 +440,7 @@ index 6160c98..ca89774 100644
      // Writing no colour never blends. With nothing to discard, the fragment stage is dropped too and
      // one pipeline per family does for every such draw, with or without a dynamic mask. An alpha
      // test still needs the shader; without a dynamic mask that is a pipeline per family and mode.
-@@ -829,10 +916,13 @@ void CreatePipelines() {
+@@ -960,10 +1047,13 @@ void CreatePipelines() {
          stage[0] = {};
          stage[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
          stage[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -493,10 +475,10 @@ index cf36c35..57291cb 100644
      return read;
  }
 diff --git a/src/cpp/gfx/renderer.cpp b/src/cpp/gfx/renderer.cpp
-index 091209e..bf424c4 100644
+index 9857928..0c04fce 100644
 --- a/src/cpp/gfx/renderer.cpp
 +++ b/src/cpp/gfx/renderer.cpp
-@@ -1163,7 +1163,17 @@ void NoteFrameCpu(bool display) {
+@@ -2274,7 +2274,17 @@ void NoteFrameCpu(bool display) {
      }
      const double ms = MillisecondsSince(g_frame_opened);
      g_frame_opened = {};
@@ -512,13 +494,13 @@ index 091209e..bf424c4 100644
 +            timings.draws_2d = g.counters.draws_2d;
 +        }
 +    });
+     UpdateFrameRoleRecord(FrameRoleState(CurrentFrame()).record, [&](FrameRoleRecord &record) { record.cpu_ms = ms; });
  }
  
- // Moves recording to the next slot once the GPU is done with what that slot last submitted.
-@@ -1571,6 +1581,11 @@ void RendererInit(SDL_Window *window, const RendererConfig &config) {
-             ? config.render_scale
-             : std::max(1.0f, std::round(static_cast<float>(g.swapchain.extent.height) / g.config.logical_height));
-     CreatePipelines();
+@@ -2726,6 +2736,11 @@ void RendererInit(SDL_Window *window, const RendererConfig &config) {
+ #ifdef __SWITCH__
+     InitializeVsyncGate();
+ #endif
 +    // The pushed-descriptor path's skinned draws fetch their bone palettes from the ring textures;
 +    // created here, on the device thread, because a draw-path creation would land after its draw.
 +    if (!g.bindless && g.config.prog0_meshes) {
@@ -527,7 +509,7 @@ index 091209e..bf424c4 100644
      StartRenderThread(g.config.render_thread);
  }
  
-@@ -2081,6 +2096,14 @@ void LogFrameTimings(double elapsed_seconds) {
+@@ -3614,6 +3629,14 @@ void LogFrameTimings(double elapsed_seconds) {
               timing.display_gpu.Average(), timing.display_gpu.max_ms);
      kz::Logf(kz::LogLevel::Info, "gfx", "timing display prepare count={} cpu={:.3f}/{:.3f}",
               timing.display_prepare_cpu.count, timing.display_prepare_cpu.Average(), timing.display_prepare_cpu.max_ms);
@@ -543,10 +525,10 @@ index 091209e..bf424c4 100644
               timing.acquire.Average(), timing.queue_present.Average(), timing.fence_wait.Average(),
               timing.interval_buckets[0], timing.interval_buckets[1], timing.interval_buckets[2], timing.interval_buckets[3],
 diff --git a/src/cpp/gfx/resources.cpp b/src/cpp/gfx/resources.cpp
-index 5932b9c..4460629 100644
+index 9481ff9..400b896 100644
 --- a/src/cpp/gfx/resources.cpp
 +++ b/src/cpp/gfx/resources.cpp
-@@ -34,10 +34,14 @@ uint32_t MakeHandle(uint16_t generation, uint32_t slot) {
+@@ -35,10 +35,14 @@ uint32_t MakeHandle(uint16_t generation, uint32_t slot) {
  
  uint16_t NextGeneration(uint16_t generation) { return generation == 0xFFFF ? 1 : generation + 1; }
  

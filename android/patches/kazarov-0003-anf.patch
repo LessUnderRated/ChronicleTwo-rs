@@ -51,10 +51,10 @@ index 0000000..84ea5ee
 +
 +#endif
 diff --git a/include/gfx/context.hpp b/include/gfx/context.hpp
-index 1b23f41..5f2a960 100644
+index 4874c59..dba97e8 100644
 --- a/include/gfx/context.hpp
 +++ b/include/gfx/context.hpp
-@@ -448,6 +448,9 @@ struct Context {
+@@ -581,6 +581,9 @@ struct Context {
      Image                main_depth;
      uint32_t             main_current = 0;
      float                render_scale = 1.0f;
@@ -65,7 +65,7 @@ index 1b23f41..5f2a960 100644
      UiAnchor             ui_anchor;
  
 diff --git a/include/gfx/gfx.hpp b/include/gfx/gfx.hpp
-index e100835..7ec81b1 100644
+index 32879f1..3dad2d5 100644
 --- a/include/gfx/gfx.hpp
 +++ b/include/gfx/gfx.hpp
 @@ -102,6 +102,9 @@ struct RendererConfig {
@@ -78,7 +78,7 @@ index e100835..7ec81b1 100644
      // False draws triangle fans as indexed lists, as on a VK_KHR_portability_subset device without
      // triangleFans, so that path can be exercised on any device.
      bool triangle_fans = true;
-@@ -263,6 +266,9 @@ double PipelineCompileSeconds();
+@@ -320,6 +323,9 @@ double PipelineCompileSeconds();
  float  RenderScale();
  // Recreates every render target at the new scale, carrying its contents over.
  void SetRenderScale(float scale);
@@ -88,7 +88,7 @@ index e100835..7ec81b1 100644
  // Outside a frame; frame targets are recreated for the new aspect, carrying their logical frame over.
  void        SetFrameLayout(const FrameLayout &layout);
  FrameLayout CurrentFrameLayout();
-@@ -946,6 +952,7 @@ struct RenderOptions {
+@@ -1015,6 +1021,7 @@ struct RenderOptions {
  // screen presented since) or the window cannot present.
  bool RenderList(const DisplayList &list, float alpha, const RenderOptions &options);
  // Presents the last canonical render as it is (interpolation off, headless runs).
@@ -1973,10 +1973,10 @@ index 0000000..48118bb
 +} // namespace gfx::detail
 +#endif
 diff --git a/src/cpp/gfx/displaylist.cpp b/src/cpp/gfx/displaylist.cpp
-index 2a1355b..1a4e762 100644
+index aeb5f71..516b293 100644
 --- a/src/cpp/gfx/displaylist.cpp
 +++ b/src/cpp/gfx/displaylist.cpp
-@@ -12,6 +12,7 @@
+@@ -14,6 +14,7 @@
  #include <unordered_map>
  #include <unordered_set>
  
@@ -1984,9 +1984,9 @@ index 2a1355b..1a4e762 100644
  #include "gfx/context.hpp"
  #include "gfx/profile.hpp"
  #include "kazarov/log.hpp"
-@@ -2158,6 +2159,16 @@ bool RenderList(const DisplayList &list, float alpha, const RenderOptions &optio
-     bool rendered = false;
-     RunOnRenderThread([&] {
+@@ -3389,6 +3390,16 @@ bool RenderList(const DisplayList &list, float alpha, const RenderOptions &optio
+             return;
+         }
          if (options.canonical) {
 +            // The frame-generation motion pass reprojects the canonical depth with this camera's
 +            // world-to-clip matrix: the first transformed mesh's camera, projection and middle
@@ -1998,11 +1998,11 @@ index 2a1355b..1a4e762 100644
 +                    break;
 +                }
 +            }
-             if (ReplayPhasesEnabled()) {
-                 const auto start = std::chrono::steady_clock::now();
-                 OpenListFrame(true, false, false);
+             rendered = ReplayCanonicalList(list);
+             return;
+         }
 diff --git a/src/cpp/gfx/renderer.cpp b/src/cpp/gfx/renderer.cpp
-index bf424c4..13f8426 100644
+index 0c04fce..bb0c488 100644
 --- a/src/cpp/gfx/renderer.cpp
 +++ b/src/cpp/gfx/renderer.cpp
 @@ -1,4 +1,4 @@
@@ -2011,15 +2011,15 @@ index bf424c4..13f8426 100644
  #include <SDL3/SDL_vulkan.h>
  
  #include <algorithm>
-@@ -24,6 +24,7 @@
- #include <android/log.h>
+@@ -35,6 +35,7 @@ extern "C" {
+ }
  #endif
  
 +#include "gfx/anf_fg.hpp"
  #include "gfx/context.hpp"
  #include "gfx/displaylist.hpp"
  #include "gfx/profile.hpp"
-@@ -35,6 +36,9 @@ namespace detail {
+@@ -87,6 +88,9 @@ namespace detail {
  
  Context g;
  
@@ -2029,7 +2029,7 @@ index bf424c4..13f8426 100644
  namespace {
  
  // Validation and performance messages seen, from any thread the driver reports on.
-@@ -553,6 +557,17 @@ void CreateDevice() {
+@@ -1510,6 +1514,17 @@ void CreateDevice() {
      if (!g.bindless) {
          extensions.push_back(VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME);
      }
@@ -2047,7 +2047,7 @@ index bf424c4..13f8426 100644
      VkPhysicalDevicePipelineExecutablePropertiesFeaturesKHR executable = {};
      executable.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_EXECUTABLE_PROPERTIES_FEATURES_KHR;
      if (!g.perf.stats.empty()) {
-@@ -579,6 +594,11 @@ void CreateDevice() {
+@@ -1536,6 +1551,11 @@ void CreateDevice() {
      LoadCoreDeviceCommands(g.device);
  #endif
      vkGetDeviceQueue(g.device, g.queue_family, 0, &g.queue);
@@ -2059,7 +2059,7 @@ index bf424c4..13f8426 100644
      if (g.dynamic_color_write_mask) {
          g.cmd_set_color_write_mask = reinterpret_cast<PFN_vkCmdSetColorWriteMaskEXT>(
              vkGetDeviceProcAddr(g.device, "vkCmdSetColorWriteMaskEXT"));
-@@ -810,7 +830,7 @@ bool ResizeOffscreen() {
+@@ -1770,7 +1790,7 @@ bool ResizeOffscreen() {
      }
      VkExtent2D extent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
      g.swapchain.extent = extent;
@@ -2068,16 +2068,16 @@ index bf424c4..13f8426 100644
      if (g.main_color[0].width != desired.width || g.main_color[0].height != desired.height) {
          vkDeviceWaitIdle(g.device);
          DestroyMainTargets();
-@@ -824,7 +844,7 @@ bool ResizeOffscreen() {
- // The main targets follow the swapchain's size, losing their contents.
- void SyncMainTargets() {
+@@ -1787,7 +1807,7 @@ void SyncMainTargets() {
+         return;
+     }
      const Image     &main = g.main_color[0];
 -    const VkExtent2D desired = DesiredMainExtent(g.swapchain.extent, g.config.main_height_limit);
 +    const VkExtent2D desired = MainExtentFor(g.swapchain.extent);
      if (main.width != desired.width || main.height != desired.height) {
          vkDeviceWaitIdle(g.device);
          DestroyMainTargets();
-@@ -832,6 +852,9 @@ void SyncMainTargets() {
+@@ -1795,6 +1815,9 @@ void SyncMainTargets() {
          RecreateSharedTargets();
          RecreateRenderTargets();
      }
@@ -2087,17 +2087,17 @@ index bf424c4..13f8426 100644
  }
  
  // Without targets the main targets keep their size until a frame that draws the game's state
-@@ -1216,7 +1239,8 @@ void AdvanceSlot() {
+@@ -2333,7 +2356,8 @@ void AdvanceSlot() {
      }
  }
  
--void Submit(bool with_draw, VkSemaphore wait, VkSemaphore signal) {
-+void Submit(bool with_draw, VkSemaphore wait, VkSemaphore signal, VkSemaphore extra_wait = VK_NULL_HANDLE,
-+            VkSemaphore extra_signal = VK_NULL_HANDLE) {
+-void Submit(bool with_draw, VkSemaphore wait, VkSemaphore signal, VkCommandBuffer final_cmd = VK_NULL_HANDLE) {
++void Submit(bool with_draw, VkSemaphore wait, VkSemaphore signal, VkCommandBuffer final_cmd = VK_NULL_HANDLE,
++            VkSemaphore extra_wait = VK_NULL_HANDLE, VkSemaphore extra_signal = VK_NULL_HANDLE) {
      AssertDeviceThread(__func__);
      KZ_PROFILE_ZONE("Kazarov Submit");
      Frame                                 &frame = CurrentFrame();
-@@ -1231,23 +1255,45 @@ void Submit(bool with_draw, VkSemaphore wait, VkSemaphore signal) {
+@@ -2348,23 +2372,45 @@ void Submit(bool with_draw, VkSemaphore wait, VkSemaphore signal, VkCommandBuffe
          commands.push_back({VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO, nullptr, frame.draw_cmd, 0});
      }
  
@@ -2153,9 +2153,9 @@ index bf424c4..13f8426 100644
 +    submit.signalSemaphoreInfoCount = signal_count;
 +    submit.pSignalSemaphoreInfos = signal_info;
      Check(vkResetFences(g.device, 1, &frame.fence), "vkResetFences");
-     Check(vkQueueSubmit2(g.queue, 1, &submit, frame.fence), "vkQueueSubmit2");
-     frame.pending = true;
-@@ -1393,6 +1439,16 @@ Image &CurrentMainColor() { return g.main_color[g.main_current]; }
+     const uint64_t            submit_start = FramePhasesEnabled() && with_draw ? FrameRoleClockNs() : 0;
+     VkCommandBufferSubmitInfo final_info{};
+@@ -2533,6 +2579,16 @@ Image &CurrentMainColor() { return g.main_color[g.main_current]; }
  
  Image &PreviousMainColor() { return g.main_color[g.main_current ^ 1]; }
  
@@ -2172,7 +2172,7 @@ index bf424c4..13f8426 100644
  VkExtent2D DesiredMainExtent(VkExtent2D output, uint32_t height_limit) {
      if (output.width == 0 || output.height == 0 || height_limit == 0 || height_limit >= output.height) {
          return output;
-@@ -1414,7 +1470,7 @@ void CreateMainTargets() {
+@@ -2554,7 +2610,7 @@ void CreateMainTargets() {
      if (trace_init) {
          std::fprintf(stderr, "perf init: allocating main targets\n");
      }
@@ -2181,7 +2181,7 @@ index bf424c4..13f8426 100644
      const uint32_t   width = extent.width;
      const uint32_t   height = extent.height;
      ++g.canonical_target_generation;
-@@ -1610,6 +1666,9 @@ void RendererShutdown() {
+@@ -2772,6 +2828,9 @@ void RendererShutdown() {
          RunDeletions(frame);
      }
      DestroyPipelines();
@@ -2191,36 +2191,49 @@ index bf424c4..13f8426 100644
      ShutdownResources();
      for (Frame &frame : g.frames) {
          DestroyTransients(frame);
-@@ -1770,8 +1829,8 @@ bool AcquireImage(bool targets) {
+@@ -2945,9 +3004,7 @@ bool AcquireImage(bool targets) {
+     return true;
  }
  
- // Ends the frame's draw commands with source blitted onto the acquired swapchain image, submits
+-// Ends the frame's draw commands with source blitted onto the acquired swapchain image, submits
 -// and presents.
+-// A whole-image nearest blit between images of one size and format is a copy, which skips the 3D engine.
++// A whole-image blit between images of one size and format is a copy, which skips the 3D engine.
+ void CopyOrBlitWhole(VkCommandBuffer cmd, VkImage source, VkFormat source_format, VkExtent2D source_extent,
+                      VkImage destination, VkFormat destination_format, VkExtent2D destination_extent,
+                      const VkImageBlit &region) {
+@@ -2961,8 +3018,9 @@ void CopyOrBlitWhole(VkCommandBuffer cmd, VkImage source, VkFormat source_format
+                        1, &copy);
+         return;
+     }
++    // A scaled main raster is upsampled: filter it rather than repeat its pixels.
+     vkCmdBlitImage(cmd, source, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, destination, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
+-                   &region, VK_FILTER_NEAREST);
++                   &region, VK_FILTER_LINEAR);
+ }
+ 
+ /**
+@@ -3011,7 +3069,9 @@ uint64_t WritePresentMarker(VkCommandBuffer cmd, VkImage swapchain) {
+     return sequence;
+ }
+ 
 -void PresentImage(Frame &frame, VkCommandBuffer cmd, Image &source) {
++// Ends the frame's draw commands with source blitted onto the acquired swapchain image, submits
 +// and presents. extra_wait: a semaphore the blit must wait on (frame generation's completion).
 +void PresentImage(Frame &frame, VkCommandBuffer cmd, Image &source, VkSemaphore extra_wait = VK_NULL_HANDLE) {
      AssertDeviceThread(__func__);
      KZ_PROFILE_ZONE("Kazarov PresentImage");
-     VkImage swapchain = g.swapchain.images[g.image_index];
-@@ -1789,7 +1848,7 @@ void PresentImage(Frame &frame, VkCommandBuffer cmd, Image &source) {
-     {
-         KZ_PROFILE_GPU_ZONE(cmd, "Kazarov swapchain blit");
-         vkCmdBlitImage(cmd, source.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, swapchain,
--                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region, VK_FILTER_NEAREST);
-+                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region, VK_FILTER_LINEAR);
-     }
-     SwapchainBarrier(cmd, swapchain, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-                      VK_PIPELINE_STAGE_2_ALL_TRANSFER_BIT, VK_ACCESS_2_TRANSFER_WRITE_BIT,
-@@ -1799,7 +1858,7 @@ void PresentImage(Frame &frame, VkCommandBuffer cmd, Image &source) {
+     const bool replay = tls.display_pass && !g_endpoint_role;
+@@ -3061,7 +3121,7 @@ void PresentImage(Frame &frame, VkCommandBuffer cmd, Image &source) {
      Check(vkEndCommandBuffer(cmd), "vkEndCommandBuffer");
  
      VkSemaphore render_finished = g.swapchain.render_finished[g.image_index];
--    Submit(true, frame.image_available, render_finished);
-+    Submit(true, frame.image_available, render_finished, extra_wait);
+-    Submit(true, frame.image_available, render_finished, split ? frame.present_cmd : VK_NULL_HANDLE);
++    Submit(true, frame.image_available, render_finished, split ? frame.present_cmd : VK_NULL_HANDLE, extra_wait);
      g.in_frame = false;
      g_game_frame_open.store(false);
  
-@@ -1836,13 +1895,14 @@ void PlotFrameCounters() {
+@@ -3129,13 +3189,14 @@ void PlotFrameCounters() {
      KZ_PROFILE_PLOT("Kazarov transient bytes", g.counters.transient_bytes);
  }
  
@@ -2233,11 +2246,11 @@ index bf424c4..13f8426 100644
      CloseTimestamps(cmd, false);
      Check(vkEndCommandBuffer(cmd), "vkEndCommandBuffer");
 -    Submit(true, VK_NULL_HANDLE, VK_NULL_HANDLE);
-+    Submit(true, VK_NULL_HANDLE, VK_NULL_HANDLE, extra_wait, extra_signal);
++    Submit(true, VK_NULL_HANDLE, VK_NULL_HANDLE, VK_NULL_HANDLE, extra_wait, extra_signal);
      NoteFrameCpu(false);
      g.in_frame = false;
      g_game_frame_open.store(false);
-@@ -1863,7 +1923,7 @@ void PrepareRecordingFromCaller() {
+@@ -3156,7 +3217,7 @@ void PrepareRecordingFromCaller() {
      // from the swapchain. The idle hook never recreates the swapchain, so the extents change only on
      // the game thread; the pending flag is atomic.
      const Image     &main = g.main_color[0];
@@ -2246,16 +2259,7 @@ index bf424c4..13f8426 100644
      const bool       same_size = main.width == desired.width && main.height == desired.height;
      if (!g_resize_pending.load() && (g.offscreen || same_size)) {
          return;
-@@ -1914,7 +1974,7 @@ bool OpenListFrame(bool canonical, bool present, bool base, double preparation_m
-         region.dstOffsets[1] = {static_cast<int32_t>(g.display_color.width),
-                                 static_cast<int32_t>(g.display_color.height), 1};
-         vkCmdBlitImage(cmd, source.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, g.display_color.image,
--                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region, VK_FILTER_NEAREST);
-+                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region, VK_FILTER_LINEAR);
-         ToRest(cmd, source);
-         ToRest(cmd, g.display_color);
-     }
-@@ -1933,11 +1993,21 @@ void CloseListFrame(bool canonical, bool present) {
+@@ -3280,7 +3341,14 @@ void CloseListFrame(bool canonical, bool present, const CanonicalCommitTransacti
              KZ_PROFILE_GPU_ZONE(cmd, "Kazarov depth queries");
              RecordDepthQueries(cmd);
          }
@@ -2268,7 +2272,20 @@ index bf424c4..13f8426 100644
 +            FrameGenRecordCanonical(cmd, CurrentMainColor(), g.main_depth, fg_wait, fg_signal);
 +        }
 +        SubmitWithoutPresent(cmd, CurrentMainColor(), fg_wait, fg_signal);
-         FinishFrame();
+         if (transaction != nullptr) {
+             g.canonical_commit_pending = true;
+             g.deferred_prior_image = transaction->prior;
+@@ -3288,6 +3356,9 @@ void CloseListFrame(bool canonical, bool present, const CanonicalCommitTransacti
+             g.deferred_endpoint_attempted = false;
+             const CanonicalCommitGuard commit(*transaction);
+             AdvanceSlot();
++            if (fg_signal != VK_NULL_HANDLE) {
++                FrameGenDispatch(submitted.fence);
++            }
+             (*transaction->callback)();
+             return;
+         }
+@@ -3295,6 +3366,9 @@ void CloseListFrame(bool canonical, bool present, const CanonicalCommitTransacti
          ++g.canonical_commit_serial;
          g.canonical_newest = true;
          g.presented_display = false;
@@ -2278,7 +2295,7 @@ index bf424c4..13f8426 100644
          return;
      }
      if (present && !g.offscreen) {
-@@ -2006,6 +2076,8 @@ void EndFrame() {
+@@ -3366,6 +3440,8 @@ void EndFrame() {
      });
  }
  
@@ -2287,7 +2304,7 @@ index bf424c4..13f8426 100644
  bool PresentCanonical() {
      // Read on the game thread: the worker must not look at the list the game thread records.
      const bool recording = RecordingCalls();
-@@ -2033,6 +2105,34 @@ bool PresentCanonical() {
+@@ -3396,6 +3472,34 @@ bool PresentCanonical() {
      return presented;
  }
  
@@ -2322,7 +2339,7 @@ index bf424c4..13f8426 100644
  std::optional<CanonicalImageToken> CaptureCanonicalImage() {
      const bool                         recording = RecordingCalls();
      std::optional<CanonicalImageToken> result;
-@@ -2159,4 +2259,25 @@ void SetRenderScale(float scale) {
+@@ -3692,4 +3796,25 @@ void SetRenderScale(float scale) {
      });
  }
  

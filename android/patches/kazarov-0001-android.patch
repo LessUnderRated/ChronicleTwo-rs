@@ -80,7 +80,7 @@ index 1e71a62..18310dd 100644
          execute_process(COMMAND "${Python3_EXECUTABLE}" "${script}" --include-dir "${gtest_headers}" --describe
              RESULT_VARIABLE result OUTPUT_VARIABLE key OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_VARIABLE error)
 diff --git a/cmake/KazarovRust.cmake b/cmake/KazarovRust.cmake
-index d3c4647..de991e0 100644
+index a4f044e..5e620d4 100644
 --- a/cmake/KazarovRust.cmake
 +++ b/cmake/KazarovRust.cmake
 @@ -17,8 +17,8 @@ set(CORROSION_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -91,14 +91,14 @@ index d3c4647..de991e0 100644
 -    # The desktop setup window (eframe, rfd) does not target iOS, which extracts without it.
 +if(CMAKE_SYSTEM_NAME STREQUAL "iOS" OR ANDROID)
 +    # The desktop setup window (eframe, rfd) does not target iOS or Android, which extract without it.
-     corrosion_import_crate(MANIFEST_PATH ${KZ_RUST_MANIFEST} CRATES kazarov_core NO_DEFAULT_FEATURES)
+     corrosion_import_crate(MANIFEST_PATH ${KZ_RUST_MANIFEST} CRATES kazarov_core NO_DEFAULT_FEATURES LOCKED)
  else()
-     corrosion_import_crate(MANIFEST_PATH ${KZ_RUST_MANIFEST} CRATES kazarov_core)
+     corrosion_import_crate(MANIFEST_PATH ${KZ_RUST_MANIFEST} CRATES kazarov_core LOCKED)
 diff --git a/include/gfx/gfx.hpp b/include/gfx/gfx.hpp
-index b4ce76a..4190669 100644
+index f20cdf3..b8a5406 100644
 --- a/include/gfx/gfx.hpp
 +++ b/include/gfx/gfx.hpp
-@@ -247,6 +247,9 @@ bool InFrame();
+@@ -304,6 +304,9 @@ void RunOnRenderThreadAsync(std::function<void()> fn);
  // Validation-layer messages seen so far (validation and performance types, warning or worse).
  uint32_t ValidationMessageCount();
  uint32_t PipelineCount();
@@ -109,10 +109,10 @@ index b4ce76a..4190669 100644
  // distinguishable through Vulkan, so this is only the time RendererInit spent creating them.
  double PipelineCompileSeconds();
 diff --git a/src/cpp/gfx/pipelines.cpp b/src/cpp/gfx/pipelines.cpp
-index 13c3f12..6160c98 100644
+index a1bf61f..1def1a2 100644
 --- a/src/cpp/gfx/pipelines.cpp
 +++ b/src/cpp/gfx/pipelines.cpp
-@@ -580,6 +580,14 @@ void LogShaderStats() {
+@@ -700,6 +700,14 @@ void LogShaderStats() {
      }
  }
  
@@ -127,7 +127,7 @@ index 13c3f12..6160c98 100644
  void CreatePipelines() {
      auto start = std::chrono::steady_clock::now();
      BuildBlendTable();
-@@ -880,8 +888,10 @@ void CreatePipelines() {
+@@ -1014,8 +1022,10 @@ void CreatePipelines() {
          describe(DepthOnlyPipelineIndex(kind), family, VK_NULL_HANDLE, nullptr, &no_color, &dynamic_no_mask);
      }
  
@@ -140,16 +140,16 @@ index 13c3f12..6160c98 100644
      g.pipelines.assign(total, VK_NULL_HANDLE);
      g.pipeline_count = creation_count;
      const auto              described = trace_init ? std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
-@@ -910,7 +920,7 @@ void CreatePipelines() {
+@@ -1044,7 +1054,7 @@ void CreatePipelines() {
          }
          return result;
      };
 -    uint32_t workers = std::clamp(std::thread::hardware_concurrency(), 1u, 8u);
 +    uint32_t workers = CompileWorkerCount();
-     {
-         // std::thread rather than std::jthread, which Android's libc++ keeps experimental.
-         std::vector<std::thread> threads;
-@@ -1152,6 +1162,8 @@ std::string DescribePipeline(uint32_t index) {
+     if (const char *setting = std::getenv("KZ_PIPELINE_COMPILER_THREADS"); setting != nullptr) {
+         uint32_t    worker_limit = 0;
+         const char *end = setting + std::strlen(setting);
+@@ -1349,6 +1359,8 @@ std::string DescribePipeline(uint32_t index) {
  
  uint32_t PipelineCount() { return detail::g.pipeline_count; }
  
@@ -159,10 +159,10 @@ index 13c3f12..6160c98 100644
  
  } // namespace gfx
 diff --git a/src/cpp/gfx/renderer.cpp b/src/cpp/gfx/renderer.cpp
-index 163800f..091209e 100644
+index ee0faa2..9857928 100644
 --- a/src/cpp/gfx/renderer.cpp
 +++ b/src/cpp/gfx/renderer.cpp
-@@ -719,6 +719,17 @@ bool CreateSwapchain() {
+@@ -1676,6 +1676,17 @@ bool CreateSwapchain() {
          extent.height = std::clamp(static_cast<uint32_t>(std::max(height, 0)),
                                     capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
      }
@@ -369,20 +369,20 @@ index 38578d9..772c956 100644
      RunEntry();
  }
 diff --git a/src/rust/archive.rs b/src/rust/archive.rs
-index ccca81b..9a68684 100644
+index 410851a..0b3b80c 100644
 --- a/src/rust/archive.rs
 +++ b/src/rust/archive.rs
-@@ -497,6 +497,9 @@ enum SourceData {
-     /// converters too little, and an allocation fails. There each resource maps its own range of the image only
-     /// while it is read.
-     Mapped { file: File, length: usize },
+@@ -500,6 +500,9 @@ enum SourceData {
+         file: File,
+         length: usize,
+     },
 +    /// 64-bit Android has the address space to map the image whole, once: a mapping per resource, as on iOS, adds to
 +    /// the process's ~65k memory mappings, which the extraction already runs short of.
 +    Whole(memmap2::Mmap),
  }
  
  /// A source's bytes, borrowed from memory or mapped from the disc image for as long as this lives.
-@@ -533,6 +536,14 @@ impl SourceBytes {
+@@ -536,6 +539,14 @@ impl SourceBytes {
          let length = usize::try_from(file.metadata()?.len())
              .map_err(|_| error("ISO exceeds addressable memory"))?;
          phase.set_total(length as u64);
@@ -397,7 +397,7 @@ index ccca81b..9a68684 100644
          if cfg!(any(target_os = "ios", kazarov_mapped_source)) {
              phase.inc(length as u64);
              phase.add_bytes(length as u64);
-@@ -559,6 +570,7 @@ impl SourceBytes {
+@@ -562,6 +573,7 @@ impl SourceBytes {
          match &*self.0 {
              SourceData::Owned(bytes) => bytes.len(),
              SourceData::Mapped { length, .. } => *length,
@@ -405,7 +405,7 @@ index ccca81b..9a68684 100644
          }
      }
  
-@@ -569,6 +581,7 @@ impl SourceBytes {
+@@ -576,6 +588,7 @@ impl SourceBytes {
          }
          match &*self.0 {
              SourceData::Owned(bytes) => Ok(SourceSlice::Borrowed(&bytes[range])),
@@ -413,7 +413,7 @@ index ccca81b..9a68684 100644
              SourceData::Mapped { file, .. } => {
                  if range.is_empty() {
                      return Ok(SourceSlice::Borrowed(&[]));
-@@ -1305,6 +1318,232 @@ mod tests {
+@@ -1364,6 +1377,232 @@ mod tests {
          iso
      }
  
@@ -647,7 +647,7 @@ index ccca81b..9a68684 100644
      fn extraction_progress_finishes_only_after_valid_publication() -> CoreResult<()> {
          let temp = tempfile::tempdir()?;
 diff --git a/src/rust/configs.rs b/src/rust/configs.rs
-index 6d68b7a..b61e669 100644
+index d0ccee5..facf745 100644
 --- a/src/rust/configs.rs
 +++ b/src/rust/configs.rs
 @@ -69,6 +69,10 @@ pub fn gameplay_documents(root: Option<&Path>) -> CoreResult<Vec<(&'static str,
@@ -662,7 +662,7 @@ index 6d68b7a..b61e669 100644
          candidates.push(directory.join("assets/data.zip"));
          candidates.push(directory.join("data.zip"));
 diff --git a/src/rust/core.rs b/src/rust/core.rs
-index ec2b738..6bc4fd5 100644
+index f717803..a167eea 100644
 --- a/src/rust/core.rs
 +++ b/src/rust/core.rs
 @@ -349,7 +349,7 @@ fn system_available_memory() -> Option<u64> {
@@ -684,7 +684,7 @@ index ec2b738..6bc4fd5 100644
      None
  }
 diff --git a/src/rust/lib.rs b/src/rust/lib.rs
-index 1e3aa2b..e8d8a0e 100644
+index f82914d..d77f4ad 100644
 --- a/src/rust/lib.rs
 +++ b/src/rust/lib.rs
 @@ -1,3 +1,9 @@
@@ -697,7 +697,7 @@ index 1e3aa2b..e8d8a0e 100644
  pub mod core;
  #[cfg(not(test))]
  mod host_jobs;
-@@ -42,6 +48,11 @@ mod ffi {
+@@ -44,6 +50,11 @@ mod ffi {
  
      extern "Rust" {
          fn bridge_smoke(value: &str) -> Result<String>;
@@ -709,7 +709,7 @@ index 1e3aa2b..e8d8a0e 100644
          fn extract(source: &str, data_out: &str, jobs: usize) -> Result<ExtractReport>;
          /// extract, also publishing its progress for extract_status, for a host that draws its own
          /// progress while it runs on another thread.
-@@ -147,6 +158,21 @@ fn setup_data_with_script_policy(
+@@ -160,6 +171,21 @@ fn setup_data_with_script_policy(
      }
  }
  
@@ -731,7 +731,7 @@ index 1e3aa2b..e8d8a0e 100644
  fn bridge_smoke(value: &str) -> Result<String, core::CoreError> {
      if value == "error" {
          return Err(core::CoreError("bridge smoke error".into()));
-@@ -864,3 +890,48 @@ mod png_tests {
+@@ -890,3 +916,48 @@ mod png_tests {
          );
      }
  }
@@ -917,35 +917,35 @@ index e768ae1..0470ca6 100644
          let file = File::open(path).map_err(|e| context(e.into()))?;
          let length = file.metadata().map_err(|e| context(e.into()))?.len();
 diff --git a/tools/ffmpeg/kz-ffmpeg b/tools/ffmpeg/kz-ffmpeg
-index b33d4bf..70a13f7 100644
+index 76ae457..faa55e4 100644
 --- a/tools/ffmpeg/kz-ffmpeg
 +++ b/tools/ffmpeg/kz-ffmpeg
-@@ -8,6 +8,7 @@ static codec, format, resampling and scaling libraries plus the FFmpeg command.
- The Linux image and macOS hosts use it; Windows takes BtbN's LGPL-shared bundle.
- --target ios-arm64 cross-compiles the libraries for iOS on a macOS host, without the command.
+@@ -10,6 +10,7 @@ The Linux image and macOS hosts use it.
  --target switch-arm64 cross-compiles the libraries with devkitA64/libnx, without the command.
-+--target android-arm64 cross-compiles them for Android with the NDK in ANDROID_NDK_ROOT, also without it.
+ --target windows-x64 cross-compiles DLLs, their import libraries and the command for Windows on a Linux host with
+ llvm-mingw's x86_64-w64-mingw32- tools on PATH.
++--target android-arm64 cross-compiles the libraries for Android with the NDK in ANDROID_NDK_ROOT, without the command.
  scripts/build/kz-ffmpeg launches this shared FFmpeg tool; the image uses it directly.
  """
  
-@@ -32,6 +33,7 @@ STAMP = 'kz-ffmpeg.json'
- LIBRARIES = ('lib/libavcodec.a', 'lib/libavformat.a', 'lib/libavutil.a',
-              'lib/libswresample.a', 'lib/libswscale.a', 'include/libavcodec/avcodec.h')
+@@ -38,6 +39,7 @@ LIBRARIES = ('lib/libavcodec.a', 'lib/libavformat.a', 'lib/libavutil.a',
+ WINDOWS_PRODUCTS = ('lib/libavcodec.dll.a', 'lib/libavformat.dll.a', 'lib/libavutil.dll.a', 'lib/libswresample.dll.a',
+                     'lib/libswscale.dll.a', 'include/libavcodec/avcodec.h', 'bin/ffmpeg.exe')
  IOS_MIN_VERSION = '16.0'
 +ANDROID_API = 33
  CONFIGURE_FLAGS = [
      '--disable-everything',
      '--disable-programs',
-@@ -60,7 +62,7 @@ GPL_FLAGS = ('--enable-gpl', '--enable-nonfree', '--enable-version3')
+@@ -66,7 +68,7 @@ GPL_FLAGS = ('--enable-gpl', '--enable-nonfree', '--enable-version3')
  
  
  def products(target):
--    return LIBRARIES if target in ('ios-arm64', 'switch-arm64') else LIBRARIES + ('bin/ffmpeg',)
-+    return LIBRARIES if target in ('ios-arm64', 'switch-arm64', 'android-arm64') else LIBRARIES + ('bin/ffmpeg',)
- 
- 
- def ios_flags():
-@@ -72,6 +74,20 @@ def ios_flags():
+-    if target in ('ios-arm64', 'switch-arm64'):
++    if target in ('ios-arm64', 'switch-arm64', 'android-arm64'):
+         return LIBRARIES
+     if target == 'windows-x64':
+         return WINDOWS_PRODUCTS
+@@ -82,6 +84,20 @@ def ios_flags():
              f'--sysroot={sysroot}', f'--extra-cflags={target}', f'--extra-ldflags={target}']
  
  
@@ -966,22 +966,22 @@ index b33d4bf..70a13f7 100644
  def switch_flags():
      devkitpro = Path(os.environ.get('DEVKITPRO', '/opt/devkitpro'))
      libnx = devkitpro / 'libnx'
-@@ -92,6 +108,9 @@ def configure_flags(target=None):
-     elif target == 'switch-arm64':
-         flags.remove('--enable-ffmpeg')
-         flags += switch_flags()
+@@ -110,6 +126,9 @@ def configure_flags(target=None):
+     elif target == 'windows-x64':
+         flags = [flag for flag in flags if flag not in ('--enable-pic', '--disable-shared', '--enable-static')]
+         flags += ['--enable-shared', '--disable-static', *windows_flags()]
 +    elif target == 'android-arm64':
 +        flags.remove('--enable-ffmpeg')
 +        flags += android_flags()
      # configure aborts without nasm unless x86 assembly is disabled explicitly.
-     elif shutil.which('nasm') is None:
+     if target not in ('ios-arm64', 'switch-arm64') and shutil.which('nasm') is None:
          flags.append('--disable-x86asm')
-@@ -179,7 +198,7 @@ def configure_and_build(src, out, jobs, target):
+@@ -212,7 +231,7 @@ def configure_and_build(src, out, jobs, target):
  def main():
      parser = argparse.ArgumentParser(description=f'Build a minimal LGPL-only FFmpeg {VERSION} for the Kazarov image.')
      parser.add_argument('--out', metavar='DIR')
--    parser.add_argument('--target', choices=['ios-arm64', 'switch-arm64'], help='cross-compile the libraries for this target')
-+    parser.add_argument('--target', choices=['ios-arm64', 'switch-arm64', 'android-arm64'], help='cross-compile the libraries for this target')
+-    parser.add_argument('--target', choices=['ios-arm64', 'switch-arm64', 'windows-x64'], help='cross-compile the libraries for this target')
++    parser.add_argument('--target', choices=['ios-arm64', 'switch-arm64', 'windows-x64', 'android-arm64'], help='cross-compile the libraries for this target')
      parser.add_argument('--tarball', metavar='FILE')
      parser.add_argument('--sha256', metavar='HEX')
      parser.add_argument('--jobs', type=int, default=os.cpu_count() or 1, metavar='N')
