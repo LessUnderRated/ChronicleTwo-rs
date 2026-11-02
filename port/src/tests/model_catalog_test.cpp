@@ -31,6 +31,7 @@
 #include "mdslist.hpp"
 #include "menu_character_assets.hpp"
 #include "menuchr.hpp"
+#include "scenesnd.hpp"
 #include "menumain.hpp"
 #include "mg_dataset.hpp"
 #include "mglib.hpp"
@@ -1173,6 +1174,63 @@ TEST_F(NativeModel, ExternalMotionPlaysActionsPublishedIntoTheCharacterModelAndB
     EXPECT_FALSE(dc2::character::ResourcesWouldRetireOnReset(character, extension_memory, dc2::memory::ArenaResetKind::Stack));
     extension_memory.stClearUsed();
     EXPECT_TRUE(dc2::character::ResourcesLive(character));
+}
+
+// The circus tent's cutscene clears the stack holding its clowns' added motions, then deletes those motions from each
+// clown and loads the next ones (_CLEAR_STACK, _DEL_EXT_MOTION, _LOAD_MOTION). Retail's clear only drops the motion
+// data; the clowns themselves live in another stack and stay in the scene for the commands that follow.
+TEST_F(NativeModel, ClearingTheStackOfACharactersAddedMotionsKeepsTheCharacterInTheScene) {
+    const Json base_commands = Json::array({
+        {{"command", "MODEL"},     {"args", {{{"type", "resource"}, {"kind", "model"}, {"index", 0}}}}},
+        {{"command", "MOTION"},    {"args", {IntegerArgument(0), AnimationArgument(0)}}               },
+        {{"command", "KEY_START"}, {"args", Json::array()}                                            },
+        {{"command", "KEY"},       {"args", {TextArgument("idle"), RealArgument(.5f)}}                },
+        {{"command", "KEY"},       {"args", {TextArgument("walk"), RealArgument(1)}}                  },
+        {{"command", "KEY_END"},   {"args", Json::array()}                                            }
+    });
+    auto        owner = std::make_shared<CCharacter2>();
+    auto       &clown = *owner;
+    clown.Initialize();
+    std::string error;
+    ASSERT_TRUE(LoadNamedActionCharacter(clown, gltf, NamedActionCharacter(game, base_commands), memory, error)) << error;
+    const Json extension = {
+        {"schema_version",  1                                                                                                                                                                          },
+        {"kind",            "character"                                                                                                                                                                },
+        {"default_profile", "info"                                                                                                                                                                     },
+        {"models",          Json::array()                                                                                                                                                              },
+        {"game_names",      {{"wave", TextArgument("wave_game")}}                                                                                                                                      },
+        {"resources",       {{"animations", Json::array({{{"external", "models/wave.gltf#0"}, {"actions", Json::array({{{"name", "wave"}, {"duration", 30}}})}, {"targets", {"models/model.gltf"}}}})}}},
+        {"profiles",
+         {{"info",
+           {{"commands", Json::array({{{"command", "MOTION"}, {"args", {IntegerArgument(1), AnimationArgument(0)}}},
+                                      {{"command", "KEY_START"}, {"args", Json::array()}},
+                                      {{"command", "KEY"}, {"args", {TextArgument("wave"), RealArgument(1)}}},
+                                      {{"command", "KEY_END"}, {"args", Json::array()}}})}}}}                                                                                                          }
+    };
+    const Json empty = {
+        {"asset", {{"version", "2.0"}}}
+    };
+    std::vector<u_long128> motion_storage(16384);
+    mgCMemory              motion_memory;
+    motion_memory.stSetBuffer(motion_storage.data(), static_cast<int>(motion_storage.size()));
+    ASSERT_TRUE(LoadNamedActionCharacter(clown, empty, extension, motion_memory, error)) << error;
+    ASSERT_NE(clown.motion[1].motion_list, nullptr);
+
+    auto scene = std::make_unique<CScene>();
+    scene->SetStack(5, &memory);
+    scene->SetStack(6, &motion_memory);
+    scene->AssignChara(11, dc2::scene::CharacterResource::FromOwned(owner), "clown");
+    ASSERT_EQ(scene->GetCharacter(11), &clown);
+
+    scene->ClearStack(6);
+
+    ASSERT_EQ(scene->GetCharacter(11), &clown);
+    EXPECT_TRUE(dc2::character::ResourcesLive(clown));
+    EXPECT_EQ(clown.motion[1].motion_list, nullptr);
+    EXPECT_FALSE(character_motion::Actions(clown.motion[0]).empty());
+    // A clear of the stack the character itself was made in still drops it.
+    scene->ClearStack(5);
+    EXPECT_EQ(scene->GetCharacter(11), nullptr);
 }
 
 TEST_F(NativeModel, ProfilesNamingUnknownActionsOrMissingExternalActionsFail) {

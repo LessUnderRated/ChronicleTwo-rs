@@ -1212,6 +1212,19 @@ void RetireSceneResources(CScene &scene, const mgCMemory &memory, dc2::memory::A
             auto &slot = scene.chara[index];
             if ((slot.Resource().HasValue() || slot.resource_lifetime.HasValue()) &&
                 (!slot.ResourcesLive() || slot.ResourcesWouldRetireOnReset(memory, kind))) {
+                // An event clears the stack holding a character's added motions and then deletes them from the
+                // character (_CLEAR_STACK, _DEL_EXT_MOTION): retail's clear only drops the motion data. Detaching them
+                // now keeps a character made in another stack in the scene for the commands that follow.
+                if (slot.status != 0 && slot.ResourcesLive()) {
+                    if (CCharacter2 *character = slot.Resource().Get()) {
+                        character->DeleteExtMotion();
+                        if (slot.ResourcesLive() && !slot.ResourcesWouldRetireOnReset(memory, kind)) {
+                            CT_LOG_DEBUG(Event, "scene: character slot {} keeps its model; its added motions went with arena {}",
+                                         index, static_cast<const void *>(&memory));
+                            continue;
+                        }
+                    }
+                }
                 // A character dropped here stops drawing at once, where retail's reset only moved an allocation
                 // pointer and the character drew on until its memory was used again: the log names both.
                 if (slot.status != 0 && slot.ResourcesLive()) {
