@@ -95,10 +95,10 @@ index a4f044e..5e620d4 100644
  else()
      corrosion_import_crate(MANIFEST_PATH ${KZ_RUST_MANIFEST} CRATES kazarov_core LOCKED)
 diff --git a/include/gfx/gfx.hpp b/include/gfx/gfx.hpp
-index f20cdf3..b8a5406 100644
+index 96bd8af..6711449 100644
 --- a/include/gfx/gfx.hpp
 +++ b/include/gfx/gfx.hpp
-@@ -304,6 +304,9 @@ void RunOnRenderThreadAsync(std::function<void()> fn);
+@@ -307,6 +307,9 @@ void RunOnRenderThreadAsync(std::function<void()> fn);
  // Validation-layer messages seen so far (validation and performance types, warning or worse).
  uint32_t ValidationMessageCount();
  uint32_t PipelineCount();
@@ -159,10 +159,10 @@ index a1bf61f..1def1a2 100644
  
  } // namespace gfx
 diff --git a/src/cpp/gfx/renderer.cpp b/src/cpp/gfx/renderer.cpp
-index ee0faa2..9857928 100644
+index cb69263..52cabae 100644
 --- a/src/cpp/gfx/renderer.cpp
 +++ b/src/cpp/gfx/renderer.cpp
-@@ -1676,6 +1676,17 @@ bool CreateSwapchain() {
+@@ -1698,6 +1698,17 @@ bool CreateSwapchain() {
          extent.height = std::clamp(static_cast<uint32_t>(std::max(height, 0)),
                                     capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
      }
@@ -195,10 +195,10 @@ index d836c3b..a9eab2a 100644
      if (!error) {
          return self;
 diff --git a/src/cpp/sce/eekernel_threads.cpp b/src/cpp/sce/eekernel_threads.cpp
-index 38578d9..772c956 100644
+index eba144f..50ea292 100644
 --- a/src/cpp/sce/eekernel_threads.cpp
 +++ b/src/cpp/sce/eekernel_threads.cpp
-@@ -82,6 +82,117 @@ _kz_fiber_trampoline:
+@@ -89,6 +89,117 @@ _kz_fiber_trampoline:
      bl _kz_fiber_entry
      brk #0
  )");
@@ -316,7 +316,7 @@ index 38578d9..772c956 100644
  #else
  #include <ucontext.h>
  #endif
-@@ -170,6 +281,42 @@ void ContextDestroy(Context &c) {
+@@ -208,6 +319,42 @@ void ContextDestroy(Context &c) {
      c.sp = nullptr;
  }
  
@@ -358,8 +358,8 @@ index 38578d9..772c956 100644
 +
  #else
  
- struct Context {
-@@ -344,7 +491,7 @@ void RunEntry() {
+ struct Context : SanitizerStack {
+@@ -395,7 +542,7 @@ void RunEntry() {
  
  } // namespace
  

@@ -1,8 +1,8 @@
 diff --git a/include/gfx/context.hpp b/include/gfx/context.hpp
-index 7bf2c97..4874c59 100644
+index f2b3cc8..7b6f212 100644
 --- a/include/gfx/context.hpp
 +++ b/include/gfx/context.hpp
-@@ -535,6 +535,9 @@ struct FrameCounters {
+@@ -584,6 +584,9 @@ struct FrameCounters {
      uint32_t grab_precopies = 0;
      uint32_t descriptor_binds = 0;
      uint64_t transient_bytes = 0;
@@ -50,10 +50,10 @@ index 2b82873..c970a31 100644
  
  } // namespace gfx
 diff --git a/include/gfx/gfx.hpp b/include/gfx/gfx.hpp
-index b8a5406..32879f1 100644
+index 6711449..e0afe3d 100644
 --- a/include/gfx/gfx.hpp
 +++ b/include/gfx/gfx.hpp
-@@ -211,6 +211,13 @@ struct FrameTimings {
+@@ -214,6 +214,13 @@ struct FrameTimings {
      uint32_t interval_buckets[4] = {};
      uint32_t sync_waits = 0; // one-shot submissions that wait for the GPU
  
@@ -67,7 +67,7 @@ index b8a5406..32879f1 100644
      // KZ_GPU_SCOPES=pass or draw: GPU time between timestamps at the end of each pass, copy and the setup
      // before a pass, and with draw at each pipeline change inside a pass. The timestamps do not wait, so a
      // segment is the time from its predecessor's completion to its own.
-@@ -331,6 +338,10 @@ inline constexpr TextureHandle kPreviousFrame = 2;
+@@ -334,6 +341,10 @@ inline constexpr TextureHandle kPreviousFrame = 2;
  enum class TextureFormat : uint8_t {
      Rgba8,
      Index8,
@@ -100,7 +100,7 @@ index a1a0667..aeb5f71 100644
                              phases.palette_blends++;
                          }
 diff --git a/src/cpp/gfx/draw.cpp b/src/cpp/gfx/draw.cpp
-index 59b4044..ee3bd63 100644
+index 51ff17d..0bd3140 100644
 --- a/src/cpp/gfx/draw.cpp
 +++ b/src/cpp/gfx/draw.cpp
 @@ -124,6 +124,7 @@ void RecordMeshApiEvent(MeshApiEvent event) {
@@ -475,10 +475,10 @@ index cf36c35..57291cb 100644
      return read;
  }
 diff --git a/src/cpp/gfx/renderer.cpp b/src/cpp/gfx/renderer.cpp
-index 9857928..0c04fce 100644
+index 52cabae..1743ad7 100644
 --- a/src/cpp/gfx/renderer.cpp
 +++ b/src/cpp/gfx/renderer.cpp
-@@ -2274,7 +2274,17 @@ void NoteFrameCpu(bool display) {
+@@ -2296,7 +2296,17 @@ void NoteFrameCpu(bool display) {
      }
      const double ms = MillisecondsSince(g_frame_opened);
      g_frame_opened = {};
@@ -497,7 +497,7 @@ index 9857928..0c04fce 100644
      UpdateFrameRoleRecord(FrameRoleState(CurrentFrame()).record, [&](FrameRoleRecord &record) { record.cpu_ms = ms; });
  }
  
-@@ -2726,6 +2736,11 @@ void RendererInit(SDL_Window *window, const RendererConfig &config) {
+@@ -2765,6 +2775,11 @@ void RendererInit(SDL_Window *window, const RendererConfig &config) {
  #ifdef __SWITCH__
      InitializeVsyncGate();
  #endif
@@ -509,7 +509,7 @@ index 9857928..0c04fce 100644
      StartRenderThread(g.config.render_thread);
  }
  
-@@ -3614,6 +3629,14 @@ void LogFrameTimings(double elapsed_seconds) {
+@@ -3659,6 +3674,14 @@ void LogFrameTimings(double elapsed_seconds) {
               timing.display_gpu.Average(), timing.display_gpu.max_ms);
      kz::Logf(kz::LogLevel::Info, "gfx", "timing display prepare count={} cpu={:.3f}/{:.3f}",
               timing.display_prepare_cpu.count, timing.display_prepare_cpu.Average(), timing.display_prepare_cpu.max_ms);
@@ -525,7 +525,7 @@ index 9857928..0c04fce 100644
               timing.acquire.Average(), timing.queue_present.Average(), timing.fence_wait.Average(),
               timing.interval_buckets[0], timing.interval_buckets[1], timing.interval_buckets[2], timing.interval_buckets[3],
 diff --git a/src/cpp/gfx/resources.cpp b/src/cpp/gfx/resources.cpp
-index 9481ff9..400b896 100644
+index a639afa..e5dc5e4 100644
 --- a/src/cpp/gfx/resources.cpp
 +++ b/src/cpp/gfx/resources.cpp
 @@ -35,10 +35,14 @@ uint32_t MakeHandle(uint16_t generation, uint32_t slot) {
