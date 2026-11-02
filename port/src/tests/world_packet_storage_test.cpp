@@ -163,6 +163,7 @@ TEST(WorldPacketStorage, ReenteringTheTownLoopThenJumpingBindsTheMapLayoutAgain)
     auto georama = packets.Prepare(dc2::world::DataPacketMode::Georama, characters, 8);
     ASSERT_EQ(georama.buffers[0].stack_size, 115000);
     EXPECT_NE(georama.buffers[1].Alloc(114000), nullptr);
+}
 
 TEST(WorldPacketStorage, RepeatedLayoutChangesRetirePacketsWithoutBorrowingThePreviousExtent) {
     mgCMemory characters;
