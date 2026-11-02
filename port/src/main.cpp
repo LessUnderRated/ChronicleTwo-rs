@@ -262,6 +262,10 @@ PresentSettings PresentSettingsFor(const Config &config, const Options &options)
         settings.show_fps = false;
     }
     settings = dc2::presentation::SwitchPresentationSettings(settings);
+#else
+    if (config.switch_tuning) {
+        settings = dc2::presentation::SwitchPresentationSettings(settings);
+    }
 #endif
     return settings;
 }
@@ -481,6 +485,10 @@ int Run(int argc, const char **argv) {
     renderer.presented_feedback = true;
     renderer.split_replay_submit = true;
     renderer.near_safe_fog = true;
+#else
+    // The Switch's tuning, where it is plain Vulkan; its presentation feedback is the Switch's own display event.
+    renderer.split_replay_submit = ConfigGet().switch_tuning;
+    renderer.near_safe_fog = ConfigGet().switch_tuning;
 #endif
     renderer.validation = renderer.validation || SettingsEnv("VULKAN_VALIDATION") != nullptr;
     // video.render_scale: pixels per PS2 line of the render targets, 0 for the window's height over 480.

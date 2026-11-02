@@ -337,6 +337,9 @@ bool Apply(Config &config, std::string_view name, const Json &value) {
     if (name == "video.frame_gen") {
         return ReadBool(value, config.frame_gen);
     }
+    if (name == "video.switch_tuning") {
+        return ReadBool(value, config.switch_tuning);
+    }
     if (name == "video.frame_timing_log") {
         return ReadBool(value, config.log_perf);
     }
@@ -600,6 +603,7 @@ std::string ConfigSerialize(const Config &config) {
     root["video"]["dynamic_scale"] = kDynamicScaleNames[static_cast<std::size_t>(config.dynamic_scale)];
     root["video"]["power_target"] = Shortest(config.power_target);
     root["video"]["frame_gen"] = config.frame_gen;
+    root["video"]["switch_tuning"] = config.switch_tuning;
     root["video"]["frame_timing_log"] = config.log_perf;
     root["video"]["text_font"] = config.font_sharp ? "sharp" : "original";
     root["video"]["show_fps"] = s.show_fps;

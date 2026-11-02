@@ -88,6 +88,10 @@ struct Config : HostSettings {
     // video.frame_gen: when interpolation is on and the device offers Qualcomm's Adreno Neural
     // Fusion, the between-frames are generated instead of replaying every draw.
     bool               frame_gen = true;
+    // video.switch_tuning: the Nintendo Switch port's renderer tuning, from its 60 FPS work: cheaper fog
+    // pipelines where a mesh's fog cannot reach its near plane, the frame's replay submitted apart from its final
+    // copy, and a 60 FPS presentation cap. Applies at the next start.
+    bool               switch_tuning = false;
     // video.frame_timing_log: the periodic present-rate and GPU timing summary in the log, plus the device
     // counters (draws, transient uploads, constant-record bytes) that point at where the watts go.
     // Formerly video.log_perf; renamed so old configs that saved it on stop forcing the per-second
