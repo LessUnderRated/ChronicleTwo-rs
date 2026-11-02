@@ -1579,11 +1579,11 @@ mgMemoryUsage MemoryUsage(const mgCMemory &memory) {
 void MemoryLogPeaks() {
     for (const PeakEntry &entry : PeakTable()) {
         if (entry.name[0] == '\0') {
-            CT_LOG_INFO(Memory, "mg_memory: ? [{}] peak {} of {} quadwords ({} free)",
+            CT_LOG_DEBUG(Memory, "mg_memory: ? [{}] peak {} of {} quadwords ({} free)",
                         static_cast<const void *>(entry.memory), entry.peak, entry.capacity,
                         entry.capacity - entry.peak);
         } else {
-            CT_LOG_INFO(Memory, "mg_memory: {:.16} peak {} of {} quadwords ({} free)", entry.name.data(), entry.peak,
+            CT_LOG_DEBUG(Memory, "mg_memory: {:.16} peak {} of {} quadwords ({} free)", entry.name.data(), entry.peak,
                         entry.capacity, entry.capacity - entry.peak);
         }
     }

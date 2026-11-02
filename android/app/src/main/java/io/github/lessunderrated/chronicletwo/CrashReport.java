@@ -15,6 +15,9 @@ import android.widget.Toast;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
@@ -192,7 +195,8 @@ final class CrashReport {
         }
         report.append("\n--- logcat ---\n").append(tail(logcat(), MAX_CHARS / 4));
         File log = newestGameLog(context);
-        report.append("\n--- log ---\n").append(log == null ? "(none)" : tail(read(log), MAX_CHARS / 2));
+        report.append("\n--- warnings and errors ---\n").append(log == null ? "(none)" : tail(problems(log), MAX_CHARS / 4));
+        report.append("\n--- log ---\n").append(log == null ? "(none)" : tail(read(log), MAX_CHARS / 4));
         return report.toString();
     }
 
@@ -289,9 +293,10 @@ final class CrashReport {
         if (stderr.isFile()) {
             report.append("\n--- stderr ---\n").append(tail(read(stderr), MAX_CHARS / 6));
         }
-        report.append("\n--- logcat ---\n").append(tail(logcat(), MAX_CHARS / 3));
+        report.append("\n--- logcat ---\n").append(tail(logcat(), MAX_CHARS / 6));
         File log = newestGameLog(context);
-        report.append("\n--- log ---\n").append(log == null ? "(none)" : tail(read(log), MAX_CHARS / 3));
+        report.append("\n--- warnings and errors ---\n").append(log == null ? "(none)" : tail(problems(log), MAX_CHARS / 4));
+        report.append("\n--- log ---\n").append(log == null ? "(none)" : tail(read(log), MAX_CHARS / 4));
         return report.toString();
     }
 
@@ -314,13 +319,56 @@ final class CrashReport {
                 }
             }
             process.waitFor();
-            return out.toString(StandardCharsets.UTF_8);
+            StringBuilder kept = new StringBuilder();
+            for (String line : out.toString(StandardCharsets.UTF_8).split("\n")) {
+                if (!quiet(line)) {
+                    kept.append(line).append('\n');
+                }
+            }
+            return kept.toString();
         } catch (IOException e) {
             return "(no logcat: " + e.getMessage() + ")";
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return "(no logcat: interrupted)";
         }
+    }
+
+    /** Every warning and error the game logged in the run, however far back: the tail of a log is mostly its last
+     * scene's loading, and a fault earlier in the run is what explains the end of it. */
+    private static String problems(File file) {
+        StringBuilder out = new StringBuilder();
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+            for (String line; (line = in.readLine()) != null; ) {
+                if (line.contains(" WARN ") || line.contains(" ERROR ") || line.contains(" CRIT ")) {
+                    out.append(line).append('\n');
+                    if (out.length() > MAX_CHARS * 2) {
+                        out.delete(0, out.length() - MAX_CHARS);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            return "(no log: " + e.getMessage() + ")";
+        }
+        return out.length() == 0 ? "(none)" : out.toString();
+    }
+
+    /** Android's own window and input bookkeeping, which fills logcat and says nothing about the game. */
+    private static final String[] QUIET_TAGS = {
+        "VRI[", "InsetsController", "InsetsSourceConsumer", "BLASTBufferQueue", "SurfaceComposerClient", "ViewRootImpl",
+        "ImeTracker", "ImeFocusController", "DecorView", "ScrollView", "AbsListView", "D/View ", "WindowManager",
+        "InputTransport", "I/Dialog", "I/Surface ", "BufferQueueProducer", "HWUI", "BackgroundBlurDrawable",
+        "WindowOnBackDispatcher", "CompatChangeReporter", "W/Settings", "NativeCustomFrequencyManager", "perf_hint",
+        "IDS_TAG", "AdrenoUtils", "ViewPostIme",
+    };
+
+    private static boolean quiet(String line) {
+        for (String tag : QUIET_TAGS) {
+            if (line.contains(tag)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** The last bytes of a file, which is all of a log worth sending. */

@@ -934,7 +934,7 @@ bool PushModuleFunction(lua_State *lua, const std::filesystem::path &file, std::
         luau_codegen_compile(lua, -1);
     }
 #endif
-    CT_LOG_INFO(Script, "luau: {} {}", loaded_precompiled ? "loaded precompiled" : "compiled", PathsDisplay(file));
+    CT_LOG_DEBUG(Script, "luau: {} {}", loaded_precompiled ? "loaded precompiled" : "compiled", PathsDisplay(file));
 
     lua_getref(lua, module_cache_ref);
     lua_pushvalue(lua, -2);
