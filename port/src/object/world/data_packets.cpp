@@ -71,9 +71,10 @@ PreparedDataPackets DataPacketStorage::Prepare(DataPacketMode requested_mode, mg
     if (mode == requested_mode && requested_mode != DataPacketMode::Bootstrap) {
         return {buffers, false};
     }
-    for (auto &buffer : buffers) {
-        auto *storage = ArenaBlock(&buffer, static_cast<std::size_t>(quadwords) * sizeof(u_long128));
-        buffer.stSetBuffer(reinterpret_cast<u_long128 *>(storage), quadwords);
+    for (std::size_t frame = 0; frame < buffers.size(); ++frame) {
+        auto *storage = ArenaBlock(&block_owners[frame][static_cast<std::size_t>(requested_mode)],
+                                   static_cast<std::size_t>(quadwords) * sizeof(u_long128));
+        buffers[frame].stSetBuffer(reinterpret_cast<u_long128 *>(storage), quadwords);
     }
     mode = requested_mode;
     return {buffers, true};

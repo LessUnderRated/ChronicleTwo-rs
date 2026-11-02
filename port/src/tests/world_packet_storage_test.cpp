@@ -87,3 +87,29 @@ TEST(WorldPacketStorage, BootstrapStorageDoesNotBorrowTheCharacterOrReadBuffer) 
         EXPECT_NE(buffer.Alloc(4999), nullptr);
     }
 }
+
+// The town loop starts on the bootstrap layout each time it is entered, after a battle or a dungeon too, and its next
+// map jump needs the map layout again: the packet arenas grow back past the bootstrap extent they were last bound at.
+TEST(WorldPacketStorage, ReenteringTheTownLoopThenJumpingBindsTheMapLayoutAgain) {
+    static char root_key;
+    mgCMemory   characters;
+    characters.stSetBuffer(reinterpret_cast<u_long128 *>(ArenaBlock(&root_key, 64 * sizeof(u_long128))), 64);
+    ASSERT_NE(characters.Alloc(8), nullptr);
+    characters.stSetLocked(true);
+    dc2::world::DataPacketStorage packets;
+
+    ASSERT_TRUE(packets.Prepare(dc2::world::DataPacketMode::Bootstrap, characters, 8).changed);
+    ASSERT_EQ(packets.Prepare(dc2::world::DataPacketMode::Map, characters, 8).buffers[0].stack_size, 70000);
+    ASSERT_EQ(packets.Prepare(dc2::world::DataPacketMode::Bootstrap, characters, 8).buffers[0].stack_size, 5000);
+
+    auto map = packets.Prepare(dc2::world::DataPacketMode::Map, characters, 8);
+    EXPECT_TRUE(map.changed);
+    ASSERT_EQ(map.buffers[0].stack_size, 70000);
+    ASSERT_EQ(map.buffers[1].stack_size, 70000);
+    EXPECT_NE(map.buffers[0].Alloc(69000), nullptr);
+
+    ASSERT_EQ(packets.Prepare(dc2::world::DataPacketMode::Bootstrap, characters, 8).buffers[0].stack_size, 5000);
+    auto georama = packets.Prepare(dc2::world::DataPacketMode::Georama, characters, 8);
+    ASSERT_EQ(georama.buffers[0].stack_size, 115000);
+    EXPECT_NE(georama.buffers[1].Alloc(114000), nullptr);
+}

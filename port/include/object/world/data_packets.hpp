@@ -31,6 +31,10 @@ struct PreparedDataPackets {
 class DataPacketStorage {
     std::array<mgCMemory, 2>      buffers{}; /**< Independent allocation controllers for the two packet frames. */
     std::optional<DataPacketMode> mode{};    /**< Layout currently bound to the packet arenas. */
+    // Each frame keeps a block per layout. The town loop starts on the bootstrap layout every time it is entered,
+    // after a battle or a dungeon too, and its next map jump needs the map layout again: one block per frame would be
+    // bound at the bootstrap extent and then asked to grow back past it, which a root rebind refuses.
+    std::array<std::array<char, 3>, 2> block_owners{}; /**< Arena block identities, by frame and layout. */
 
 public:
     /**
