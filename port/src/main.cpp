@@ -261,8 +261,7 @@ PresentSettings PresentSettingsFor(const Config &config, const Options &options)
     if (hide_fps != nullptr && std::string_view(hide_fps) == "1") {
         settings.show_fps = false;
     }
-    settings.max_fps = 60.0;
-    settings.display_per_tick = 0;
+    settings = dc2::presentation::SwitchPresentationSettings(settings);
 #endif
     return settings;
 }
@@ -279,6 +278,9 @@ bool host_renderer_initialized{};
  */
 void ShutdownRenderer() {
     if (std::exchange(host_renderer_initialized, false)) {
+#ifdef __SWITCH__
+        ClockSetResumeCallback(nullptr);
+#endif
         gfx::SetRenderIdleHook(nullptr, nullptr);
         gfx::RendererShutdown();
     }
@@ -449,6 +451,9 @@ int Run(int argc, const char **argv) {
     window.fullscreen = true;
 #endif
     window.vulkan = !offscreen;
+#ifdef __SWITCH__
+    window.manual_background_lifecycle = !offscreen && !window.headless;
+#endif
     WindowInit(window);
     host_window_initialized = true;
     std::atexit(ShutdownWindow);
@@ -472,6 +477,11 @@ int Run(int argc, const char **argv) {
     renderer.offscreen = offscreen;
     renderer.layout = Layout(ConfigGet());
     renderer.prog0_meshes = true;
+#ifdef __SWITCH__
+    renderer.presented_feedback = true;
+    renderer.split_replay_submit = true;
+    renderer.near_safe_fog = true;
+#endif
     renderer.validation = renderer.validation || SettingsEnv("VULKAN_VALIDATION") != nullptr;
     // video.render_scale: pixels per PS2 line of the render targets, 0 for the window's height over 480.
     if (ConfigGet().render_scale > 0.0f) {
@@ -519,6 +529,7 @@ int Run(int argc, const char **argv) {
                 PresentGetSettings().interpolation, PresentGetSettings().max_fps, ConfigGet().render_scale,
                 ConfigGet().log_perf);
 #ifdef __SWITCH__
+    ClockSetResumeCallback(dc2::presentation::ResumeAfterSuspend);
     if (const char *trace = std::getenv("DC2_SWITCH_MODEL_TRACE"); trace != nullptr && std::string_view(trace) == "1") {
         CT_LOG_INFO(Gfx, "switch: model trace enabled; canonical-only={}", !PresentGetSettings().interpolation);
     }
