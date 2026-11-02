@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include "common.h"
 
 #include <memory>
@@ -468,3 +470,19 @@ struct DataReadPathNameExt {
  *
  */
 DataReadPathNameExt DivPathNameExt(std::string_view path);
+
+/**
+ *
+ * The data files read since the last take: how many, their bytes, the time spent reading, and the slowest one. The
+ * frame loop's hitch report says what a long frame was loading.
+ *
+ */
+struct DataReadTally {
+    std::uint64_t files = 0;
+    std::uint64_t bytes = 0;
+    double        milliseconds = 0.0;
+    std::string   slowest;
+    double        slowest_milliseconds = 0.0;
+};
+
+DataReadTally DataReadTakeTally();

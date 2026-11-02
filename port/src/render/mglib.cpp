@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
@@ -28,6 +29,8 @@
 #include "dng_main.hpp"
 #include "exitcodes.hpp"
 #include "gfx/gfx.hpp"
+#include "crash/crash_detail.hpp"
+#include "dataread.hpp"
 #include "log/log.hpp"
 #include "mainloop.hpp"
 #include "menu_mouse.hpp"
@@ -2231,8 +2234,36 @@ void mgBeginPacket(mgCDrawManager *manager) {
     manager->SetSortTable(1);
 }
 
+namespace {
+
+// When the game thread's last frame wait ended: the work of a frame runs from there to the next mgEndFrame.
+std::chrono::steady_clock::time_point frame_work_start{};
+
+// A frame whose work alone took this long shows as a hitch, at the game's 60 fields a second as at its 30.
+constexpr double kHitchMilliseconds = 50.0;
+
+// Names a hitch in the log with what the frame read from the data, and where the game was.
+void ReportHitch(double milliseconds) {
+    const DataReadTally reads = DataReadTakeTally();
+    if (milliseconds < kHitchMilliseconds) {
+        return;
+    }
+    std::array<char, crash_detail::kSlotSize> map{};
+    std::array<char, crash_detail::kSlotSize> event{};
+    const std::size_t                         map_length = crash_detail::ContextRead(CrashKey::Map, map);
+    const std::size_t                         event_length = crash_detail::ContextRead(CrashKey::Event, event);
+    CT_LOG_WARN(Gfx, "hitch: frame work {:.0f} ms (map {}, event {}); read {} files, {} KiB in {:.0f} ms{}{}", milliseconds,
+                std::string_view(map.data(), map_length), std::string_view(event.data(), event_length), reads.files,
+                reads.bytes / 1024, reads.milliseconds, reads.files > 0 ? ", slowest " : "", reads.slowest);
+}
+
+} // namespace
+
 void mgEndFrame(mgCDrawManager *manager) {
     bool queued[4] = {};
+    if (frame_work_start != std::chrono::steady_clock::time_point{}) {
+        ReportHitch(std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - frame_work_start).count());
+    }
 
     {
         // The tick's device work runs under the lease; an Async render thread draws no display frame until it ends.
@@ -2347,6 +2378,7 @@ void mgEndFrame(mgCDrawManager *manager) {
     }
 
     PresentWaitFrame(old_vcount, mgFrameRate);
+    frame_work_start = std::chrono::steady_clock::now();
     old_vcount = mgGetVSyncCount();
     PresentTickEnd();
     mgNowFrameRate = dc2::timing::FrameFields();

@@ -23,6 +23,7 @@
 #include "mg_drawprim.hpp"
 #include "mg_frame.hpp"
 #include "mg_math.hpp"
+#include "log/log.hpp"
 #include "mg_memory.hpp"
 #include "mg_tanime.hpp"
 #include "mglib.hpp"
@@ -1207,9 +1208,17 @@ void RetireSceneResources(CScene &scene, const mgCMemory &memory, dc2::memory::A
                 retired = true;
             }
         }
-        for (auto &slot : scene.chara) {
+        for (std::size_t index = 0; index < std::size(scene.chara); ++index) {
+            auto &slot = scene.chara[index];
             if ((slot.Resource().HasValue() || slot.resource_lifetime.HasValue()) &&
                 (!slot.ResourcesLive() || slot.ResourcesWouldRetireOnReset(memory, kind))) {
+                // A character dropped here stops drawing at once, where retail's reset only moved an allocation
+                // pointer and the character drew on until its memory was used again: the log names both.
+                if (slot.status != 0 && slot.ResourcesLive()) {
+                    CT_LOG_WARN(Event, "scene: character slot {} dropped by the {} of arena {} ({:.16s})", index,
+                                kind == dc2::memory::ArenaResetKind::Rebind ? "rebind" : "reset",
+                                static_cast<const void *>(&memory), memory.name);
+                }
                 slot.Initialize();
                 retired = true;
             }
@@ -2192,6 +2201,7 @@ void CScene::ClearStack(int index) {
         return;
     }
     const int count = std::min(stack_num, static_cast<int>(std::size(stack)));
+    CT_LOG_DEBUG(Event, "scene: clearing stacks {} to {}", index, count - 1);
     for (int i = index; i < count; i++) {
         mgCMemory *memory = stack[i];
 

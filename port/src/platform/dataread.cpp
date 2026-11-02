@@ -478,11 +478,44 @@ std::optional<int> FileSize(const IndexedFile &file) {
     return static_cast<int>(*size);
 }
 
+std::mutex    tally_mutex;
+DataReadTally tally;
+
+// Counts one read for the frame loop's hitch report.
+class TallyRead {
+    const IndexedFile                    &file;
+    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+
+public:
+    std::size_t bytes = 0;
+
+    explicit TallyRead(const IndexedFile &read) : file(read) {}
+
+    ~TallyRead() {
+        const double                milliseconds = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
+        const std::lock_guard<std::mutex> lock(tally_mutex);
+        tally.files++;
+        tally.bytes += bytes;
+        tally.milliseconds += milliseconds;
+        if (milliseconds > tally.slowest_milliseconds) {
+            tally.slowest_milliseconds = milliseconds;
+            tally.slowest.assign(file.relative.data(), file.relative.size());
+        }
+    }
+
+    TallyRead(const TallyRead &) = delete;
+    TallyRead &operator=(const TallyRead &) = delete;
+};
+
 // Reads a whole file into a sector-padded buffer without recording the buffer, so it is safe off the main thread.
 int ReadUnregistered(const IndexedFile &file, void *buffer, std::size_t capacity) {
     CT_PROFILE_ZONE("Read asset");
     CT_PROFILE_TEXT(file.relative.data(), file.relative.size());
+    TallyRead                counted(file);
     const std::optional<int> size = FileSize(file);
+    if (size) {
+        counted.bytes = static_cast<std::size_t>(std::max(*size, 0));
+    }
     if (!size) {
         return -1;
     }
@@ -1274,4 +1307,9 @@ bool dc2::io::WriteFile(std::string_view path, std::span<const std::byte> bytes)
         bytes = bytes.subspan(static_cast<std::size_t>(written));
     }
     return sceClose(std::exchange(file.descriptor, -1)) == 0;
+}
+
+DataReadTally DataReadTakeTally() {
+    const std::lock_guard<std::mutex> lock(tally_mutex);
+    return std::exchange(tally, DataReadTally{});
 }
