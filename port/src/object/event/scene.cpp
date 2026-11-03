@@ -13,6 +13,7 @@
 #include "editmap.hpp"
 #include "effscript.hpp"
 #include "font.hpp"
+#include "log/log.hpp"
 #include "mainloop.hpp"
 #include "map.hpp"
 #include "mapload.hpp"
@@ -23,7 +24,6 @@
 #include "mg_drawprim.hpp"
 #include "mg_frame.hpp"
 #include "mg_math.hpp"
-#include "log/log.hpp"
 #include "mg_memory.hpp"
 #include "mg_tanime.hpp"
 #include "mglib.hpp"
@@ -1291,6 +1291,9 @@ CSceneCharacter *CScene::GetSceneCharacter(int index) {
     }
     auto &slot = chara[index];
     if (slot.Resource().HasValue() && !slot.ResourcesLive()) {
+        // Nothing released this character: whatever still expects it in the scene stops seeing it from here on.
+        CT_LOG_WARN(Memory, "scene character {} ({}) dropped: its resources retired without a release",
+                    index, dc2::text::View(slot.name));
         slot.Initialize();
     }
     return &slot;
