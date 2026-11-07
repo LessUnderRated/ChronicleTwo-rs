@@ -1330,6 +1330,12 @@ declare event: {
 	--- Sets the background music volume from an integer, or from a float scaled by the current volume.
 	set_music_volume: (volume: s32) -> (),
 	set_music_volume_1: (volume: s32) -> (),
+	--- set_music_volume with its value as an integer.
+	set_music_volume_int: (volume: s32) -> (),
+	set_music_volume_int_1: (volume: s32) -> (),
+	--- set_music_volume with its value as a float.
+	set_music_volume_float: (volume: f32) -> (),
+	set_music_volume_float_1: (volume: f32) -> (),
 	--- Does nothing and fails.
 	set_sound_reverb_unused: () -> (),
 	set_sound_reverb_unused_0: () -> (),
@@ -1707,6 +1713,12 @@ declare event: {
 	--- Pushes a random float or integer in the range given, depending on the type of the range argument.
 	get_random_number: (range: f32) -> f32?,
 	get_random_number_2: (range: f32) -> f32?,
+	--- get_random_number with its value as an integer.
+	get_random_number_int: (range: s32) -> s32?,
+	get_random_number_int_2: (range: s32) -> s32?,
+	--- get_random_number with its value as a float.
+	get_random_number_float: (range: f32) -> f32?,
+	get_random_number_float_2: (range: f32) -> f32?,
 	--- Pushes the distance from a point to a line segment, or -1 when the point projects outside the segment.
 	get_point_to_segment_distance: (start_x: f32, start_y: f32, start_z: f32, end_x: f32, end_y: f32, end_z: f32, point_x: f32, point_y: f32, point_z: f32) -> f32?,
 	get_point_to_segment_distance_10: (start_x: f32, start_y: f32, start_z: f32, end_x: f32, end_y: f32, end_z: f32, point_x: f32, point_y: f32, point_z: f32) -> f32?,
