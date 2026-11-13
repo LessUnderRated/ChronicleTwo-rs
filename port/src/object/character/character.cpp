@@ -3007,6 +3007,31 @@ bool ResourcesWouldRetireOnReset(const CCharacter2 &character, const mgCMemory &
     return character.resource_state.WouldRetireOnReset(memory, kind);
 }
 
+bool DetachRetiringExtensions(CCharacter2 &character, const mgCMemory &memory, dc2::memory::ArenaResetKind kind) {
+    const auto state = character.resource_state.Acquire<ResourceState>();
+    if (!state || state->anchor.WouldRetireOnReset(memory, kind)) {
+        return false;
+    }
+    bool extension_retires = false;
+    for (const auto &producer : state->producers) {
+        if (!producer.lifetime.WouldRetireOnReset(memory, kind)) {
+            continue;
+        }
+        const bool extension = producer.index > 0 && (producer.channel == ResourceChannel::Motion ||
+                                                      producer.channel == ResourceChannel::ShadowMotion ||
+                                                      producer.channel == ResourceChannel::Image);
+        if (!extension) {
+            return false;
+        }
+        extension_retires = true;
+    }
+    if (!extension_retires) {
+        return false;
+    }
+    character.DeleteExtMotion();
+    return !ResourcesWouldRetireOnReset(character, memory, kind);
+}
+
 bool PublishResources(CCharacter2 &character, ResourceState state) {
     std::stable_sort(state.producers.begin(), state.producers.end(), [](const auto &left, const auto &right) {
         return left.channel < right.channel || (left.channel == right.channel && left.index < right.index);
@@ -3057,7 +3082,7 @@ bool CaptureModelResources(CCharacter2 &character, mgCMemory &memory) {
     }
     ResourceState state;
     state.anchor = dc2::memory::ArenaBuffer::Bind(memory, std::span<u8>(reinterpret_cast<u8 *>(character.CObjectFrame::frame), sizeof(mgCFrame)));
-    state.producers.push_back({ResourceChannel::Model, 0, dc2::memory::ArenaLifetime::Capture(memory)});
+    state.producers.push_back({ResourceChannel::Model, 0, dc2::memory::ArenaLifetime::Capture(memory, character.CObjectFrame::frame)});
     const auto      prior = character.resource_state.Acquire<ResourceState>();
     CloneAuxBuilder builder(prior ? prior->clone_inputs : nullptr);
     if (!builder.CaptureFrames(character, memory)) {

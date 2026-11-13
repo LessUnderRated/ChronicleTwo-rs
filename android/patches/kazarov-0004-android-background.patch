@@ -1,5 +1,5 @@
 diff --git a/include/gfx/gfx.hpp b/include/gfx/gfx.hpp
-index 368ecc1..edcb144 100644
+index 192768d..ce5c8d4 100644
 --- a/include/gfx/gfx.hpp
 +++ b/include/gfx/gfx.hpp
 @@ -178,7 +178,9 @@ void RendererResize();
@@ -14,10 +14,10 @@ index 368ecc1..edcb144 100644
  void RendererResume();
  // The swapchain is recreated with the mode at the next BeginFrame or tick render.
 diff --git a/src/cpp/gfx/renderer.cpp b/src/cpp/gfx/renderer.cpp
-index 87680f8..ade3cb7 100644
+index c166c1d..80224d1 100644
 --- a/src/cpp/gfx/renderer.cpp
 +++ b/src/cpp/gfx/renderer.cpp
-@@ -2928,6 +2928,11 @@ void RendererSuspend() {
+@@ -4351,6 +4351,11 @@ void RendererSuspend() {
      SuspendPresentedGateBudget(true);
  #endif
      vkDeviceWaitIdle(g.device);

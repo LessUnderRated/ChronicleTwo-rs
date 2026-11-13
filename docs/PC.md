@@ -25,6 +25,14 @@ The renderer's cases need a Vulkan device with the features `tools/kazarov/src/c
 
 ### Windows
 
+GitHub Actions cross-compiles Windows releases and test executables on Ubuntu with the `windows` target in `tools/ci/Dockerfile`. Linux host tools build the C++26 and Rust code for `x86_64-pc-windows-gnullvm`; a separate Windows job runs the resulting CPU and Rust tests with an official Python installation. Cross builds use `port/build/windows-cross-x64-release`, keeping their CMake cache separate from native Windows builds.
+
+The Windows and macOS workflows each compile, test and package one build per push or pull request. The Tests workflow covers Linux and the iOS simulator; it does not repeat the desktop release builds. Manual desktop runs can disable tests with the `tests` input.
+
+For a local cross build, run `docker build --target windows -f tools/ci/Dockerfile -t chronicletwo-ci:windows .`, then `docker run --rm -v "${PWD}:/work" chronicletwo-ci:windows bash tools/ci/windows.sh build` from Bash. Use `tests` to compile the test executables as well. Run `python3 tools/ci/windows-package.py build` inside that container to validate the bundled DLL imports and symbol lookup and write the runtime and symbol ZIPs under `artifacts/`.
+
+CI images pin their base-image digests and Ubuntu package snapshot. Rust comes from its official image, target libraries from rustup, and bridge generators from Cargo with locked dependencies. The Docker source bundle verifies upstream archive checksums, rejects conflicting pins, and keeps its download layer cached across unrelated CMake edits. CMake consumes only those verified sources, and Linux and Windows compilation use the Cargo dependencies fetched into the image without network access. BuildKit, compiler, Rust and ThinLTO caches are reused across runs. GPU tests share a CTest resource lock so renderer startup cannot exhaust hosted-runner resources while CPU tests remain parallel.
+
 ```bat
 .\build.bat windows-x64
 .\run.bat windows-x64
@@ -72,9 +80,9 @@ export VK_DRIVER_FILES="$(brew --prefix)/etc/vulkan/icd.d/MoltenVK_icd.json"
 
 ### iOS
 
-The iOS arm64 build requires macOS and Xcode with Swift C++ interoperability. The
+The iOS arm64 build requires macOS and Xcode with the iOS 27 SDK or newer. The
 [build workflow](../.github/workflows/ios.yml) builds SDL3 and FFmpeg, supplies the iOS MoltenVK library,
-and packages an unsigned IPA with its scripts, glyphs and gameplay seed. It targets iOS 16.3 and later;
+and packages an unsigned IPA with its scripts, glyphs and gameplay seed. It targets iOS 27 and later;
 install the IPA through a sideloading tool that signs it for your device.
 
 For a local build, export Docker's `apple-deps` target into `.kazarov`, then run
@@ -119,7 +127,7 @@ BUILD_DIR=build/pal python3 scripts/build/verify.py -c
 
 ### Continuous integration
 
-Four independent workflows publish Windows, macOS, iOS and Linux builds on pushes to `master`, pull requests and manual dispatches. Builds configure `CT_BUILD_TESTS=OFF`; neither the game suite nor the data bridge test executable is compiled. Linux remains the Flatpak in `linux.yml`, without a duplicate native Release build. Platform packages retain their separate symbol artifacts.
+Five independent workflows publish Windows, macOS, iOS, Linux and Nintendo Switch builds on pushes to `master`, pull requests and manual dispatches. Builds configure `CT_BUILD_TESTS=OFF`; neither the game suite nor the data bridge test executable is compiled. Linux remains the Flatpak in `linux.yml`, without a duplicate native Release build. `switch.yml` builds Kazarov's Switch toolchain image (cached between runs) and uploads the NRO with its ELF. Platform packages retain their separate symbol artifacts.
 
 `tests.yml` runs separately and calls the same Windows, macOS and Linux configurations with tests enabled. Linux uses the Docker toolchain, Debug assertions and lavapipe; it preserves the PAL timing baseline check, Python clang-binding checks, Rust publisher tests, crash-symboliser tests, native runtime gate, PIE check and split-symbol checks. Windows runs the desktop suite excluding GPU cases, Rust tests and symbol resolution. macOS runs its desktop and Rust suites and checks dSYM resolution; the documented virtual-GPU exceptions remain report-only. iOS runs the existing floating-point formatting compatibility regressions on an available arm64 iPhone simulator. The desktop suite's subprocess/death-test assumptions are not supported by iOS. Each platform uploads CTest XML and diagnostics on failure.
 
@@ -163,7 +171,7 @@ Help movie extraction first appears in Kazarov `2e6ef96` (data version 14). The 
 
 Never edit `data.json` to claim the new version: the marker would pass, but the older `data.zip` still lacks the newly extracted assets.
 
-On iOS a launcher (`port/src/ios/Launcher.swift`; the iOS code is Swift under `port/src/ios`, calling the game through `ios/bridge.hpp` with Swift's C++ interoperability) comes up on every start, before the game's window. It shows whether the data is current and offers **Play** only then. Without data it finds a disc image (`.iso`) in the app's Documents folder or its Inbox, where the Files app and Open In put it, or lets the player choose one in Files, opened in place rather than copied; it then extracts into the data root on a worker thread and draws the progress. **Extract Again…** re-extracts over current data, saves and settings untouched. **Settings** lists the APP SETTINGS rows, apart from the bindings, and **Help** explains where the disc image goes, LiveContainer included. The on-screen gamepad starts after the launcher.
+On iOS a launcher (`port/src/ios/Launcher.swift`; the iOS code is Swift under `port/src/ios`, calling the game through the C-compatible interface in `ios/bridge.hpp`) comes up on every start, before the game's window. It shows whether the data is current and offers **Play** only then. Without data it finds a disc image (`.iso`) in the app's Documents folder or its Inbox, where the Files app and Open In put it, or lets the player choose one in Files, opened in place rather than copied; it then extracts into the data root on a worker thread and draws the progress. **Extract Again…** re-extracts over current data, saves and settings untouched. **Settings** lists the APP SETTINGS rows, apart from the bindings, and **Help** explains where the disc image goes, LiveContainer included. The on-screen gamepad starts after the launcher.
 
 `run.sh` and `run.bat` pass `--run-dir <checkout>/port/run`, giving them the data root `port/run/data`, whose parent holds `data.zip`, and `port/run/saves`. A direct executable launch defaults to the per-user `chronicletwo` application data root with the same layout. They also set `DC2_LOG=debug` when it is unset, so the console shows debug lines ([logging](LOGGING.md)).
 
@@ -1450,15 +1458,6 @@ remain intact. Maps sharing the arena share this invalidation scope.
 
 This prevents a stale map-part access after the chapter 6 Griffon cutscenes load d06e01.
 
-### Texture blocks across a map change
-
-EditMapJump (port/src/object/world/editloop.cpp) deletes the old villagers and maps before it lays out the next map's
-memory. Rebinding MainDataBuff retires the map slot, and a retired slot no longer knows its texture blocks, so deleting
-the map afterwards would release nothing: a texture animation allocated in the map arena would stay on its block while
-the next map overwrites it, and the first draw of that block would walk the overwritten records.
-
-This prevents the crash when the opening moves from Monica's battle through op_rain to s42.
-
 ### Georama limits
 
 Retail caps a town at 256 edit part slots, a 1024-entry placement log, 32 houses,
@@ -1542,6 +1541,8 @@ Title submenus borrow the remaining `Stack_ReadBuff` storage explicitly. The men
 A full party change clears old actor models and attachment chains before repartitioning the character arenas. An optional model that supplies no read therefore remains empty; the previous gun or accessory cannot survive until sound metadata reuses that same storage. NativeRecords.UnitReloadClearsMissingRangedModelBeforeSoundArenaReuse exercises the old-frame address being reused for an arena-owned sound name.
 
 Costume replacement detaches the previous skin while its arena is still live, before resetting the menu or scene costume slot. PrepareSkinArenaReset removes retiring visuals, deformation channels, copied deformation vertices and image dependencies, then publishes the remaining character dependencies. It refuses to retire a model or another nonreplaceable resource. Repeated changes reuse the same slot capacity without leaving the body dependent on its previous generation. Skin IMG commands read their texture resource after the image-slot argument, as the shipped character profiles specify. Only MODEL, MOTION, IMG and IMG_END commands apply during skin loading. Replacement bind matrices update the weighted visual frames; skeleton and fixed-visual bind matrices retain the base character pose. Skin loads require a body target even when the separate costume character slot is absent. NativeModel.CostumeSkinArenaCanBeReusedWithoutRetiringTheBody covers 100 replacements with stable allocation use; NativeModel.SkinReadsTextureResourceAfterItsImageSlot covers explicit costume texture registration.
+
+An event can load extension motions and images onto a scene character from an arena it later resets, as `_DEL_MONSTER` does when it clears the event scene's monster stack after the Halloween and Starlight Canyon cutscenes. Retail leaves those pointers dangling in the player. `RetireSceneResources` (`port/src/object/event/scene.cpp`) instead detaches them through `DetachRetiringExtensions`, which runs `DeleteExtMotion` when only extension motions or images would retire, so the player keeps its slot rather than being dropped from the scene. The train sub-game's bomb pack on Max, which stays in the scene's stack 5 after the sub-game ends, detaches the same way. `PrepareEditMapJumpStorage` (`port/src/object/world/editloop.cpp`) clears the scene's stacks from stack 1 before it rebinds `MainDataBuff`, so this detachment still sees live resources on a map jump. When a script skips villager loading, `CScene::LoadVillager` still binds the villager stack to the new map, because `EditInit` borrows its sub data from that stack. The dungeon item menu's preview body shares its sword trail through its own `MenuPreviewSwordEffectStack`; the scene player keeps `SwordEffectStack`, so neither body's reload retires the other. `MenuReplay.WeaponViewExit` covers the menu exit.
 
 The renderer shares packet-data views while retaining their backing owner. Title initialization passes borrowed views of main-arena allocations, allowing model drawing to use those allocations after its temporary cursors are destroyed. Resetting the main arena still retires the renderer's views.
 
@@ -2023,6 +2024,8 @@ is the table that retail `CSound::Init` loads, kept in `sound.cpp` as `kLayout`.
 `TransBdState` always reports the transfer complete.
 
 Sound metadata borrows the allocator that loaded it. The title event bank and shop bank keep their allocator objects for the scene or menu lifetime, so later Start and shop sound requests retain valid mappings. The title menu also keeps its borrowed backing allocator alive while the main menu stack uses it; resetting the parent storage still retires these resources. The optional AudioReplay.TitleStart, AudioReplay.ShopTransaction and AudioReplay.CostumeMusic CTests initialize the real scenes, press Start or complete shop transactions after initialization returns and require a successful sample dispatch on the corresponding driver port in the mixer trace. They also require the title Options/costume music (`bg_048`) or shop music (`bg_050`) to start and dispatch synthesized samples; set DC2_DATA to current published data to run them.
+
+Every event start (`_INITIALIZE` through `EdEventInit`) resets `BuffEventSnd`. Retail only rewinds the arena, so the bank loaded on the event sound port (`SND_PORT_EVENT`), which is the dungeon battle theme, stays usable. Here the reset would retire that bank, so a chest, revive or any other event would leave the battle theme unable to start, fade or stop, and the floor music would resume over it. `_SND_LOAD_SOUND` (`port/src/object/event/event_func.cpp`) therefore loads the event port's bank into its own arena, which resets only when that port is loaded again.
 
 Scene music metadata lives in each scene's persistent BGM_INFO::stack, backed by its independent SceneBgm arena. Sequence playback retains shared ownership of its parsed SqFile in the sound port and mixer sequencer. Stream playback likewise retains its PcmTrack in StreamChannel, so EzBgmOpen's local loading handle can expire after opening the stream.
 

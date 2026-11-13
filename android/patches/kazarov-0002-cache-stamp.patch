@@ -1,8 +1,8 @@
 diff --git a/include/gfx/context.hpp b/include/gfx/context.hpp
-index f2b3cc8..7b6f212 100644
+index 8f4919c..36c966f 100644
 --- a/include/gfx/context.hpp
 +++ b/include/gfx/context.hpp
-@@ -584,6 +584,9 @@ struct FrameCounters {
+@@ -1011,6 +1011,9 @@ struct FrameCounters {
      uint32_t grab_precopies = 0;
      uint32_t descriptor_binds = 0;
      uint64_t transient_bytes = 0;
@@ -11,7 +11,7 @@ index f2b3cc8..7b6f212 100644
 +    uint64_t constant_record_bytes = 0;
  };
  
- struct Context {
+ /**
 diff --git a/include/gfx/displaylist.hpp b/include/gfx/displaylist.hpp
 index 2b82873..c970a31 100644
 --- a/include/gfx/displaylist.hpp
@@ -50,7 +50,7 @@ index 2b82873..c970a31 100644
  
  } // namespace gfx
 diff --git a/include/gfx/gfx.hpp b/include/gfx/gfx.hpp
-index 6711449..e0afe3d 100644
+index c38c503..352f0ab 100644
 --- a/include/gfx/gfx.hpp
 +++ b/include/gfx/gfx.hpp
 @@ -214,6 +214,13 @@ struct FrameTimings {
@@ -67,7 +67,7 @@ index 6711449..e0afe3d 100644
      // KZ_GPU_SCOPES=pass or draw: GPU time between timestamps at the end of each pass, copy and the setup
      // before a pass, and with draw at each pipeline change inside a pass. The timestamps do not wait, so a
      // segment is the time from its predecessor's completion to its own.
-@@ -334,6 +341,10 @@ inline constexpr TextureHandle kPreviousFrame = 2;
+@@ -360,6 +367,10 @@ inline constexpr TextureHandle kPreviousFrame = 2;
  enum class TextureFormat : uint8_t {
      Rgba8,
      Index8,
@@ -79,10 +79,10 @@ index 6711449..e0afe3d 100644
  
  struct TextureDesc {
 diff --git a/src/cpp/gfx/displaylist.cpp b/src/cpp/gfx/displaylist.cpp
-index a1a0667..aeb5f71 100644
+index 7456194..cac8976 100644
 --- a/src/cpp/gfx/displaylist.cpp
 +++ b/src/cpp/gfx/displaylist.cpp
-@@ -1459,9 +1459,14 @@ void Interpolated(const DisplayList &list, const DisplayList &previous, float al
+@@ -1474,9 +1474,14 @@ void Interpolated(const DisplayList &list, const DisplayList &previous, float al
                          if (phases.enabled) {
                              phases.palette_reuses++;
                          }
@@ -100,10 +100,10 @@ index a1a0667..aeb5f71 100644
                              phases.palette_blends++;
                          }
 diff --git a/src/cpp/gfx/draw.cpp b/src/cpp/gfx/draw.cpp
-index 51ff17d..0bd3140 100644
+index 08fe176..4b8f0e8 100644
 --- a/src/cpp/gfx/draw.cpp
 +++ b/src/cpp/gfx/draw.cpp
-@@ -124,6 +124,7 @@ void RecordMeshApiEvent(MeshApiEvent event) {
+@@ -125,6 +125,7 @@ void RecordMeshApiEvent(MeshApiEvent event) {
  }
  
  void RecordMeshConstantCopy(size_t bytes) {
@@ -111,7 +111,7 @@ index 51ff17d..0bd3140 100644
      if (MeshPhaseContextActive() && mesh_phase_diagnostic.current_class != MeshPhaseClass::Count) {
          mesh_phase_diagnostic.frame[static_cast<size_t>(mesh_phase_diagnostic.current_class)].constant_copy_bytes += bytes;
      }
-@@ -595,6 +596,16 @@ bool Prepare(PipelineFamily family, VkPrimitiveTopology topology, const TextureB
+@@ -598,6 +599,16 @@ bool Prepare(PipelineFamily family, VkPrimitiveTopology topology, const TextureB
          }
      }
  
@@ -128,7 +128,7 @@ index 51ff17d..0bd3140 100644
      Target target;
      EnsureRendering(target);
      VkCommandBuffer cmd = DrawCommands();
-@@ -1945,6 +1956,67 @@ void DrawPrepared(Primitive primitive, std::span<const Vertex2D> vertices, const
+@@ -2169,6 +2180,67 @@ void DrawPrepared(Primitive primitive, std::span<const Vertex2D> vertices, const
  
  } // namespace
  
@@ -196,7 +196,7 @@ index 51ff17d..0bd3140 100644
  namespace {
  
  // The state DrawDepthPlanes2D is exact for: the feathered haze blend (A = source, B = zero, C = FIX 0x80,
-@@ -2251,11 +2323,20 @@ void DrawIndexedMesh(MeshHandle handle, uint32_t first_index, uint32_t index_cou
+@@ -2475,6 +2547,15 @@ void DrawIndexedMesh(MeshHandle handle, uint32_t first_index, uint32_t index_cou
          if (index_count == 0) {
              return;
          }
@@ -212,13 +212,16 @@ index 51ff17d..0bd3140 100644
          std::optional<MeshPhaseCall> phases;
          if (MeasureMeshPhaseCall()) {
              phases.emplace(family == kFamilyMesh ? MeshPhaseClass::RetainedPlain : MeshPhaseClass::RetainedProg0);
+@@ -2484,7 +2565,7 @@ void DrawIndexedMesh(MeshHandle handle, uint32_t first_index, uint32_t index_cou
+             fragment_observation.emplace();
          }
+         uint32_t guarded_scope = UINT32_MAX;
 -        if (!Prepare(family, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, binding, state, push,
 +        if (!Prepare(family, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, local_binding, state, push,
-                      false, {}, {}, &constants, mesh, index_count, prog0)) {
+                      false, {}, {}, &constants, mesh, index_count, prog0, handle, first_index,
+                      fragment_observation ? &*fragment_observation : nullptr, g.guarded_samples_enabled ? &guarded_scope : nullptr)) {
              return;
-         }
-@@ -2265,8 +2346,7 @@ void DrawIndexedMesh(MeshHandle handle, uint32_t first_index, uint32_t index_cou
+@@ -2495,8 +2576,7 @@ void DrawIndexedMesh(MeshHandle handle, uint32_t first_index, uint32_t index_cou
          }
          mesh->last_draw_use = g.frame_serial;
          VkCommandBuffer cmd = DrawCommands();
@@ -228,7 +231,7 @@ index 51ff17d..0bd3140 100644
          if (phases) {
              phases->Advance(MeshPhase::Emit);
          }
-@@ -2321,11 +2401,18 @@ void DrawImmediateMesh(std::span<const Vertex3D> vertices, std::span<const uint3
+@@ -2603,11 +2683,18 @@ void DrawImmediateMesh(std::span<const Vertex3D> vertices, std::span<const uint3
          if (vertices.empty() || indices.empty()) {
              return;
          }
@@ -248,7 +251,7 @@ index 51ff17d..0bd3140 100644
                       static_cast<uint32_t>(indices.size()), prog0)) {
              return;
          }
-@@ -2342,8 +2429,7 @@ void DrawImmediateMesh(std::span<const Vertex3D> vertices, std::span<const uint3
+@@ -2624,8 +2711,7 @@ void DrawImmediateMesh(std::span<const Vertex3D> vertices, std::span<const uint3
              phases->PayloadCopied(vertices.size_bytes() + indices.size_bytes());
              phases->Advance(MeshPhase::Constants);
          }
@@ -259,20 +262,20 @@ index 51ff17d..0bd3140 100644
              phases->Advance(MeshPhase::Emit);
          }
 diff --git a/src/cpp/gfx/pipelines.cpp b/src/cpp/gfx/pipelines.cpp
-index 1def1a2..1f3eeaf 100644
+index ed0ca27..19ab332 100644
 --- a/src/cpp/gfx/pipelines.cpp
 +++ b/src/cpp/gfx/pipelines.cpp
-@@ -29,6 +29,9 @@
- #include "shaders/draw_single.frag.spv.hpp"
+@@ -36,6 +36,9 @@
  #include "shaders/mesh.vert.spv.hpp"
  #include "shaders/mesh_prog0.vert.spv.hpp"
+ #include "shaders/mesh_prog0_unlit.vert.spv.hpp"
 +#include "shaders/mesh_prog0_bound.vert.spv.hpp"
 +#include "shaders/mesh_prog0_skinned.vert.spv.hpp"
 +#include "shaders/mesh_prog0_bound_skinned.vert.spv.hpp"
  
  namespace gfx {
  
-@@ -220,12 +223,75 @@ uint32_t CanonicalFragmentFeatures(TextureMode mode, uint32_t features) {
+@@ -227,12 +230,75 @@ uint32_t CanonicalFragmentFeatures(TextureMode mode, uint32_t features) {
      return features;
  }
  
@@ -349,7 +352,7 @@ index 1def1a2..1f3eeaf 100644
      VkPipelineCacheHeaderVersionOne header = {};
      if (!file.read(reinterpret_cast<char *>(&header), sizeof(header))) {
          return {};
-@@ -237,12 +303,13 @@ std::vector<uint8_t> LoadCache(const std::filesystem::path &path) {
+@@ -244,12 +310,13 @@ std::vector<uint8_t> LoadCache(const std::filesystem::path &path) {
      }
      file.seekg(0, std::ios::end);
      const auto size = file.tellg();
@@ -367,7 +370,7 @@ index 1def1a2..1f3eeaf 100644
          return {};
      }
      return data;
-@@ -270,7 +337,15 @@ void SaveCache(const std::filesystem::path &path, const std::vector<uint8_t> &in
+@@ -277,7 +344,15 @@ void SaveCache(const std::filesystem::path &path, const std::vector<uint8_t> &in
                           PathsDisplay(path.parent_path()), error.value(), error.message());
              }
          }
@@ -384,7 +387,7 @@ index 1def1a2..1f3eeaf 100644
              Error("cannot write the pipeline cache to %s", PathsDisplay(path).c_str());
          }
      }
-@@ -459,7 +534,9 @@ void CreateBindlessTextureSet() {
+@@ -466,7 +541,9 @@ void CreateBindlessTextureSet() {
  }
  
  // Set 0 without the bindless array, pushed by each draw: its texture, its palette, its sampler and
@@ -395,7 +398,7 @@ index 1def1a2..1f3eeaf 100644
  void CreatePushedTextureLayout() {
      VkDescriptorSetLayoutBinding bindings[4] = {};
      for (uint32_t binding = 0; binding < 4; binding++) {
-@@ -468,6 +545,9 @@ void CreatePushedTextureLayout() {
+@@ -475,6 +552,9 @@ void CreatePushedTextureLayout() {
          bindings[binding].descriptorCount = 1;
          bindings[binding].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
      }
@@ -405,8 +408,8 @@ index 1def1a2..1f3eeaf 100644
      bindings[3].pImmutableSamplers = &g.samplers[0];
  
      VkDescriptorSetLayoutCreateInfo layout = {};
-@@ -737,6 +817,20 @@ void CreatePipelines() {
-                                             : CreateShader(draw_bound_single_frag, sizeof(draw_bound_single_frag));
+@@ -793,6 +873,20 @@ void CreatePipelines() {
+     VkShaderModule shared_rgb_module = VK_NULL_HANDLE;
      VkShaderModule prog0_module =
          g.config.prog0_meshes ? CreateShader(mesh_prog0_vert, sizeof(mesh_prog0_vert)) : VK_NULL_HANDLE;
 +    // The pushed-descriptor path's prog0 vertex shader fetches the skin palette by texel: Adreno's
@@ -426,7 +429,7 @@ index 1def1a2..1f3eeaf 100644
  
      VkVertexInputBindingDescription   binding_2d = {0, sizeof(Vertex2D), VK_VERTEX_INPUT_RATE_VERTEX};
      VkVertexInputAttributeDescription attributes_2d[4] = {
-@@ -923,13 +1017,6 @@ void CreatePipelines() {
+@@ -991,13 +1085,6 @@ void CreatePipelines() {
          }
      }
  
@@ -440,7 +443,7 @@ index 1def1a2..1f3eeaf 100644
      // Writing no colour never blends. With nothing to discard, the fragment stage is dropped too and
      // one pipeline per family does for every such draw, with or without a dynamic mask. An alpha
      // test still needs the shader; without a dynamic mask that is a pipeline per family and mode.
-@@ -960,10 +1047,13 @@ void CreatePipelines() {
+@@ -1028,10 +1115,13 @@ void CreatePipelines() {
          stage[0] = {};
          stage[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
          stage[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -459,10 +462,10 @@ index 1def1a2..1f3eeaf 100644
          stage[1] = stage[0];
          stage[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 diff --git a/src/cpp/gfx/readback.cpp b/src/cpp/gfx/readback.cpp
-index cf36c35..57291cb 100644
+index 93bea71..9e7845b 100644
 --- a/src/cpp/gfx/readback.cpp
 +++ b/src/cpp/gfx/readback.cpp
-@@ -233,7 +233,10 @@ bool ReadbackTexture(TextureHandle handle, std::vector<uint8_t> &pixels, uint32_
+@@ -241,7 +241,10 @@ bool ReadbackTexture(TextureHandle handle, std::vector<uint8_t> &pixels, uint32_
          }
          width = image->width;
          height = image->height;
@@ -475,10 +478,10 @@ index cf36c35..57291cb 100644
      return read;
  }
 diff --git a/src/cpp/gfx/renderer.cpp b/src/cpp/gfx/renderer.cpp
-index 52cabae..1743ad7 100644
+index 57e5e95..a73f202 100644
 --- a/src/cpp/gfx/renderer.cpp
 +++ b/src/cpp/gfx/renderer.cpp
-@@ -2296,7 +2296,17 @@ void NoteFrameCpu(bool display) {
+@@ -3663,7 +3663,17 @@ void NoteFrameCpu(bool display) {
      }
      const double ms = MillisecondsSince(g_frame_opened);
      g_frame_opened = {};
@@ -497,7 +500,7 @@ index 52cabae..1743ad7 100644
      UpdateFrameRoleRecord(FrameRoleState(CurrentFrame()).record, [&](FrameRoleRecord &record) { record.cpu_ms = ms; });
  }
  
-@@ -2765,6 +2775,11 @@ void RendererInit(SDL_Window *window, const RendererConfig &config) {
+@@ -4152,6 +4162,11 @@ void RendererInit(SDL_Window *window, const RendererConfig &config) {
  #ifdef __SWITCH__
      InitializeVsyncGate();
  #endif
@@ -509,7 +512,7 @@ index 52cabae..1743ad7 100644
      StartRenderThread(g.config.render_thread);
  }
  
-@@ -3659,6 +3674,14 @@ void LogFrameTimings(double elapsed_seconds) {
+@@ -5157,6 +5172,14 @@ void LogFrameTimings(double elapsed_seconds) {
               timing.display_gpu.Average(), timing.display_gpu.max_ms);
      kz::Logf(kz::LogLevel::Info, "gfx", "timing display prepare count={} cpu={:.3f}/{:.3f}",
               timing.display_prepare_cpu.count, timing.display_prepare_cpu.Average(), timing.display_prepare_cpu.max_ms);
@@ -525,10 +528,10 @@ index 52cabae..1743ad7 100644
               timing.acquire.Average(), timing.queue_present.Average(), timing.fence_wait.Average(),
               timing.interval_buckets[0], timing.interval_buckets[1], timing.interval_buckets[2], timing.interval_buckets[3],
 diff --git a/src/cpp/gfx/resources.cpp b/src/cpp/gfx/resources.cpp
-index a639afa..e5dc5e4 100644
+index 5974550..7211ebe 100644
 --- a/src/cpp/gfx/resources.cpp
 +++ b/src/cpp/gfx/resources.cpp
-@@ -35,10 +35,14 @@ uint32_t MakeHandle(uint16_t generation, uint32_t slot) {
+@@ -36,10 +36,14 @@ uint32_t MakeHandle(uint16_t generation, uint32_t slot) {
  
  uint16_t NextGeneration(uint16_t generation) { return generation == 0xFFFF ? 1 : generation + 1; }
  

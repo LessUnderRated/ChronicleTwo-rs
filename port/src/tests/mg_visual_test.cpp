@@ -748,6 +748,7 @@ TEST(MgVisual, QueuedFixFaceSurvivesFaceAddressReuse) {
     const mgFACE_GROUP *group = first.face_group;
     const auto         *geometry = mgVisualPortGroupMesh(group, nullptr);
     ASSERT_NE(geometry, nullptr);
+    mgVisualPortFlushUploads();
     const gfx::MeshHandle previous = geometry->mesh;
     ASSERT_NE(previous, gfx::kNullMesh);
 

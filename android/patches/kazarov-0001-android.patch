@@ -61,10 +61,10 @@ index 6662c0e..2dee227 100644
  # The desktop setup window; iOS builds without it.
  default = ["desktop-ui"]
 diff --git a/cmake/KazarovPort.cmake b/cmake/KazarovPort.cmake
-index 1e71a62..18310dd 100644
+index 5b7d105..3caf99d 100644
 --- a/cmake/KazarovPort.cmake
 +++ b/cmake/KazarovPort.cmake
-@@ -202,7 +202,13 @@ function(_kz_port_test_diagnostics target)
+@@ -214,7 +214,13 @@ function(_kz_port_test_diagnostics target)
              string(REPLACE "$<SEMICOLON>" ";" directories "${directories}")
              list(APPEND search_dirs ${directories})
          endforeach()
@@ -95,10 +95,10 @@ index a4f044e..5e620d4 100644
  else()
      corrosion_import_crate(MANIFEST_PATH ${KZ_RUST_MANIFEST} CRATES kazarov_core LOCKED)
 diff --git a/include/gfx/gfx.hpp b/include/gfx/gfx.hpp
-index 96bd8af..6711449 100644
+index 01108bc..c38c503 100644
 --- a/include/gfx/gfx.hpp
 +++ b/include/gfx/gfx.hpp
-@@ -307,6 +307,9 @@ void RunOnRenderThreadAsync(std::function<void()> fn);
+@@ -333,6 +333,9 @@ void RunOnRenderThreadAsync(std::function<void()> fn);
  // Validation-layer messages seen so far (validation and performance types, warning or worse).
  uint32_t ValidationMessageCount();
  uint32_t PipelineCount();
@@ -109,10 +109,10 @@ index 96bd8af..6711449 100644
  // distinguishable through Vulkan, so this is only the time RendererInit spent creating them.
  double PipelineCompileSeconds();
 diff --git a/src/cpp/gfx/pipelines.cpp b/src/cpp/gfx/pipelines.cpp
-index a1bf61f..1def1a2 100644
+index 5a67738..ed0ca27 100644
 --- a/src/cpp/gfx/pipelines.cpp
 +++ b/src/cpp/gfx/pipelines.cpp
-@@ -700,6 +700,14 @@ void LogShaderStats() {
+@@ -752,6 +752,14 @@ void LogShaderStats() {
      }
  }
  
@@ -127,7 +127,7 @@ index a1bf61f..1def1a2 100644
  void CreatePipelines() {
      auto start = std::chrono::steady_clock::now();
      BuildBlendTable();
-@@ -1014,8 +1022,10 @@ void CreatePipelines() {
+@@ -1082,8 +1090,10 @@ void CreatePipelines() {
          describe(DepthOnlyPipelineIndex(kind), family, VK_NULL_HANDLE, nullptr, &no_color, &dynamic_no_mask);
      }
  
@@ -140,7 +140,7 @@ index a1bf61f..1def1a2 100644
      g.pipelines.assign(total, VK_NULL_HANDLE);
      g.pipeline_count = creation_count;
      const auto              described = trace_init ? std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
-@@ -1044,7 +1054,7 @@ void CreatePipelines() {
+@@ -1112,7 +1122,7 @@ void CreatePipelines() {
          }
          return result;
      };
@@ -149,7 +149,7 @@ index a1bf61f..1def1a2 100644
      if (const char *setting = std::getenv("KZ_PIPELINE_COMPILER_THREADS"); setting != nullptr) {
          uint32_t    worker_limit = 0;
          const char *end = setting + std::strlen(setting);
-@@ -1349,6 +1359,8 @@ std::string DescribePipeline(uint32_t index) {
+@@ -1625,6 +1635,8 @@ std::string DescribePipeline(uint32_t index) {
  
  uint32_t PipelineCount() { return detail::g.pipeline_count; }
  
@@ -159,10 +159,10 @@ index a1bf61f..1def1a2 100644
  
  } // namespace gfx
 diff --git a/src/cpp/gfx/renderer.cpp b/src/cpp/gfx/renderer.cpp
-index cb69263..52cabae 100644
+index 2b2a69b..57e5e95 100644
 --- a/src/cpp/gfx/renderer.cpp
 +++ b/src/cpp/gfx/renderer.cpp
-@@ -1698,6 +1698,17 @@ bool CreateSwapchain() {
+@@ -2671,6 +2671,17 @@ bool CreateSwapchain() {
          extent.height = std::clamp(static_cast<uint32_t>(std::max(height, 0)),
                                     capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
      }

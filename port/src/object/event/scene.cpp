@@ -663,7 +663,8 @@ CCharacter2 *CharacterView::Get() const {
         return nullptr;
     }
     const auto &slot = *binding->owner;
-    return slot.status != 0 && slot.ResourcesLive() ? slot.Resource().Get() : nullptr;
+    // Resolving the resource checks the character's liveness, so the slot's own check would repeat it.
+    return slot.status != 0 && slot.CSceneData::ResourcesLive() ? slot.Resource().Get() : nullptr;
 }
 
 /**
@@ -1212,18 +1213,12 @@ void RetireSceneResources(CScene &scene, const mgCMemory &memory, dc2::memory::A
             auto &slot = scene.chara[index];
             if ((slot.Resource().HasValue() || slot.resource_lifetime.HasValue()) &&
                 (!slot.ResourcesLive() || slot.ResourcesWouldRetireOnReset(memory, kind))) {
-                // An event clears the stack holding a character's added motions and then deletes them from the
-                // character (_CLEAR_STACK, _DEL_EXT_MOTION): retail's clear only drops the motion data. Detaching them
-                // now keeps a character made in another stack in the scene for the commands that follow.
-                if (slot.status != 0 && slot.ResourcesLive()) {
-                    if (CCharacter2 *character = slot.Resource().Get()) {
-                        character->DeleteExtMotion();
-                        if (slot.ResourcesLive() && !slot.ResourcesWouldRetireOnReset(memory, kind)) {
-                            CT_LOG_DEBUG(Event, "scene: character slot {} keeps its model; its added motions went with arena {}",
-                                         index, static_cast<const void *>(&memory));
-                            continue;
-                        }
-                    }
+                // An event's extension motions die with its arena; the character they were loaded onto stays.
+                auto *character = slot.ResourcesLive() ? slot.Resource().Get() : nullptr;
+                if (character != nullptr && !slot.CSceneData::ResourcesWouldRetireOnReset(memory, kind) &&
+                    dc2::character::DetachRetiringExtensions(*character, memory, kind) &&
+                    !slot.ResourcesWouldRetireOnReset(memory, kind)) {
+                    continue;
                 }
                 // A character dropped here stops drawing at once, where retail's reset only moved an allocation
                 // pointer and the character drew on until its memory was used again: the log names both.

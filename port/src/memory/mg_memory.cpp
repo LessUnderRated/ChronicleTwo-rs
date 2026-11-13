@@ -397,6 +397,32 @@ ArenaLifetime ArenaLifetime::Capture(const mgCMemory &memory) {
     return result;
 }
 
+ArenaLifetime ArenaLifetime::Capture(const mgCMemory &memory, const void *allocation) {
+    ArenaLifetime         result;
+    auto                 &registry = Generations();
+    const std::lock_guard lock(registry.mutex);
+    if (allocation == nullptr || !StorageLiveLocked(registry, &memory)) {
+        return result;
+    }
+    const auto &state = registry.values.find(&memory)->second;
+    const auto  address = reinterpret_cast<std::uintptr_t>(allocation);
+    if (!RangeFits(*state.binding, allocation, 1)) {
+        return result;
+    }
+    if (memory.heap_top != nullptr) {
+        const auto block = std::ranges::find_if(state.leases, [address](const AllocationLease &lease) {
+            return lease.kind == LeaseKind::HeapBlock && address >= lease.start && address - lease.start < lease.bytes;
+        });
+        if (block == state.leases.end()) {
+            return result;
+        }
+        result.heap_block = block->id;
+    }
+    result.owner = &memory;
+    result.generation = state.generation;
+    return result;
+}
+
 bool ArenaLifetime::IsLive() const {
     auto                 &registry = Generations();
     const std::lock_guard lock(registry.mutex);
